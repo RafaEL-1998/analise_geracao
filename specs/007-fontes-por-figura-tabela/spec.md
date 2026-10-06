@@ -119,8 +119,8 @@ Como fiscal, quero uma aba na planilha que diga, para cada aba, de quais conjunt
 
 **Rodapé e cabeçalho (US2)**
 
-- **FR-009**: O rodapé das páginas do PDF NÃO DEVE citar um único conjunto como fonte do relatório. DEVE dizer "ONS – Dados Abertos", a quantidade de conjuntos carregados (calculada), que a fonte de cada figura e tabela está na legenda e que a relação completa está nas Notas metodológicas, além da data e hora de geração.
-- **FR-010**: O cabeçalho do Markdown DEVE trazer a mesma informação de fontes do rodapé do PDF.
+- **FR-009**: O rodapé das páginas do PDF NÃO DEVE citar um único conjunto como fonte do relatório. DEVE dizer "ONS – Dados Abertos", a quantidade de conjuntos carregados (calculada), que a fonte de cada figura e tabela está na legenda e que a relação completa está nas Notas metodológicas, além da data e hora de geração. *(Revisto pela spec 008 em 06/10/2026; ver Histórico de revisões.)*
+- **FR-010**: O cabeçalho do Markdown DEVE trazer a mesma informação de fontes do rodapé do PDF. *(Revisto pela spec 008 em 06/10/2026; ver Histórico de revisões.)*
 
 **Planilha (US3)**
 
@@ -148,7 +148,7 @@ Como fiscal, quero uma aba na planilha que diga, para cada aba, de quais conjunt
 - **SC-002**: Em 100% das legendas, cada conjunto citado alimenta de fato a figura ou tabela, e nenhum conjunto que a alimenta fica de fora (conferência por amostra completa das figuras e tabelas).
 - **SC-003**: Os resultados de conferência citados nas legendas são idênticos aos das abas de conferência da planilha.
 - **SC-004**: Nenhum número, constatação, seção, tabela ou aba existente muda (comparação com o relatório anterior à feature).
-- **SC-005**: O rodapé do PDF cita a quantidade correta de conjuntos com todas as bases e com só a base de EVT.
+- **SC-005**: O rodapé do PDF cita a quantidade correta de conjuntos com todas as bases e com só a base de EVT. *(Revisto pela spec 008 em 06/10/2026; ver Histórico de revisões.)*
 - **SC-006**: Entregue e com o relatório regenerado até 13/10/2026, véspera da fiscalização.
 
 ---
@@ -162,3 +162,16 @@ Como fiscal, quero uma aba na planilha que diga, para cada aba, de quais conjunt
 - As legendas seguem o estilo das legendas já existentes nas tabelas (texto curto abaixo da figura ou tabela); as notas metodológicas e a tabela de parâmetros continuam como estão.
 - Gráficos: nenhum gráfico novo; as figuras atuais não são alteradas (constituição, Requisito Técnico 5, continua atendido).
 - Prazo: fiscalização presencial de 14 a 16/10/2026.
+
+---
+
+## Histórico de revisões
+
+### 2026-10-06 — revisão pela spec 008 (relatório mais enxuto)
+
+| Item | O que mudou | Por quê |
+| :--- | :--- | :--- |
+| FR-009 | O rodapé do PDF passou a ter só a numeração ("Página X de Y"). Saíram a frase de fontes e a data de geração; a data foi para a capa. | Pedido do usuário em 06/10/2026: cada figura e tabela já cita a sua fonte na legenda, e a frase repetida em todas as páginas virou ruído. |
+| FR-010 | O cabeçalho do Markdown não tem mais a linha "**Fontes**:"; passou a ter "**Gerado em**". | Mesmo motivo; o Markdown segue a estrutura do PDF (spec 008). |
+| SC-005 | Deixa de se aplicar: o rodapé não cita mais a quantidade de conjuntos. | Consequência da FR-009 revista. |
+| Legendas de fonte e conferência, aba `FONTES` | Sem mudança. | Continuam em 100% das figuras e tabelas e em todas as abas. |

@@ -254,8 +254,9 @@ def test_analise_inclui_constatacoes_dos_indicadores(resultados_com_indicadores)
 def test_relatorios_com_indicadores(resultados_com_indicadores, tmp_path: Path) -> None:
     res = resultados_com_indicadores
     md = gerar_relatorio_md(res, None, tmp_path / "relatorio.md").read_text(encoding="utf-8")
-    assert "## 3. Indicadores oficiais do ONS por unidade geradora" in md
-    assert "## 4. Eventos de indisponibilidade total" in md
+    assert "## 3. Disponibilidade e geração por ano" in md
+    assert "## 4. Indicadores oficiais do ONS por unidade geradora" in md
+    assert "### Períodos de indisponibilidade total" in md
     _, linhas = linhas_tabela_ons_disponibilidade(res)
     for linha in linhas:
         assert f"| {' | '.join(linha)} |" in md
@@ -270,4 +271,5 @@ def test_analise_sem_indicadores_mantem_o_relatorio_anterior(df_sintetico: pd.Da
     assert len(res.achados) == 12
     md = gerar_relatorio_md(res, None, tmp_path / "relatorio.md").read_text(encoding="utf-8")
     assert "Indicadores oficiais do ONS" not in md
-    assert "## 3. Eventos de indisponibilidade total" in md
+    assert "## 3. Disponibilidade e geração por ano" in md
+    assert "### Períodos de indisponibilidade total" in md

@@ -258,3 +258,11 @@ A versão anterior tinha números e conclusões falsos fixos no código (relató
 - O rodapé do PDF deixou de dizer que o relatório vem só do conjunto de EVT: cita a quantidade de conjuntos carregados e remete à legenda de cada figura e tabela.
 - Cada figura, tabela e bloco do PDF e do Markdown tem a legenda "Fonte dos dados" (ou "Calculado neste relatório a partir de"), com conjuntos, identificador da usina, data de obtenção e conferências.
 - Planilha: aba `FONTES`, a última. Números, constatações, seções, abas e figuras existentes inalterados.
+
+### 2026-10-06 — spec 008 (relatório mais enxuto)
+
+- Saiu a seção de constatações do início. A capa traz identificação, parâmetros, indicadores principais, data de geração e sumário; no PDF, com a página de cada seção e só na página 1.
+- Cada constatação aparece uma única vez, no início da seção correspondente; o mapa constatação → seção fica em `src/estrutura_relatorio.py`, usado pelo PDF e pelo Markdown.
+- O Markdown passou a ter a mesma estrutura do PDF: seções na mesma ordem, figuras no corpo, sem a seção "Figuras". As tabelas que só existiam num dos dois passaram aos dois.
+- O rodapé do PDF ficou só com a numeração. As notas das bases complementares perderam a parte de fonte e mantiveram as ressalvas.
+- Números, textos das constatações, abas e figuras inalterados.

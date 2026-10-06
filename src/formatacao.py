@@ -77,3 +77,13 @@ def fmt_lista(itens: Iterable[Any]) -> str:
 
 def plural(quantidade: int, singular: str, plural_: str) -> str:
     return singular if quantidade == 1 else plural_
+
+
+def fmt_utc(valor: Any) -> str:
+    """Data e hora UTC ('2026-09-30T15:05:02.533') como '30/09/2026 15:05 UTC'; vazio se não houver valor."""
+    if not valor:
+        return ""
+    try:
+        return pd.Timestamp(valor).strftime("%d/%m/%Y %H:%M") + " UTC"
+    except (ValueError, TypeError):
+        return str(valor)

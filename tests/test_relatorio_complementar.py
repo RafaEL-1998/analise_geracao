@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -177,7 +178,7 @@ def test_relacao_de_fontes_inclui_as_bases_novas(df_base: pd.DataFrame, tmp_path
     res = analisar(df_base, disponibilidade=_serie_disponibilidade(df_base), hidrologia=_hidrologia(df_base),
                    geracao=_geracao(df_base), cadastro=_ficha())
     md = gerar_relatorio_md(res, None, tmp_path / "relatorio.md").read_text(encoding="utf-8")
-    notas = md.split("Notas metodológicas e limitações", 1)[1]
+    notas = re.split(r"^## \d+\. Notas metodológicas e limitações$", md, flags=re.M)[1]
     for conjunto in ("disponibilidade_usina", "dados_hidrologicos_ho", "geracao-usina-2", "modalidade-usina"):
         assert f"https://dados.ons.org.br/dataset/{conjunto}" in notas
     inicio = df_base["din_instante"].min().strftime("%d/%m/%Y")
@@ -189,9 +190,9 @@ def test_identificacao_do_cadastro_no_pdf(df_base: pd.DataFrame) -> None:
     """US6/AC4 (T058): data da consulta na tabela do PDF e ressalva da fonte mantida quando há divergência."""
     res = analisar(df_base, cadastro=_ficha())
     assert ("Data da consulta", "05/10/2026 13:00 UTC") in pares_identificacao_cadastro(res)
-    assert nota_identificacao_cadastro(res).startswith("Fonte:")
+    assert nota_identificacao_cadastro(res) == "Cadastro sem série histórica; as versões anteriores do arquivo ficam preservadas."
     nota = nota_identificacao_cadastro(analisar(df_base, cadastro=_ficha(potencia=47.5)))
-    assert "potência autorizada de 47.5 MW" in nota and "cadastro sem série histórica" in nota
+    assert "potência autorizada de 47.5 MW" in nota and "Cadastro sem série histórica" in nota
 
 
 def _sem_legenda(md: str) -> list:
@@ -200,14 +201,14 @@ def _sem_legenda(md: str) -> list:
     faltando = []
     for i, linha in enumerate(linhas):
         tabela = linha.startswith("| ---")
-        figura = linha.startswith("- `reports/figures/")
+        figura = linha.startswith("![")
         if not (tabela or figura):
             continue
         j = i + 1
         while tabela and j < len(linhas) and linhas[j].startswith("|"):
             j += 1
         achou = False
-        while j < len(linhas) and not linhas[j].startswith(("#", "|", "- `reports/figures/")):
+        while j < len(linhas) and not linhas[j].startswith(("#", "|", "![")):
             if linhas[j].strip().startswith((PREFIXO_FONTE, PREFIXO_CALCULADO)):
                 achou = True
                 break
@@ -239,14 +240,10 @@ def test_pdf_com_bases_novas_tem_legenda_em_tudo(df_base: pd.DataFrame, tmp_path
     assert gerador._desenhados > 0 and gerador._legendas == gerador._desenhados
 
 
-def test_cabecalho_do_markdown_cita_os_conjuntos(df_base: pd.DataFrame, tmp_path: Path) -> None:
-    """Spec 007 (FR-010): linha de fontes no cabeçalho, com N calculado das bases carregadas."""
+def test_cabecalho_do_markdown_sem_linha_de_fontes(df_base: pd.DataFrame, tmp_path: Path) -> None:
+    """Spec 008 (FR-010): sem a linha "**Fontes**:"; data de geração no cabeçalho."""
     md = gerar_relatorio_md(analisar(df_base), None, tmp_path / "so_evt.md").read_text(encoding="utf-8")
-    assert "**Fontes**: ONS – Dados Abertos, 1 conjunto; fonte de cada figura e tabela na legenda;" in md
-    res = analisar(df_base, disponibilidade=_serie_disponibilidade(df_base), hidrologia=_hidrologia(df_base),
-                   geracao=_geracao(df_base), cadastro=_ficha())
-    md = gerar_relatorio_md(res, None, tmp_path / "com_bases.md").read_text(encoding="utf-8")
-    assert "**Fontes**: ONS – Dados Abertos, 5 conjuntos;" in md
+    assert "**Fontes**:" not in md and "**Gerado em**:" in md
 
 
 @pytest.mark.parametrize("com_bases", [False, True])
@@ -263,3 +260,17 @@ def test_aba_fontes_cobre_todas_as_abas(df_base: pd.DataFrame, tmp_path: Path, c
     assert fontes["aba"].tolist() == abas[:-1]
     assert not fontes["conjuntos_origem"].str.contains("origem não mapeada").any()
     assert set(fontes["calculado_no_relatorio"]) <= {"sim", "não"}
+
+
+def test_notas_das_bases_novas_sem_a_parte_de_fonte(df_base: pd.DataFrame, tmp_path: Path) -> None:
+    """Spec 008 (FR-013): sai "Fonte: conjunto … obtido em …"; as ressalvas ficam."""
+    from src.analyzer import notas_disponibilidade, notas_hidrologia
+
+    res = analisar(df_base, disponibilidade=_serie_disponibilidade(df_base), hidrologia=_hidrologia(df_base),
+                   geracao=_geracao(df_base), cadastro=_ficha())
+    assert notas_disponibilidade(res)[0].startswith("A disponibilidade operacional é a mesma informação")
+    assert notas_hidrologia(res)[0].startswith("Os dados são informados pelos agentes e não são consistidos pelo ONS")
+    md = gerar_relatorio_md(res, None, tmp_path / "relatorio.md").read_text(encoding="utf-8")
+    secoes = re.split(r"^## \d+\. Notas metodológicas e limitações$", md, flags=re.M)[0]
+    assert "Fonte: conjunto" not in secoes
+    assert "Cadastro sem série histórica; as versões anteriores do arquivo ficam preservadas." in secoes

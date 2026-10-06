@@ -39,11 +39,25 @@ def test_pdf_toda_tabela_e_figura_tem_legenda_de_fonte(tmp_path: Path, df_sintet
     assert gerador._desenhados > 0 and gerador._legendas == gerador._desenhados
 
 
-def test_rodape_cita_os_conjuntos_carregados(tmp_path: Path, df_sintetico) -> None:
-    """Spec 007 (FR-009): o rodapé não cita só a EVT; diz quantos conjuntos entraram e onde está a fonte de cada um."""
+def test_rodape_so_com_a_numeracao() -> None:
+    """Spec 008 (FR-009): o rodapé não tem frase de fontes nem data; só "Página X de Y"."""
+    import inspect
+
+    import src.pdf_generator as pdf
+
+    assert list(inspect.signature(pdf._canvas_numerado).parameters) == ["cabecalho", "fonte"]
+
+
+def test_capa_com_data_e_sumario_com_paginas(tmp_path: Path, df_sintetico) -> None:
+    """Spec 008 (US1): "Gerado em" na capa; sumário com todas as seções presentes e a página real de cada uma."""
+    from src.estrutura_relatorio import sumario
+
     df = preparar_dados(df_sintetico)
     res = analisar(df, tmp_path / "sem_auditoria.csv", tmp_path / "sem_manifesto.json")
-    gerador = PDFReportGenerator(res, {}, tmp_path / "relatorio.pdf")
+    gerador = PDFReportGenerator(res, gerar_graficos(df, res, tmp_path / "figures", dpi=40), tmp_path / "r.pdf")
     gerador.build_pdf()
-    assert gerador.rodape.startswith("Fontes: ONS – Dados Abertos, 1 conjunto; fonte de cada figura e tabela na legenda;")
-    assert "conjunto Energia Vertida Turbinável" not in gerador.rodape
+    assert "Gerado em" in gerador.subtitulo_capa
+    assert [(n, t) for n, t, _ in gerador.sumario_entradas] == sumario(res)
+    paginas = [p for _, _, p in gerador.sumario_entradas]
+    assert paginas == sorted(paginas) and paginas[0] >= 1
+    assert all(gerador.paginas_secoes[t] == p for _, t, p in gerador.sumario_entradas)

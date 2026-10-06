@@ -1,8 +1,7 @@
-"""Testes do mapa de fontes do relatório (spec 007): catálogo, textos das legendas, rodapé e aba FONTES."""
+"""Testes do mapa de fontes do relatório (spec 007): catálogo, textos das legendas e aba FONTES."""
 
 from __future__ import annotations
 
-from datetime import datetime
 from types import SimpleNamespace
 from typing import Any, Dict
 
@@ -13,10 +12,8 @@ from src.fontes_relatorio import (
     CONFERENCIAS,
     CONJUNTOS,
     MAPA_FONTES,
-    cabecalho_fontes,
     conjuntos_carregados,
     legenda_fonte,
-    rodape_fontes,
     tabela_fontes_abas,
     texto_conferencia,
 )
@@ -96,17 +93,6 @@ def test_conferencias_com_divergencias_e_taxas() -> None:
     taxas = texto_conferencia(res, "teifa_teip")
     assert "2 de 2 meses reproduzidos (diferença máxima de 0,000 p.p.)" in taxas
     assert "sem divergência" in texto_conferencia(res, "cadastro")
-
-
-def test_rodape_e_cabecalho_com_n_conjuntos() -> None:
-    quando = datetime(2026, 10, 6, 9, 30)
-    assert rodape_fontes(_res(), quando) == (
-        "Fontes: ONS – Dados Abertos, 10 conjuntos; fonte de cada figura e tabela na legenda; relação completa nas "
-        "Notas metodológicas. Gerado em 06/10/2026 09:30.")
-    assert "Dados Abertos, 1 conjunto;" in rodape_fontes(_res(completo=False), quando)
-    assert cabecalho_fontes(_res()) == (
-        "**Fontes**: ONS – Dados Abertos, 10 conjuntos; fonte de cada figura e tabela na legenda; relação completa nas "
-        "notas metodológicas.")
 
 
 def test_aba_fontes() -> None:

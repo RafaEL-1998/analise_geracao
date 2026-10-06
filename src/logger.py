@@ -46,6 +46,7 @@ LOGGERS_PIPELINE: Tuple[str, ...] = (
     "geracao_ons",
     "cadastro_ons",
     "fontes_relatorio",
+    "estrutura_relatorio",
 )
 NIVEIS_LOG: Tuple[str, ...] = ("DEBUG", "INFO", "WARNING", "ERROR")
 

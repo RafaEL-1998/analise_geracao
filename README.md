@@ -46,9 +46,9 @@ Pipeline em Python que baixa o conjunto de dados **Energia Vertida Turbinável**
   - Em falha, o arquivo volta à versão anterior.
 
 ### Relatórios (`reports/`)
-- `relatorio_analise_estatistica.pdf`: relatório completo (A4 paisagem) com constatações, indicadores, eventos, qualidade dos dados, notas metodológicas e figuras.
-- `relatorio_analise_estatistica.md`: mesmo conteúdo em Markdown.
-- **Fonte de cada figura e tabela** (spec 007): logo abaixo de cada uma, no PDF e no Markdown, a linha "Fonte dos dados" (ou "Calculado neste relatório a partir de") cita os conjuntos do ONS usados, com o identificador da usina e a data de obtenção, e as conferências com outra fonte refeitas pelo pipeline, com o resultado; quando não há outra fonte (ex.: EVT), a legenda diz isso. O rodapé do PDF e o cabeçalho do Markdown dizem quantos conjuntos entraram.
+- `relatorio_analise_estatistica.pdf`: relatório completo (A4 paisagem). A capa (página 1) traz a identificação da usina, os parâmetros técnicos, os indicadores principais, a data de geração e o sumário com a página de cada seção. Cada seção começa com as suas constatações (cada uma aparece uma única vez no relatório), seguidas das tabelas e figuras com as legendas; o rodapé tem só a numeração das páginas.
+- `relatorio_analise_estatistica.md`: mesmo conteúdo e mesma estrutura do PDF (capa, sumário com links, seções na mesma ordem, figuras no corpo das seções).
+- **Fonte de cada figura e tabela** (spec 007): logo abaixo de cada uma, no PDF e no Markdown, a linha "Fonte dos dados" (ou "Calculado neste relatório a partir de") cita os conjuntos do ONS usados, com o identificador da usina e a data de obtenção, e as conferências com outra fonte refeitas pelo pipeline, com o resultado; quando não há outra fonte (ex.: EVT), a legenda diz isso. A relação completa dos conjuntos fica nas notas metodológicas.
 - `perfil_estatistico_anual.xlsx`: todas as tabelas calculadas.
   - Base: indicadores anuais e globais, EVT mensal, eventos de parada com EVT, eventos de indisponibilidade, anomalias, extremos, parâmetros.
   - `ONS_*` e `PROG_*`: indicadores oficiais por unidade geradora e cruzamento com a programação diária.
@@ -201,3 +201,5 @@ Falha ao obter um dicionário não muda o código de saída.
 Cópias anteriores em `_backup_2026-10-05_antes_convergencia006/` e `_backup_2026-10-05_antes_t062/`. Os números das seções existentes não mudaram.
 
 **06/10/2026 - spec 007, fonte explícita em cada figura e tabela**: o rodapé do PDF deixou de citar só o conjunto de EVT. Cada figura e tabela ganhou a legenda de fonte e de conferência, gerada de um mapa único (`src/fontes_relatorio.py`) e dos resultados das conferências; a planilha ganhou a aba `FONTES`. Números, constatações, abas e figuras existentes não mudaram. Cópia anterior em `_backup_2026-10-06_antes_spec007/`.
+
+**06/10/2026 - spec 008, relatório mais enxuto**: saiu a lista de constatações do início, que se repetia nas seções. A capa (página 1) ficou com os dados básicos da usina, os indicadores principais, a data de geração e o sumário com a página de cada seção. Cada constatação aparece uma única vez, no início da sua seção (mapa em `src/estrutura_relatorio.py`), seguida das tabelas e figuras. O rodapé do PDF ficou só com a numeração, e o Markdown passou a ter a mesma estrutura do PDF. As notas das bases complementares perderam a parte de fonte, já dita nas legendas, e mantiveram as ressalvas. Números, textos das constatações, abas e figuras não mudaram; o PDF passou de 31 para 30 páginas. Cópia anterior em `_backup_2026-10-06_antes_spec008/`.

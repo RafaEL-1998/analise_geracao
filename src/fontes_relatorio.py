@@ -16,7 +16,6 @@ instituições ficam fora (decisão do usuário em 06/10/2026).
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
@@ -391,23 +390,6 @@ def legenda_fonte(res: Any, chave: str) -> str:
     return " ".join(partes)
 
 
-def _texto_n(res: Any) -> str:
-    n = len(_carregados(res))
-    return f"{n} {'conjunto' if n == 1 else 'conjuntos'}"
-
-
-def rodape_fontes(res: Any, gerado_em: datetime) -> str:
-    """Rodapé das páginas do PDF (FR-009)."""
-    return (f"Fontes: ONS – Dados Abertos, {_texto_n(res)}; fonte de cada figura e tabela na legenda; relação completa "
-            f"nas Notas metodológicas. Gerado em {gerado_em.strftime('%d/%m/%Y %H:%M')}.")
-
-
-def cabecalho_fontes(res: Any) -> str:
-    """Linha de fontes do cabeçalho do Markdown (FR-010)."""
-    return (f"**Fontes**: ONS – Dados Abertos, {_texto_n(res)}; fonte de cada figura e tabela na legenda; relação "
-            "completa nas notas metodológicas.")
-
-
 # ---------------------------------------------------------------------------
 # Aba FONTES
 # ---------------------------------------------------------------------------
@@ -445,7 +427,6 @@ def tabela_fontes_abas(res: Any, abas: Sequence[str]) -> pd.DataFrame:
 
 
 __all__ = [
-    "CONFERENCIAS", "CONJUNTOS", "MAPA_FONTES", "PREFIXO_CALCULADO", "PREFIXO_FONTE", "cabecalho_fontes",
-    "conjuntos_carregados", "datas_obtencao", "legenda_fonte", "origem_dos_dados", "rodape_fontes",
-    "tabela_fontes_abas", "texto_conferencia", "texto_conjunto",
+    "CONFERENCIAS", "CONJUNTOS", "MAPA_FONTES", "PREFIXO_CALCULADO", "PREFIXO_FONTE", "conjuntos_carregados",
+    "datas_obtencao", "legenda_fonte", "origem_dos_dados", "tabela_fontes_abas", "texto_conferencia", "texto_conjunto",
 ]

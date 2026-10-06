@@ -12,9 +12,11 @@ import calendar
 import json
 import logging
 import math
+import re
 import sys
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -105,8 +107,8 @@ from src.programacao_ons import (  # noqa: E402
 )
 from src.conjuntos_ons import SerieConjunto  # noqa: E402
 from src.dicionarios_ons import carregar_registro as carregar_registro_dicionarios  # noqa: E402
+from src.estrutura_relatorio import constatacoes_da_secao, secoes_presentes, sumario  # noqa: E402
 from src.fontes_relatorio import (  # noqa: E402
-    cabecalho_fontes,
     legenda_fonte,
     origem_dos_dados,
     tabela_fontes_abas,
@@ -164,6 +166,7 @@ from src.formatacao import (  # noqa: E402
     fmt_num,
     fmt_pct,
     fmt_pp,
+    fmt_utc,
     plural,
 )
 from src.validator import (  # noqa: E402
@@ -2929,32 +2932,6 @@ def linhas_tabela_programacao_perfil(res: ResultadosAnalise) -> Tuple[List[str],
     return cabecalho, [["Horas", *[fmt_int(v) for v in t["horas"]]]]
 
 
-def secao_programacao_md(res: ResultadosAnalise, secao) -> List[str]:
-    """Seção Markdown da programação diária do ONS (vazia se não houver programação)."""
-    if not res.programacao:
-        return []
-    linhas: List[str] = ["", secao("Operação verificada e programação diária do ONS"), ""]
-    texto = next((x for t, x in res.achados if t == "Programação diária do ONS"), "")
-    if texto:
-        linhas += [texto, ""]
-    for titulo, funcao, nota in [
-        ("Horas paradas com EVT por mês e programação do ONS", linhas_tabela_programacao_mensal,
-         "Horas comuns à base de EVT e à programação. Usina parada = geração até 1 MW."),
-        ("Horas paradas com EVT e programação de até 1 MW, por hora do dia", linhas_tabela_programacao_perfil, ""),
-        (f"Maiores eventos de usina parada com programação acima de {fmt_num(LIMIAR_DESVIO_PROGRAMACAO_MW, 0)} MW",
-         linhas_tabela_programacao_eventos, "Lista completa na aba PROG_EVENTOS_DESVIO da planilha."),
-    ]:
-        cabecalho, corpo = funcao(res)
-        if not corpo:
-            continue
-        linhas += [f"### {titulo}", ""] + _tabela_md(cabecalho, corpo) + [""]
-        if nota:
-            linhas += [nota, ""]
-        linhas += _fonte_md(res, _CHAVE_FONTE_TABELA[funcao])
-    ausentes = res.programacao["periodo"]["lista_dias_ausentes"]
-    if ausentes:
-        linhas += [f"Dias sem arquivo de programação no portal: {fmt_lista(fmt_data(d) for d in ausentes)}.", ""]
-    return linhas
 
 
 _ROTULOS_CLASSES_PARADA: Dict[str, str] = {
@@ -3015,9 +2992,9 @@ def notas_disponibilidade(res: ResultadosAnalise) -> List[str]:
     d = res.disponibilidade
     r = d["resumo"]
     notas = [
-        "Fonte: conjunto Disponibilidade por usina do ONS (id ONS MSUHSD, conferido pelo CEG e pelo estado MS), "
-        f"{_data_obtencao_texto(d['obtido_em'])}. A disponibilidade operacional é a mesma informação da disponibilidade "
-        "declarada da base de EVT; a sincronizada indica a capacidade das unidades ligadas à rede.",
+        # spec 008 (FR-013): a fonte (conjunto, identificador e data de obtenção) está na legenda de cada tabela e figura
+        "A disponibilidade operacional é a mesma informação da disponibilidade declarada da base de EVT; a sincronizada "
+        "indica a capacidade das unidades ligadas à rede.",
         f"Usina parada = geração até {fmt_num(LIMIAR_GERACAO_PARADA_MW, 0)} MW; unidade sincronizada = disponibilidade "
         f"sincronizada acima de {fmt_num(LIMIAR_SINCRONIZADA_MW, 0)} MW. Não sincronizada = operacional − sincronizada; "
         "reserva desligada = horas em reserva desligada (HRD) das unidades × potência (parâmetros TEIFa/TEIP), apuração "
@@ -3033,31 +3010,6 @@ def notas_disponibilidade(res: ResultadosAnalise) -> List[str]:
     return notas
 
 
-def secao_disponibilidade_md(res: ResultadosAnalise, secao) -> List[str]:
-    """Seção Markdown da disponibilidade operacional e sincronizada (vazia sem os dados)."""
-    if not res.disponibilidade:
-        return []
-    linhas: List[str] = ["", secao("Disponibilidade operacional e sincronizada (ONS)"), ""]
-    texto = dict(res.achados).get("Disponibilidade sincronizada", "")
-    if texto:
-        linhas += [texto, ""]
-    for titulo, funcao, nota in [
-        ("Disponibilidade média por ano", linhas_tabela_disponibilidade_anual,
-         "Médias nas horas comuns à base de EVT e à disponibilidade do ONS. \\* ano parcial; – = sem apuração TEIFa/TEIP."),
-        ("Horas com a usina parada, por sincronização, EVT e programação do ONS", linhas_tabela_disponibilidade_paradas,
-         "Classificação hora a hora na aba DISP_HORAS_PARADAS da planilha."),
-        ("Maiores períodos de divergência entre a disponibilidade operacional e a declarada",
-         linhas_tabela_disponibilidade_divergencias, "Lista completa na aba DISP_DIVERGENCIAS da planilha."),
-    ]:
-        cabecalho, corpo = funcao(res)
-        if not corpo:
-            continue
-        linhas += [f"### {titulo}", ""] + _tabela_md(cabecalho, corpo) + [""]
-        if nota:
-            linhas += [nota, ""]
-        linhas += _fonte_md(res, _CHAVE_FONTE_TABELA[funcao])
-    linhas += [f"- {nota}" for nota in notas_disponibilidade(res)]
-    return linhas
 
 
 _ROTULOS_FAIXAS_CURTOS: Dict[str, str] = {
@@ -3137,9 +3089,8 @@ def notas_hidrologia(res: ResultadosAnalise) -> List[str]:
     h = res.hidrologia
     r = h["resumo"]
     notas = [
-        f"Fonte: conjunto Dados hidrológicos horários do ONS (cod_usina {COD_USINA_ONS}, conferido pelo nome e pelo código "
-        f"{ID_RESERVATORIO_ONS} do reservatório), {_data_obtencao_texto(h['obtido_em'])}. Os dados são informados pelos "
-        "agentes e não são consistidos pelo ONS; valores fora da faixa física (vazão negativa, volume útil fora de 0 a 100%) "
+        # spec 008 (FR-013): a fonte está na legenda de cada tabela e figura; a ressalva fica
+        "Os dados são informados pelos agentes e não são consistidos pelo ONS; valores fora da faixa física (vazão negativa, volume útil fora de 0 a 100%) "
         "são sinalizados e excluídos só no campo afetado, sem correção, e campos vazios não são tratados como zero.",
         "O conjunto marca o fim da hora (a última hora do dia aparece às 23:59); a série foi convertida para a hora de "
         f"início, como a base de EVT, e {_texto_alinhamento(h['alinhamento'])}.",
@@ -3174,39 +3125,6 @@ def notas_hidrologia(res: ResultadosAnalise) -> List[str]:
     return notas
 
 
-def secao_hidrologia_md(res: ResultadosAnalise, secao) -> List[str]:
-    """Seção Markdown de afluência, vertimento e nível do reservatório (vazia sem os dados)."""
-    if not res.hidrologia:
-        return []
-    linhas: List[str] = ["", secao("Afluência, vertimento e nível do reservatório (ONS)"), ""]
-    texto = dict(res.achados).get("Afluência e vertimento", "")
-    if texto:
-        linhas += [texto, ""]
-    if res.hidrologia["publicado"]:
-        for titulo, funcao, nota in [
-            ("Horas com EVT por faixa de afluência", linhas_tabela_faixas_afluencia,
-             "Cabia nas turbinas = afluência até o engolimento máximo da usina. \\* ano parcial. Classificação hora a hora "
-             "na aba HID_HORAS_EVT da planilha."),
-            ("EVT por faixa de afluência (MWh)", linhas_tabela_faixas_afluencia_evt,
-             "Energia vertida turbinável das horas de cada faixa. Cabia nas turbinas = parcela da EVT com afluência até o "
-             "engolimento máximo da usina. \\* ano parcial. Por mês na aba HID_FAIXAS_AFLUENCIA e por ano na aba "
-             "HID_FAIXAS_ANUAL da planilha."),
-            ("Afluência, vazões, nível e volume útil por ano", linhas_tabela_hidrologia_anual,
-             "Médias sem os valores sinalizados, que saem só do campo afetado (a hora continua nos demais campos). "
-             "\\* ano parcial."),
-            ("Vazões e nível de montante médios por hora do dia", linhas_tabela_perfil_hidrologico,
-             "\"c/ parada\" = dias com ao menos uma hora de parada com EVT; \"demais\" = outros dias. Perfil completo na "
-             "aba HID_PERFIL_HORA_DO_DIA."),
-        ]:
-            cabecalho, corpo = funcao(res)
-            if not corpo:
-                continue
-            linhas += [f"### {titulo}", ""] + _tabela_md(cabecalho, corpo) + [""]
-            if nota:
-                linhas += [nota, ""]
-            linhas += _fonte_md(res, _CHAVE_FONTE_TABELA[funcao])
-    linhas += [f"- {nota}" for nota in notas_hidrologia(res)]
-    return linhas
 
 
 def linhas_tabela_geracao_anual(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
@@ -3220,61 +3138,144 @@ def linhas_tabela_geracao_anual(res: ResultadosAnalise) -> Tuple[List[str], List
     return cabecalho, linhas
 
 
-def secao_geracao_oficial_md(res: ResultadosAnalise, secao) -> List[str]:
-    """Seção Markdown da conferência da geração com a série oficial (vazia sem os dados)."""
-    if not res.geracao_oficial:
+
+
+
+
+
+
+def _ancora_md(titulo: str) -> str:
+    """Âncora de um título "## n. Título" no padrão do GitHub (minúsculas, sem pontuação, hífens)."""
+    return re.sub(r"[^\w\- ]", "", titulo.strip().lower()).replace(" ", "-")
+
+
+def _nota_md(texto: str) -> str:
+    return texto.replace("*", "\\*")
+
+
+def _md_tabela(res: ResultadosAnalise, textos: Dict[str, Tuple[str, str]], chave: str, cabecalho: List[str],
+               linhas: List[List[str]], intro: str = "") -> List[str]:
+    """Subtítulo, texto de abertura, tabela, nota e legenda de fonte (mesmos textos do PDF)."""
+    subtitulo, nota = textos.get(chave, ("", ""))
+    saida: List[str] = [f"### {subtitulo}", ""] if subtitulo else []
+    if intro:
+        saida += [intro, ""]
+    saida += _tabela_md(cabecalho, linhas) + [""]
+    if nota:
+        saida += [_nota_md(nota), ""]
+    return saida + _fonte_md(res, chave)
+
+
+def _md_chave_valor(res: ResultadosAnalise, titulo: str, pares: List[Tuple[str, str]], chave: str,
+                    nota: str = "") -> List[str]:
+    saida = ([f"### {titulo}", ""] if titulo else []) + _tabela_md(["Item", "Valor"], [[k, v] for k, v in pares]) + [""]
+    if nota:
+        saida += [nota, ""]
+    return saida + _fonte_md(res, chave)
+
+
+def _md_figura(res: ResultadosAnalise, figuras: Optional[Dict[str, Path]], chave: str, titulo: str) -> List[str]:
+    """Figura no corpo da seção, com a legenda descritiva e a legenda de fonte (FR-014)."""
+    caminho = (figuras or {}).get(chave)
+    if caminho is None:
         return []
-    linhas: List[str] = ["", secao("Conferência da geração com a série oficial (ONS)"), "", texto_conferencia_geracao(res), ""]
-    cabecalho, corpo = linhas_tabela_geracao_anual(res)
-    if corpo:
-        linhas += _tabela_md(cabecalho, corpo) + ["", "\\* ano parcial. Diferença = série oficial − base de EVT.", ""]
-        linhas += _fonte_md(res, "tab_geracao_oficial")
-    g = res.geracao_oficial
-    linhas.append(f"- Fonte: conjunto Geração por usina do ONS (id ONS {ID_ONS_USINA}, conferido pelo CEG e pelo estado), "
-                  f"{_data_obtencao_texto(g['obtido_em'])}; coincidência = diferença de até "
-                  f"{fmt_num(g['conferencia']['tolerancia_mw'], 2)} MW na mesma hora.")
-    return linhas
+    return [f"![{titulo}](figures/{Path(caminho).name})", "", legenda_figura(res, chave), "", legenda_fonte(res, chave), ""]
 
 
-def secao_cadastro_md(res: ResultadosAnalise, secao) -> List[str]:
-    """Seção Markdown da identificação da usina no cadastro do ONS (vazia sem os dados)."""
-    if not res.cadastro:
-        return []
-    return ["", secao("Identificação da usina no cadastro do ONS"), "", texto_cadastro(res), "",
-            "- Fonte: conjunto Modalidade das usinas do ONS (cadastro sem série histórica; as versões anteriores do "
-            "arquivo ficam preservadas em data/raw/modalidade_usina/_versoes_anteriores/).", ""]
-
-
-def secao_indicadores_ons_md(res: ResultadosAnalise, secao) -> List[str]:
-    """Seção Markdown dos indicadores oficiais do ONS (vazia se não houver indicadores)."""
-    if not res.ons:
-        return []
-    linhas: List[str] = [secao("Indicadores oficiais do ONS por unidade geradora"), ""]
-    texto = next((x for t, x in res.achados if t == "Indicadores oficiais de disponibilidade (ONS)"), "")
-    if texto:
-        linhas += [texto, ""]
-    for titulo, funcao, nota in [
-        ("Disponibilidade da usina por ano: declarada (EVT) e DISPF", linhas_tabela_ons_disponibilidade,
-         "\\* ano parcial. DISPF = média das unidades ponderada pela potência e pelas horas da base de EVT."),
-        ("Indicadores anuais por unidade geradora (base anual do ONS)", linhas_tabela_ons_ug_anual,
-         "\\* ano parcial. DMDFF = duração média dos desligamentos forçados."),
-        ("Horas por estado operativo, por ano e unidade", linhas_tabela_ons_horas,
-         "\\* ano parcial. " + "; ".join(f"{s} = {d}" for s, d in INSUMOS_HORAS.items()) + "."),
-        ("Contribuição de cada unidade e parcela para a TEIFa e a TEIP mais recentes", linhas_tabela_ons_decomposicao,
-         texto_taxas_ons(res)),
-        ("Meses em que o indicador DISPF e as horas do TEIP divergem", linhas_tabela_ons_divergencias,
-         f"Diferença superior a {fmt_num(TOLERANCIA_DIVERGENCIA_HORAS, 0)} h entre as horas de indisponibilidade "
-         "programada ou forçada do DISPF (percentual × horas do período) e as horas HDP ou HDF do conjunto do TEIP."),
-    ]:
-        cabecalho, corpo = funcao(res)
-        if not corpo:
-            continue
-        linhas += [f"### {titulo}", ""] + _tabela_md(cabecalho, corpo) + ["", nota, ""]
-        linhas += _fonte_md(res, _CHAVE_FONTE_TABELA[funcao])
-    texto = next((x for t, x in res.achados if t == "Estados operativos das unidades geradoras (ONS)"), "")
-    if texto:
-        linhas += [texto, ""]
-    return linhas
+def _md_conteudo_secao(res: ResultadosAnalise, chave: str, titulo: str, figuras: Optional[Dict[str, Path]],
+                       textos: Dict[str, Tuple[str, str]]) -> List[str]:
+    """Tabelas, figuras e notas de cada seção, na mesma ordem do PDF."""
+    tab = lambda c, cl, intro="": _md_tabela(res, textos, c, cl[0], cl[1], intro)  # noqa: E731
+    fig = lambda c: _md_figura(res, figuras, c, titulo)  # noqa: E731
+    saida: List[str] = []
+    if chave == "cobertura":
+        saida += _md_chave_valor(res, "", pares_cobertura(res), "tab_cobertura")
+    elif chave == "cadastro":
+        saida += _md_chave_valor(res, "Ficha cadastral", pares_identificacao_cadastro(res), "bloco_cadastro",
+                                 nota_identificacao_cadastro(res))
+    elif chave == "indicadores_anuais":
+        saida += tab("tab_indicadores_anuais", linhas_tabela_anual(res))
+    elif chave == "disponibilidade_geracao":
+        saida += fig("disponibilidade_anual")
+        cabecalho, linhas = linhas_tabela_eventos_indisponibilidade(res)
+        if linhas:
+            saida += tab("tab_eventos_indisponibilidade", (cabecalho, linhas))
+        else:
+            saida += [f"### {textos['tab_eventos_indisponibilidade'][0]}", "", "Nenhum período com essa duração.", ""]
+    elif chave == "indicadores_ons":
+        for c, funcao in (("tab_ons_disp_anual", linhas_tabela_ons_disponibilidade),
+                          ("tab_ons_decomposicao", linhas_tabela_ons_decomposicao),
+                          ("tab_ons_ug_anual", linhas_tabela_ons_ug_anual), ("tab_ons_horas", linhas_tabela_ons_horas),
+                          ("tab_ons_divergencias", linhas_tabela_ons_divergencias)):
+            cabecalho, linhas = funcao(res)
+            if linhas:
+                saida += tab(c, (cabecalho, linhas), texto_taxas_ons(res) if c == "tab_ons_decomposicao" else "")
+    elif chave in ("serie_temporal", "evt_mensal"):
+        saida += fig(chave)
+    elif chave == "perfil_horario":
+        saida += fig("perfil_horario") + tab("tab_perfil_horario", linhas_tabela_perfil_diurno(res))
+    elif chave == "eventos":
+        saida += tab("tab_evt_por_nivel", linhas_tabela_evt_por_nivel(res))
+        cabecalho, linhas = linhas_tabela_eventos_parada(res)
+        saida += (tab("tab_eventos_parada_evt", (cabecalho, linhas)) if linhas
+                  else [f"### {textos['tab_eventos_parada_evt'][0]}", "", "Nenhum evento.", ""])
+    elif chave == "programacao":
+        for c, funcao in (("tab_programacao_mensal", linhas_tabela_programacao_mensal),
+                          ("tab_programacao_hora", linhas_tabela_programacao_perfil),
+                          ("tab_programacao_eventos", linhas_tabela_programacao_eventos)):
+            cabecalho, linhas = funcao(res)
+            if linhas:
+                saida += tab(c, (cabecalho, linhas))
+        ausentes = res.programacao["periodo"]["lista_dias_ausentes"]
+        if ausentes:
+            saida += [f"Dias sem arquivo de programação no portal do ONS: {fmt_lista(fmt_data(d) for d in ausentes)}.", ""]
+    elif chave == "disponibilidade_sincronizada":
+        cabecalho, linhas = linhas_tabela_disponibilidade_anual(res)
+        if linhas:
+            saida += tab("tab_disponibilidade_anual", (cabecalho, linhas))
+        saida += fig("disponibilidade_sincronizada")
+        for c, funcao in (("tab_disponibilidade_paradas", linhas_tabela_disponibilidade_paradas),
+                          ("tab_disponibilidade_divergencias", linhas_tabela_disponibilidade_divergencias)):
+            cabecalho, linhas = funcao(res)
+            if linhas:
+                saida += tab(c, (cabecalho, linhas))
+        saida += [f"- {nota}" for nota in notas_disponibilidade(res)] + [""]
+    elif chave == "hidrologia":
+        if res.hidrologia["publicado"]:
+            for c, funcao in (("tab_faixas_afluencia", linhas_tabela_faixas_afluencia),
+                              ("tab_faixas_afluencia_evt", linhas_tabela_faixas_afluencia_evt)):
+                cabecalho, linhas = funcao(res)
+                if linhas:
+                    saida += tab(c, (cabecalho, linhas))
+            saida += fig("faixas_afluencia")
+            for c, funcao in (("tab_hidrologia_anual", linhas_tabela_hidrologia_anual),
+                              ("tab_hidrologia_perfil", linhas_tabela_perfil_hidrologico)):
+                cabecalho, linhas = funcao(res)
+                if linhas:
+                    saida += tab(c, (cabecalho, linhas))
+            saida += fig("perfil_hidrologico")
+        saida += [f"- {nota}" for nota in notas_hidrologia(res)] + [""]
+    elif chave == "geracao_zero":
+        saida += tab("tab_geracao_zero", linhas_tabela_geracao_zero(res))
+    elif chave == "vazoes":
+        saida += fig("vazoes_defluentes")
+    elif chave == "geracao_oficial":
+        if "Conferência da geração" not in dict(res.achados):
+            saida += [texto_conferencia_geracao(res), ""]
+        cabecalho, linhas = linhas_tabela_geracao_anual(res)
+        if linhas:
+            saida += tab("tab_geracao_oficial", (cabecalho, linhas))
+    elif chave == "qualidade":
+        for c, funcao in (("tab_regras_validacao", linhas_tabela_regras),
+                          ("tab_registros_sinalizados", linhas_tabela_registros_sinalizados),
+                          ("tab_extremos", linhas_tabela_extremos)):
+            cabecalho, linhas = funcao(res)
+            if linhas:
+                saida += tab(c, (cabecalho, linhas))
+    elif chave == "notas":
+        saida += [f"- {nota}" for nota in notas_metodologicas(res)] + [""]
+        saida += tab("tab_parametros", linhas_tabela_parametros(res))
+    return saida
 
 
 def gerar_relatorio_md(
@@ -3282,110 +3283,38 @@ def gerar_relatorio_md(
     figuras: Optional[Dict[str, Path]] = None,
     caminho_md: Optional[Path] = None,
 ) -> Path:
-    """Gera o relatório em Markdown; todo número e frase vêm de ``res``."""
+    """Gera o relatório em Markdown com a mesma estrutura do PDF (spec 008); todo número e frase vêm de ``res``.
+
+    Capa com período, data de geração, identificação, parâmetros, indicadores principais e sumário; depois, cada
+    seção com as suas constatações (uma única vez no relatório), tabelas, figuras, notas e legendas de fonte.
+    """
     destino = caminho_md or STATISTICAL_REPORT_MD
     destino.parent.mkdir(parents=True, exist_ok=True)
     c = res.cobertura
-    ident = c["identificacao"]
-    numero_secao = iter(range(1, 100))
-
-    def secao(titulo: str) -> str:
-        return f"## {next(numero_secao)}. {titulo}"
+    textos = textos_tabelas(res)
+    tiles, nota_capa = indicadores_capa(res)
 
     linhas: List[str] = [
         "# UHE São Domingos — energia vertida turbinável e desempenho operacional (dados ONS)",
         "",
         f"**Período**: {fmt_data_hora(c['inicio'])} a {fmt_data_hora(c['fim'])} "
         f"({fmt_int(c['horas_observadas'])} registros horários)",
-        f"**Identificação no ONS**: cod_usina {ident.get('cod_usina', '')} · reservatório {ident.get('nom_reservatorio', '')} "
-        f"· rio {ident.get('nom_rio', '')} · bacia {ident.get('nom_bacia', '')} · subsistema {ident.get('nom_subsistema', '')}",
-        "**Agentes na série**: " + "; ".join(
-            f"{r.nom_agente} ({fmt_data(r.primeiro_registro)} a {fmt_data(r.ultimo_registro)})"
-            for r in c["agentes"].itertuples()
-        ),
-        f"**Usina**: {fmt_num(NOMINAL_INSTALLED_CAPACITY_MW, 1)} MW, {NUMERO_UNIDADES_GERADORAS} unidades de "
-        f"{fmt_num(POTENCIA_UNITARIA_MW, 1)} MW ({TIPO_TURBINA}); garantia física {fmt_num(GARANTIA_FISICA_MWMED, 1)} MWmed.",
-        cabecalho_fontes(res),
-        "",
-        secao("Constatações"),
+        f"**Gerado em**: {datetime.now().strftime('%d/%m/%Y %H:%M')}",
         "",
     ]
-    for i, (titulo, texto) in enumerate(res.achados, start=1):
-        linhas.append(f"{i}. **{titulo}.** {texto}")
-    linhas += secao_cadastro_md(res, secao)
-    linhas += ["", secao("Indicadores anuais"), ""]
-    cabecalho, corpo = linhas_tabela_anual(res)
-    linhas += _tabela_md(cabecalho, corpo)
-    linhas += ["", "\\* ano parcial.", ""] + _fonte_md(res, "tab_indicadores_anuais")
+    linhas += _md_chave_valor(res, "Identificação nos dados do ONS", pares_identificacao(res), "bloco_identificacao")
+    linhas += _md_chave_valor(res, "Parâmetros técnicos da usina", pares_parametros(), "bloco_parametros")
+    linhas += ["### Indicadores principais", ""]
+    linhas += _tabela_md(["Indicador", "Valor", "Detalhe"], [[r, v, s] for r, v, s in tiles]) + ["", nota_capa, ""]
+    linhas += _fonte_md(res, "tab_capa_indicadores")
+    linhas += ["## Sumário", ""]
+    linhas += [f"{n}. [{titulo}](#{_ancora_md(f'{n}. {titulo}')})" for n, titulo in sumario(res)]
 
-    linhas += secao_indicadores_ons_md(res, secao)
-    linhas += [secao("Eventos de indisponibilidade total"), ""]
-    ev = res.eventos_indisponibilidade_total
-    longos = ev[ev["duracao_h"] >= DURACAO_MINIMA_EVENTO_RELATORIO_H] if len(ev) else ev
-    if len(longos):
-        linhas += _tabela_md(
-            ["Início", "Fim", "Duração (h)", "Vazão vertida média (m³/s)"],
-            [[fmt_data_hora(r.inicio), fmt_data_hora(r.fim), fmt_int(r.duracao_h), fmt_num(r.vazao_vertida_media_m3s, 1)]
-             for r in longos.itertuples()],
-        )
-        linhas += ["", *_fonte_md(res, "tab_eventos_indisponibilidade")]
-    else:
-        linhas.append(f"Nenhum evento com pelo menos {DURACAO_MINIMA_EVENTO_RELATORIO_H} h.")
-
-    linhas += ["", secao(f"Maiores eventos de usina parada com EVT (top {NUMERO_EVENTOS_RELATORIO} por EVT)"), ""]
-    top = res.eventos_parada_com_evt.nlargest(NUMERO_EVENTOS_RELATORIO, "evt_mwh") if len(res.eventos_parada_com_evt) else res.eventos_parada_com_evt
-    if len(top):
-        linhas += _tabela_md(
-            ["Início", "Fim", "Duração (h)", "Disponibilidade média (MW)", "Vazão vertida média (m³/s)", "EVT (MWh)"],
-            [[fmt_data_hora(r.inicio), fmt_data_hora(r.fim), fmt_int(r.duracao_h), fmt_num(r.disponibilidade_media_mw, 1),
-              fmt_num(r.vazao_vertida_media_m3s, 1), fmt_num(r.evt_mwh, 1)] for r in top.itertuples()],
-        )
-        linhas += ["", *_fonte_md(res, "tab_eventos_parada_evt")]
-    else:
-        linhas.append("Nenhum evento.")
-
-    linhas += secao_programacao_md(res, secao)
-    linhas += secao_disponibilidade_md(res, secao)
-    linhas += secao_hidrologia_md(res, secao)
-    linhas += ["", secao("Horas com geração zero por mês"), ""]
-    cab_zero, corpo_zero = linhas_tabela_geracao_zero(res)
-    linhas += _tabela_md(cab_zero, corpo_zero)
-    linhas += ["", "\\* ano parcial; – = mês sem dados na série.", ""] + _fonte_md(res, "tab_geracao_zero")
-    linhas += ["", secao("EVT por nível de geração"), ""]
-    linhas += _tabela_md(
-        ["Geração na hora", "Horas", "EVT (MWh)", "Participação na EVT", "Disponibilidade média (MW)"],
-        [[r.faixa_geracao, fmt_int(r.horas), fmt_num(r.evt_mwh, 1), fmt_pct(r.participacao_evt_pct),
-          fmt_num(r.disponibilidade_media_mw, 1)] for r in res.evt_por_faixa_geracao.itertuples()],
-    )
-    linhas += ["", *_fonte_md(res, "tab_evt_por_nivel")]
-
-    linhas += secao_geracao_oficial_md(res, secao)
-    linhas += ["", secao("Registros sinalizados (plausibilidade física)"), ""]
-    linhas += _tabela_md(
-        ["Regra", "Descrição", "Horas", "Primeira ocorrência", "Última ocorrência"],
-        [[r.regra, r.descricao, fmt_int(r.horas),
-          fmt_data_hora(r.primeira_ocorrencia) if pd.notna(r.primeira_ocorrencia) else "–",
-          fmt_data_hora(r.ultima_ocorrencia) if pd.notna(r.ultima_ocorrencia) else "–"]
-         for r in res.resumo_anomalias.itertuples()],
-    )
-    linhas += ["", *_fonte_md(res, "tab_registros_sinalizados")]
-
-    linhas += ["", secao("Extremos do período (registros sem anomalia)"), ""]
-    linhas += _tabela_md(
-        ["Grandeza", "Unidade", "Máximo", "Data/hora do máximo", "Mínimo", "Data/hora do mínimo"],
-        [[f"`{r.variavel}`", r.unidade, fmt_num(r.maximo_historico, 3), fmt_data_hora(r.data_hora_max),
-          fmt_num(r.minimo_historico, 3), fmt_data_hora(r.data_hora_min)] for r in res.extremos.itertuples()],
-    )
-    linhas += ["", *_fonte_md(res, "tab_extremos")]
-
-    linhas += ["", secao("Notas metodológicas e limitações"), ""]
-    linhas += [f"- {nota}" for nota in notas_metodologicas(res)]
-
-    if figuras:
-        linhas += ["", secao("Figuras"), ""]
-        for chave, caminho in figuras.items():
-            linhas.append(f"- `reports/figures/{Path(caminho).name}`")
-            linhas.append(f"  {legenda_fonte(res, chave)}")
+    for n, secao in secoes_presentes(res):
+        linhas += ["", f"## {n}. {secao.titulo}", ""]
+        for titulo_c, texto in constatacoes_da_secao(res, secao.chave):
+            linhas += [f"**{titulo_c}.** {texto}", ""]
+        linhas += _md_conteudo_secao(res, secao.chave, secao.titulo, figuras, textos)
     linhas.append("")
 
     with open(destino, mode="w", encoding="utf-8") as f:
@@ -3520,24 +3449,374 @@ def main() -> None:
     sys.exit(code)
 
 
-# Chave do mapa de fontes (spec 007) de cada tabela montada nos laços das seções do Markdown
-_CHAVE_FONTE_TABELA: Dict[Callable[..., Any], str] = {
-    linhas_tabela_programacao_mensal: "tab_programacao_mensal",
-    linhas_tabela_programacao_perfil: "tab_programacao_hora",
-    linhas_tabela_programacao_eventos: "tab_programacao_eventos",
-    linhas_tabela_disponibilidade_anual: "tab_disponibilidade_anual",
-    linhas_tabela_disponibilidade_paradas: "tab_disponibilidade_paradas",
-    linhas_tabela_disponibilidade_divergencias: "tab_disponibilidade_divergencias",
-    linhas_tabela_faixas_afluencia: "tab_faixas_afluencia",
-    linhas_tabela_faixas_afluencia_evt: "tab_faixas_afluencia_evt",
-    linhas_tabela_hidrologia_anual: "tab_hidrologia_anual",
-    linhas_tabela_perfil_hidrologico: "tab_hidrologia_perfil",
-    linhas_tabela_ons_disponibilidade: "tab_ons_disp_anual",
-    linhas_tabela_ons_ug_anual: "tab_ons_ug_anual",
-    linhas_tabela_ons_horas: "tab_ons_horas",
-    linhas_tabela_ons_decomposicao: "tab_ons_decomposicao",
-    linhas_tabela_ons_divergencias: "tab_ons_divergencias",
-}
+# ---------------------------------------------------------------------------
+# Conteúdo compartilhado pelo PDF e pelo Markdown (spec 008, FR-014)
+# ---------------------------------------------------------------------------
+
+
+def indicadores_capa(res: ResultadosAnalise) -> Tuple[List[Tuple[str, str, str]], str]:
+    """Indicadores da capa (rótulo, valor, complemento) e a nota que os acompanha."""
+    g = res.globais
+    tiles = [
+        ("Disponibilidade média declarada", fmt_pct(g["disponibilidade_relativa_pct"]),
+         f"da potência instalada; referência da garantia física: {fmt_pct(g['disponibilidade_referencia_pct'])}"),
+        ("Fator de capacidade", fmt_pct(g["fator_capacidade_pct"]),
+         f"geração média de {fmt_num(g['geracao_media_mwmed'], 1)} MWmed, "
+         f"{fmt_pct(g['geracao_sobre_garantia_fisica_pct'])} da garantia física"),
+        ("Energia vertida turbinável", f"{fmt_num(g['evt_mwh'] / 1000, 1)} GWh",
+         f"{fmt_pct(g['indice_evt_pct'])} de geração + EVT; presente em {fmt_pct(g['horas_com_evt_pct'])} das horas"),
+        ("EVT com a usina parada", f"{fmt_num(g['evt_parada_mwh'] / 1000, 1)} GWh",
+         f"{fmt_pct(g['evt_parada_pct'])} da EVT, em {fmt_int(g['horas_parada_com_evt'])} h com geração até 1 MW"),
+    ]
+    p = res.ons.get("disp_periodo")
+    t = res.ons.get("taxa_ultima")
+    if p and t:
+        tiles.insert(1, (
+            "Disponibilidade apurada pelo ONS (DISPF)", fmt_pct(p["dispf_pct"]),
+            f"média das unidades; TEIFa {fmt_pct(t['teifa_pct'], 2)} e TEIP {fmt_pct(t['teip_pct'], 2)} "
+            f"em {fmt_mes_ano(t['mes'])}",
+        ))
+    if res.ons:
+        nota = ("A disponibilidade declarada e o fator de capacidade são calculados a partir do conjunto de EVT; o DISPF, "
+                "a TEIFa e a TEIP são os indicadores apurados pelo ONS (seção de indicadores oficiais). O FID não é "
+                "publicado pelo ONS. Ver notas metodológicas.")
+    else:
+        nota = ("Os indicadores de disponibilidade e fator de capacidade são aproximações calculadas a partir dos dados "
+                "do ONS e não substituem os índices regulatórios (FID, TEIP, TEIFa). Ver notas metodológicas.")
+    return tiles, nota
+
+
+def pares_identificacao(res: ResultadosAnalise) -> List[Tuple[str, str]]:
+    """Bloco "Identificação nos dados do ONS" da capa."""
+    c = res.cobertura
+    ident = c["identificacao"]
+    agentes = "; ".join(
+        f"{r.nom_agente} ({fmt_data(r.primeiro_registro)} a {fmt_data(r.ultimo_registro)})" for r in c["agentes"].itertuples()
+    )
+    return [
+        ("cod_usina", f"{ident.get('cod_usina', '')} (código nos modelos de otimização)"),
+        ("Reservatório", ident.get("nom_reservatorio", "")),
+        ("Rio / bacia", f"{ident.get('nom_rio', '')} / {ident.get('nom_bacia', '')}"),
+        ("Subsistema", f"{ident.get('nom_subsistema', '')} ({ident.get('id_subsistema', '')})"),
+        ("Agente", agentes),
+    ]
+
+
+def pares_parametros() -> List[Tuple[str, str]]:
+    """Bloco "Parâmetros técnicos da usina" da capa."""
+    return [
+        ("Potência instalada", f"{fmt_num(NOMINAL_INSTALLED_CAPACITY_MW, 1)} MW "
+                               f"({NUMERO_UNIDADES_GERADORAS} × {fmt_num(POTENCIA_UNITARIA_MW, 1)} MW)"),
+        ("Turbinas", TIPO_TURBINA),
+        ("Engolimento nominal", f"{NUMERO_UNIDADES_GERADORAS} × {fmt_num(ENGOLIMENTO_NOMINAL_UG_M3S, 1)} m³/s "
+                                f"({fmt_num(ENGOLIMENTO_MAXIMO_USINA_M3S, 1)} m³/s)"),
+        ("Garantia física", f"{fmt_num(GARANTIA_FISICA_MWMED, 1)} MWmed (ANEEL)"),
+        ("IP / TEIF de referência", f"{fmt_pct(IP_REFERENCIA * 100, 3)} / {fmt_pct(TEIF_REFERENCIA * 100, 3)} "
+                                    f"(disponibilidade de referência {fmt_pct(DISPONIBILIDADE_REFERENCIA * 100, 2)})"),
+    ]
+
+
+def pares_cobertura(res: ResultadosAnalise) -> List[Tuple[str, str]]:
+    """Tabela da seção "Fonte e cobertura dos dados"."""
+    c = res.cobertura
+    arq = c.get("arquivos") or {}
+    man = c.get("manifesto") or {}
+    faltantes = c["horas_faltantes"]
+    pares = [
+        ("Conjunto de dados", f"Energia Vertida Turbinável — ONS ({ONS_DATASET_URL})"),
+        ("Critério de extração", f"cod_usina = {COD_USINA_ONS} e nome do reservatório conferido"),
+    ]
+    if arq:
+        pares.append(("Arquivos lidos", (
+            f"{fmt_int(arq['total'])} arquivos CSV; {fmt_int(arq['com_registros'])} com registros da usina; "
+            f"sem registros: {fmt_lista(arq['sem_registros']) or 'nenhum'}; "
+            f"falhas de leitura: {fmt_lista(arq['falhas']) or 'nenhuma'}; "
+            f"linhas com código ou nome divergentes: {fmt_int(arq['divergencias'])}"
+        )))
+    if man:
+        pares.append(("Versão dos arquivos", (
+            f"{fmt_int(man['arquivos'])} arquivos registrados no manifesto; publicação mais recente no portal: "
+            f"{fmt_utc(man['ultima_modificacao_mais_recente'])}"
+        )))
+    pares += [
+        ("Período", f"{fmt_data_hora(c['inicio'])} a {fmt_data_hora(c['fim'])}"),
+        ("Registros", (
+            f"{fmt_int(c['horas_observadas'])} de {fmt_int(c['horas_esperadas'])} horas esperadas; "
+            f"horas ausentes: {fmt_lista(fmt_data_hora(t) for t in faltantes[:10]) or 'nenhuma'}; "
+            f"horários duplicados: {fmt_int(c['duplicadas'])}"
+        )),
+        ("Anos parciais", fmt_lista(
+            f"{int(r.ano)} ({fmt_pct(r.cobertura_pct)} das horas)" for r in c["por_ano"].itertuples() if r.ano_parcial
+        ) or "nenhum"),
+    ]
+    return pares
+
+
+def _eventos_longos(res: ResultadosAnalise) -> pd.DataFrame:
+    eventos = res.eventos_indisponibilidade_total
+    return eventos[eventos["duracao_h"] >= DURACAO_MINIMA_EVENTO_RELATORIO_H] if len(eventos) else eventos
+
+
+def legenda_figura(res: ResultadosAnalise, chave: str) -> str:
+    """Legenda descritiva de cada figura, igual no PDF e no Markdown."""
+    c = res.cobertura
+    mc = res.mudanca_classificacao
+    if chave == "disponibilidade_anual":
+        referencia = DISPONIBILIDADE_REFERENCIA * 100
+        gf_rel = GARANTIA_FISICA_MWMED / NOMINAL_INSTALLED_CAPACITY_MW * 100
+        return ("Barras: disponibilidade média declarada e geração média, em % da potência instalada. Linha tracejada: "
+                f"disponibilidade de referência da garantia física ({fmt_pct(referencia)}); linha pontilhada: garantia "
+                f"física ({fmt_pct(gf_rel)} da potência instalada).")
+    if chave == "serie_temporal":
+        longos = _eventos_longos(res)
+        return (f"Médias diárias de {fmt_data(c['inicio'])} a {fmt_data(c['fim'])}. Faixas cinza: indisponibilidade total "
+                f"com pelo menos {DURACAO_MINIMA_EVENTO_RELATORIO_H} h ({fmt_int(len(longos))} "
+                f"{plural(len(longos), 'período', 'períodos')}). Linha tracejada: potência instalada "
+                f"({fmt_num(NOMINAL_INSTALLED_CAPACITY_MW, 0)} MW); linha pontilhada: garantia física "
+                f"({fmt_num(GARANTIA_FISICA_MWMED, 1)} MWmed).")
+    if chave == "evt_mensal":
+        m = res.evt_mensal
+        texto = (f"EVT mensal em MWh. Cinza: parcela ocorrida em horas com vertimento de até "
+                 f"{fmt_num(LIMIAR_VERTIMENTO_MINIMO_M3S, 0)} m³/s (patamar contínuo); laranja: demais horas.")
+        if mc.get("mes") is not None:
+            texto += (f" Linha vertical: {fmt_mes_ano(mc['mes'])}, mês a partir do qual parte do vertimento contínuo passa "
+                      "a ser registrada como não turbinável.")
+        if len(m):
+            maior = m.loc[m["evt_mwh"].idxmax()]
+            texto += f" Maior EVT mensal: {fmt_int(maior['evt_mwh'])} MWh em {fmt_mes_ano(maior['mes'])}."
+        return texto
+    if chave == "perfil_horario":
+        return ("Média por ano e hora do dia: à esquerda, geração (MW); à direita, EVT (MWmed). A tabela "
+                f"compara a janela diurna ({HORAS_DIURNAS[0]}h às {HORAS_DIURNAS[-1]}h) com a noturna "
+                f"({HORAS_NOTURNAS[0]}h às {HORAS_NOTURNAS[-1]}h).")
+    if chave == "vazoes_defluentes":
+        texto = ("Médias anuais das vazões defluentes (turbinada, vertida turbinável e vertida não turbinável). Linha "
+                 f"tracejada: engolimento máximo ({NUMERO_UNIDADES_GERADORAS} × {fmt_num(ENGOLIMENTO_NOMINAL_UG_M3S, 1)} "
+                 "m³/s).")
+        if mc.get("mes") is not None:
+            texto += (f" A parcela não turbinável contínua aparece a partir de {fmt_mes_ano(mc['mes'])}, "
+                      "quando muda a classificação do vertimento contínuo.")
+        return texto
+    if chave == "disponibilidade_sincronizada":
+        return ("Médias mensais da disponibilidade operacional e sincronizada publicadas pelo ONS e da geração. A "
+                "operacional coincide com a disponibilidade declarada da base de EVT; a sincronizada mostra a capacidade "
+                f"das unidades ligadas à rede. Linha tracejada: potência instalada ({fmt_num(NOMINAL_INSTALLED_CAPACITY_MW, 0)} MW).")
+    if chave == "faixas_afluencia":
+        return ("Horas com energia vertida turbinável por faixa de afluência ao reservatório. Tons de laranja mais "
+                "escuros indicam afluência maior; cinza, horas sem dado hidrológico. Número no topo: total de horas com "
+                "EVT no ano.")
+    if chave == "perfil_hidrologico":
+        return ("Médias por hora do dia nos dias com ao menos uma hora de parada com EVT (linhas cheias) e nos demais "
+                "dias (tracejadas). Faixa cinza: janela diurna usada no relatório. Valores na aba HID_PERFIL_HORA_DO_DIA.")
+    logger.warning("Figura sem legenda descritiva: %s", chave)
+    return ""
+
+
+def textos_tabelas(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
+    """Subtítulo e nota de cada tabela (chave do mapa de fontes da spec 007), iguais no PDF e no Markdown."""
+    eventos = res.eventos_indisponibilidade_total
+    paradas = res.eventos_parada_com_evt
+    por_ano = (paradas.assign(ano=pd.to_datetime(paradas["inicio"]).dt.year).groupby("ano").size()
+               if len(paradas) else pd.Series(dtype=int))
+    prog = res.programacao.get("periodo", {}) if res.programacao else {}
+    referencia = fmt_pct(DISPONIBILIDADE_REFERENCIA * 100, 2)
+    return {
+        "tab_indicadores_anuais": ("", (
+            "* Ano parcial. Disp. média = disponibilidade média declarada ÷ potência instalada; Δ vs ref. GF = diferença "
+            f"para a disponibilidade de referência da garantia física ({referencia}); fator de capacidade = geração média "
+            "÷ potência instalada; Geração / GF = geração média ÷ garantia física; EVT no vert. mínimo = parcela da EVT "
+            f"ocorrida em horas com vertimento de até {fmt_num(LIMIAR_VERTIMENTO_MINIMO_M3S, 0)} m³/s; índice EVT = EVT ÷ "
+            "(geração + EVT); horas parada c/ EVT = horas com geração até 1 MW e EVT positiva; horas indisp. total = "
+            "horas com disponibilidade zero.")),
+        "tab_eventos_indisponibilidade": (
+            "Períodos de indisponibilidade total (disponibilidade zero) com pelo menos "
+            f"{DURACAO_MINIMA_EVENTO_RELATORIO_H} h",
+            f"Total de eventos com disponibilidade zero (qualquer duração): {fmt_int(len(eventos))}. A lista completa está "
+            "na aba EVENTOS_INDISP_TOTAL da planilha."),
+        "tab_ons_disp_anual": (
+            "Disponibilidade da usina por ano: declarada no conjunto de EVT e DISPF apurado pelo ONS",
+            "* Ano parcial. DISPF da usina = média das unidades ponderada pela potência e pelas horas da base de EVT em "
+            f"cada mês; Δ = diferença para a disponibilidade de referência da garantia física ({referencia})."),
+        "tab_ons_decomposicao": (
+            "TEIFa e TEIP mais recentes: contribuição de cada unidade e parcela de horas",
+            "Contribuição = horas da parcela na janela de 60 meses (ponderadas pela potência) ÷ denominador da taxa; as "
+            "contribuições somam a taxa publicada."),
+        "tab_ons_ug_anual": (
+            "Indicadores anuais por unidade geradora (base anual do ONS)",
+            "* Ano parcial. DISPF, INDISPPF e INDISPFF em % do tempo; DMDFF = duração média dos desligamentos forçados "
+            "(h). Não descontam a operação com potência limitada."),
+        "tab_ons_horas": (
+            "Horas por estado operativo, por ano e unidade geradora",
+            "* Ano parcial. " + "; ".join(f"{s} = {d}" for s, d in INSUMOS_HORAS.items())
+            + ". HP = HS + HRD + HDP + HDF + HDCE + HEDP + HEDF."),
+        "tab_ons_divergencias": (
+            "Meses em que o indicador DISPF e as horas do TEIP divergem",
+            f"Diferença superior a {fmt_num(TOLERANCIA_DIVERGENCIA_HORAS, 0)} h entre as horas de indisponibilidade "
+            "programada ou forçada do DISPF (percentual × horas do período) e as horas HDP ou HDF do conjunto do TEIP."),
+        "tab_perfil_horario": ("", ""),
+        "tab_evt_por_nivel": ("Distribuição das horas com EVT pelo nível de geração no mesmo horário", ""),
+        "tab_eventos_parada_evt": (
+            f"Maiores eventos de usina parada (geração até 1 MW) com EVT — {NUMERO_EVENTOS_RELATORIO} maiores por EVT",
+            f"Total: {fmt_int(len(paradas))} eventos ({'; '.join(f'{a}: {fmt_int(n)}' for a, n in por_ano.items())}). A "
+            "lista completa está na aba EVENTOS_PARADA_COM_EVT da planilha. O conjunto de dados não informa a causa das "
+            "paradas."),
+        "tab_programacao_mensal": (
+            "Horas paradas com EVT por mês e programação do ONS",
+            "Horas comuns à base de EVT e à programação. Usina parada = geração até 1 MW; programação ≤ 1 MW = o ONS não "
+            "programou geração; > 5 MW = a usina parou com geração programada. Classificação hora a hora na aba "
+            "PROG_HORAS_CLASSIFICADAS da planilha."),
+        "tab_programacao_hora": ("Horas paradas com EVT e programação de até 1 MW, por hora do dia", ""),
+        "tab_programacao_eventos": (
+            f"Maiores eventos de usina parada com programação acima de 5 MW ({fmt_int(prog.get('eventos_desvio', 0))} "
+            f"eventos, {fmt_int(prog.get('horas_desvio', 0))} h no total)",
+            "Ordenados por duração. Lista completa na aba PROG_EVENTOS_DESVIO da planilha."),
+        "tab_disponibilidade_anual": (
+            "Disponibilidade média por ano",
+            "Médias nas horas comuns à base de EVT e à disponibilidade do ONS. * ano parcial; – = sem apuração TEIFa/TEIP "
+            "no ano."),
+        "tab_disponibilidade_paradas": (
+            "Horas com a usina parada, por sincronização, EVT e programação do ONS",
+            "Classificação hora a hora na aba DISP_HORAS_PARADAS da planilha."),
+        "tab_disponibilidade_divergencias": (
+            "Maiores períodos de divergência entre a disponibilidade operacional e a declarada",
+            "Lista completa na aba DISP_DIVERGENCIAS da planilha."),
+        "tab_faixas_afluencia": (
+            "Horas com EVT por faixa de afluência",
+            "Cabia nas turbinas = afluência até o engolimento máximo da usina. * ano parcial. Classificação hora a hora na "
+            "aba HID_HORAS_EVT da planilha."),
+        "tab_faixas_afluencia_evt": (
+            "EVT por faixa de afluência (MWh)",
+            "Energia vertida turbinável das horas de cada faixa. Cabia nas turbinas = parcela da EVT com afluência até o "
+            "engolimento máximo da usina. * ano parcial. Por mês na aba HID_FAIXAS_AFLUENCIA e por ano na aba "
+            "HID_FAIXAS_ANUAL da planilha."),
+        "tab_hidrologia_anual": (
+            "Afluência, vazões, nível e volume útil por ano",
+            "Médias sem os valores sinalizados, que saem só do campo afetado (a hora continua nos demais campos). * ano "
+            "parcial."),
+        "tab_hidrologia_perfil": (
+            "Vazões e nível de montante médios por hora do dia",
+            "\"c/ parada\" = dias com ao menos uma hora de parada com EVT; \"demais\" = outros dias. Perfil completo na aba "
+            "HID_PERFIL_HORA_DO_DIA."),
+        "tab_geracao_zero": ("", (
+            "Horas em que val_geracao é exatamente zero. * ano parcial; – = mês sem dados na série. Com disp. zero = horas "
+            "com disponibilidade declarada zero (indisponibilidade total); com usina disponível = demais horas com geração "
+            "zero.")),
+        "tab_geracao_oficial": ("", (
+            "* ano parcial. Diferença = série oficial − base de EVT. Coincidência = diferença de até "
+            f"{fmt_num(TOLERANCIA_COINCIDENCIA_MW, 2)} MW na mesma hora.")),
+        "tab_regras_validacao": ("Regras de validação (R1 a R5: consistência interna; R6 a R9: plausibilidade física)", ""),
+        "tab_registros_sinalizados": ("Registros sinalizados (plausibilidade física)", ""),
+        "tab_extremos": ("Extremos do período, excluídos os registros sinalizados", ""),
+        "tab_parametros": ("Parâmetros utilizados", ""),
+    }
+
+
+def linhas_tabela_eventos_indisponibilidade(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
+    """Períodos de indisponibilidade total com a duração mínima do relatório (versão do PDF)."""
+    cabecalho = ["Início", "Fim", "Duração (h)", "Duração (dias)", "Vazão vertida média (m³/s)"]
+    return cabecalho, [
+        [fmt_data_hora(r.inicio), fmt_data_hora(r.fim), fmt_int(r.duracao_h), fmt_num(r.duracao_h / 24, 1),
+         fmt_num(r.vazao_vertida_media_m3s, 1)]
+        for r in _eventos_longos(res).itertuples()
+    ]
+
+
+def linhas_tabela_evt_por_nivel(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
+    """Horas com EVT pelo nível de geração na mesma hora (versão do PDF)."""
+    cabecalho = ["Geração na hora", "Horas", "EVT (MWh)", "Participação na EVT", "Geração média (MW)",
+                 "Disponibilidade média (MW)"]
+    return cabecalho, [
+        [r.faixa_geracao, fmt_int(r.horas), fmt_num(r.evt_mwh, 1), fmt_pct(r.participacao_evt_pct),
+         fmt_num(r.geracao_media_mw, 1), fmt_num(r.disponibilidade_media_mw, 1)]
+        for r in res.evt_por_faixa_geracao.itertuples()
+    ]
+
+
+def linhas_tabela_eventos_parada(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
+    """Maiores eventos de usina parada com EVT, por EVT."""
+    cabecalho = ["Início", "Fim", "Duração (h)", "Disponibilidade média (MW)", "Vazão vertida média (m³/s)", "EVT (MWh)"]
+    eventos = res.eventos_parada_com_evt
+    if not len(eventos):
+        return cabecalho, []
+    return cabecalho, [
+        [fmt_data_hora(r.inicio), fmt_data_hora(r.fim), fmt_int(r.duracao_h), fmt_num(r.disponibilidade_media_mw, 1),
+         fmt_num(r.vazao_vertida_media_m3s, 1), fmt_num(r.evt_mwh, 1)]
+        for r in eventos.nlargest(NUMERO_EVENTOS_RELATORIO, "evt_mwh").itertuples()
+    ]
+
+
+def linhas_tabela_perfil_diurno(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
+    """EVT e geração nas janelas diurna e noturna, por ano."""
+    cabecalho = ["Ano", "EVT diurna (MWmed)", "EVT noturna (MWmed)", "Razão EVT diurna/noturna", "Geração diurna (MW)",
+                 "Geração noturna (MW)", "Geração diurna ÷ noturna"]
+    return cabecalho, [
+        [f"{int(r.ano)}{'*' if r.ano_parcial else ''}", fmt_num(r.evt_media_diurna_mw, 2), fmt_num(r.evt_media_noturna_mw, 2),
+         fmt_num(r.razao_evt_diurna_noturna, 2), fmt_num(r.geracao_media_diurna_mw, 1), fmt_num(r.geracao_media_noturna_mw, 1),
+         fmt_pct(r.razao_geracao_diurna_noturna * 100, 0)]
+        for r in res.indicadores_anuais.itertuples()
+    ]
+
+
+def linhas_tabela_regras(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
+    """Regras de validação R1 a R9 e registros com violação."""
+    cabecalho = ["Regra", "Grupo", "Descrição", "Registros com violação", "% dos registros", "Status"]
+    return cabecalho, [
+        [r.codigo_regra, r.grupo, r.nome_regra, fmt_int(r.violacoes),
+         fmt_pct(r.violacoes / r.total_linhas * 100 if r.total_linhas else 0, 3), r.status]
+        for r in res.validacao.itertuples()
+    ]
+
+
+def linhas_tabela_registros_sinalizados(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
+    """Resumo dos registros sinalizados por regra de plausibilidade física."""
+    cabecalho = ["Regra", "Descrição", "Horas", "Primeira ocorrência", "Última ocorrência"]
+    return cabecalho, [
+        [r.regra, r.descricao, fmt_int(r.horas),
+         fmt_data_hora(r.primeira_ocorrencia) if pd.notna(r.primeira_ocorrencia) else "–",
+         fmt_data_hora(r.ultima_ocorrencia) if pd.notna(r.ultima_ocorrencia) else "–"]
+        for r in res.resumo_anomalias.itertuples()
+    ]
+
+
+def linhas_tabela_extremos(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
+    """Máximos e mínimos do período, sem os registros sinalizados."""
+    cabecalho = ["Grandeza", "Unidade", "Máximo", "Data/hora do máximo", "Mínimo", "Data/hora do mínimo"]
+    return cabecalho, [
+        [r.variavel, r.unidade, fmt_num(r.maximo_historico, 3), fmt_data_hora(r.data_hora_max),
+         fmt_num(r.minimo_historico, 3), fmt_data_hora(r.data_hora_min)]
+        for r in res.extremos.itertuples()
+    ]
+
+
+def linhas_tabela_parametros(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
+    """Parâmetros utilizados (grupo, parâmetro, valor, unidade, origem)."""
+    cabecalho = ["Grupo", "Parâmetro", "Valor", "Unidade", "Origem"]
+    return cabecalho, [[str(r.grupo), str(r.parametro), str(r.valor), str(r.unidade), str(r.origem)]
+                       for r in res.parametros.itertuples()]
+
+
+
+def pares_identificacao_cadastro(res: ResultadosAnalise) -> List[Tuple[str, str]]:
+    """Ficha da usina no cadastro do ONS (US6/AC4 da spec 006), com a data da consulta."""
+    f = res.cadastro["ficha"]
+    return [
+        ("Usina", f"{f.get('nom_usina', '')} · CEG {f.get('ceg', '')} · id ONS {f.get('id_ons', '')}"),
+        ("Modalidade de operação", str(f.get("nom_modalidadeoperacao", ""))),
+        ("Centro de operação", str(f.get("sgl_centrooperacao", ""))),
+        ("Ponto de conexão", str(f.get("nom_pontoconexao", ""))),
+        ("Potência autorizada", f"{fmt_num(f.get('val_potenciaautorizada'), 1)} MW"),
+        ("Estado · situação na ANEEL", f"{f.get('id_estado', '')} · {f.get('sts_aneel', '')}"),
+        ("Homônimos no cadastro (excluídos pelo CEG)", fmt_int(f.get("homonimos", 0))),
+        ("Data da consulta", fmt_utc(res.cadastro["obtido_em"]) or "não registrada"),
+    ]
+
+
+def nota_identificacao_cadastro(res: ResultadosAnalise) -> str:
+    """Nota da ficha: a ressalva de cadastro sem histórico (spec 008, FR-013), precedida das divergências, se houver."""
+    nota = "Cadastro sem série histórica; as versões anteriores do arquivo ficam preservadas."
+    if res.cadastro["divergencias"]:
+        nota = f"Divergências com os parâmetros do projeto: {res.cadastro['divergencias']}. {nota}"
+    return nota
 
 
 if __name__ == "__main__":
