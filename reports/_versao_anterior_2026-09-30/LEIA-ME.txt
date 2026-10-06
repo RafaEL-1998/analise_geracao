@@ -1,0 +1,7 @@
+Versão anterior dos relatórios (gerada em 30/09/2026 até 12:23), preservada para comparação.
+
+ATENÇÃO: estes arquivos contêm informações incorretas identificadas na auditoria de 30/09/2026,
+entre elas: fator de disponibilidade de 96,1% (valor real: 87,8%), período 18/05/2018 a 30/09/2026
+(real: 28/08/2018 a 28/09/2026), turbinas "Francis" (são Kaplan), vertimento turbinável atribuído à
+plena carga e ao 1º trimestre (os dados mostram o contrário) e conclusões de conformidade regulatória
+sem base nos dados. Não utilizar. A versão corrigida está em reports/.

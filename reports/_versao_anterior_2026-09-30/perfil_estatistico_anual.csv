@@ -1,0 +1,10 @@
+ano;horas_amostradas;geracao_media_mwmed;disponibilidade_media_mwmed;fator_capacidade_pct;fator_disponibilidade_pct;fator_indisponibilidade_pct;energia_gerada_mwh;energia_vertida_turbinavel_mwh;energia_vertida_total_mwh;indice_vertimento_turbinavel_pct;horas_vertimento;taxa_horas_vertimento_pct;parecer_performance;principal_causa_vertimento
+2018;3023;35.472;45.27;73.9;94.31;5.69;107233.21;5444.01;11217.93;4.83;3023;100.0;SATISFATÓRIO;Restrição de despacho / ordem do ONS (constrained-off)
+2019;8760;27.407;34.259;57.1;71.37;28.63;240085.75;11454.2;94976.52;4.55;8760;100.0;CRÍTICO;Indisponibilidade eletromecânica parcial
+2020;8784;27.337;43.623;56.95;90.88;9.12;240130.41;18967.0;36421.82;7.32;8783;99.99;SATISFATÓRIO;Restrição de despacho / ordem do ONS (constrained-off)
+2021;8760;28.05;45.002;58.44;93.75;6.25;245719.61;17701.87;22152.85;6.72;8760;100.0;SATISFATÓRIO;Restrição de despacho / ordem do ONS (constrained-off)
+2022;8760;26.395;39.255;54.99;81.78;18.22;231220.28;15403.28;42717.32;6.25;8760;100.0;ATENÇÃO;Indisponibilidade eletromecânica parcial
+2023;8760;30.274;43.421;63.07;90.46;9.54;265201.49;13078.01;22287.41;4.7;8754;99.93;SATISFATÓRIO;Restrição de despacho / ordem do ONS (constrained-off)
+2024;8784;27.667;43.795;57.64;91.24;8.76;243027.63;8940.34;18295.4;3.55;8776;99.91;SATISFATÓRIO;Restrição de despacho / ordem do ONS (constrained-off)
+2025;8760;23.614;43.79;49.2;91.23;8.77;206856.86;30689.93;41352.73;12.92;8758;99.98;SATISFATÓRIO;Restrição de despacho / ordem do ONS (constrained-off)
+2026;6504;21.541;43.183;44.88;89.97;10.03;140101.76;25972.46;28194.06;15.64;6499;99.92;ATENÇÃO;Restrição de despacho / ordem do ONS (constrained-off)

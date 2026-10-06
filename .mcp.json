@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "ons-dados": {
+      "type": "http",
+      "url": "https://mcp.dados.tiago.ons.org.br/"
+    }
+  }
+}
