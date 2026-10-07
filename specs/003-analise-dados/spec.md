@@ -266,3 +266,9 @@ A versão anterior tinha números e conclusões falsos fixos no código (relató
 - O Markdown passou a ter a mesma estrutura do PDF: seções na mesma ordem, figuras no corpo, sem a seção "Figuras". As tabelas que só existiam num dos dois passaram aos dois.
 - O rodapé do PDF ficou só com a numeração. As notas das bases complementares perderam a parte de fonte e mantiveram as ressalvas.
 - Números, textos das constatações, abas e figuras inalterados.
+
+### 2026-10-07 — revisão da spec 008 (ficha do cadastro na capa)
+
+- Saiu a seção "Identificação da usina no cadastro do ONS". A ficha do cadastro foi para a capa, como bloco "Cadastro no ONS" ao lado da identificação e dos parâmetros, sem a data da consulta.
+- A constatação do cadastro (só com divergência) passou para a seção "Fonte e cobertura dos dados".
+- As demais seções, as constatações, a planilha e as figuras não mudaram.

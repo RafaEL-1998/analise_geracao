@@ -156,6 +156,55 @@
 
 ---
 
+## Phase 7: Revisão de 07/10/2026 — ficha do cadastro na capa (FR-015)
+
+**Goal**: pedido do usuário em 07/10/2026: retirar a seção "Identificação da usina no cadastro do ONS" e levar a ficha para a capa, sem a data da consulta.
+
+**Independent Test**: capa com o bloco "Cadastro no ONS" (sem "Data da consulta") e numa página só; nenhuma seção do cadastro; constatação do cadastro, quando houver, na seção "Fonte e cobertura dos dados".
+
+- [X] T022 Cópia datada `_backup_2026-10-07_antes_revisao008/` da versão aprovada, com `src/`, `tests/`, `specs/`, `reports/`, `.specify/`, `README.md`, `requirements.txt`, `conftest.py` e `LEIA-ME.txt` (Requisito Técnico 3(b)).
+- [X] T023 Revisar `specs/008-relatorio-enxuto/spec.md` (FR-001, FR-012, FR-013, FR-015, SC-005, US1, tabela do Contexto, histórico de revisões), `data-model.md` (seções 1, 2, 4 e 5), o contrato (capa) e `research.md` (R10).
+- [X] T024 [P] Testes, que devem falhar antes de T025 a T027:
+  - `tests/test_estrutura_relatorio.py`: 16 chaves, sem `cadastro`; com as bases sintéticas, 14 seções; "Cadastro da usina no ONS" → `cobertura`; capa do Markdown e do PDF com o bloco "Cadastro no ONS" quando houver cadastro, sem "Data da consulta"; nenhuma seção "Identificação da usina no cadastro do ONS";
+  - `tests/test_relatorio_complementar.py`: `pares_identificacao_cadastro` sem a data da consulta; ressalva "cadastro sem série histórica" nas Notas metodológicas.
+- [X] T025 Em `src/estrutura_relatorio.py`, retirar a seção `cadastro` e mapear "Cadastro da usina no ONS" para `cobertura`.
+- [X] T026 Em `src/analyzer.py`:
+  - `pares_identificacao_cadastro` sem a data da consulta;
+  - sai `nota_identificacao_cadastro`;
+  - capa do Markdown com o bloco "Cadastro no ONS" e a legenda `bloco_cadastro`;
+  - sai o conteúdo da seção do cadastro.
+- [X] T027 Em `src/pdf_generator.py`, capa com três blocos lado a lado (identificação, cadastro, parâmetros) quando houver cadastro, e sai `_secao_cadastro`. A capa continua numa página.
+- [X] T028 [P] Atualizar `README.md` e o histórico de `specs/003-analise-dados/spec.md`.
+- [X] T029 Executar `python -m pytest tests -q` com a rede bloqueada. Esperado: suíte aprovada, sem alterar arquivos vigiados.
+- [X] T030 Validar na base real:
+  - `python -m src.analyzer` sem aviso; capa numa página; 16 seções;
+  - não regressão contra `_backup_2026-10-07_antes_revisao008/reports/`: mudam só a capa, a seção retirada, a numeração das seções, a data da consulta e a nota da ficha;
+  - planilha e figuras idênticas;
+  - registro de execução e status da spec.
+
+---
+
+## Phase 8: Revisão 2 de 07/10/2026 — figuras maiores e padronizadas (FR-016)
+
+**Goal**: pedido do usuário: aumentar e padronizar os gráficos das seções de série temporal, EVT mensal, disponibilidade sincronizada e vazões defluentes.
+
+**Independent Test**: no PDF, as quatro figuras têm a mesma largura e altura, na largura útil da página; os PNG têm o mesmo tamanho.
+
+- [X] T031 Cópia datada `_backup_2026-10-07_antes_figuras/` (Requisito Técnico 3(b)).
+- [X] T032 Revisar `spec.md` (FR-016, histórico), `research.md` (R11) e este arquivo.
+- [X] T033 [P] Teste em `tests/test_estrutura_relatorio.py`, que deve falhar antes de T034 e T035: as quatro figuras com o mesmo tamanho de PNG e, no PDF, com a mesma largura e altura, na largura útil; as demais continuam com a altura máxima da R9.
+- [X] T034 Em `src/analyzer.py`, figuras 01, 02, 05 e 06 com 11 × 4,3 polegadas, sem outra mudança no gráfico (seaborn, cores e textos iguais).
+- [X] T035 Em `src/pdf_generator.py`, essas quatro figuras na largura útil, fora do limite de altura.
+- [X] T036 Executar `python -m pytest tests -q` com a rede bloqueada.
+- [X] T037 Validar na base real:
+  - `python -m src.analyzer` sem aviso; capa numa página;
+  - Markdown e planilha idênticos aos da cópia de T031, fora a data de geração;
+  - figuras 03, 04, 07 e 08 com o mesmo SHA-256;
+  - imagens das quatro figuras conferidas a olho (legendas e rótulos sem sobreposição);
+  - registro de execução.
+
+---
+
 ## Dependencies & Execution Order
 
 - **Setup (Phase 1)** → **Foundational (Phase 2)** → **US1** → **US2** → **US3** → **Polish**.
@@ -264,3 +313,46 @@ T006 Logger estrutura_relatorio em src/logger.py
   - **Planilha e figuras**: 57 abas idênticas célula a célula; as 8 figuras com o mesmo SHA-256.
   - **Tamanho do Markdown**: de 517 para 737 linhas, por receber as tabelas que só o PDF tinha e as figuras no corpo (decisão 2A).
   - **SC-007**: entregue em 06/10/2026, antes de 13/10/2026.
+
+### 07/10/2026 — revisão: ficha do cadastro na capa (FR-015)
+
+- **T022**: cópia `_backup_2026-10-07_antes_revisao008/` da versão aprovada (240 arquivos; ignorada pelo git).
+- **T023**: spec (FR-001, FR-012, FR-013, FR-015 nova, SC-005, US1, tabela do Contexto, histórico de revisões), data-model, contrato e research R10.
+- **T024**: testes novos ou revistos falharam antes da implementação (7 falhas): estrutura com 16 chaves, ficha na capa sem a data da consulta, constatação do cadastro na seção de cobertura, ressalva do cadastro só nas notas.
+- **T025 a T027**:
+  - sai a seção do cadastro; a constatação do cadastro (só com divergência) vai para "Fonte e cobertura dos dados";
+  - `pares_identificacao_cadastro` sem a data da consulta, com o rótulo "Homônimos excluídos pelo CEG" (antes, "Homônimos no cadastro (excluídos pelo CEG)"), para caber numa linha da capa;
+  - sai `nota_identificacao_cadastro`;
+  - capa do PDF com três blocos de largura própria (26%, 38% e 36%; colunas de chaves de 62, 112 e 88 pt), escolhidas por medição na base real, e capa do Markdown com a tabela "Cadastro no ONS".
+- **Capa numa página**: com o bloco do cadastro, a capa passou da página (o sumário ia para a página 2). Ajustes de leiaute, sem mudar texto:
+  - células vazias do sumário com fonte pequena: elas ditavam 12,8 pt por linha, em vez de 10,3;
+  - sumário em 8 pt;
+  - nota e legendas da capa em 7,5 pt (estilo `legenda_capa`);
+  - menos espaço depois do subtítulo, nos cartões dos indicadores e no topo dos blocos.
+  - Resultado: a capa termina a 32 pt da margem inferior.
+- **T028**: `README.md` e históricos das specs 003 e 006. Na spec 006 (US6, cenário 4), a linha "Data da consulta" saiu do relatório; a data de obtenção continua na legenda do bloco e nas notas, e a data e hora continuam na aba `CAD_FICHA`.
+- **T029**: 243 testes aprovados (1 novo) em 58 s, com a rede bloqueada; nenhum dos 128 arquivos vigiados mudou.
+- **T030**, na base real (`python -m src.analyzer`, 23 s, sem aviso):
+  - 16 seções, numeradas sem lacunas; o corpo de todas elas é idêntico ao da versão aprovada;
+  - a ficha na capa é a mesma de antes, sem a data da consulta (7 itens), e a legenda de fonte e conferência do bloco é igual;
+  - o resto da capa é idêntico;
+  - 17 constatações, uma vez cada, com o mesmo texto;
+  - PDF com 29 páginas (30 antes) e capa numa página, conferida na imagem da página 1; seção 1 na p. 2 e seção 16 na p. 27;
+  - 38 legendas para 38 tabelas, blocos e figuras;
+  - planilha com as 57 abas idênticas célula a célula; as 8 figuras com o mesmo SHA-256;
+  - Markdown de 737 para 730 linhas.
+
+### 07/10/2026 — revisão 2: figuras maiores e padronizadas (FR-016)
+
+- **T031**: cópia `_backup_2026-10-07_antes_figuras/` (240 arquivos; ignorada pelo git).
+- **T032**: FR-016 e histórico na spec, R11 no research, Phase 8 neste arquivo.
+- **T033**: teste novo (`test_figuras_padronizadas_na_largura_util`) falhou antes da implementação; o teste de paginação passou a conferir o limite de altura numa figura não padronizada (perfil horário).
+- **T034 e T035**:
+  - figuras 01, 02, 05 e 06 com `TAMANHO_FIGURA_PADRONIZADA` = 11 × 4,3 polegadas (antes, 11 × 5,0 nas 01 e 02 e 11 × 4,6 nas 05 e 06); nada mais mudou nos gráficos;
+  - no PDF, as quatro na largura útil (`FIGURAS_PADRONIZADAS`), cerca de 760 × 297 pt (antes, 627 a 682 pt de largura).
+- **T036**: 244 testes aprovados com a rede bloqueada; nenhum dos 128 arquivos vigiados mudou.
+- **T037**, na base real (`python -m src.analyzer`, sem aviso):
+  - capa numa página; PDF com 29 páginas, como antes; a seção de EVT mensal (título, três constatações, figura e legendas) cabe numa página, com 21 pt de folga;
+  - Markdown idêntico ao da cópia de T031, fora a data de geração; planilha com as 57 abas idênticas;
+  - figuras 03, 04, 07 e 08 com o mesmo SHA-256; as 01, 02, 05 e 06 com 3300 × 1290 px;
+  - páginas 8, 9, 16 e 24 conferidas na imagem: legendas, rótulos e anotações sem sobreposição.

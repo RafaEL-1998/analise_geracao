@@ -350,3 +350,13 @@ Como fiscal, quero a ficha cadastral da usina no ONS, com a data da consulta, pa
   - extensão das séries para antes do período da base EVT;
   - o motivo de cada parada, que nenhuma base aberta do ONS informa e que deve ser pedido ao agente.
 - Prazo: fiscalização presencial de 14 a 16/10/2026; P1 (US1 a US4) até 13/10/2026. P2 e P3 podem ser entregues depois, sem prejuízo das demais.
+
+---
+
+## Histórico de revisões
+
+### 2026-10-07 — revisão pela spec 008 (ficha do cadastro na capa)
+
+| Item | O que mudou | Por quê |
+| :--- | :--- | :--- |
+| US6, cenário 4 | A tabela de identificação da usina no cadastro saiu da seção própria e foi para a capa do relatório, sem a linha "Data da consulta". A data de obtenção do cadastro continua na legenda de fonte do bloco e nas Notas metodológicas; a data e a hora da consulta continuam registradas na ficha (aba `CAD_FICHA`). | Pedido do usuário em 07/10/2026 (spec 008, FR-015). |

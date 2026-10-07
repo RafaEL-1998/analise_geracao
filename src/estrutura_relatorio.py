@@ -29,7 +29,6 @@ class Secao:
 
 SECOES: Tuple[Secao, ...] = (
     Secao("cobertura", "Fonte e cobertura dos dados"),
-    Secao("cadastro", "Identificação da usina no cadastro do ONS", lambda res: bool(res.cadastro)),
     Secao("indicadores_anuais", "Indicadores anuais"),
     Secao("disponibilidade_geracao", "Disponibilidade e geração por ano"),
     Secao("indicadores_ons", "Indicadores oficiais do ONS por unidade geradora", lambda res: bool(res.ons)),
@@ -52,7 +51,7 @@ SECAO_PADRAO = "cobertura"
 # Título da constatação (fixo em analyzer.montar_achados) → chave da seção onde ela é apresentada
 MAPA_CONSTATACOES: Dict[str, str] = {
     "Cobertura dos dados": "cobertura",
-    "Cadastro da usina no ONS": "cadastro",
+    "Cadastro da usina no ONS": "cobertura",  # a ficha do cadastro fica na capa (revisão de 07/10/2026, FR-015)
     "Disponibilidade": "indicadores_anuais",
     "Indicadores oficiais de disponibilidade (ONS)": "indicadores_ons",
     "Estados operativos das unidades geradoras (ONS)": "indicadores_ons",

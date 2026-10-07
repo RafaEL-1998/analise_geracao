@@ -6,7 +6,7 @@
 
 1. Título: "UHE São Domingos — energia vertida turbinável e desempenho operacional".
 2. Subtítulo: período, quantidade de registros horários e "Gerado em dd/mm/aaaa hh:mm".
-3. Blocos "Identificação nos dados do ONS" e "Parâmetros técnicos da usina", cada um com a sua legenda de fonte.
+3. Blocos "Identificação nos dados do ONS", "Cadastro no ONS" (só com o cadastro carregado, sem a data da consulta; revisão de 07/10/2026) e "Parâmetros técnicos da usina", lado a lado, cada um com a sua legenda de fonte.
 4. Indicadores principais (mesmos rótulos e valores de hoje), com a nota da capa e a legenda de fonte.
 5. "Sumário": as seções presentes, numeradas, na ordem do [data-model.md](../data-model.md), seção 1.
    - PDF: "<n>. <título> …… <página>".

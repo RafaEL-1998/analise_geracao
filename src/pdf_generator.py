@@ -75,7 +75,6 @@ from src.analyzer import (
     linhas_tabela_perfil_hidrologico,
     linhas_tabela_regras,
     linhas_tabela_registros_sinalizados,
-    nota_identificacao_cadastro,
     notas_metodologicas,
     pares_cobertura,
     pares_identificacao,
@@ -145,9 +144,13 @@ ALTURA_QUADRO = landscape(A4)[1] - MARGEM_SUPERIOR - MARGEM_INFERIOR - 12
 # Paginação (spec 008): a figura cabe na página com o título e as constatações da seção; a tabela longa pode
 # continuar na página seguinte, com o cabeçalho repetido, se o subtítulo e as primeiras linhas couberem.
 ALTURA_MAXIMA_FIGURA = 285
+# Figuras padronizadas (revisão 2, FR-016): mesma proporção do PNG e largura útil, fora do limite de altura
+FIGURAS_PADRONIZADAS = ("serie_temporal", "evt_mensal", "disponibilidade_sincronizada", "vazoes_defluentes")
 LINHAS_TABELA_INTEIRA = 12
 LINHAS_MINIMAS_NA_PAGINA = 6
 ALTURA_ABERTURA_CURTA = 150
+# Capa com a ficha do cadastro (FR-015): fração da largura e coluna das chaves de cada bloco, para caber numa página
+BLOCOS_CAPA_TRES = {"bloco_identificacao": (0.26, 62), "bloco_cadastro": (0.38, 112), "bloco_parametros": (0.36, 88)}
 
 
 def _registrar_fontes() -> Tuple[str, str]:
@@ -259,9 +262,11 @@ class _SumarioDuasColunas(TableOfContents):
                 linha.append("")
             dados.append(linha[:-1])
         largura = (availWidth - 30) / 2
-        estilo = [("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 1.2),
-                  ("BOTTOMPADDING", (0, 0), (-1, -1), 1.2), ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                  ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("LINEBELOW", (0, 0), (1, -1), 0.3, LINHA)]
+        estilo = [("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 0.4),
+                  ("BOTTOMPADDING", (0, 0), (-1, -1), 0.4), ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                  ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("LINEBELOW", (0, 0), (1, -1), 0.3, LINHA),
+                  # células vazias (espaço entre as colunas) não podem ditar a altura da linha
+                  ("FONTSIZE", (0, 0), (-1, -1), 4), ("LEADING", (0, 0), (-1, -1), 4)]
         if colunas[1]:
             estilo.append(("LINEBELOW", (3, 0), (4, len(colunas[1]) - 1), 0.3, LINHA))
         self._table = Table(dados, colWidths=[largura - 28, 28, 30, largura - 28, 28], style=TableStyle(estilo),
@@ -307,7 +312,7 @@ class PDFReportGenerator:
         base = dict(fontName=self.fonte, textColor=TINTA, alignment=TA_LEFT)
         return {
             "titulo": ParagraphStyle("titulo", **{**base, "fontName": self.fonte_negrito}, fontSize=17, leading=21, spaceAfter=3),
-            "subtitulo": ParagraphStyle("subtitulo", **{**base, "textColor": TINTA_SECUNDARIA}, fontSize=9.5, leading=13, spaceAfter=8),
+            "subtitulo": ParagraphStyle("subtitulo", **{**base, "textColor": TINTA_SECUNDARIA}, fontSize=9.5, leading=13, spaceAfter=5),
             "secao": ParagraphStyle("secao", **{**base, "fontName": self.fonte_negrito, "textColor": AZUL_TITULO},
                                     fontSize=12.5, leading=16, spaceBefore=8, spaceAfter=5),
             "subsecao": ParagraphStyle("subsecao", **{**base, "fontName": self.fonte_negrito}, fontSize=9.5, leading=12,
@@ -315,6 +320,9 @@ class PDFReportGenerator:
             "corpo": ParagraphStyle("corpo", **base, fontSize=9, leading=12.5, spaceAfter=4),
             "achado": ParagraphStyle("achado", **base, fontSize=8.8, leading=12, spaceAfter=5, leftIndent=14, firstLineIndent=-14),
             "legenda": ParagraphStyle("legenda", **{**base, "textColor": TINTA_SECUNDARIA}, fontSize=8, leading=10.5, spaceAfter=6),
+            # Capa (spec 008, FR-015): nota e legendas um pouco menores, para a capa caber numa página com a ficha
+            "legenda_capa": ParagraphStyle("legenda_capa", **{**base, "textColor": TINTA_SECUNDARIA}, fontSize=7.5,
+                                           leading=9.5, spaceAfter=6),
             "nota": ParagraphStyle("nota", **{**base, "textColor": TINTA_SECUNDARIA}, fontSize=8, leading=10.5, spaceAfter=3,
                                    leftIndent=10, firstLineIndent=-10),
             "cab_tabela": ParagraphStyle("cab_tabela", **{**base, "fontName": self.fonte_negrito}, fontSize=7.3, leading=9),
@@ -377,18 +385,21 @@ class PDFReportGenerator:
         if caminho is None or not Path(caminho).exists():
             return [self._p(f"Figura não disponível ({escape(NOMES_FIGURAS.get(chave, chave))}).", "legenda")]
         largura_px, altura_px = ImageReader(str(caminho)).getSize()
+        if chave in FIGURAS_PADRONIZADAS:
+            largura = LARGURA_UTIL - 10
         altura = largura * altura_px / largura_px
-        if altura > ALTURA_MAXIMA_FIGURA:
+        if altura > ALTURA_MAXIMA_FIGURA and chave not in FIGURAS_PADRONIZADAS:
             largura, altura = largura * ALTURA_MAXIMA_FIGURA / altura, ALTURA_MAXIMA_FIGURA
         self._desenhados += 1
         return [Image(str(caminho), width=largura, height=altura), Spacer(1, 3), self._p(legenda, "legenda"),
                 self._legenda_fonte(chave)]
 
     def _bloco_chave_valor(
-        self, titulo: str, pares: List[Tuple[str, str]], chave_fonte: str, nota: str = ""
+        self, titulo: str, pares: List[Tuple[str, str]], chave_fonte: str, nota: str = "",
+        largura: float = LARGURA_UTIL / 2, largura_chave: float = 118,
     ) -> List[Any]:
         linhas = [[self._p(f"<b>{escape(k)}</b>", "celula"), self._p(escape(v), "celula")] for k, v in pares]
-        tabela = Table(linhas, colWidths=[118, LARGURA_UTIL / 2 - 118 - 12])
+        tabela = Table(linhas, colWidths=[largura_chave, largura - largura_chave - 12])
         tabela.setStyle(TableStyle([
             ("LINEBELOW", (0, 0), (-1, -1), 0.4, LINHA),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -397,10 +408,14 @@ class PDFReportGenerator:
             ("LEFTPADDING", (0, 0), (-1, -1), 3),
         ]))
         self._desenhados += 1
-        bloco: List[Any] = [self._p(escape(titulo), "subsecao"), tabela]
+        cabecalho = self._p(escape(titulo), "subsecao")
+        cabecalho.style = ParagraphStyle("subsecao_bloco", parent=cabecalho.style, spaceBefore=0)
+        bloco: List[Any] = [cabecalho, tabela]
         if nota:
             bloco += [Spacer(1, 2), self._p(nota, "legenda")]
-        return bloco + [Spacer(1, 2), self._legenda_fonte(chave_fonte)]
+        legenda = self._legenda_fonte(chave_fonte)
+        legenda.style = ParagraphStyle("legenda_bloco", parent=self.estilos["legenda_capa"], spaceAfter=0)
+        return bloco + [Spacer(1, 2), legenda]
 
     # ------------------------------------------------------------------
     # Componentes das seções (spec 008)
@@ -484,15 +499,22 @@ class PDFReportGenerator:
             f"{fmt_int(c['horas_observadas'])} registros horários · Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')}"
         )
         story.append(self._p(self.subtitulo_capa, "subtitulo"))
-        esquerda = self._bloco_chave_valor("Identificação nos dados do ONS", chave_fonte="bloco_identificacao",
-                                           pares=pares_identificacao(self.res))
-        direita = self._bloco_chave_valor("Parâmetros técnicos da usina", chave_fonte="bloco_parametros",
-                                          pares=pares_parametros())
-        blocos = Table([[esquerda, direita]], colWidths=[LARGURA_UTIL / 2, LARGURA_UTIL / 2])
+        # Identificação, ficha do cadastro (se carregado; FR-015) e parâmetros, lado a lado
+        conteudo = [("Identificação nos dados do ONS", pares_identificacao(self.res), "bloco_identificacao")]
+        if self.res.cadastro:
+            conteudo.append(("Cadastro no ONS", pares_identificacao_cadastro(self.res), "bloco_cadastro"))
+        conteudo.append(("Parâmetros técnicos da usina", pares_parametros(), "bloco_parametros"))
+        medidas = ([BLOCOS_CAPA_TRES[chave] for _, _, chave in conteudo] if len(conteudo) == 3
+                   else [(1 / len(conteudo), 118)] * len(conteudo))
+        larguras = [fracao * LARGURA_UTIL for fracao, _ in medidas]
+        celulas = [self._bloco_chave_valor(titulo, pares, chave, largura=largura, largura_chave=largura_chave)
+                   for (titulo, pares, chave), largura, (_, largura_chave) in zip(conteudo, larguras, medidas)]
+        blocos = Table([celulas], colWidths=larguras)
         blocos.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                                    ("RIGHTPADDING", (0, 0), (-1, -1), 12)]))
+                                    ("RIGHTPADDING", (0, 0), (-1, -1), 12), ("TOPPADDING", (0, 0), (-1, -1), 0),
+                                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
         story.append(blocos)
-        story.append(Spacer(1, 8))
+        story.append(Spacer(1, 5))
 
         tiles, nota_capa = indicadores_capa(self.res)
         celulas = [[
@@ -504,20 +526,22 @@ class PDFReportGenerator:
             ("BOX", (0, 0), (-1, -1), 0.6, LINHA),
             ("INNERGRID", (0, 0), (-1, -1), 0.6, LINHA),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("TOPPADDING", (0, 0), (-1, -1), 7),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ("TOPPADDING", (0, 0), (-1, -1), 5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
             ("LEFTPADDING", (0, 0), (-1, -1), 9),
             ("RIGHTPADDING", (0, 0), (-1, -1), 9),
         ]))
         self._desenhados += 1
         story.append(tabela_kpi)
         story.append(Spacer(1, 4))
-        story.append(self._p(nota_capa, "legenda"))
-        story.append(self._legenda_fonte("tab_capa_indicadores"))
+        story.append(self._p(nota_capa, "legenda_capa"))
+        legenda = self._legenda_fonte("tab_capa_indicadores")
+        legenda.style = self.estilos["legenda_capa"]
+        story.append(legenda)
 
         # Sumário (FR-003): índice com a página de cada seção, preenchido na segunda passagem
         story.append(self._p("Sumário", "subsecao"))
-        estilo = ParagraphStyle("sumario", fontName=self.fonte, fontSize=8.5, leading=10.5, textColor=TINTA)
+        estilo = ParagraphStyle("sumario", fontName=self.fonte, fontSize=8, leading=9.5, textColor=TINTA)
         self.toc = _SumarioDuasColunas([f"{n}. {titulo}" for n, titulo in sumario(self.res)], estilo,
                                        ParagraphStyle("sumario_pagina", parent=estilo, alignment=TA_RIGHT))
         story += [self.toc, PageBreak()]
@@ -541,13 +565,6 @@ class PDFReportGenerator:
         story.append(tabela)
         story.append(Spacer(1, 3))
         story.append(self._legenda_fonte("tab_cobertura"))
-
-    def _secao_cadastro(self, story: List[Any], titulo: str) -> None:
-        self._inicio_secao(story, "cadastro", titulo, 160)
-        story.append(KeepTogether(self._bloco_chave_valor(
-            "Ficha cadastral", pares_identificacao_cadastro(self.res), "bloco_cadastro",
-            nota=escape(nota_identificacao_cadastro(self.res)),
-        )))
 
     def _secao_indicadores_anuais(self, story: List[Any], titulo: str) -> None:
         self._inicio_secao(story, "indicadores_anuais", titulo, 260)

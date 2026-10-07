@@ -15,22 +15,23 @@ Ordem e condições (research R2):
 | # | `chave` | `titulo` | Presente quando |
 |---|---|---|---|
 | 1 | `cobertura` | Fonte e cobertura dos dados | sempre |
-| 2 | `cadastro` | Identificação da usina no cadastro do ONS | `res.cadastro` |
-| 3 | `indicadores_anuais` | Indicadores anuais | sempre |
-| 4 | `disponibilidade_geracao` | Disponibilidade e geração por ano | sempre |
-| 5 | `indicadores_ons` | Indicadores oficiais do ONS por unidade geradora | `res.ons` |
-| 6 | `serie_temporal` | Série temporal de disponibilidade, geração e EVT | sempre |
-| 7 | `evt_mensal` | Energia vertida turbinável mensal | sempre |
-| 8 | `perfil_horario` | Perfil horário da geração e da EVT | sempre |
-| 9 | `eventos` | EVT por nível de geração e eventos de usina parada | sempre |
-| 10 | `programacao` | Operação verificada e programação diária do ONS | `res.programacao` |
-| 11 | `disponibilidade_sincronizada` | Disponibilidade operacional e sincronizada (ONS) | `res.disponibilidade` |
-| 12 | `hidrologia` | Afluência, vertimento e nível do reservatório (ONS) | `res.hidrologia` |
-| 13 | `geracao_zero` | Horas com geração zero por mês | sempre |
-| 14 | `vazoes` | Vazões defluentes por ano | sempre |
-| 15 | `geracao_oficial` | Conferência da geração com a série oficial (ONS) | `res.geracao_oficial` |
-| 16 | `qualidade` | Qualidade dos dados | sempre |
-| 17 | `notas` | Notas metodológicas e limitações | sempre |
+| 2 | `indicadores_anuais` | Indicadores anuais | sempre |
+| 3 | `disponibilidade_geracao` | Disponibilidade e geração por ano | sempre |
+| 4 | `indicadores_ons` | Indicadores oficiais do ONS por unidade geradora | `res.ons` |
+| 5 | `serie_temporal` | Série temporal de disponibilidade, geração e EVT | sempre |
+| 6 | `evt_mensal` | Energia vertida turbinável mensal | sempre |
+| 7 | `perfil_horario` | Perfil horário da geração e da EVT | sempre |
+| 8 | `eventos` | EVT por nível de geração e eventos de usina parada | sempre |
+| 9 | `programacao` | Operação verificada e programação diária do ONS | `res.programacao` |
+| 10 | `disponibilidade_sincronizada` | Disponibilidade operacional e sincronizada (ONS) | `res.disponibilidade` |
+| 11 | `hidrologia` | Afluência, vertimento e nível do reservatório (ONS) | `res.hidrologia` |
+| 12 | `geracao_zero` | Horas com geração zero por mês | sempre |
+| 13 | `vazoes` | Vazões defluentes por ano | sempre |
+| 14 | `geracao_oficial` | Conferência da geração com a série oficial (ONS) | `res.geracao_oficial` |
+| 15 | `qualidade` | Qualidade dos dados | sempre |
+| 16 | `notas` | Notas metodológicas e limitações | sempre |
+
+Revisão de 07/10/2026 (FR-015): a seção `cadastro` saiu; a ficha do cadastro está na capa.
 
 A numeração exibida é a posição entre as seções presentes (1, 2, 3, … sem lacunas).
 
@@ -39,7 +40,7 @@ A numeração exibida é a posição entre as seções presentes (1, 2, 3, … s
 | Título da constatação | `chave` da seção |
 |---|---|
 | Cobertura dos dados | `cobertura` |
-| Cadastro da usina no ONS | `cadastro` |
+| Cadastro da usina no ONS | `cobertura` (revisão de 07/10/2026) |
 | Disponibilidade | `indicadores_anuais` |
 | Indicadores oficiais de disponibilidade (ONS) | `indicadores_ons` |
 | Estados operativos das unidades geradoras (ONS) | `indicadores_ons` |
@@ -75,6 +76,7 @@ Lista das seções presentes: `numero`, `titulo` e, no PDF, `pagina` (página em
 | Legenda descritiva de cada figura | `legenda_figura(res, chave)` | só no PDF |
 | Cobertura (pares chave-valor) | `pares_cobertura(res)` | só no PDF |
 | Identificação e parâmetros técnicos (capa) | `pares_identificacao(res)`, `pares_parametros()` | só no PDF |
+| Ficha do cadastro (capa, revisão de 07/10/2026) | `pares_identificacao_cadastro(res)`, sem a data da consulta | seção própria |
 | Perfil diurno × noturno | `linhas_tabela_perfil_diurno(res)` | só no PDF |
 | Regras de validação | `linhas_tabela_regras(res)` | só no PDF |
 | Parâmetros utilizados | `linhas_tabela_parametros(res)` | só no PDF |
@@ -89,4 +91,4 @@ Lista das seções presentes: `numero`, `titulo` e, no PDF, `pagina` (página em
 | `notas_disponibilidade`, 1ª nota | "Fonte: conjunto Disponibilidade por usina do ONS (…), obtido em …." | "A disponibilidade operacional é a mesma informação …" |
 | `notas_hidrologia`, 1ª nota | "Fonte: conjunto Dados hidrológicos horários do ONS (…), obtido em …." | "Os dados são informados pelos agentes e não são consistidos pelo ONS; …" |
 | `secao_geracao_oficial_md` | nota "- Fonte: conjunto Geração por usina do ONS …" | critério de coincidência na nota da tabela |
-| cadastro (Markdown e `nota_identificacao_cadastro`) | "Fonte: conjunto Modalidade das usinas do ONS (…)" | "Cadastro sem série histórica; as versões anteriores do arquivo ficam preservadas." |
+| cadastro (Markdown e `nota_identificacao_cadastro`) | "Fonte: conjunto Modalidade das usinas do ONS (…)"; na revisão de 07/10/2026, a nota inteira (sai `nota_identificacao_cadastro`) | a ressalva "cadastro sem série histórica", nas Notas metodológicas |

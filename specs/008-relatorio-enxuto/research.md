@@ -92,3 +92,16 @@ Com as constatações no início das seções, figuras e tabelas passaram a não
 - **Tabelas**: até 12 linhas ficam inteiras. As mais longas começam na página corrente se o subtítulo e 6 linhas couberem, e continuam na seguinte com o cabeçalho repetido.
 - **Abertura da seção**: título e constatações sempre juntos. Até 150 pt, ficam também com o primeiro bloco; acima disso, podem ficar no pé da página, com a tabela na seguinte.
 - **Resultado**: 30 páginas (31 no relatório anterior).
+
+## R10. Ficha do cadastro na capa (revisão de 07/10/2026, FR-015)
+
+- **Decisão**: bloco próprio "Cadastro no ONS" entre a identificação e os parâmetros, os três lado a lado na capa do PDF (no Markdown, três tabelas em sequência), cada um com a sua legenda de fonte e conferência. Sem o cadastro carregado, a capa fica com os dois blocos de antes.
+- **Por quê**: cada bloco mantém a legenda da spec 007 sem misturar conjuntos (Energia Vertida Turbinável, Modalidade das usinas e parâmetros do projeto); a conferência do cadastro com os parâmetros continua na legenda do bloco.
+- **Alternativa descartada**: fundir os itens do cadastro no bloco de identificação. A legenda passaria a misturar dois conjuntos, e a coluna da esquerda ficaria com o dobro das linhas da direita, alongando a capa.
+- **Sem a nota abaixo da ficha**: a ressalva "cadastro sem série histórica" já está nas Notas metodológicas; a divergência, quando houver, aparece na constatação (seção "Fonte e cobertura dos dados") e na legenda de conferência do bloco.
+
+## R11. Figuras maiores e padronizadas (revisão 2, 07/10/2026, FR-016)
+
+- **Antes**: as figuras 01 e 02 eram geradas com 11 × 5,0 polegadas e as 05 e 06 com 11 × 4,6; no PDF, a altura máxima de 285 pt (R9) as deixava com 627 e 682 pt de largura, de 770 pt úteis.
+- **Decisão**: as quatro passam a 11 × 4,3 polegadas (mesma proporção) e, no PDF, são desenhadas na largura útil (cerca de 760 × 297 pt), fora do limite de altura da R9, que continua valendo para as demais figuras.
+- **Por quê**: 4,3 polegadas é a maior altura com a qual a seção de EVT mensal (título, três constatações, figura e legendas) ainda cabe numa página.

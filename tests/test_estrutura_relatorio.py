@@ -14,7 +14,7 @@ from src.analyzer import analisar, gerar_graficos, gerar_relatorio_md, preparar_
 from src.estrutura_relatorio import MAPA_CONSTATACOES, SECOES, constatacoes_da_secao, secoes_presentes, sumario
 from tests.test_relatorio_complementar import _ficha, _geracao, _hidrologia, _serie_disponibilidade
 
-CHAVES = ["cobertura", "cadastro", "indicadores_anuais", "disponibilidade_geracao", "indicadores_ons", "serie_temporal",
+CHAVES = ["cobertura", "indicadores_anuais", "disponibilidade_geracao", "indicadores_ons", "serie_temporal",
           "evt_mensal", "perfil_horario", "eventos", "programacao", "disponibilidade_sincronizada", "hidrologia",
           "geracao_zero", "vazoes", "geracao_oficial", "qualidade", "notas"]
 TITULOS_CONSTATACOES = {
@@ -46,10 +46,10 @@ def test_secoes_em_ordem() -> None:
 def test_numeracao_sem_lacunas(df_base: pd.DataFrame) -> None:
     so_evt = secoes_presentes(analisar(df_base))
     assert [n for n, _ in so_evt] == list(range(1, 12))
-    assert {s.chave for _, s in so_evt}.isdisjoint({"cadastro", "indicadores_ons", "programacao",
+    assert {s.chave for _, s in so_evt}.isdisjoint({"indicadores_ons", "programacao",
                                                     "disponibilidade_sincronizada", "hidrologia", "geracao_oficial"})
     completo = secoes_presentes(_completo(df_base))
-    assert [n for n, _ in completo] == list(range(1, 16))
+    assert [n for n, _ in completo] == list(range(1, 15))
     assert sumario(_completo(df_base)) == [(n, s.titulo) for n, s in completo]
 
 
@@ -164,5 +164,50 @@ def test_pdf_capa_numa_pagina_e_paginacao_enxuta(df_base: pd.DataFrame, tmp_path
     assert len(curta) == 1 and isinstance(curta[0], KeepTogether)
     longa = gerador._bloco_tabela("tab_parametros", cabecalho, [["1", "2"]] * (LINHAS_TABELA_INTEIRA + 1), [100, 100])
     assert isinstance(longa[0], CondPageBreak) and any(isinstance(f, Table) and f.repeatRows == 1 for f in longa)
-    imagens = [f for f in gerador._figura("serie_temporal", "legenda") if isinstance(f, Image)]
+    imagens = [f for f in gerador._figura("perfil_horario", "legenda") if isinstance(f, Image)]
     assert imagens and imagens[0].drawHeight <= ALTURA_MAXIMA_FIGURA
+
+
+def test_ficha_do_cadastro_na_capa_e_sem_secao_propria(df_base: pd.DataFrame, tmp_path: Path) -> None:
+    """Revisão de 07/10/2026 (FR-015): a ficha do cadastro vai para a capa, sem a data da consulta; a seção do cadastro
+    sai; a constatação do cadastro (só com divergência) fica na seção de cobertura; a capa continua numa página."""
+    from src.pdf_generator import PDFReportGenerator
+
+    assert MAPA_CONSTATACOES["Cadastro da usina no ONS"] == "cobertura"
+    res = _completo(df_base)
+    texto = dict(res.achados)["Cadastro da usina no ONS"]
+    assert ("Cadastro da usina no ONS", texto) in constatacoes_da_secao(res, "cobertura")
+    md, figuras = _md(res, df_base, tmp_path)
+    capa, corpo = md.split("\n## 1. ", 1)
+    assert "### Cadastro no ONS" in capa and "| Modalidade de operação | TIPO II-A |" in capa
+    assert "Data da consulta" not in md and "Identificação da usina no cadastro do ONS" not in md
+    assert texto in corpo.split("\n## 2. ")[0]
+    gerador = PDFReportGenerator(res, figuras, tmp_path / "relatorio.pdf")
+    gerador.build_pdf()
+    assert "bloco_cadastro" in gerador.legendas_emitidas
+    assert "Identificação da usina no cadastro do ONS" not in gerador.titulos_secoes
+    assert gerador.sumario_entradas[0][2] == 2
+
+    sem_cadastro, _ = _md(analisar(df_base), df_base, tmp_path / "sem")
+    assert "### Cadastro no ONS" not in sem_cadastro
+
+
+def test_figuras_padronizadas_na_largura_util(df_base: pd.DataFrame, tmp_path: Path) -> None:
+    """Revisão 2 (FR-016): série temporal, EVT mensal, disponibilidade sincronizada e vazões defluentes com o mesmo
+    tamanho de PNG e, no PDF, com a mesma largura e altura, na largura útil da página."""
+    from reportlab.platypus import Image
+    from reportlab.lib.utils import ImageReader
+
+    from src.pdf_generator import ALTURA_MAXIMA_FIGURA, FIGURAS_PADRONIZADAS, LARGURA_UTIL, PDFReportGenerator
+
+    assert set(FIGURAS_PADRONIZADAS) == {"serie_temporal", "evt_mensal", "disponibilidade_sincronizada",
+                                         "vazoes_defluentes"}
+    res = _completo(df_base)
+    figuras = gerar_graficos(df_base, res, tmp_path / "figuras", dpi=40)
+    assert len({ImageReader(str(figuras[c])).getSize() for c in FIGURAS_PADRONIZADAS}) == 1
+    gerador = PDFReportGenerator(res, figuras, tmp_path / "relatorio.pdf")
+    tamanhos = {(round(i.drawWidth), round(i.drawHeight)) for c in FIGURAS_PADRONIZADAS
+                for i in gerador._figura(c, "legenda") if isinstance(i, Image)}
+    assert len(tamanhos) == 1
+    largura, altura = tamanhos.pop()
+    assert largura == round(LARGURA_UTIL - 10) and altura > ALTURA_MAXIMA_FIGURA

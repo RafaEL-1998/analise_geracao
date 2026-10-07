@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-06
 
-**Status**: Implementado (06/10/2026)
+**Status**: Implementado (06/10/2026; revisado em 07/10/2026)
 
 **Input**: User description: "Relatório mais enxuto: capa com sumário e constatações dentro de cada seção (spec 008). Pedido do usuário em 06/10/2026, depois de aprovar o relatório da spec 007: hoje a lista "Principais constatações" no início traz o texto completo de cada constatação, e depois cada seção repete ou retoma a mesma explicação. (1) A página 1 (capa) mantém os dados básicos da usina, os percentuais importantes (indicadores da capa) e passa a ter um SUMÁRIO que só elenca os pontos abordados (seções), sem o texto das constatações. (2) Cada constatação passa a aparecer uma única vez, no início da seção correspondente, seguida das tabelas e figuras com as explicações e legendas atuais; constatações sem seção própria hoje vão para a seção mais próxima. (3) As legendas de fonte e conferência de cada figura e tabela (spec 007) continuam; o rodapé repetido em todas as páginas sai, porque cada figura e tabela já cita a sua fonte; o número da página continua e a data de geração vai para a capa; o mesmo vale para a linha "**Fontes**:" do cabeçalho do Markdown (revisão das FR-009 e FR-010 da spec 007). (4) Números, textos das constatações, tabelas, figuras, legendas de fonte e abas da planilha (inclusive CONSTATACOES e FONTES) inalterados; só a organização e o rodapé mudam. Dúvidas para o usuário: se o Markdown deve seguir a mesma estrutura do PDF e se as notas "Fonte: conjunto …" das seções das bases novas devem sair, mantendo as ressalvas. Prazo: antes da fiscalização presencial de 14 a 16/10/2026."
 
@@ -24,7 +24,7 @@ Esta spec reorganiza o relatório sem mudar nenhum número nem texto de análise
 | Constatação | Seção |
 |---|---|
 | Cobertura dos dados | Fonte e cobertura dos dados |
-| Cadastro da usina no ONS (só com divergência) | Identificação da usina no cadastro do ONS |
+| Cadastro da usina no ONS (só com divergência) | Fonte e cobertura dos dados (revisão de 07/10/2026; antes, Identificação da usina no cadastro do ONS) |
 | Disponibilidade | Indicadores anuais |
 | Geração e garantia física; Indisponibilidades | Disponibilidade e geração por ano |
 | Indicadores oficiais de disponibilidade (ONS); Estados operativos das unidades geradoras (ONS) | Indicadores oficiais do ONS por unidade geradora |
@@ -53,7 +53,7 @@ Como fiscal da AGEMS, quero que a primeira página traga os dados básicos da us
 **Acceptance Scenarios**:
 
 1. **Given** o relatório gerado, **When** a capa é aberta, **Then** ela mostra:
-   - os blocos de identificação da usina e de parâmetros técnicos, como hoje;
+   - os blocos de identificação da usina e de parâmetros técnicos, como hoje, e a ficha do cadastro do ONS, quando carregado (revisão de 07/10/2026);
    - os indicadores da capa (percentuais e totais principais), como hoje;
    - a data e a hora de geração do relatório;
    - o sumário, com o número e o título de cada seção, na ordem em que aparecem.
@@ -113,7 +113,7 @@ Como fiscal, quero que o rodapé das páginas não repita a frase sobre as fonte
 
 **Capa e sumário (US1)**
 
-- **FR-001**: A capa DEVE manter os blocos de identificação da usina e de parâmetros técnicos e os indicadores da capa, como hoje.
+- **FR-001**: A capa DEVE manter os blocos de identificação da usina e de parâmetros técnicos e os indicadores da capa, como hoje. Com o cadastro do ONS carregado, DEVE trazer também a ficha cadastral (FR-015).
 - **FR-002**: A capa DEVE mostrar a data e a hora de geração do relatório.
 - **FR-003**: O relatório DEVE ter um sumário, logo após a capa ou nela, com o número e o título de cada seção presente nesta execução, na ordem do relatório; no PDF, com a página de início de cada seção.
 - **FR-004**: A capa e o sumário NÃO DEVEM conter o texto das constatações.
@@ -133,12 +133,17 @@ Como fiscal, quero que o rodapé das páginas não repita a frase sobre as fonte
 
 **Não regressão**
 
-- **FR-012**: Números, textos das constatações, textos das seções, tabelas, figuras, legendas de fonte e abas da planilha (inclusive CONSTATACOES e FONTES) NÃO DEVEM mudar; muda só o lugar das constatações, a capa, o sumário, o rodapé, o cabeçalho, as notas de fonte da FR-013 e a organização do Markdown da FR-014.
+- **FR-012**: Números, textos das constatações, textos das seções, tabelas, figuras, legendas de fonte e abas da planilha (inclusive CONSTATACOES e FONTES) NÃO DEVEM mudar; muda só o lugar das constatações, a capa, o sumário, o rodapé, o cabeçalho, as notas de fonte da FR-013, a organização do Markdown da FR-014 e a ficha do cadastro da FR-015.
 
 **Decisões do usuário (06/10/2026)**
 
-- **FR-013**: Nas notas das seções das bases novas (disponibilidade, hidrologia, geração e cadastro), a parte "Fonte: conjunto … (identificador), obtido em …" DEVE sair, no PDF e no Markdown; as ressalvas dessas notas DEVEM ficar, com o mesmo texto. A relação completa de fontes nas Notas metodológicas continua.
+- **FR-013**: Nas notas das seções das bases novas (disponibilidade, hidrologia, geração e cadastro), a parte "Fonte: conjunto … (identificador), obtido em …" DEVE sair, no PDF e no Markdown; as ressalvas dessas notas DEVEM ficar, com o mesmo texto. A relação completa de fontes nas Notas metodológicas continua. Exceção (revisão de 07/10/2026): a ressalva do cadastro sem série histórica fica só nas Notas metodológicas, onde já está (FR-015).
 - **FR-014**: O Markdown DEVE seguir a estrutura do PDF: as mesmas seções, na mesma ordem e com os mesmos títulos, cada figura no corpo da sua seção (imagem com a legenda descritiva e a legenda de fonte), sem a lista de figuras no final. Tabelas que hoje só existem no PDF ou só no Markdown passam a existir nos dois.
+
+**Revisão do usuário (07/10/2026)**
+
+- **FR-016** (revisão 2, 07/10/2026): As figuras das seções "Série temporal de disponibilidade, geração e EVT", "Energia vertida turbinável mensal", "Disponibilidade operacional e sincronizada (ONS)" e "Vazões defluentes por ano" DEVEM ter o mesmo tamanho, no PNG e no PDF, e ocupar a largura útil da página no PDF. O conteúdo das figuras (dados, séries, cores e textos) não muda.
+- **FR-015**: A seção "Identificação da usina no cadastro do ONS" DEVE sair. A ficha do cadastro DEVE ir para a capa, como bloco "Cadastro no ONS" ao lado dos blocos de identificação e de parâmetros, com a sua legenda de fonte e conferência e com os mesmos itens de antes, exceto a data da consulta. A constatação "Cadastro da usina no ONS" (só com divergência) DEVE ir para a seção "Fonte e cobertura dos dados". A capa DEVE continuar cabendo numa página (SC-002).
 
 ### Key Entities
 
@@ -156,7 +161,7 @@ Como fiscal, quero que o rodapé das páginas não repita a frase sobre as fonte
 - **SC-002**: A capa do PDF cabe numa página e contém dados básicos, indicadores, data de geração e sumário; nenhum texto completo de constatação.
 - **SC-003**: O sumário lista 100% das seções presentes, e no PDF a página indicada de cada seção confere com a página real.
 - **SC-004**: O rodapé de 100% das páginas do PDF tem só a numeração; 100% das figuras e tabelas mantêm a legenda de fonte.
-- **SC-005**: Nenhum número, texto de constatação, tabela, figura ou aba muda em relação ao relatório anterior (comparação ignorando só a posição das constatações e das seções, a capa, o sumário, o rodapé, o cabeçalho e a parte de fonte das notas da FR-013).
+- **SC-005**: Nenhum número, texto de constatação, tabela, figura ou aba muda em relação ao relatório anterior (comparação ignorando só a posição das constatações e das seções, a capa, o sumário, o rodapé, o cabeçalho, a parte de fonte das notas da FR-013 e a ficha do cadastro da FR-015).
 - **SC-008**: O Markdown e o PDF têm as mesmas seções, na mesma ordem, e o mesmo sumário.
 - **SC-006**: O relatório fica mais curto que o anterior (31 páginas no PDF), sem perder conteúdo.
 - **SC-007**: Entregue e com o relatório regenerado até 13/10/2026.
@@ -171,3 +176,28 @@ Como fiscal, quero que o rodapé das páginas não repita a frase sobre as fonte
 - O título do relatório e o cabeçalho das páginas do PDF (nome da usina e período) continuam.
 - O mapa constatação → seção da tabela do Contexto é a proposta inicial, aberta a ajuste do usuário.
 - Prazo: fiscalização presencial de 14 a 16/10/2026.
+
+---
+
+## Histórico de revisões
+
+### 2026-10-07 — ficha do cadastro na capa
+
+Pedido do usuário em 07/10/2026, depois de aprovar o relatório: retirar a seção 2 (Identificação da usina no cadastro do ONS) e complementar a capa com essas informações, sem a data da consulta. Cópia da versão aprovada em `_backup_2026-10-07_antes_revisao008/`.
+
+| Item | O que mudou |
+| :--- | :--- |
+| FR-001, US1 | A capa ganha o bloco "Cadastro no ONS" quando o cadastro está carregado. |
+| FR-015 (nova) | Sai a seção do cadastro; ficha na capa, sem a data da consulta; constatação do cadastro na seção "Fonte e cobertura dos dados". |
+| FR-012, SC-005 | A ficha do cadastro na capa entra nas mudanças permitidas. |
+| FR-013 | A ressalva do cadastro sem série histórica fica só nas Notas metodológicas, onde já estava; sai a nota abaixo da ficha. |
+| Tabela do Contexto | Constatação do cadastro → Fonte e cobertura dos dados. |
+
+### 2026-10-07 (revisão 2) — figuras maiores e padronizadas
+
+Pedido do usuário em 07/10/2026: aumentar e padronizar os gráficos das seções 5, 6, 10 e 13 (série temporal, EVT mensal, disponibilidade sincronizada e vazões defluentes). Cópia anterior em `_backup_2026-10-07_antes_figuras/`.
+
+| Item | O que mudou |
+| :--- | :--- |
+| FR-016 (nova) | As quatro figuras com o mesmo tamanho (PNG de 11 × 4,3 polegadas) e, no PDF, na largura útil da página. |
+| FR-012, SC-005 | O tamanho dessas quatro figuras entra nas mudanças permitidas; o conteúdo continua o mesmo. |

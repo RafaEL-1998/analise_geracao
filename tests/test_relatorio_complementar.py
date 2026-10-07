@@ -19,7 +19,7 @@ from src.analyzer import (
 )
 from src.conjuntos_ons import SerieConjunto
 from src.fontes_relatorio import PREFIXO_CALCULADO, PREFIXO_FONTE
-from src.pdf_generator import PDFReportGenerator, nota_identificacao_cadastro, pares_identificacao_cadastro
+from src.pdf_generator import PDFReportGenerator, pares_identificacao_cadastro
 
 
 def _serie_disponibilidade(df: pd.DataFrame) -> SerieConjunto:
@@ -157,7 +157,7 @@ def test_geracao_e_cadastro_sem_divergencia_nao_geram_constatacao(df_base: pd.Da
     titulos = dict(res.achados)
     assert "Conferência da geração" not in titulos and "Cadastro da usina no ONS" not in titulos
     md = gerar_relatorio_md(res, None, tmp_path / "relatorio.md").read_text(encoding="utf-8")
-    assert "Identificação da usina no cadastro do ONS" in md and "TIPO II-A" in md
+    assert "### Cadastro no ONS" in md and "TIPO II-A" in md
     assert "Conferência da geração com a série oficial (ONS)" in md and "coincide com a série oficial" in md
     xlsx, _ = exportar_tabelas(res, tmp_path / "tabelas.xlsx", tmp_path / "tabelas.csv")
     assert {"GER_CONFERENCIA", "GER_MENSAL", "GER_ANUAL", "CAD_FICHA", "CAD_AUDITORIA"} <= set(pd.ExcelFile(xlsx).sheet_names)
@@ -186,13 +186,18 @@ def test_relacao_de_fontes_inclui_as_bases_novas(df_base: pd.DataFrame, tmp_path
     assert "cadastro sem série histórica, obtido em 05/10/2026" in notas and "não consistidos pelo ONS" in notas
 
 
-def test_identificacao_do_cadastro_no_pdf(df_base: pd.DataFrame) -> None:
-    """US6/AC4 (T058): data da consulta na tabela do PDF e ressalva da fonte mantida quando há divergência."""
+def test_ficha_do_cadastro_sem_a_data_da_consulta(df_base: pd.DataFrame) -> None:
+    """US6/AC4 (T058), revisto pela spec 008 em 07/10/2026 (FR-015): a ficha da capa traz os itens do cadastro, sem a
+    data da consulta; a data de obtenção fica na legenda de fonte do bloco, e a divergência, na legenda de conferência."""
+    from src.fontes_relatorio import legenda_fonte
+
     res = analisar(df_base, cadastro=_ficha())
-    assert ("Data da consulta", "05/10/2026 13:00 UTC") in pares_identificacao_cadastro(res)
-    assert nota_identificacao_cadastro(res) == "Cadastro sem série histórica; as versões anteriores do arquivo ficam preservadas."
-    nota = nota_identificacao_cadastro(analisar(df_base, cadastro=_ficha(potencia=47.5)))
-    assert "potência autorizada de 47.5 MW" in nota and "Cadastro sem série histórica" in nota
+    assert [k for k, _ in pares_identificacao_cadastro(res)] == [
+        "Usina", "Modalidade de operação", "Centro de operação", "Ponto de conexão", "Potência autorizada",
+        "Estado · situação na ANEEL", "Homônimos excluídos pelo CEG"]
+    assert "obtido em 05/10/2026" in legenda_fonte(res, "bloco_cadastro")
+    divergente = analisar(df_base, cadastro=_ficha(potencia=47.5))
+    assert "potência autorizada de 47.5 MW" in legenda_fonte(divergente, "bloco_cadastro")
 
 
 def _sem_legenda(md: str) -> list:
@@ -273,4 +278,4 @@ def test_notas_das_bases_novas_sem_a_parte_de_fonte(df_base: pd.DataFrame, tmp_p
     md = gerar_relatorio_md(res, None, tmp_path / "relatorio.md").read_text(encoding="utf-8")
     secoes = re.split(r"^## \d+\. Notas metodológicas e limitações$", md, flags=re.M)[0]
     assert "Fonte: conjunto" not in secoes
-    assert "Cadastro sem série histórica; as versões anteriores do arquivo ficam preservadas." in secoes
+    assert "Cadastro sem série histórica" not in md  # revisão de 07/10/2026: a ressalva fica só nas notas

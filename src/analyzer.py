@@ -1758,7 +1758,7 @@ def _achado_conferencia_geracao(res: ResultadosAnalise) -> Optional[Tuple[str, s
 
 
 def texto_cadastro(res: ResultadosAnalise) -> str:
-    """Identificação da usina no cadastro do ONS (seção e, havendo divergência, constatação)."""
+    """Constatação do cadastro do ONS, só havendo divergência com os parâmetros do projeto (a ficha fica na capa)."""
     f = res.cadastro["ficha"]
     texto = (
         f"No cadastro de modalidade das usinas do ONS ({_data_obtencao_texto(res.cadastro['obtido_em'])}), a usina consta "
@@ -2249,6 +2249,11 @@ def _rotulo_referencia(ax: plt.Axes, y: float, texto: str) -> None:
             fontsize=8, color=COR_TINTA_SECUNDARIA, clip_on=False)
 
 
+# Tamanho comum das figuras de série temporal, EVT mensal, vazões defluentes e disponibilidade sincronizada
+# (spec 008, revisão 2, FR-016): no PDF, as quatro ocupam a largura útil com a mesma altura.
+TAMANHO_FIGURA_PADRONIZADA = (11, 4.3)
+
+
 def _grafico_serie_temporal(df: pd.DataFrame, res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
     P = NOMINAL_INSTALLED_CAPACITY_MW
     diario = (
@@ -2268,7 +2273,7 @@ def _grafico_serie_temporal(df: pd.DataFrame, res: ResultadosAnalise, caminho: P
         .melt(id_vars="din_instante", var_name="serie", value_name="mw")
         .assign(serie=lambda d: d["serie"].map(nomes))
     )
-    fig, ax = plt.subplots(figsize=(11, 5.0))
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
     eventos = res.eventos_indisponibilidade_total
     longos = eventos[eventos["duracao_h"] >= DURACAO_MINIMA_EVENTO_RELATORIO_H] if len(eventos) else eventos
     for ev in longos.itertuples():
@@ -2313,7 +2318,7 @@ def _grafico_evt_mensal(res: ResultadosAnalise, caminho: Path, dpi: int) -> None
         pd.DataFrame({"mes": m["mes"], "parcela": rotulo_minimo, "mwh": m["evt_vertimento_minimo_mwh"]}),
         pd.DataFrame({"mes": m["mes"], "parcela": rotulo_demais, "mwh": m["evt_demais_horas_mwh"]}),
     ], ignore_index=True)
-    fig, ax = plt.subplots(figsize=(11, 5.0))
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
     if len(m):
         limites = list(m["mes"]) + [m["mes"].max() + pd.offsets.MonthBegin(1)]
         # o seaborn empilha da última categoria (base) para a primeira (topo)
@@ -2429,7 +2434,7 @@ def _grafico_vazoes_defluentes(df: pd.DataFrame, res: ResultadosAnalise, caminho
         .melt(id_vars="ano", var_name="componente", value_name="m3s")
         .assign(componente=lambda d: d["componente"].map(nomes))
     )
-    fig, ax = plt.subplots(figsize=(11, 4.6))
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
     # o seaborn empilha da última categoria (base) para a primeira (topo): turbinada na base
     sns.histplot(data=longo, x="ano", weights="m3s", hue="componente", hue_order=list(reversed(list(cores))),
                  palette=cores, multiple="stack", discrete=True, shrink=0.6, alpha=1, edgecolor="white",
@@ -2478,7 +2483,7 @@ def _grafico_disponibilidade_sincronizada(res: ResultadosAnalise, caminho: Path,
         [pd.DataFrame({"mes": m["mes"], "serie": nome, "mw": m[coluna]}) for nome, (coluna, _) in series.items()],
         ignore_index=True,
     )
-    fig, ax = plt.subplots(figsize=(11, 4.6))
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
     sns.lineplot(data=longo, x="mes", y="mw", hue="serie", hue_order=list(series),
                  palette={nome: cor for nome, (_, cor) in series.items()}, linewidth=1.4, legend=False, ax=ax)
     ax.axhline(NOMINAL_INSTALLED_CAPACITY_MW, color=COR_TINTA_SUAVE, lw=0.9, ls=(0, (4, 3)), zorder=1)
@@ -3190,9 +3195,6 @@ def _md_conteudo_secao(res: ResultadosAnalise, chave: str, titulo: str, figuras:
     saida: List[str] = []
     if chave == "cobertura":
         saida += _md_chave_valor(res, "", pares_cobertura(res), "tab_cobertura")
-    elif chave == "cadastro":
-        saida += _md_chave_valor(res, "Ficha cadastral", pares_identificacao_cadastro(res), "bloco_cadastro",
-                                 nota_identificacao_cadastro(res))
     elif chave == "indicadores_anuais":
         saida += tab("tab_indicadores_anuais", linhas_tabela_anual(res))
     elif chave == "disponibilidade_geracao":
@@ -3303,6 +3305,8 @@ def gerar_relatorio_md(
         "",
     ]
     linhas += _md_chave_valor(res, "Identificação nos dados do ONS", pares_identificacao(res), "bloco_identificacao")
+    if res.cadastro:
+        linhas += _md_chave_valor(res, "Cadastro no ONS", pares_identificacao_cadastro(res), "bloco_cadastro")
     linhas += _md_chave_valor(res, "Parâmetros técnicos da usina", pares_parametros(), "bloco_parametros")
     linhas += ["### Indicadores principais", ""]
     linhas += _tabela_md(["Indicador", "Valor", "Detalhe"], [[r, v, s] for r, v, s in tiles]) + ["", nota_capa, ""]
@@ -3797,7 +3801,10 @@ def linhas_tabela_parametros(res: ResultadosAnalise) -> Tuple[List[str], List[Li
 
 
 def pares_identificacao_cadastro(res: ResultadosAnalise) -> List[Tuple[str, str]]:
-    """Ficha da usina no cadastro do ONS (US6/AC4 da spec 006), com a data da consulta."""
+    """Ficha da usina no cadastro do ONS (US6 da spec 006), no bloco "Cadastro no ONS" da capa (spec 008, FR-015).
+
+    Sem a data da consulta (pedido do usuário em 07/10/2026); a data de obtenção fica na legenda de fonte do bloco.
+    """
     f = res.cadastro["ficha"]
     return [
         ("Usina", f"{f.get('nom_usina', '')} · CEG {f.get('ceg', '')} · id ONS {f.get('id_ons', '')}"),
@@ -3806,17 +3813,8 @@ def pares_identificacao_cadastro(res: ResultadosAnalise) -> List[Tuple[str, str]
         ("Ponto de conexão", str(f.get("nom_pontoconexao", ""))),
         ("Potência autorizada", f"{fmt_num(f.get('val_potenciaautorizada'), 1)} MW"),
         ("Estado · situação na ANEEL", f"{f.get('id_estado', '')} · {f.get('sts_aneel', '')}"),
-        ("Homônimos no cadastro (excluídos pelo CEG)", fmt_int(f.get("homonimos", 0))),
-        ("Data da consulta", fmt_utc(res.cadastro["obtido_em"]) or "não registrada"),
+        ("Homônimos excluídos pelo CEG", fmt_int(f.get("homonimos", 0))),
     ]
-
-
-def nota_identificacao_cadastro(res: ResultadosAnalise) -> str:
-    """Nota da ficha: a ressalva de cadastro sem histórico (spec 008, FR-013), precedida das divergências, se houver."""
-    nota = "Cadastro sem série histórica; as versões anteriores do arquivo ficam preservadas."
-    if res.cadastro["divergencias"]:
-        nota = f"Divergências com os parâmetros do projeto: {res.cadastro['divergencias']}. {nota}"
-    return nota
 
 
 if __name__ == "__main__":
