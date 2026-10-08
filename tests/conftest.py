@@ -5,6 +5,18 @@ import pandas as pd
 from pathlib import Path
 from typing import Dict, Any
 
+from src.comum.perfil import carregar_perfil, definir_perfil_ativo
+
+_PERFIL_SAO_DOMINGOS = carregar_perfil("sao_domingos")
+
+
+@pytest.fixture(autouse=True)
+def perfil_sao_domingos_ativo():
+    """Perfil ativo durante cada teste, como ``src.pipeline`` faz em cada etapa (as Análises e o relatório o leem)."""
+    definir_perfil_ativo(_PERFIL_SAO_DOMINGOS)
+    yield _PERFIL_SAO_DOMINGOS
+    definir_perfil_ativo(None)
+
 ONS_CSV_HEADER = (
     "id_subsistema;nom_subsistema;nom_bacia;nom_rio;nom_agente;nom_reservatorio;"
     "cod_usina;din_instante;val_geracao;val_disponibilidade;val_vazaoturbinada;"

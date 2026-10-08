@@ -43,8 +43,9 @@ Desktop.ini
 # Backups
 _backup_*/
 
-# Arquivos grandes e documentos externos
-Docs_usina/
+# Arquivos grandes e documentos externos (documentos da usina e de consulta ficam fora do git)
+usinas/*/documentos/
+referencias/
 *.rar
 *.zip
 *.7z
@@ -54,3 +55,6 @@ data/
 *.pdf
 *.docx
 *.doc
+.venv/
+.DS_Store
+*.tmp

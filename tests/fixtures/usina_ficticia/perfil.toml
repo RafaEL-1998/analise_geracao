@@ -1,0 +1,39 @@
+# Perfil de uma usina fictícia, só para testes: três unidades de 30 MW, sem programação diária publicada e sem os
+# textos opcionais (o relatório omite os trechos correspondentes). Identificadores próprios, que não existem no ONS.
+
+[usina]
+slug = "usina_ficticia"
+nome = "UHE Fictícia"
+nome_curto = "Fictícia"
+estado = "GO"
+inicio_operacao_comercial = 2015
+
+[identificacao]
+cod_usina = 999
+nome_ons = "USINA FICTICIA"
+ceg = "UHE.PH.GO.000001-0.01"
+id_ons = "GOUHFI"
+cod_programacao = "PRUHFI"
+id_reservatorio = "PNUHFI"
+
+[parametros]
+potencia_instalada_mw = 90.0
+unidades_geradoras = 3
+potencia_unitaria_mw = 30.0
+tipo_turbina = "Francis de eixo vertical"
+engolimento_nominal_ug_m3s = 60.0
+garantia_fisica_mwmed = 50.0
+ip_referencia = 0.05
+teif_referencia = 0.02
+queda_bruta_m = 60.0
+perda_hidraulica_m = 1.0
+rendimento_turbina_gerador = 0.9
+vazao_remanescente_m3s = 5.0
+
+[parametros.fontes]
+geral = "Ficha técnica fictícia, Tabela 1"
+garantia_fisica = "valor fictício para teste"
+
+[analises]
+vertimento_minimo_m3s = 6.0
+faixas_geracao_mw = [20.0, 40.0, 60.0]

@@ -1,4 +1,4 @@
-# Dependências usadas pelo código (src/) e pelos testes (tests/) — conferidas por tests/test_conformidade.py
+# Dependências usadas pelo código (src/) e pelos testes (tests/) — conferidas por tests/comum/test_conformidade.py
 pandas>=2.0.0
 numpy>=1.26.0
 pyarrow>=14.0.0

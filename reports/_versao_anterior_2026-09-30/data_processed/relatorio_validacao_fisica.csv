@@ -1,6 +1,0 @@
-codigo_regra;nome_regra;expressao;total_linhas;conformes;violacoes;taxa_conformidade_pct;desvio_maximo;desvio_medio;status
-R1;Não-Negatividade das Grandezas;val_x >= 0 para todas as 10 colunas val_*;70895;70895;0;100.0;0.0;0.0;CONFORME
-R2;Conservação de Vertimento de Energia;val_energiavertida >= val_energiavertidaturbinavel;70895;70895;0;100.0;0.0;0.0;CONFORME
-R3;Conservação de Vazão Vertida;val_vazaovertida >= val_vazaovertidaturbinavel + val_vazaovertidanaoturbinavel;70895;70895;0;100.0;0.0;0.0;CONFORME
-R4;Equação da Energia Vertida Turbinável;val_energiavertidaturbinavel = val_vazaovertidaturbinavel * val_produtividade;70895;70895;0;100.0;0.0;0.0;CONFORME
-R5;Equação de Folga Operacional de Geração;val_folgadegeracao = max(0, val_disponibilidade - val_geracao);70895;70895;0;100.0;0.0;0.0;CONFORME

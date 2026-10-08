@@ -1,1 +1,1 @@
-"""Pacote principal do pipeline de coleta e filtragem ONS - UHE São Domingos."""
+"""Fluxo de análise de usinas hidrelétricas com os dados abertos do ONS: coleta, tratamento, conferência, análises e relatório."""

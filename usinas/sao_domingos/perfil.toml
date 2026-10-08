@@ -1,0 +1,50 @@
+# Perfil da UHE São Domingos (MS). Valores de identificação conferidos nos conjuntos do ONS;
+# parâmetros técnicos do RF 0009/2017-AGEPAN-SFG, exceto a garantia física (ANEEL).
+# Homônimos excluídos pelos identificadores: PCH São Domingos I e II (GO), CGH São Domingos (SC),
+# CGH São Domingos do Prata (RS), UTE São Domingos (SP), eólicas e solares São Domingos (RN, BA).
+
+[usina]
+slug = "sao_domingos"
+nome = "UHE São Domingos"
+nome_curto = "São Domingos"                # frases sobre homônimos no cadastro
+estado = "MS"
+inicio_operacao_comercial = 2013
+
+[identificacao]
+cod_usina = 153                      # Energia Vertida Turbinável e Dados hidrológicos horários
+nome_ons = "SAO DOMINGOS"            # nome da usina e do reservatório nos conjuntos (conferência)
+ceg = "UHE.PH.MS.028761-0.01"        # indicadores, TEIFa/TEIP, geração, disponibilidade e cadastro
+id_ons = "MSUHSD"                    # geração, disponibilidade e cadastro
+cod_programacao = "PRUHSD"           # Programação diária (código de exibição)
+id_reservatorio = "PNUHSD"           # Dados hidrológicos horários (conferência)
+
+[parametros]
+potencia_instalada_mw = 48.0
+unidades_geradoras = 2
+potencia_unitaria_mw = 24.0
+tipo_turbina = "Kaplan de eixo vertical"
+engolimento_nominal_ug_m3s = 81.5
+garantia_fisica_mwmed = 36.4
+ip_referencia = 0.06861
+teif_referencia = 0.02333
+queda_bruta_m = 35.24
+perda_hidraulica_m = 0.747
+rendimento_turbina_gerador = 0.9053
+vazao_remanescente_m3s = 4.78
+
+[parametros.fontes]
+geral = "RF 0009/2017-AGEPAN-SFG, Tabelas 1 a 3"
+garantia_fisica = "ANEEL, valor vigente consultado em 02/10/2026"
+inicio_operacao_comercial = "Despachos ANEEL nº 377/2013 e nº 2.692/2013, citados no RF 0009/2017-AGEPAN-SFG"
+ip_teif = "cálculo de garantia física registrado no RF 0009/2017-AGEPAN-SFG, quando a garantia física era de 36,9 MWmed"
+
+[analises]
+vertimento_minimo_m3s = 6.0                       # patamar contínuo de vertimento da série (0 se não houver)
+faixas_geracao_mw = [10.0, 20.0, 30.0, 40.0]      # faixas intermediárias da análise de EVT por nível de geração
+descricao_vertimento_minimo = "patamar contínuo da série, da ordem da vazão remanescente"
+
+[analises.fontes]
+vertimento_minimo = "patamar de 5 a 6 m³/s observado na série"
+
+[textos]
+ressalva_volume_util = "O volume útil é apresentado como informado; ele varia entre os anos sem variação correspondente do nível de montante, por isso o comportamento do reservatório é descrito pelo nível."

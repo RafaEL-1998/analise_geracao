@@ -1,0 +1,82 @@
+{
+ "etapa": "relatorio",
+ "usina": "sao_domingos",
+ "versao_formato": 1,
+ "iniciada_em": "2026-10-08T14:27:54Z",
+ "concluida_em": "2026-10-08T14:28:16Z",
+ "status": "concluida",
+ "codigo_saida": 0,
+ "etapa_anterior": {
+  "etapa": "analises",
+  "concluida_em": "2026-10-08T14:27:54Z"
+ },
+ "arquivos": [
+  {
+   "nome": "relatorio_analise_estatistica.pdf",
+   "bytes": 2337866,
+   "sha256": "c8515216cd2c11fa64670025421eb78c1a4d2d47644b0c2b33439bec1429b9dc"
+  },
+  {
+   "nome": "relatorio_analise_estatistica.md",
+   "bytes": 77143,
+   "sha256": "1b65ca1cb987a93623a4bf5319c290c61329e219786671ebd3f172690395d75a"
+  },
+  {
+   "nome": "perfil_estatistico_anual.xlsx",
+   "bytes": 2926160,
+   "sha256": "8009e9d8c31f96ad206c558c41a5a1307cf70a988082a8f4527d7f61d0161094"
+  },
+  {
+   "nome": "perfil_estatistico_anual.csv",
+   "bytes": 4281,
+   "sha256": "ebcf2db6dd66e1e6c51cca172b658dfc92422c9dbd0d8a62c40ba9691a962f00"
+  },
+  {
+   "nome": "figures/01_serie_temporal_disponibilidade_geracao_evt.png",
+   "bytes": 504111,
+   "sha256": "bbebd29dc1cd32895fe3168a23e489af5fdfee7dbe09d2415807f1d71b05551f"
+  },
+  {
+   "nome": "figures/02_evt_mensal.png",
+   "bytes": 103866,
+   "sha256": "460c95479cfd44f85164947ff7b04e0d02f8cd6982807a4499d61665705bb1aa"
+  },
+  {
+   "nome": "figures/03_perfil_horario_geracao_evt.png",
+   "bytes": 126533,
+   "sha256": "c7e627bf8a15c470dee2ee1cd7bf968976641d7026ed020e951f97a8e52d52d9"
+  },
+  {
+   "nome": "figures/04_disponibilidade_geracao_anual.png",
+   "bytes": 112771,
+   "sha256": "0956b20eb0d6dbf42e0b9ad856000fa319db2ed7e0cd08aa5d0695ee409528ec"
+  },
+  {
+   "nome": "figures/05_vazoes_defluentes_anuais.png",
+   "bytes": 105239,
+   "sha256": "065a008cefc01244b524a14b592399f244ecd2c61ff6cac14c45046b479851b9"
+  },
+  {
+   "nome": "figures/06_disponibilidade_operacional_sincronizada_mensal.png",
+   "bytes": 339500,
+   "sha256": "5a76334c166a9fa5fda2c8d62d1dcf29f90e097095bbefa98b13e6afe61eb2e1"
+  },
+  {
+   "nome": "figures/07_evt_por_faixa_de_afluencia.png",
+   "bytes": 122869,
+   "sha256": "f5e336924fd8135a81d6ad0090ee57bf28d61a3b909ed9250cf9806b2de9f537"
+  },
+  {
+   "nome": "figures/08_perfil_horario_nivel_vazoes.png",
+   "bytes": 222116,
+   "sha256": "a000b0bfb69fb6f6cdf8cceffb62dc7fd5288b5ae354ae296c48c155c5a1bd87"
+  }
+ ],
+ "resumo": {
+  "data_geracao": "07/10/2026 08:53",
+  "secoes": 17,
+  "paginas_pdf": 30,
+  "figuras": 8,
+  "abas_planilha": 58
+ }
+}
