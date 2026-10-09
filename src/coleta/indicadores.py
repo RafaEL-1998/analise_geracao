@@ -23,9 +23,11 @@ import pandas as pd
 from src.coleta.catalogo import (
     _local_filename,
     download_resource,
+    escolher_entre_repetidos,
     fetch_ckan_package_metadata,
     load_manifest,
     parse_ckan_resources,
+    registrar_repetidos,
     save_manifest,
 )
 from src.coleta.conjuntos import Regra, _corresponde, avisar_linhas_irregulares, ler_csv_texto
@@ -93,9 +95,9 @@ def sincronizar_indicadores(
     for conjunto in CONJUNTOS_INDICADORES_ONS:
         pasta = Path(destino) / conjunto
         pasta.mkdir(parents=True, exist_ok=True)
-        recursos = selecionar_recursos(
+        recursos, duplicados = escolher_entre_repetidos(selecionar_recursos(
             parse_ckan_resources(fetch_ckan_package_metadata(url_pacote(conjunto))), ano_inicio, ano_fim
-        )
+        ), conjunto)
         manifesto_path = pasta / RAW_MANIFEST_FILE.name
         manifesto = load_manifest(manifesto_path)
         try:
@@ -111,6 +113,7 @@ def sincronizar_indicadores(
                                    "periodo": "" if ano is None else f"{ano:04d}", "status": "FALHA",
                                    "mensagem": str(exc)})
         finally:
+            registrar_repetidos(manifesto, duplicados)
             save_manifest(manifesto, manifesto_path)
     return falhas
 

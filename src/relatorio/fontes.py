@@ -8,21 +8,19 @@ Mapa único e declarativo usado pelo Markdown, pelo PDF e pela planilha (FR-027)
 - ``MAPA_FONTES`` e as regras das abas: de onde vêm os dados de cada figura, tabela ou aba e com o que foram
   conferidos.
 
-Os textos são gerados a partir dos resultados da análise (``ResultadosAnalise``) e das datas de obtenção
-registradas nos manifestos; nenhum resultado de conferência é fixo (FR-026). As conferências manuais com outras
+Os textos são gerados a partir dos resultados da análise (``ResultadosAnalise``), com as datas de obtenção
+gravadas pela Coleta; nenhum resultado de conferência é fixo (FR-026). As conferências manuais com outras
 instituições ficam fora (decisão do usuário em 06/10/2026).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import pandas as pd
 
-from src.coleta.conjuntos import data_obtencao
-from src.comum import caminhos
+from src.coleta import registro
 from src.comum.formatacao import fmt_data, fmt_int, fmt_num, fmt_pct
 from src.comum.logger import setup_logger
 from src.comum.perfil import perfil_ativo
@@ -33,7 +31,6 @@ from src.comum.regras import (
     CONJUNTO_GERACAO,
     CONJUNTO_HIDROLOGIA,
     CONJUNTO_PROGRAMACAO_DIARIA,
-    CONJUNTOS_PIPELINE,
     META_ALINHAMENTO_HIDROLOGIA_PCT,
     TOLERANCIA_REPRODUCAO_TAXAS_PP,
 )
@@ -335,18 +332,19 @@ def conjuntos_carregados(res: Any) -> List[str]:
     return carregados
 
 
-def datas_obtencao(raiz_raw: Optional[Path] = None) -> Dict[str, str]:
-    """Data (UTC) mais recente registrada no manifesto de cada conjunto; vazia se não houver registro."""
+def datas_obtencao(res: Any) -> Dict[str, str]:
+    """Data (UTC) de obtenção mais recente de cada conjunto, gravada pela Coleta; vazia se não houver registro."""
+    registradas = getattr(res, "datas_obtencao", None) or {}
     datas: Dict[str, str] = {}
     for cid, conjunto in CONJUNTOS.items():
         if conjunto.catalogo:
-            datas[cid] = data_obtencao(Path(raiz_raw or caminhos.RAW_DATA_DIR) / CONJUNTOS_PIPELINE[conjunto.catalogo])
+            datas[cid] = str((registradas.get(conjunto.catalogo) or {}).get("obtencao_mais_recente") or "")
     return datas
 
 
-def origem_dos_dados(res: Any, raiz_raw: Optional[Path] = None) -> Dict[str, Any]:
+def origem_dos_dados(res: Any) -> Dict[str, Any]:
     """Conteúdo de ``res.fontes``: datas de obtenção e conjuntos carregados."""
-    return {"obtencao": datas_obtencao(raiz_raw), "carregados": conjuntos_carregados(res)}
+    return {"obtencao": datas_obtencao(res), "carregados": conjuntos_carregados(res)}
 
 
 # ---------------------------------------------------------------------------
@@ -417,8 +415,9 @@ def _entrada_aba(res: Any, aba: str) -> Optional[Entrada]:
         return _e(carregados, [c for c, conf in CONFERENCIAS.items() if conf.base in carregados], calculado=True)
     if aba == "PARAMETROS":
         return _e(["projeto", *_carregados(res)])
-    if aba == "DICIONARIOS":
-        return _e([c for c in CONJUNTOS if c != "projeto"], todos=True)
+    if aba == "DICIONARIOS":  # só os conjuntos do tipo e da cobertura da usina (spec 006, decisão R8)
+        da_usina = registro.pacotes(registro.conjuntos_da_usina(perfil_ativo()))
+        return _e([c for c, conjunto in CONJUNTOS.items() if conjunto.catalogo in da_usina], todos=True)
     if aba in _ABAS_EXATAS:
         return _ABAS_EXATAS[aba]
     for prefixo, entrada in _ABAS_POR_PREFIXO:

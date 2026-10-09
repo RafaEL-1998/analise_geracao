@@ -8,9 +8,7 @@ import pandas as pd
 
 from src.analises.comum import _pct
 from src.analises.programacao import PARADA_EVT_PROGRAMACAO_ZERO
-from src.coleta.conjuntos import data_obtencao
-from src.comum import caminhos
-from src.comum.regras import PASTA_DISPONIBILIDADE_RAW, LIMIAR_GERACAO_PARADA_MW, LIMIAR_SINCRONIZADA_MW
+from src.comum.regras import LIMIAR_GERACAO_PARADA_MW, LIMIAR_SINCRONIZADA_MW
 from src.conferencia.disponibilidade import validas
 from src.tratamento.indicadores import IndicadoresONS
 from src.tratamento.series import SerieConjunto
@@ -97,10 +95,12 @@ def analisar_disponibilidade(
     cobertura: Dict[str, Any],
     conferencia: Dict[str, Any],
     divergencias: pd.DataFrame,
+    obtido_em: str = "",
 ) -> Dict[str, Any]:
     """Disponibilidade horária do ONS (operacional e sincronizada) cruzada com a base de EVT (US2).
 
-    ``conferencia`` e ``divergencias`` vêm da Conferência (disponibilidade declarada × operacional).
+    ``conferencia`` e ``divergencias`` vêm da Conferência (disponibilidade declarada × operacional);
+    ``obtido_em``, do ``datas_obtencao.csv`` da Coleta.
     """
     disp = serie.horaria
     paradas = classificar_horas_paradas(disp, df, programacao.get("classificadas") if programacao else None)
@@ -143,5 +143,5 @@ def analisar_disponibilidade(
         "anual": anual,
         "auditoria": serie.auditoria,
         "ausencias": aus,
-        "obtido_em": data_obtencao(caminhos.RAW_DATA_DIR / PASTA_DISPONIBILIDADE_RAW),
+        "obtido_em": obtido_em,
     }

@@ -11,8 +11,9 @@ import pandas as pd
 
 from src.comum.persistencia import ResultadoGravacao, gravar_bytes
 
-# Muda quando os campos mudam; a Geração do relatório recusa um formato diferente
-VERSAO_FORMATO = 1
+# Muda quando os campos mudam; a Geração do relatório recusa um formato diferente.
+# 2: datas de obtenção da Coleta em ``datas_obtencao`` (spec 006, decisão R22).
+VERSAO_FORMATO = 2
 
 
 @dataclass
@@ -51,6 +52,9 @@ class ResultadosAnalise:
     geracao_oficial: Dict[str, Any] = field(default_factory=dict)
     cadastro: Dict[str, Any] = field(default_factory=dict)
     dicionarios: Dict[str, Any] = field(default_factory=dict)
+    # Datas de obtenção por conjunto, do ``datas_obtencao.csv`` da Coleta (arquivos registrados, publicação e
+    # obtenção mais recentes, só dos arquivos do escopo da usina)
+    datas_obtencao: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     # Origem dos dados (legendas de fonte do relatório): datas de obtenção por conjunto e conjuntos carregados
     fontes: Dict[str, Any] = field(default_factory=dict)
     # Dados das figuras 01 (médias diárias) e 05 (vazões médias anuais), para a Geração do relatório só desenhar

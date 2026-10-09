@@ -58,3 +58,8 @@ data/
 .venv/
 .DS_Store
 *.tmp
+# Relatórios de referência aprovados (spec 006, decisão R22): o PDF entra no git; a Coleta congelada e as pastas
+# temporárias do comando referencia, não
+!relatorios_referencia/**/*.pdf
+relatorios_referencia/*/coleta/
+relatorios_referencia/.*/

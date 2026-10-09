@@ -2,13 +2,13 @@
  "etapa": "relatorio",
  "usina": "sao_domingos",
  "versao_formato": 1,
- "iniciada_em": "2026-10-08T14:27:54Z",
- "concluida_em": "2026-10-08T14:28:16Z",
+ "iniciada_em": "2026-10-09T17:21:51Z",
+ "concluida_em": "2026-10-09T17:22:11Z",
  "status": "concluida",
  "codigo_saida": 0,
  "etapa_anterior": {
   "etapa": "analises",
-  "concluida_em": "2026-10-08T14:27:54Z"
+  "concluida_em": "2026-10-09T17:21:51Z"
  },
  "arquivos": [
   {
@@ -23,8 +23,8 @@
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
-   "bytes": 2926160,
-   "sha256": "8009e9d8c31f96ad206c558c41a5a1307cf70a988082a8f4527d7f61d0161094"
+   "bytes": 2926158,
+   "sha256": "65523d1f861e0bcc5ce62a24a3011b126b18ceba903d8f21111bad03ad6c7882"
   },
   {
    "nome": "perfil_estatistico_anual.csv",

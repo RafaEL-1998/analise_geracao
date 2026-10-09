@@ -11,7 +11,7 @@ from tests.relatorio.apoio import analisar_com_bases
 def test_pdf_gerado_a_partir_dos_resultados(tmp_path: Path, df_sintetico) -> None:
     """O PDF é montado a partir de ResultadosAnalise e das figuras geradas."""
     df = preparar_dados(df_sintetico)
-    res = analisar_com_bases(df, tmp_path / "sem_auditoria.csv", tmp_path / "sem_manifesto.json")
+    res = analisar_com_bases(df, tmp_path / "sem_auditoria.csv")
     figuras = gerar_graficos(res, tmp_path / "figures", dpi=60)
 
     saida = PDFReportGenerator(res, figuras, tmp_path / "relatorio.pdf").build_pdf()
@@ -24,7 +24,7 @@ def test_pdf_gerado_a_partir_dos_resultados(tmp_path: Path, df_sintetico) -> Non
 def test_pdf_sem_figuras_nao_falha(tmp_path: Path, df_sintetico) -> None:
     """Figuras ausentes geram aviso no documento em vez de erro."""
     df = preparar_dados(df_sintetico)
-    res = analisar_com_bases(df, tmp_path / "sem_auditoria.csv", tmp_path / "sem_manifesto.json")
+    res = analisar_com_bases(df, tmp_path / "sem_auditoria.csv")
 
     saida = PDFReportGenerator(res, {}, tmp_path / "relatorio.pdf").build_pdf()
 
@@ -34,7 +34,7 @@ def test_pdf_sem_figuras_nao_falha(tmp_path: Path, df_sintetico) -> None:
 def test_pdf_toda_tabela_e_figura_tem_legenda_de_fonte(tmp_path: Path, df_sintetico) -> None:
     """Spec da Geração do relatório (FR-023): cada tabela, bloco e figura desenhados no PDF ganha a legenda de fonte."""
     df = preparar_dados(df_sintetico)
-    res = analisar_com_bases(df, tmp_path / "sem_auditoria.csv", tmp_path / "sem_manifesto.json")
+    res = analisar_com_bases(df, tmp_path / "sem_auditoria.csv")
     figuras = gerar_graficos(res, tmp_path / "figures", dpi=50)
     gerador = PDFReportGenerator(res, figuras, tmp_path / "relatorio.pdf")
     gerador.build_pdf()
@@ -55,7 +55,7 @@ def test_capa_com_data_e_sumario_com_paginas(tmp_path: Path, df_sintetico) -> No
     from src.relatorio.estrutura import sumario
 
     df = preparar_dados(df_sintetico)
-    res = analisar_com_bases(df, tmp_path / "sem_auditoria.csv", tmp_path / "sem_manifesto.json")
+    res = analisar_com_bases(df, tmp_path / "sem_auditoria.csv")
     gerador = PDFReportGenerator(res, gerar_graficos(res, tmp_path / "figures", dpi=40), tmp_path / "r.pdf")
     gerador.build_pdf()
     assert "Gerado em" in gerador.subtitulo_capa
@@ -72,7 +72,7 @@ def test_data_geracao_fixa_torna_o_pdf_reproduzivel(tmp_path: Path, df_sintetico
     from reportlab import rl_config
 
     df = preparar_dados(df_sintetico)
-    res = analisar_com_bases(df, tmp_path / "sem_auditoria.csv", tmp_path / "sem_manifesto.json")
+    res = analisar_com_bases(df, tmp_path / "sem_auditoria.csv")
     figuras = gerar_graficos(res, tmp_path / "figures", dpi=40)
     data = datetime(2026, 10, 7, 8, 53)
     a = PDFReportGenerator(res, figuras, tmp_path / "a.pdf", data_geracao=data)
@@ -94,7 +94,7 @@ def test_data_geracao_no_markdown_e_na_linha_de_comando(tmp_path: Path, df_sinte
     from src.relatorio.markdown import gerar_relatorio_md
 
     df = preparar_dados(df_sintetico)
-    res = analisar_com_bases(df, tmp_path / "sem_auditoria.csv", tmp_path / "sem_manifesto.json")
+    res = analisar_com_bases(df, tmp_path / "sem_auditoria.csv")
     md = gerar_relatorio_md(res, {}, tmp_path / "r.md", data_geracao=datetime(2026, 10, 7, 8, 53))
     assert "**Gerado em**: 07/10/2026 08:53" in md.read_text(encoding="utf-8")
     assert ler_data_geracao("07/10/2026 08:53") == datetime(2026, 10, 7, 8, 53)

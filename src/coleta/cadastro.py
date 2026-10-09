@@ -17,7 +17,8 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import pandas as pd
 
 from src.coleta.catalogo import _local_filename, download_resource, fetch_ckan_package_metadata, load_manifest, save_manifest
-from src.coleta.conjuntos import _normalizar, avisar_linhas_irregulares, ler_csv_texto
+from src.coleta.conjuntos import _normalizar, avisar_linhas_irregulares, ler_csv_texto, numero_publicado
+from src.coleta.registro import normalizar_texto
 from src.comum.caminhos import RAW_MANIFEST_FILE
 from src.comum.formatacao import fmt_num
 from src.comum.logger import setup_logger
@@ -95,9 +96,10 @@ def ler_cadastro(caminho: Path) -> Tuple[pd.DataFrame, List[int]]:
 def _mascaras(cadastro: pd.DataFrame, ceg: str, id_ons: str, estado: str,
               nome_ons: str) -> Tuple[pd.Series, pd.Series, pd.Series]:
     """Linhas com o CEG do perfil, linhas com a conferência (id ONS e estado) e homônimos (nome sem o CEG)."""
-    alvo = _normalizar(pd.Series([nome_ons])).iloc[0]
-    com_ceg = _normalizar(cadastro["ceg"]) == ceg.upper()
-    conferencia = (_normalizar(cadastro["id_ons"]) == id_ons.upper()) & (_normalizar(cadastro["id_estado"]) == estado.upper())
+    alvo = normalizar_texto(nome_ons)
+    com_ceg = _normalizar(cadastro["ceg"]) == normalizar_texto(ceg)
+    conferencia = ((_normalizar(cadastro["id_ons"]) == normalizar_texto(id_ons))
+                   & (_normalizar(cadastro["id_estado"]) == normalizar_texto(estado)))
     homonimos = _normalizar(cadastro["nom_usina"]).str.contains(alvo, regex=False) & ~com_ceg
     return com_ceg, conferencia, homonimos
 
@@ -144,7 +146,7 @@ def extrair_ficha(cadastro: pd.DataFrame, data_consulta: str, arquivo: str, ceg:
     linha = cadastro[com_ceg].iloc[0]
     ficha = {coluna: linha.get(coluna, "") for coluna in COLUNAS_FICHA}
     ficha.update(
-        val_potenciaautorizada=pd.to_numeric(pd.Series([linha.get("val_potenciaautorizada", "")]), errors="coerce").iloc[0],
+        val_potenciaautorizada=numero_publicado(pd.Series([linha.get("val_potenciaautorizada", "")])).iloc[0],
         data_consulta_utc=data_consulta, arquivo_origem=arquivo, homonimos=int(homonimos.sum()),
         linhas_so_identificador=int((com_ceg & ~conferencia).sum()),
         linhas_so_conferencia=int((~com_ceg & conferencia).sum()), linhas_ceg=int(com_ceg.sum()),

@@ -7,18 +7,20 @@ auditoria, para que uma mudança de código ou de nome no ONS fique visível. A 
 """
 
 import csv
-import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.coleta.catalogo import (
     _local_filename,
     download_resource,
+    escolher_entre_repetidos,
     fetch_ckan_package_metadata,
     load_manifest,
     parse_ckan_resources,
+    registrar_repetidos,
     save_manifest,
 )
+from src.coleta.registro import normalizar_texto
 from src.comum.caminhos import RAW_MANIFEST_FILE
 from src.comum.logger import FilterError, setup_logger
 from src.comum.modelos import AuditoriaArquivo, RegistroEnergiaVertida
@@ -26,15 +28,6 @@ from src.comum.persistencia import gravar_linhas_csv
 from src.comum.regras import ONS_CKAN_PACKAGE_URL, OPERATIONAL_METRIC_COLUMNS
 
 logger = setup_logger("coleta")
-
-
-def normalize_text(text: str) -> str:
-    """Normaliza texto removendo acentos e convertendo para maiúsculas."""
-    if not text:
-        return ""
-    nfkd = unicodedata.normalize("NFKD", text)
-    ascii_text = "".join([c for c in nfkd if not unicodedata.combining(c)])
-    return ascii_text.strip().upper()
 
 
 def safe_float(val: Optional[str]) -> Optional[float]:
@@ -104,8 +97,8 @@ def _scan_file(
     nome_sem_codigo = 0
     irregulares: List[int] = []  # números das linhas com nº de campos diferente do cabeçalho
     invalidos = 0  # valores numéricos ilegíveis nas linhas extraídas
-    # Pré-teste barato pela última palavra do nome antes da normalização completa
-    termo_rapido = nome_normalizado.split()[-1]
+    # Nome do reservatório normalizado uma vez por valor distinto (correção P3: a mesma normalização da extração)
+    normalizados: Dict[str, str] = {}
 
     with open(file_path, "r", encoding=encoding, newline="") as f:
         reader = csv.reader(f, delimiter=";")
@@ -117,6 +110,7 @@ def _scan_file(
                 periodo_referencia=file_path.stem,
                 codificacao=encoding,
                 status_processamento="FALHA",
+                mensagem="arquivo vazio",  # correção P5
             )
 
         header = [h.strip() for h in header]
@@ -137,7 +131,10 @@ def _scan_file(
 
             codigo_confere = row[idx_codigo].strip() == cod_usina
             reservatorio = row[idx_reservatorio]
-            nome_confere = termo_rapido in reservatorio.upper() and nome_normalizado in normalize_text(reservatorio)
+            normalizado = normalizados.get(reservatorio)
+            if normalizado is None:
+                normalizado = normalizados[reservatorio] = normalizar_texto(reservatorio)
+            nome_confere = nome_normalizado in normalizado
 
             if codigo_confere and nome_confere:
                 rec = parse_line_to_record(header, row, file_path.name, "CODIGO_E_NOME")
@@ -183,7 +180,7 @@ def filter_csv_file(
 ) -> Tuple[List[RegistroEnergiaVertida], AuditoriaArquivo]:
     """Inspeciona um arquivo CSV via streaming, extraindo os registros da usina."""
     codigo = str(int(cod_usina))
-    nome_normalizado = normalize_text(nome_reservatorio)
+    nome_normalizado = normalizar_texto(nome_reservatorio)
 
     try:
         try:
@@ -437,7 +434,8 @@ def sincronizar_evt(pasta_raw: Path, force: bool = False) -> List[Dict[str, Any]
     com o nome e o motivo (FR-026).
     """
     pasta_raw = Path(pasta_raw)
-    recursos = parse_ckan_resources(fetch_ckan_package_metadata(ONS_CKAN_PACKAGE_URL))
+    recursos, duplicados = escolher_entre_repetidos(
+        parse_ckan_resources(fetch_ckan_package_metadata(ONS_CKAN_PACKAGE_URL)), "Energia Vertida Turbinável")
     manifesto_path = pasta_raw / RAW_MANIFEST_FILE.name
     manifesto = load_manifest(manifesto_path)
     falhas: List[Dict[str, Any]] = []
@@ -451,6 +449,7 @@ def sincronizar_evt(pasta_raw: Path, force: bool = False) -> List[Dict[str, Any]
                 logger.error("Energia Vertida Turbinável: falha ao obter %s: %s", nome, exc)
                 falhas.append({"arquivo": nome, "mensagem": str(exc)})
     finally:
+        registrar_repetidos(manifesto, duplicados)
         save_manifest(manifesto, manifesto_path)
     resumo: Dict[str, int] = {}
     for r in recursos:

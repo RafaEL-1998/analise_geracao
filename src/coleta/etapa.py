@@ -14,7 +14,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional
 
 import pandas as pd
 
-from src.coleta import cadastro, conjuntos, indicadores, programacao
+from src.coleta import cadastro, conjuntos, indicadores, programacao, registro
 from src.coleta.catalogo import load_manifest
 from src.coleta.dicionarios import NOME_REGISTRO, exportar_registro, sincronizar_dicionarios
 from src.coleta.evt import (
@@ -27,20 +27,40 @@ from src.coleta.evt import (
 from src.comum import caminhos
 from src.comum.logger import setup_logger
 from src.comum.modelos import AuditoriaArquivo
-from src.comum.persistencia import gravar_csv, gravar_parquet
+from src.comum.persistencia import gravar_bytes, gravar_csv, gravar_parquet
 from src.comum.regras import (
+    CONJUNTO_CADASTRO,
+    CONJUNTO_EVT,
+    CONJUNTO_PROGRAMACAO_DIARIA,
     CONJUNTOS_INDICADORES_ONS,
-    CONJUNTOS_PIPELINE,
     PASTA_CADASTRO_RAW,
     PASTA_INDICADORES_RAW,
     PASTA_PROGRAMACAO_RAW,
 )
-from src.pipeline import CODIGO_DADO_NAO_OBTIDO, CODIGO_SUCESSO, ResultadoEtapa
+from src.pipeline import CODIGO_DADO_NAO_OBTIDO, CODIGO_ERRO, CODIGO_SUCESSO, ResultadoEtapa
 
 logger = setup_logger("coleta")
 
 FORMATO_DATA = "%Y-%m-%d %H:%M:%S"
 ARQ = caminhos.ARQUIVOS_COLETA
+# Datas de obtenção por conjunto, só com os arquivos do escopo da usina (spec 006, decisão R22)
+COLUNAS_DATAS_OBTENCAO = ["conjunto", "arquivos_registrados", "publicacao_mais_recente", "obtencao_mais_recente"]
+
+
+def datas_do_escopo(pasta: Path, arquivos: Iterable[str]) -> Dict[str, Any]:
+    """Arquivos registrados no manifesto da pasta, publicação e obtenção mais recentes, só dos ``arquivos`` dados."""
+    manifesto = load_manifest(Path(pasta) / caminhos.RAW_MANIFEST_FILE.name)
+    entradas = [manifesto[nome] for nome in dict.fromkeys(arquivos) if isinstance(manifesto.get(nome), dict)]
+    publicacoes = [str(e["ultima_modificacao"]) for e in entradas if e.get("ultima_modificacao")]
+    registros = [str(e["registrado_em_utc"]) for e in entradas if e.get("registrado_em_utc")]
+    return {"arquivos_registrados": len(entradas), "publicacao_mais_recente": max(publicacoes, default=""),
+            "obtencao_mais_recente": max(registros, default="")}
+
+
+def _obtidos(auditoria: pd.DataFrame) -> List[str]:
+    if not len(auditoria):
+        return []
+    return auditoria.loc[auditoria["obtido"].astype(bool), "arquivo"].astype(str).tolist()
 
 
 # ---------------------------------------------------------------------------
@@ -144,6 +164,14 @@ class _Coleta:
         self.inicio_execucao = _agora_utc()
         self.arquivos: List[Path] = []
         self.resumo: Dict[str, Any] = {"sem_portal": sem_portal, "forcar_download": self.forcar, "conjuntos": {}}
+        self.datas: Dict[str, Dict[str, Any]] = {}
+        # Conjuntos do tipo e da cobertura da usina, na ordem do registro (spec 006, decisão R8; FR-015)
+        self.entradas = registro.conjuntos_da_usina(perfil)
+        self.pacotes = registro.pacotes(self.entradas)
+
+    def anotar_datas(self, pacote: str, pasta: Path, arquivos: Iterable[str]) -> None:
+        """Datas de obtenção do conjunto, só com os arquivos do escopo da usina (``datas_obtencao.csv``)."""
+        self.datas[pacote] = datas_do_escopo(pasta, arquivos)
 
     def gravar_csv(self, tabela: pd.DataFrame, chave: str, **opcoes: Any) -> None:
         destino = self.pasta / ARQ[chave]
@@ -189,6 +217,7 @@ def _coletar_evt(c: _Coleta) -> Optional[ResultadoEtapa]:
     save_consolidated_records(consolidados, destino_evt)
     save_audit_report(audits, destino_auditoria)
     c.arquivos += [destino_evt, destino_auditoria]
+    c.anotar_datas(CONJUNTO_EVT, c.raw, [a.nome_arquivo for a in audits if a.obtido])
     if c.registrar("energia-vertida-turbinavel", auditoria_evt_normalizada(audits), [c.raw]):
         return c.resultado(CODIGO_DADO_NAO_OBTIDO)
     if not consolidados:
@@ -210,6 +239,8 @@ def _coletar_indicadores(c: _Coleta) -> Optional[ResultadoEtapa]:
     extraido, auditoria = indicadores.extrair_indicadores(raiz, c.inicio, c.fim, ident.ceg, ident.id_ons, falhas)
     c.gravar_parquet(extraido, "indicadores")
     c.gravar_csv(auditoria, "auditoria_indicadores")
+    for conjunto in CONJUNTOS_INDICADORES_ONS:
+        c.anotar_datas(conjunto, raiz / conjunto, _obtidos(auditoria[auditoria["conjunto"] == conjunto]))
     if c.registrar("indicadores", auditoria, [raiz / conjunto for conjunto in CONJUNTOS_INDICADORES_ONS]):
         return c.resultado(CODIGO_DADO_NAO_OBTIDO)
     return None
@@ -224,6 +255,7 @@ def _coletar_programacao(c: _Coleta) -> Optional[ResultadoEtapa]:
                                                           ident.nome_ons, estado, falhas)
     c.gravar_parquet(extraido, "programacao")
     c.gravar_csv(auditoria, "auditoria_programacao", date_format=FORMATO_DATA)
+    c.anotar_datas(CONJUNTO_PROGRAMACAO_DIARIA, pasta, _obtidos(auditoria))
     if c.registrar("programacao_diaria", auditoria.rename(columns={
             "linhas_codigo_sem_conferencia": "linhas_so_identificador"}), [pasta]):
         return c.resultado(CODIGO_DADO_NAO_OBTIDO)
@@ -231,13 +263,14 @@ def _coletar_programacao(c: _Coleta) -> Optional[ResultadoEtapa]:
 
 
 def _coletar_horario(c: _Coleta, nome: str) -> Optional[ResultadoEtapa]:
-    desc = conjuntos.descricoes(c.perfil)[nome]
+    desc = registro.descricoes(c.perfil)[nome]
     pasta = c.raw / desc.pasta
     falhas = c.sincronizar(desc.pacote, lambda: conjuntos.sincronizar_conjunto(desc, c.inicio, c.fim, pasta,
                                                                                 c.forcar)) or []
     extraido, auditoria = conjuntos.extrair_conjunto(desc, pasta, c.inicio, c.fim, falhas)
     c.gravar_parquet(extraido, nome)
     c.gravar_csv(auditoria, f"auditoria_{nome}")
+    c.anotar_datas(desc.pacote, pasta, _obtidos(auditoria))
     if c.registrar(desc.pacote, auditoria, [pasta]):
         return c.resultado(CODIGO_DADO_NAO_OBTIDO)
     return None
@@ -251,6 +284,7 @@ def _coletar_cadastro(c: _Coleta) -> Optional[ResultadoEtapa]:
     ficha, auditoria = cadastro.extrair_cadastro(pasta, ident.ceg, ident.id_ons, estado, ident.nome_ons, nome, falhas)
     c.gravar_csv(ficha, "cadastro_ficha")
     c.gravar_csv(auditoria, "auditoria_cadastro")
+    c.anotar_datas(CONJUNTO_CADASTRO, pasta, _obtidos(auditoria))
     if c.registrar("modalidade-usina", auditoria, [pasta]) or ficha.empty:
         if ficha.empty:
             logger.error("Coleta interrompida: a usina (CEG %s) não tem ficha no cadastro do ONS.", ident.ceg)
@@ -259,41 +293,71 @@ def _coletar_cadastro(c: _Coleta) -> Optional[ResultadoEtapa]:
 
 
 def _coletar_dicionarios(c: _Coleta) -> None:
-    """Dicionários dos dez conjuntos (só com o portal) e o registro, montado a partir dos manifestos locais."""
+    """Dicionários dos conjuntos da usina (só com o portal) e o registro, montado a partir dos manifestos locais."""
     if not c.sem_portal:
         try:
-            sincronizar_dicionarios(list(CONJUNTOS_PIPELINE), c.raw)
+            sincronizar_dicionarios(list(c.pacotes), c.raw)
         except Exception as exc:  # FR-033: falha nos dicionários não interrompe a coleta nem muda o código
             logger.warning("Dicionários de dados não obtidos (%s); a coleta continua.", exc)
-    registro = exportar_registro(c.raw, c.pasta, NOME_REGISTRO)
+    tabela = exportar_registro(c.raw, c.pasta, NOME_REGISTRO, c.pacotes)
     c.arquivos.append(c.pasta / NOME_REGISTRO)
     c.resumo["dicionarios"] = {str(k): int(v) for k, v in
-                               registro["resultado_ultima_obtencao"].value_counts().sort_index().items()}
+                               tabela["resultado_ultima_obtencao"].value_counts().sort_index().items()}
+
+
+def _gravar_formato_2(c: _Coleta) -> None:
+    """Arquivos que as etapas seguintes leem no lugar de ``data/raw/`` (spec 006, decisão R22).
+
+    ``datas_obtencao.csv``: uma linha por conjunto coletado, na ordem do registro. ``dicionario_evt.json``:
+    a cópia do dicionário de dados da EVT, quando a usina tem EVT e o dicionário existe em ``data/raw/``.
+    """
+    ordem = [p for p in registro.CONJUNTOS_PIPELINE if p in c.datas]
+    ordem += [p for p in c.datas if p not in registro.CONJUNTOS_PIPELINE]
+    tabela = pd.DataFrame([{"conjunto": p, **c.datas[p]} for p in ordem], columns=COLUNAS_DATAS_OBTENCAO)
+    c.gravar_csv(tabela, "datas_obtencao")
+    origem = caminhos.dicionario_evt()
+    if CONJUNTO_EVT in c.datas:
+        if origem.is_file():
+            destino = c.pasta / ARQ["dicionario_evt"]
+            gravar_bytes(origem.read_bytes(), destino)
+            c.arquivos.append(destino)
+        else:
+            logger.warning("Dicionário de dados da EVT ausente em %s; o Tratamento vai recusar a base.", origem)
+
+
+def _coletar(c: _Coleta, chave: str) -> Optional[ResultadoEtapa]:
+    """Coleta de um conjunto do registro (spec 006, decisão R8): o motor comum nos que têm descrição e os módulos
+    próprios nos demais."""
+    if registro.entrada(chave).descricao is not None:
+        return _coletar_horario(c, chave)
+    proprios = {"evt": _coletar_evt, "indicadores": _coletar_indicadores, "programacao": _coletar_programacao,
+                "cadastro": _coletar_cadastro}
+    return proprios[chave](c)
 
 
 def executar_coleta(perfil: Any, sem_portal: bool = False, forcar_download: bool = False) -> ResultadoEtapa:
-    """Coleta os dez conjuntos para a usina do perfil e grava ``data/usinas/<slug>/coleta/``.
+    """Coleta os conjuntos do registro da usina do perfil e grava ``data/usinas/<slug>/coleta/``.
 
-    Códigos: 0 (sucesso), 2 (arquivo não obtido ou não lido, ou usina sem registro na EVT ou no cadastro); o erro
-    (código 1, inclusive o catálogo inacessível) é tratado por ``src.pipeline``.
+    Na UHE sem ``[cobertura]``, os dez conjuntos de hoje. Códigos: 0 (sucesso), 2 (arquivo não obtido ou não lido,
+    ou usina sem registro na EVT ou no cadastro), 1 (usina sem a EVT, cuja série de referência ainda não é
+    coletada); o erro (código 1, inclusive o catálogo inacessível) é tratado por ``src.pipeline``.
     """
     c = _Coleta(perfil, sem_portal, forcar_download)
+    chaves = [e.chave for e in c.entradas]
+    if chaves[:1] != ["evt"]:  # a série de referência das usinas sem EVT (decisão R6) ainda não é coletada
+        logger.error("A usina '%s' (%s) não tem a Energia Vertida Turbinável, que hoje define o período da "
+                     "Coleta; a série de referência do tipo ainda não é coletada.", perfil.usina.slug,
+                     registro.tipo_da_usina(perfil))
+        return c.resultado(CODIGO_ERRO)
     c.pasta.mkdir(parents=True, exist_ok=True)
     if sem_portal:
         logger.info("Coleta sem consulta ao portal (--sem-portal): só os arquivos locais de %s.", c.raw)
-    etapas: List[Callable[[_Coleta], Optional[ResultadoEtapa]]] = [
-        _coletar_evt,
-        _coletar_indicadores,
-        _coletar_programacao,
-        lambda x: _coletar_horario(x, "disponibilidade"),
-        lambda x: _coletar_horario(x, "hidrologia"),
-        lambda x: _coletar_horario(x, "geracao"),
-        _coletar_cadastro,
-    ]
-    for etapa in etapas:
-        interrompida = etapa(c)
+    for chave in chaves:
+        interrompida = _coletar(c, chave)
         if interrompida is not None:
             _coletar_dicionarios(c)  # a consulta ao portal obtém os dicionários mesmo com a coleta interrompida
+            _gravar_formato_2(c)
             return c.resultado(interrompida.codigo)
     _coletar_dicionarios(c)
+    _gravar_formato_2(c)
     return c.resultado(CODIGO_SUCESSO)

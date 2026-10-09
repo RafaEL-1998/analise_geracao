@@ -7,6 +7,8 @@ nome = "UHE Fictícia"
 nome_curto = "Fictícia"
 estado = "GO"
 inicio_operacao_comercial = 2015
+tipo = "UHE"
+modalidade = "TIPO II-A"
 
 [identificacao]
 cod_usina = 999

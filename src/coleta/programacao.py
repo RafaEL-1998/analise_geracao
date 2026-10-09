@@ -24,13 +24,16 @@ import pyarrow.parquet as pq
 from src.coleta.catalogo import (
     _local_filename,
     download_resource,
+    escolher_entre_repetidos,
     fetch_ckan_package_metadata,
     load_manifest,
     parse_ckan_resources,
+    registrar_repetidos,
     save_manifest,
 )
-from src.coleta.evt import normalize_text
+from src.coleta.conjuntos import _normalizar, numero_publicado
 from src.coleta.indicadores import url_pacote
+from src.coleta.registro import normalizar_texto
 from src.comum.caminhos import RAW_MANIFEST_FILE
 from src.comum.logger import setup_logger
 from src.comum.modelos import RecursoONS
@@ -108,7 +111,9 @@ def sincronizar_programacao(
     destino = Path(destino)
     destino.mkdir(parents=True, exist_ok=True)
     metadados = fetch_ckan_package_metadata(url_pacote(CONJUNTO_PROGRAMACAO_DIARIA))
-    recursos = selecionar_recursos_periodo(parse_ckan_resources(metadados, FORMATO_PROGRAMACAO_DIARIA), inicio, fim)
+    recursos, duplicados = escolher_entre_repetidos(
+        selecionar_recursos_periodo(parse_ckan_resources(metadados, FORMATO_PROGRAMACAO_DIARIA), inicio, fim),
+        "Programação diária")
     manifesto_path = destino / RAW_MANIFEST_FILE.name
     manifesto = load_manifest(manifesto_path)
     logger.info("Programação diária: %d arquivos publicados no período.", len(recursos))
@@ -127,6 +132,7 @@ def sincronizar_programacao(
         with concurrent.futures.ThreadPoolExecutor(DOWNLOADS_SIMULTANEOS) as executor:
             list(executor.map(baixar, recursos))
     finally:
+        registrar_repetidos(manifesto, duplicados)
         save_manifest(manifesto, manifesto_path)
     resumo: Dict[str, int] = {}
     for r in recursos:
@@ -140,12 +146,15 @@ def sincronizar_programacao(
 # ---------------------------------------------------------------------------
 
 
-def _numerico(serie: pd.Series) -> pd.Series:
-    return pd.to_numeric(serie.astype(str).str.strip().str.replace(",", ".", regex=False), errors="coerce")
-
-
 def _igual(coluna: pa.ChunkedArray, valor: str) -> pa.ChunkedArray:
-    return pc.equal(pc.utf8_trim_whitespace(pc.cast(coluna, pa.string())), valor)
+    """Linhas cujo valor normalizado é o de ``valor`` (correção P3), pelo filtro do pyarrow.
+
+    A normalização é feita uma vez por valor distinto da coluna; o filtro usa os valores publicados que conferem.
+    """
+    texto = pc.cast(coluna, pa.string())
+    alvo = normalizar_texto(valor)
+    conferem = [v for v in pc.unique(texto).to_pylist() if v is not None and normalizar_texto(v) == alvo]
+    return pc.is_in(texto, value_set=pa.array(conferem, type=pa.string()))
 
 
 def _preenchido(serie: pd.Series) -> pd.Series:
@@ -176,14 +185,14 @@ def ler_arquivo(caminho: Path, cod_programacao: str, nome_ons: str, estado: str)
                        "linhas_so_conferencia": 0, "valores_invalidos": 0, "patamares": 0,
                        "data_interna_confere": False, "status": "FALHA", "mensagem": str(e)}
 
-    alvo = normalize_text(nome_ons)
-    codigo = bruto["cod_exibicaousina"].astype(str).str.strip() == cod_programacao
+    alvo = normalizar_texto(nome_ons)
+    codigo = _normalizar(bruto["cod_exibicaousina"]) == normalizar_texto(cod_programacao)
     nomes = bruto["nom_usina"].astype(str)
-    contem = {nome: alvo in normalize_text(nome) for nome in nomes.unique()}  # um nome por usina, 48 linhas cada
-    conferencia = nomes.map(contem).astype(bool) & (bruto["id_estado"].astype(str).str.strip() == estado)
+    contem = {nome: alvo in normalizar_texto(nome) for nome in nomes.unique()}  # um nome por usina, 48 linhas cada
+    conferencia = nomes.map(contem).astype(bool) & (_normalizar(bruto["id_estado"]) == normalizar_texto(estado))
     sel = bruto[codigo & conferencia]
-    patamares = _numerico(sel["num_patamar"]).astype("Int64")
-    geracao = _numerico(sel["val_geracaoprogramada"])
+    patamares = numero_publicado(sel["num_patamar"]).astype("Int64")
+    geracao = numero_publicado(sel["val_geracaoprogramada"])
     invalidos = int((patamares.isna() & _preenchido(sel["num_patamar"])).sum()
                     + (geracao.isna() & _preenchido(sel["val_geracaoprogramada"])).sum())
     linhas = pd.DataFrame({

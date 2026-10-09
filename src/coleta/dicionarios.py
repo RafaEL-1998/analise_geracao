@@ -18,7 +18,8 @@ import pandas as pd
 
 from src.coleta.catalogo import _local_filename, _sha256, download_resource, fetch_ckan_package_metadata, load_manifest, save_manifest
 from src.comum.caminhos import ARQUIVOS_COLETA, RAW_DATA_DIR, RAW_MANIFEST_FILE
-from src.comum.regras import CONJUNTOS_PIPELINE, DIRETORIO_DICIONARIOS, ONS_CKAN_PACKAGE_SHOW_URL
+from src.coleta.registro import CONJUNTOS_PIPELINE
+from src.comum.regras import DIRETORIO_DICIONARIOS, ONS_CKAN_PACKAGE_SHOW_URL
 from src.comum.logger import setup_logger
 from src.comum.modelos import RecursoONS
 from src.comum.persistencia import gravar_csv
@@ -125,10 +126,13 @@ def sincronizar_dicionarios(conjuntos: Iterable[str], raiz_raw: Path = RAW_DATA_
     return resultados
 
 
-def montar_registro(raiz_raw: Path = RAW_DATA_DIR) -> pd.DataFrame:
-    """Registro de todos os conjuntos do pipeline, montado a partir dos manifestos (uma linha por formato)."""
+def montar_registro(raiz_raw: Path = RAW_DATA_DIR, conjuntos: Optional[Iterable[str]] = None) -> pd.DataFrame:
+    """Registro dos dicionários, montado a partir dos manifestos (uma linha por conjunto e formato).
+
+    ``conjuntos``: os pacotes da usina, na ordem do registro (spec 006, decisão R8); por padrão, todos os registrados.
+    """
     linhas = []
-    for conjunto in CONJUNTOS_PIPELINE:
+    for conjunto in (CONJUNTOS_PIPELINE if conjuntos is None else conjuntos):
         pasta = pasta_dicionarios(conjunto, raiz_raw)
         manifesto = load_manifest(pasta / RAW_MANIFEST_FILE.name)
         consulta = manifesto.get(CHAVE_CONSULTA) or {}
@@ -157,9 +161,10 @@ def montar_registro(raiz_raw: Path = RAW_DATA_DIR) -> pd.DataFrame:
     return pd.DataFrame(linhas, columns=COLUNAS_REGISTRO)
 
 
-def exportar_registro(raiz_raw: Path, pasta_saida: Path, nome_registro: str = NOME_REGISTRO) -> pd.DataFrame:
-    """Grava o registro dos dicionários (via persistência, com cópia da versão anterior)."""
-    registro = montar_registro(raiz_raw)
+def exportar_registro(raiz_raw: Path, pasta_saida: Path, nome_registro: str = NOME_REGISTRO,
+                      conjuntos: Optional[Iterable[str]] = None) -> pd.DataFrame:
+    """Grava o registro dos dicionários dos ``conjuntos`` (via persistência, com cópia da versão anterior)."""
+    registro = montar_registro(raiz_raw, conjuntos)
     gravar_csv(registro, Path(pasta_saida) / nome_registro)
     return registro
 

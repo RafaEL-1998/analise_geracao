@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
+from src.comum import caminhos
 from src.comum.logger import setup_logger
 from src.comum.persistencia import gravar_csv, gravar_parquet, gravar_planilha
 from src.comum.regras import OPERATIONAL_METRIC_COLUMNS
@@ -142,10 +143,12 @@ def tratar_evt(perfil: Any, entrada: Path, arquivos: Dict[str, Path]) -> Tuple[i
 
     ``arquivos`` traz os destinos ``evt_parquet``, ``evt_csv``, ``evt_xlsx``, ``validacao_csv`` e ``validacao_md``.
     Devolve o código (0 sucesso; 1 com violação da R1, valor negativo publicado), os arquivos gravados e o resumo
-    (período, registros, violações por regra, registros sinalizados e valores ausentes nas grandezas).
+    (período, registros, violações por regra, registros sinalizados e valores ausentes nas grandezas). O dicionário
+    de dados é a cópia gravada pela Coleta ao lado da ``entrada``, nunca o de ``data/raw/`` (spec 006, decisão R22).
     """
+    dicionario = Path(entrada).parent / caminhos.ARQUIVOS_COLETA["dicionario_evt"]
     df_bruto = carregar_base_consolidada(entrada)
-    verificar_colunas_no_dicionario(OPERATIONAL_METRIC_COLUMNS, carregar_dicionario_dados())
+    verificar_colunas_no_dicionario(OPERATIONAL_METRIC_COLUMNS, carregar_dicionario_dados(dicionario))
     df_tratado = padronizar_tipagem_numerica(df_bruto)
     resumo: Dict[str, Any] = {
         "inicio": df_tratado["din_instante"].min(),
@@ -166,7 +169,8 @@ def tratar_evt(perfil: Any, entrada: Path, arquivos: Dict[str, Path]) -> Tuple[i
 
     df_tratado = sinalizar_anomalias(df_tratado, perfil)
     resumo["sinalizados"] = int((df_tratado["qualidade_registro"] != "OK").sum())
-    gerar_relatorio_validacao_md(df_res_validacao, perfil, arquivos["validacao_md"], df_tratado)
+    gerar_relatorio_validacao_md(df_res_validacao, perfil, arquivos["validacao_md"], df_tratado,
+                                 dicionario=dicionario)
     gerar_relatorio_validacao_csv(df_res_validacao, arquivos["validacao_csv"])
     exportar_excel(df_tratado, arquivos["evt_xlsx"], nome_aba(perfil))
     exportar_parquet(df_tratado, arquivos["evt_parquet"])

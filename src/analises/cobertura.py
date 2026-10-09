@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import pandas as pd
 
 from src.analises.comum import horas_no_ano
-from src.comum.caminhos import RAW_MANIFEST_FILE
 
 
 def _periodo_do_arquivo(nome_arquivo: str) -> str:
@@ -41,32 +39,26 @@ def _resumo_auditoria(caminho_auditoria: Optional[Path]) -> Dict[str, Any]:
     }
 
 
-def _resumo_manifesto(caminho_manifesto: Optional[Path]) -> Dict[str, Any]:
-    caminho = Path(caminho_manifesto) if caminho_manifesto else RAW_MANIFEST_FILE
-    if not caminho.exists():
+def _resumo_manifesto(datas_evt: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """Arquivos da EVT registrados no manifesto e datas mais recentes, da linha da EVT no ``datas_obtencao.csv``."""
+    if not datas_evt or not int(datas_evt.get("arquivos_registrados") or 0):
         return {}
-    try:
-        with open(caminho, "r", encoding="utf-8") as f:
-            entradas = list(json.load(f).values())
-    except (OSError, json.JSONDecodeError):
-        return {}
-    if not entradas:
-        return {}
-    modificacoes = [e.get("ultima_modificacao", "") for e in entradas if e.get("ultima_modificacao")]
-    registros = [e.get("registrado_em_utc", "") for e in entradas if e.get("registrado_em_utc")]
     return {
-        "arquivos": len(entradas),
-        "ultima_modificacao_mais_recente": max(modificacoes) if modificacoes else "",
-        "registro_mais_recente_utc": max(registros) if registros else "",
+        "arquivos": int(datas_evt["arquivos_registrados"]),
+        "ultima_modificacao_mais_recente": str(datas_evt.get("publicacao_mais_recente") or ""),
+        "registro_mais_recente_utc": str(datas_evt.get("obtencao_mais_recente") or ""),
     }
 
 
 def analisar_cobertura(
     df: pd.DataFrame,
     caminho_auditoria: Optional[Path] = None,
-    caminho_manifesto: Optional[Path] = None,
+    datas_evt: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Período coberto, horas ausentes, anos parciais, agentes e arquivos de origem."""
+    """Período coberto, horas ausentes, anos parciais, agentes e arquivos de origem.
+
+    ``datas_evt``: a linha da EVT no ``datas_obtencao.csv`` da Coleta (arquivos registrados e datas).
+    """
     inicio = df["din_instante"].min()
     fim = df["din_instante"].max()
     grade = pd.date_range(inicio, fim, freq="h")
@@ -116,5 +108,5 @@ def analisar_cobertura(
         "agentes": agentes,
         "identificacao": identificacao,
         "arquivos": _resumo_auditoria(caminho_auditoria),
-        "manifesto": _resumo_manifesto(caminho_manifesto),
+        "manifesto": _resumo_manifesto(datas_evt),
     }

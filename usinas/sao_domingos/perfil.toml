@@ -9,6 +9,9 @@ nome = "UHE São Domingos"
 nome_curto = "São Domingos"                # frases sobre homônimos no cadastro
 estado = "MS"
 inicio_operacao_comercial = 2013
+# Tipo (prefixo do CEG) e modalidade de operação no cadastro do ONS (spec 006, FR-011)
+tipo = "UHE"
+modalidade = "TIPO II-A"
 
 [identificacao]
 cod_usina = 153                      # Energia Vertida Turbinável e Dados hidrológicos horários

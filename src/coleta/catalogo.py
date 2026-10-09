@@ -11,12 +11,13 @@ são registradas no manifesto.
 import hashlib
 import http.client
 import json
+import re
 import time
 import urllib.request
 import urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Iterable, Optional, Sequence, Tuple
 
 from src.comum.caminhos import RAW_DATA_DIR, RAW_MANIFEST_FILE
 from src.comum.regras import (
@@ -115,6 +116,39 @@ def _local_filename(recurso: RecursoONS) -> str:
     if not url_filename.lower().endswith(extensao):
         url_filename = f"{recurso.nome_recurso}{extensao}"
     return url_filename
+
+
+def recurso_preferido(candidatos: Sequence[RecursoONS]) -> RecursoONS:
+    """Entre recursos repetidos no catálogo, o que tem ``last_modified`` preenchido e, em empate, o maior."""
+    return max(candidatos, key=lambda r: (bool(r.ultima_modificacao), r.tamanho_bytes))
+
+
+def escolher_entre_repetidos(recursos: Iterable[RecursoONS], rotulo: str) -> Tuple[List[RecursoONS], Dict[str, int]]:
+    """Um recurso por arquivo local (correção P1; spec da Coleta de dados, FR-019).
+
+    Devolve os escolhidos, na ordem da primeira aparição de cada arquivo, e {arquivo: repetições descartadas}.
+    """
+    grupos: Dict[str, List[RecursoONS]] = {}
+    for recurso in recursos:
+        grupos.setdefault(_local_filename(recurso), []).append(recurso)
+    escolhidos: List[RecursoONS] = []
+    duplicados: Dict[str, int] = {}
+    for nome, candidatos in grupos.items():
+        escolhido = recurso_preferido(candidatos)
+        escolhidos.append(escolhido)
+        if len(candidatos) > 1:
+            duplicados[nome] = len(candidatos) - 1
+            logger.warning("%s: %d recursos repetidos no catálogo para %s; usado o de %s (%d bytes).", rotulo,
+                           len(candidatos), nome, escolhido.ultima_modificacao or "data não informada",
+                           escolhido.tamanho_bytes)
+    return escolhidos, duplicados
+
+
+def registrar_repetidos(manifest: Dict[str, Dict[str, Any]], duplicados: Dict[str, int]) -> None:
+    """Anota no manifesto quantos recursos repetidos no catálogo foram descartados para cada arquivo obtido."""
+    for nome, quantidade in duplicados.items():
+        if nome in manifest:
+            manifest[nome]["recursos_duplicados_catalogo"] = quantidade
 
 
 def _is_local_copy_current(recurso: RecursoONS, entry: Optional[Dict[str, Any]], local_size: int) -> bool:
@@ -278,7 +312,9 @@ def download_resource(
         )
         status_sucesso = "UPDATED"
 
-    temp_path = destination_dir / f"{url_filename}.part"
+    # O arquivo temporário leva o id do recurso: dois downloads simultâneos nunca escrevem no mesmo (correção P1)
+    id_recurso = re.sub(r"[^A-Za-z0-9_-]", "", recurso.id_recurso or "")
+    temp_path = destination_dir / (f"{url_filename}.{id_recurso}.part" if id_recurso else f"{url_filename}.part")
     headers = {"User-Agent": "ONS-Analise-Usinas-Hidreletricas/1.0"}
     req = urllib.request.Request(recurso.url_download, headers=headers)
 

@@ -15,7 +15,6 @@ from src.coleta.conjuntos import (
     COLUNAS_AUDITORIA_COLETA,
     DescricaoConjunto,
     Regra,
-    data_obtencao,
     descricoes,
     extrair_arquivo,
     extrair_conjunto,
@@ -247,4 +246,3 @@ def test_sincronizacao_registra_falhas_e_duplicados(tmp_path: Path) -> None:
     assert [f["arquivo"] for f in falhas] == ["D_2025_02.csv"] and falhas[0]["status"] == "FALHA"
     manifesto = json.loads((pasta / "_manifesto_ons.json").read_text(encoding="utf-8"))
     assert manifesto["D_2025_01.parquet"]["recursos_duplicados_catalogo"] == 1
-    assert data_obtencao(pasta) == ""  # o simulador não registra a data; a função não falha

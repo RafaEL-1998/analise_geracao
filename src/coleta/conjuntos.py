@@ -12,8 +12,6 @@ from __future__ import annotations
 import concurrent.futures
 import csv
 import re
-import unicodedata
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
@@ -26,25 +24,20 @@ from src.coleta.catalogo import (
     fetch_ckan_package_metadata,
     load_manifest,
     parse_ckan_resources,
+    recurso_preferido,
+    registrar_repetidos,
     save_manifest,
 )
+from src.coleta import registro
+from src.coleta.registro import COLUNA_INSTANTE, DescricaoConjunto, Regra, normalizar_texto
 from src.comum.caminhos import RAW_MANIFEST_FILE
 from src.comum.logger import setup_logger
 from src.comum.modelos import RecursoONS
-from src.comum.regras import (
-    CONJUNTO_DISPONIBILIDADE,
-    CONJUNTO_GERACAO,
-    CONJUNTO_HIDROLOGIA,
-    ONS_CKAN_PACKAGE_SHOW_URL,
-    PASTA_DISPONIBILIDADE_RAW,
-    PASTA_GERACAO_RAW,
-    PASTA_HIDROLOGIA_RAW,
-)
+from src.comum.regras import ONS_CKAN_PACKAGE_SHOW_URL
 
 logger = setup_logger("coleta")
 
 DOWNLOADS_SIMULTANEOS = 8
-COLUNA_INSTANTE = "din_instante"
 COLUNA_NAO_NUMERICO = "_nao_numerico"  # marca de valor não numérico na fonte; o Tratamento a transforma em sinalização
 _RE_PERIODO = re.compile(r"_(\d{4})(?:_(\d{2}))?\.[A-Za-z0-9]+$")
 EXTENSOES = {".parquet": "PARQUET", ".csv": "CSV"}
@@ -56,66 +49,10 @@ COLUNAS_AUDITORIA_COLETA: List[str] = [
     "recursos_duplicados_catalogo", "status", "mensagem",
 ]
 
-VAZOES = ("val_vazaoafluente", "val_vazaodefluente", "val_vazaoturbinada", "val_vazaovertida",
-          "val_vazaovertidanaoturbinavel", "val_vazaooutrasestruturas")
-
-
-@dataclass(frozen=True)
-class Regra:
-    """Condição sobre uma coluna: ``igual`` (texto normalizado ou número) ou ``contem`` (texto normalizado)."""
-
-    coluna: str
-    valor: Any
-    modo: str = "igual"
-
-
-@dataclass(frozen=True)
-class DescricaoConjunto:
-    """Descrição declarativa de um conjunto horário do ONS para uma usina."""
-
-    pacote: str
-    pasta: str
-    identificador: Regra
-    conferencias: Tuple[Regra, ...]
-    colunas_valor: Tuple[str, ...]
-    convencao_hora: str = "inicio"  # "inicio" ou "fim" (aplicada no Tratamento de dados)
-    formatos_preferidos: Tuple[str, ...] = ("PARQUET", "CSV")
-    # Filtro empurrado à leitura do Parquet (DNF do pyarrow), útil nos arquivos grandes com todas as usinas
-    filtro_parquet: Optional[Tuple[Tuple[Tuple[str, str, Any], ...], ...]] = None
-
-    @property
-    def colunas_leitura(self) -> List[str]:
-        colunas = [self.identificador.coluna, *(r.coluna for r in self.conferencias), COLUNA_INSTANTE,
-                   *self.colunas_valor]
-        return list(dict.fromkeys(colunas))
-
 
 def descricoes(perfil: Any) -> Dict[str, DescricaoConjunto]:
-    """Descrições dos três conjuntos horários com os identificadores do perfil (contrato do perfil)."""
-    ident, estado = perfil.identificacao, perfil.usina.estado
-    return {
-        "disponibilidade": DescricaoConjunto(
-            pacote=CONJUNTO_DISPONIBILIDADE, pasta=PASTA_DISPONIBILIDADE_RAW,
-            identificador=Regra("id_ons", ident.id_ons),
-            conferencias=(Regra("ceg", ident.ceg), Regra("id_estado", estado)),
-            colunas_valor=("val_potenciainstalada", "val_dispoperacional", "val_dispsincronizada"),
-        ),
-        "hidrologia": DescricaoConjunto(
-            pacote=CONJUNTO_HIDROLOGIA, pasta=PASTA_HIDROLOGIA_RAW,
-            identificador=Regra("cod_usina", ident.cod_usina),
-            conferencias=(Regra("nom_reservatorio", ident.nome_ons, "contem"),
-                          Regra("id_reservatorio", ident.id_reservatorio)),
-            colunas_valor=(*VAZOES, "val_nivelmontante", "val_niveljusante", "val_volumeutil"),
-            convencao_hora="fim",
-        ),
-        "geracao": DescricaoConjunto(
-            pacote=CONJUNTO_GERACAO, pasta=PASTA_GERACAO_RAW,
-            identificador=Regra("id_ons", ident.id_ons),
-            conferencias=(Regra("ceg", ident.ceg), Regra("id_estado", estado)),
-            colunas_valor=("val_geracao",),
-            filtro_parquet=((("id_ons", "==", ident.id_ons),), (("ceg", "==", ident.ceg),)),
-        ),
-    }
+    """Descrições dos conjuntos horários da usina, com a identificação do perfil (registro, decisão R8)."""
+    return registro.descricoes(perfil)
 
 
 # ---------------------------------------------------------------------------
@@ -179,7 +116,7 @@ def selecionar_recursos(
     for chave in sorted({c for c, _ in grupos}, key=lambda c: (c[0], c[1] or 0)):
         formato = next(f for f in desc.formatos_preferidos if (chave, f) in grupos)
         candidatos = grupos[(chave, formato)]
-        escolhido = max(candidatos, key=lambda r: (bool(r.ultima_modificacao), r.tamanho_bytes))
+        escolhido = recurso_preferido(candidatos)
         escolhidos.append(escolhido)
         if len(candidatos) > 1:
             duplicados[_local_filename(escolhido)] = len(candidatos) - 1
@@ -226,9 +163,7 @@ def sincronizar_conjunto(
         with concurrent.futures.ThreadPoolExecutor(DOWNLOADS_SIMULTANEOS) as executor:
             list(executor.map(baixar, escolhidos))
     finally:
-        for nome, quantidade in duplicados.items():
-            if nome in manifesto:
-                manifesto[nome]["recursos_duplicados_catalogo"] = quantidade
+        registrar_repetidos(manifesto, duplicados)
         save_manifest(manifesto, manifesto_path)
     resumo: Dict[str, int] = {}
     for r in escolhidos:
@@ -243,10 +178,18 @@ def sincronizar_conjunto(
 
 
 def _normalizar(serie: pd.Series) -> pd.Series:
-    def _sem_acento(valor: str) -> str:
-        return "".join(c for c in unicodedata.normalize("NFKD", valor) if not unicodedata.combining(c))
+    """``normalizar_texto`` em cada valor (calculada uma vez por valor distinto)."""
+    texto = serie.fillna("").astype(str)
+    return texto.map({valor: normalizar_texto(valor) for valor in texto.unique()})
 
-    return serie.fillna("").astype(str).map(_sem_acento).str.strip().str.upper()
+
+def numero_publicado(serie: pd.Series) -> pd.Series:
+    """Números como publicados pelo ONS, com vírgula ou ponto decimal (correção P2); texto não numérico fica
+    ausente."""
+    if pd.api.types.is_numeric_dtype(serie) and not pd.api.types.is_bool_dtype(serie):
+        return pd.to_numeric(serie, errors="coerce").astype("float64")
+    texto = serie.astype("string").str.strip().str.replace(",", ".", regex=False)
+    return pd.to_numeric(texto, errors="coerce").astype("float64")
 
 
 def _corresponde(tabela: pd.DataFrame, regra: Regra) -> pd.Series:
@@ -307,6 +250,14 @@ def avisar_linhas_irregulares(pacote: str, arquivo: str, irregulares: List[int])
         )
 
 
+def _exigir_conferencias(desc: DescricaoConjunto, colunas: Iterable[str]) -> None:
+    """Num conjunto com conferência declarada, a coluna ausente impede a leitura do arquivo (correção P4)."""
+    presentes = set(colunas)
+    ausentes = [r.coluna for r in desc.conferencias if r.coluna not in presentes]
+    if ausentes:
+        raise ValueError(f"coluna de conferência ausente: {', '.join(ausentes)}")
+
+
 def extrair_arquivo(desc: DescricaoConjunto, caminho: Path) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """Linhas da usina (instante como publicado, valores numéricos sem arredondamento) e a auditoria do arquivo."""
     chave = periodo_do_arquivo(caminho.name)
@@ -319,6 +270,7 @@ def extrair_arquivo(desc: DescricaoConjunto, caminho: Path) -> Tuple[pd.DataFram
     try:
         if caminho.suffix.lower() == ".parquet":
             disponiveis = set(pq.read_schema(caminho).names)
+            _exigir_conferencias(desc, disponiveis)
             colunas = [c for c in desc.colunas_leitura if c in disponiveis]
             auditoria["linhas_lidas"] = pq.read_metadata(caminho).num_rows
             filtros = [list(grupo) for grupo in desc.filtro_parquet] if desc.filtro_parquet else None
@@ -329,6 +281,7 @@ def extrair_arquivo(desc: DescricaoConjunto, caminho: Path) -> Tuple[pd.DataFram
             auditoria["linhas_lidas"] = len(bruto) + len(irregulares)
             auditoria["linhas_formato_irregular"] = len(irregulares)
             avisar_linhas_irregulares(desc.pacote, caminho.name, irregulares)
+            _exigir_conferencias(desc, bruto.columns)
         faltantes = [c for c in (desc.identificador.coluna, COLUNA_INSTANTE) if c not in bruto.columns]
         if faltantes:
             raise ValueError(f"colunas ausentes no arquivo: {faltantes}")
@@ -357,7 +310,7 @@ def extrair_arquivo(desc: DescricaoConjunto, caminho: Path) -> Tuple[pd.DataFram
     invalidos += instantes.isna().astype(int)
     for coluna in desc.colunas_valor:
         bruto_col = usina[coluna] if coluna in usina.columns else pd.Series(pd.NA, index=usina.index, dtype=object)
-        numerico = pd.to_numeric(bruto_col, errors="coerce")
+        numerico = numero_publicado(bruto_col)
         preenchido = bruto_col.notna() & (bruto_col.astype(str).str.strip() != "")
         ruim = numerico.isna() & preenchido
         invalidos += ruim.astype(int)
@@ -428,10 +381,3 @@ def extrair_conjunto(
     extraido = pd.concat(partes, ignore_index=True)[colunas] if partes else pd.DataFrame(columns=colunas)
     logger.info("%s: %d linhas da usina em %d arquivos.", desc.pacote, len(extraido), len(arquivos))
     return extraido, auditoria_df
-
-
-def data_obtencao(pasta_raw: Path) -> str:
-    """Data (UTC) mais recente registrada no manifesto da pasta; vazio se não houver."""
-    manifesto = load_manifest(Path(pasta_raw) / RAW_MANIFEST_FILE.name)
-    datas = [str(e.get("registrado_em_utc")) for e in manifesto.values() if isinstance(e, dict) and e.get("registrado_em_utc")]
-    return max(datas) if datas else ""

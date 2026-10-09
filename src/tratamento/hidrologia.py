@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional
 import numpy as np
 import pandas as pd
 
-from src.coleta.conjuntos import VAZOES
+from src.coleta.registro import VAZOES
 from src.comum.caminhos import ARQUIVOS_TRATAMENTO
 from src.comum.logger import setup_logger
 from src.comum.regras import DESVIO_MAXIMO_NIVEL_M

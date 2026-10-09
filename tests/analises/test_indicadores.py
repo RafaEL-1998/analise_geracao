@@ -77,8 +77,7 @@ def test_recalculo_e_decomposicao_das_taxas() -> None:
 def resultados_com_indicadores(df_sintetico: pd.DataFrame, tmp_path: Path):
     df = preparar_dados(df_sintetico)
     ind = _indicadores_sinteticos()
-    return analisar(df, _conferencias(ind), tmp_path / "sem_auditoria.csv", tmp_path / "sem_manifesto.json",
-                    indicadores=ind)
+    return analisar(df, _conferencias(ind), tmp_path / "sem_auditoria.csv", indicadores=ind)
 
 
 def test_analise_inclui_constatacoes_dos_indicadores(resultados_com_indicadores) -> None:

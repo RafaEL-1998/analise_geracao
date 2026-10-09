@@ -12,7 +12,8 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
-from src.comum.regras import CONJUNTO_EVT, CONJUNTO_HIDROLOGIA, CONJUNTO_PROGRAMACAO_DIARIA, CONJUNTOS_PIPELINE
+from src.coleta.registro import CONJUNTOS_PIPELINE
+from src.comum.regras import CONJUNTO_EVT, CONJUNTO_HIDROLOGIA, CONJUNTO_PROGRAMACAO_DIARIA
 from src.coleta.dicionarios import (
     COLUNAS_REGISTRO,
     NOME_REGISTRO,

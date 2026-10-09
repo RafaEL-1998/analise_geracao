@@ -21,6 +21,7 @@ from src.tratamento.evt import (
     tratar_evt,
 )
 from tests.conftest import gerar_df_sintetico
+from tests.fixtures.brutos_ficticios import gravar_dicionario_evt
 
 PERFIL = carregar_perfil("sao_domingos")
 
@@ -118,6 +119,7 @@ def test_exportar_csv_precisao_integral(tmp_path: Path, amostra_df_misto: pd.Dat
 def test_tratar_evt_sinaliza_anomalias(tmp_path: Path) -> None:
     """Base sintética: exporta os formatos, a validação e a coluna de qualidade."""
     entrada = tmp_path / "evt_extraido.csv"
+    gravar_dicionario_evt(tmp_path / "dicionario_evt.json")  # a cópia que a Coleta grava ao lado da base
     df = gerar_df_sintetico()
     df["din_instante"] = df["din_instante"].dt.strftime("%Y-%m-%d %H:%M:%S")
     df.to_csv(entrada, sep=";", index=False)
@@ -134,6 +136,7 @@ def test_tratar_evt_sinaliza_anomalias(tmp_path: Path) -> None:
 def test_tratar_evt_com_valor_negativo_e_erro(tmp_path: Path) -> None:
     """R1 (valor negativo publicado) é erro: código 1 e nada gravado."""
     entrada = tmp_path / "evt_extraido.csv"
+    gravar_dicionario_evt(tmp_path / "dicionario_evt.json")
     df = gerar_df_sintetico()
     df["din_instante"] = df["din_instante"].dt.strftime("%Y-%m-%d %H:%M:%S")
     df.loc[0, "val_geracao"] = -3.0

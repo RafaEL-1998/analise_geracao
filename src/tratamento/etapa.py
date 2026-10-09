@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Sequence
 
 import pandas as pd
 
-from src.coleta.conjuntos import descricoes
+from src.coleta.registro import descricoes
 from src.comum import caminhos
 from src.comum.logger import setup_logger
 from src.comum.persistencia import registrar_gravacoes

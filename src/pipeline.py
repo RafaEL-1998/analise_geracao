@@ -29,8 +29,9 @@ logger = setup_logger("pipeline")
 
 ETAPAS: Tuple[str, ...] = ("coleta", "tratamento", "conferencia", "analises", "relatorio")
 ANTERIOR: Dict[str, str] = {b: a for a, b in zip(ETAPAS, ETAPAS[1:])}
-# Muda quando os arquivos da etapa mudam de formato; a etapa seguinte recusa um formato antigo (código 5)
-VERSAO_FORMATO: Dict[str, int] = {etapa: 1 for etapa in ETAPAS}
+# Muda quando os arquivos da etapa mudam de formato; a etapa seguinte recusa um formato antigo (código 5).
+# Coleta 2 e Análises 2: datas de obtenção e dicionário da EVT na pasta da Coleta (spec 006, decisão R22).
+VERSAO_FORMATO: Dict[str, int] = {"coleta": 2, "tratamento": 1, "conferencia": 1, "analises": 2, "relatorio": 1}
 
 CODIGO_SUCESSO = 0
 CODIGO_ERRO = 1

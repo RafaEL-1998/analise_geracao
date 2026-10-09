@@ -417,8 +417,12 @@ def gerar_relatorio_validacao_md(
     caminho_md: Path,
     df_sinalizado: Optional[pd.DataFrame] = None,
     limite_linhas_anomalias: int = 40,
+    dicionario: Optional[Path] = None,
 ) -> Path:
-    """Gera o relatório de validação em Markdown; todo o texto deriva de ``df_res`` e do perfil."""
+    """Gera o relatório de validação em Markdown; todo o texto deriva de ``df_res`` e do perfil.
+
+    ``dicionario``: o dicionário de dados da EVT de onde sai a versão citada (por padrão, o de ``data/raw/``).
+    """
     destino = Path(caminho_md)
     destino.parent.mkdir(parents=True, exist_ok=True)
 
@@ -427,7 +431,7 @@ def gerar_relatorio_validacao_md(
         f"# Relatório de Validação dos Dados - {perfil.usina.nome}",
         "",
         f"**Usina**: {perfil.usina.nome} (cod_usina {perfil.identificacao.cod_usina} nos arquivos do ONS)",
-        f"**Dicionário de dados ONS**: {versao_dicionario_dados()}",
+        f"**Dicionário de dados ONS**: {versao_dicionario_dados(dicionario)}",
         f"**Tolerância das identidades (R2 a R5)**: {PHYSICAL_TOLERANCE_EPSILON}",
         f"**Faixa de produtividade aceita (R8)**: {fmt_num(prod_min, 3)} a {fmt_num(prod_max, 3)} MW/(m³/s) "
         f"({fmt_num(perfil.produtividade_nominal_mw_m3s, 4)} nominal teórica)",

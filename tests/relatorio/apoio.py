@@ -4,7 +4,7 @@ a partir das mesmas bases e a tabela de parâmetros e a origem dos dados complet
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
@@ -30,7 +30,7 @@ def _vazoes(alinhamento: pd.DataFrame) -> ResultadoConferencia:
 def analisar_com_bases(
     df: pd.DataFrame,
     caminho_auditoria: Optional[Path] = None,
-    caminho_manifesto: Optional[Path] = None,
+    datas_obtencao: Optional[Dict[str, Dict[str, Any]]] = None,
     indicadores: Any = None,
     programacao: Any = None,
     disponibilidade: Optional[SerieConjunto] = None,
@@ -51,7 +51,7 @@ def analisar_com_bases(
     if indicadores is not None:
         conferencias["dispf_horas"] = conferencia_dispf_horas(indicadores)
         conferencias["teifa_teip"] = conferencia_teifa_teip(indicadores)
-    res = analisar(df, conferencias, caminho_auditoria, caminho_manifesto, indicadores=indicadores,
+    res = analisar(df, conferencias, caminho_auditoria, datas_obtencao, indicadores=indicadores,
                    programacao=programacao, disponibilidade=disponibilidade, hidrologia=serie_hidrologia,
                    geracao=geracao, **outros)
     return completar_resultados(res)

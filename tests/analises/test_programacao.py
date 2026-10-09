@@ -69,7 +69,7 @@ def resultados_com_programacao(df_sintetico: pd.DataFrame, tmp_path: Path):
     horaria = horaria[horaria["din_instante"] != pd.Timestamp("2024-01-15 10:00")]  # hora sem programação
     prog = ProgramacaoONS(horaria=horaria, dias_ausentes=pd.DataFrame({"dia": [pd.Timestamp("2024-01-20")]}),
                           auditoria=pd.DataFrame({"arquivo": ["x"], "status": ["PROCESSADO"]}))
-    return analisar(df, {}, tmp_path / "a.csv", tmp_path / "m.json", programacao=prog)
+    return analisar(df, {}, tmp_path / "a.csv", programacao=prog)
 
 
 def test_analise_inclui_a_constatacao_da_programacao(resultados_com_programacao) -> None:

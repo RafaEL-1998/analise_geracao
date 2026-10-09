@@ -188,7 +188,9 @@ def test_ficha_do_cadastro_sem_a_data_da_consulta(df_base: pd.DataFrame) -> None
     data da consulta; a data de obtenção fica na legenda de fonte do bloco, e a divergência, na legenda de conferência."""
     from src.relatorio.fontes import legenda_fonte
 
-    res = analisar_com_bases(df_base, cadastro=_ficha())
+    datas = {"modalidade-usina": {"arquivos_registrados": 1, "publicacao_mais_recente": "2026-10-01T09:00:00",
+                                  "obtencao_mais_recente": "2026-10-05 13:00:00"}}  # datas_obtencao.csv da Coleta
+    res = analisar_com_bases(df_base, datas_obtencao=datas, cadastro=_ficha())
     assert [k for k, _ in pares_identificacao_cadastro(res)] == [
         "Usina", "Modalidade de operação", "Centro de operação", "Ponto de conexão", "Potência autorizada",
         "Estado · situação na ANEEL", "Homônimos excluídos pelo CEG"]

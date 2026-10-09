@@ -30,8 +30,7 @@ from tests.relatorio.apoio import analisar_com_bases
 
 @pytest.fixture
 def resultados(df_sintetico: pd.DataFrame, tmp_path: Path):
-    return analisar_com_bases(preparar_dados(df_sintetico), tmp_path / "sem_auditoria.csv",
-                              tmp_path / "sem_manifesto.json")
+    return analisar_com_bases(preparar_dados(df_sintetico), tmp_path / "sem_auditoria.csv")
 
 
 def test_markdown_usa_os_valores_calculados(resultados, tmp_path: Path) -> None:
@@ -78,7 +77,7 @@ def test_relatorios_com_indicadores(resultados_com_indicadores, tmp_path: Path) 
 
 
 def test_analise_sem_indicadores_mantem_o_relatorio_anterior(df_sintetico: pd.DataFrame, tmp_path: Path) -> None:
-    res = analisar_com_bases(preparar_dados(df_sintetico), tmp_path / "a.csv", tmp_path / "m.json")
+    res = analisar_com_bases(preparar_dados(df_sintetico), tmp_path / "a.csv")
     assert res.ons == {}
     assert len(res.achados) == 12
     md = gerar_relatorio_md(res, None, tmp_path / "relatorio.md").read_text(encoding="utf-8")

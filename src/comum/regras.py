@@ -43,6 +43,16 @@ TOLERANCIA_POTENCIA_CADASTRO_MW: float = 0.001  # conferência do cadastro: pot�
 TOLERANCIA_IDENTIDADE_HORAS: float = 0.1  # horas por estado operativo: HP = soma das parcelas
 
 # ---------------------------------------------------------------------------
+# Tipos de usina e perfil (spec 006, data-model, seção 1)
+# ---------------------------------------------------------------------------
+
+TIPOS_USINA: Tuple[str, ...] = ("UHE", "PCH", "CGH", "UTE", "UTN", "EOL", "UFV")
+MODALIDADES_COM_PERFIL: Tuple[str, ...] = ("TIPO I", "TIPO II-A", "TIPO II-B", "TIPO II-C")
+MODALIDADES_TIPO_III: Tuple[str, ...] = ("TIPO III", "TIPO III (EM DIT)")  # só o agregado: sem perfil
+SUBSISTEMAS: Tuple[str, ...] = ("SE", "S", "NE", "N")
+COBERTURAS: Tuple[str, ...] = ("proprio", "conjunto", "agregado", "ausente")
+
+# ---------------------------------------------------------------------------
 # Conjuntos do ONS e leitura
 # ---------------------------------------------------------------------------
 
@@ -71,15 +81,7 @@ PASTA_DISPONIBILIDADE_RAW: str = "disponibilidade_usina"
 PASTA_HIDROLOGIA_RAW: str = "dados_hidrologicos_ho"
 PASTA_GERACAO_RAW: str = "geracao_usina_2"
 PASTA_CADASTRO_RAW: str = "modalidade_usina"
-CONJUNTOS_PIPELINE: Dict[str, str] = {
-    CONJUNTO_EVT: "",
-    **{conjunto: f"{PASTA_INDICADORES_RAW}/{conjunto}" for conjunto in CONJUNTOS_INDICADORES_ONS},
-    CONJUNTO_PROGRAMACAO_DIARIA: PASTA_PROGRAMACAO_RAW,
-    CONJUNTO_DISPONIBILIDADE: PASTA_DISPONIBILIDADE_RAW,
-    CONJUNTO_HIDROLOGIA: PASTA_HIDROLOGIA_RAW,
-    CONJUNTO_GERACAO: PASTA_GERACAO_RAW,
-    CONJUNTO_CADASTRO: PASTA_CADASTRO_RAW,
-}
+# Pacote -> pasta de todos os conjuntos: CONJUNTOS_PIPELINE, derivado do registro (src/coleta/registro.py)
 DIRETORIO_DICIONARIOS: str = "_dicionarios"  # subpasta com os dicionários de dados de cada conjunto
 
 FORMATO_PROGRAMACAO_DIARIA: str = "PARQUET"

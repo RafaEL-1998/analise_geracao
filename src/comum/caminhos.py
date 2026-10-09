@@ -1,14 +1,18 @@
 """Pastas e nomes de arquivo do fluxo (constituição, Requisito Técnico 6; spec da Coleta de dados, FR-010).
 
 - ``data/raw/``: dados brutos do ONS, compartilhados por todas as usinas e gravados só pela Coleta de dados.
+- ``data/catalogo/``: catálogo de usinas, montado pela Coleta (spec 006).
 - ``data/usinas/<slug>/<etapa>/``: resultados de cada etapa, separados por usina.
-- ``reports/<slug>/``: relatório da usina.
+- ``reports/<slug>/``: relatório da usina; ``reports/carteiras/<nome>/``: relatórios de carteira.
 - ``usinas/<slug>/``: perfil da usina e, fora do controle de versões, os documentos de referência dela.
+- ``relatorios_referencia/<slug>/``: relatórios aprovados, com a Coleta e o perfil congelados (spec 006, decisão R22).
 """
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Iterator, Optional
 
 from src.comum.regras import (
     DIRETORIO_DICIONARIOS,
@@ -24,6 +28,9 @@ RAIZ_PROJETO: Path = Path(__file__).resolve().parents[2]
 DATA_DIR: Path = RAIZ_PROJETO / "data"
 USINAS_DIR: Path = RAIZ_PROJETO / "usinas"
 REPORTS_DIR: Path = RAIZ_PROJETO / "reports"
+RELATORIOS_REFERENCIA_DIR: Path = RAIZ_PROJETO / "relatorios_referencia"
+PASTA_CATALOGO: str = "catalogo"  # dentro de data/
+PASTA_CARTEIRAS: str = "carteiras"  # dentro de reports/; nome reservado, não pode ser slug de usina
 
 # Dados brutos compartilhados
 RAW_DATA_DIR: Path = DATA_DIR / "raw"
@@ -56,6 +63,9 @@ ARQUIVOS_COLETA = {
     "auditoria_geracao": "auditoria_geracao.csv",
     "auditoria_cadastro": "auditoria_cadastro.csv",
     "dicionarios": "dicionarios.csv",
+    # Formato 2 (spec 006, decisão R22): as etapas seguintes leem estes arquivos, nunca data/raw/
+    "datas_obtencao": "datas_obtencao.csv",
+    "dicionario_evt": "dicionario_evt.json",
 }
 ARQUIVOS_TRATAMENTO = {
     "evt_parquet": "evt_tratado.parquet",
@@ -123,3 +133,34 @@ def pasta_etapa(slug: str, etapa: str) -> Path:
 def dicionario_evt() -> Path:
     """Dicionário de dados JSON da EVT, obtido pela Coleta: ``data/raw/_dicionarios/``."""
     return RAW_DATA_DIR / DIRETORIO_DICIONARIOS / NOME_DICIONARIO_EVT
+
+
+def pasta_catalogo() -> Path:
+    """``data/catalogo/``: catálogo de usinas, gravado pela Coleta (spec 006)."""
+    return DATA_DIR / PASTA_CATALOGO
+
+
+def pasta_referencia(slug: str) -> Path:
+    """``relatorios_referencia/<slug>/``: relatório aprovado da usina, com a Coleta e o perfil congelados."""
+    return RELATORIOS_REFERENCIA_DIR / slug
+
+
+@contextmanager
+def espaco_isolado(raiz: Path, raw: Optional[Path] = None) -> Iterator[Path]:
+    """Durante o bloco, as pastas do fluxo e o perfil passam a ficar em ``raiz``.
+
+    ``data/``, ``reports/`` e ``usinas/`` ficam em ``raiz``; os brutos, em ``raw`` (por padrão, ``raiz/data/raw``).
+    Usado pelo ``comparar --todas`` para refazer as etapas sem tocar nas pastas do projeto (spec 006, decisão R22).
+    """
+    global DATA_DIR, RAW_DATA_DIR, REPORTS_DIR, USINAS_DIR
+    from src.comum import perfil as modulo_perfil
+
+    raiz = Path(raiz)
+    anteriores = (DATA_DIR, RAW_DATA_DIR, REPORTS_DIR, USINAS_DIR, modulo_perfil.RAIZ_PROJETO)
+    DATA_DIR, REPORTS_DIR, USINAS_DIR = raiz / "data", raiz / "reports", raiz / "usinas"
+    RAW_DATA_DIR = Path(raw) if raw is not None else raiz / "data" / "raw"
+    modulo_perfil.RAIZ_PROJETO = raiz
+    try:
+        yield raiz
+    finally:
+        DATA_DIR, RAW_DATA_DIR, REPORTS_DIR, USINAS_DIR, modulo_perfil.RAIZ_PROJETO = anteriores

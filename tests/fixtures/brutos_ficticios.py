@@ -75,6 +75,17 @@ def _por_mes(tabela: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     return {f"{mes.year}_{mes.month:02d}": g for mes, g in tabela.groupby(tabela["din_instante"].dt.to_period("M"))}
 
 
+def gravar_dicionario_evt(caminho: Path) -> None:
+    """Dicionário de dados da EVT no formato do ONS (todas as colunas da base e a linha da versão)."""
+    dicionario = {"dicionario_simplificado": [
+        *({"codigo": c, "descricao": f"descrição de {c}"} for c in COLUNAS_EVT),
+        {"codigo": "06-06-2024", "descricao": "Versão de teste"},
+    ]}
+    caminho = Path(caminho)
+    caminho.parent.mkdir(parents=True, exist_ok=True)
+    caminho.write_text(json.dumps(dicionario, ensure_ascii=False), encoding="utf-8")
+
+
 def gerar_brutos(raw: Path) -> pd.DataFrame:
     """Grava os arquivos brutos em ``raw`` e devolve a operação horária usada."""
     raw = Path(raw)
@@ -86,13 +97,7 @@ def gerar_brutos(raw: Path) -> pd.DataFrame:
         homonimo = extra.assign(nom_reservatorio="OUTRA USINA")
         outra = extra.assign(cod_usina=111, nom_reservatorio="BALBINA", nom_agente="OUTRO AGENTE")
         _csv(pd.concat([g, homonimo, outra])[COLUNAS_EVT], raw / f"ENERGIA_VERTIDA_TURBINAVEL_{sufixo}.csv")
-    dicionario = {"dicionario_simplificado": [
-        *({"codigo": c, "descricao": f"descrição de {c}"} for c in COLUNAS_EVT),
-        {"codigo": "06-06-2024", "descricao": "Versão de teste"},
-    ]}
-    (raw / "_dicionarios").mkdir(parents=True, exist_ok=True)
-    (raw / "_dicionarios" / "DicionarioDados_EnergiaVertidaTurbinavel.json").write_text(
-        json.dumps(dicionario, ensure_ascii=False), encoding="utf-8")
+    gravar_dicionario_evt(raw / "_dicionarios" / "DicionarioDados_EnergiaVertidaTurbinavel.json")
 
     # Disponibilidade por usina (CSV mensal): sincronizada = unidades em operação × 30 MW
     unidades = np.ceil(op["val_geracao"] / 30.0)

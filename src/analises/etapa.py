@@ -43,6 +43,7 @@ from src.analises.programacao import analisar_programacao
 from src.analises.resultados import ResultadosAnalise, salvar_resultados
 from src.comum import caminhos
 from src.comum.logger import setup_logger
+from src.comum.regras import CONJUNTO_DISPONIBILIDADE, CONJUNTO_EVT, CONJUNTO_GERACAO, CONJUNTO_HIDROLOGIA
 from src.comum.persistencia import registrar_gravacoes
 from src.conferencia.resultado import ResultadoConferencia, carregar_conferencias
 from src.pipeline import CODIGO_SUCESSO, ResultadoEtapa
@@ -66,7 +67,7 @@ def analisar(
     df: pd.DataFrame,
     conferencias: Dict[str, ResultadoConferencia],
     caminho_auditoria: Optional[Path] = None,
-    caminho_manifesto: Optional[Path] = None,
+    datas_obtencao: Optional[Dict[str, Dict[str, Any]]] = None,
     indicadores: Optional[IndicadoresONS] = None,
     programacao: Optional[ProgramacaoONS] = None,
     disponibilidade: Optional[SerieConjunto] = None,
@@ -81,10 +82,12 @@ def analisar(
 
     As bases complementares são opcionais: sem elas, o relatório sai sem as seções correspondentes. As conferências
     (geração, disponibilidade, vazões, DISPF × horas, TEIFa e TEIP, cadastro) vêm prontas da Conferência.
+    ``datas_obtencao`` é o ``datas_obtencao.csv`` da Coleta, por conjunto (spec 006, decisão R22).
     """
     if "ano" not in df.columns or COLUNA_QUALIDADE not in df.columns:
         df = preparar_dados(df)
-    cobertura = analisar_cobertura(df, caminho_auditoria, caminho_manifesto)
+    datas = datas_obtencao or {}
+    cobertura = analisar_cobertura(df, caminho_auditoria, datas.get(CONJUNTO_EVT))
     anuais = calcular_indicadores_anuais(df, cobertura)
     lista_anomalias, resumo_anomalias = listar_anomalias(df)
     res = ResultadosAnalise(
@@ -107,6 +110,7 @@ def analisar(
     # Resultado das regras R1 a R9 gravado pelo Tratamento; sem ele (chamada direta), as regras são avaliadas aqui
     res.validacao = validacao if validacao is not None else validar_regras_fisicas(df, perfil_ativo())[0]
     res.horas_geracao_zero = calcular_horas_geracao_zero(df)
+    res.datas_obtencao = datas
     if indicadores is not None:
         dispf = conferencias.get("dispf_horas")
         indicadores.divergencias = dispf.tabelas.get("divergencias", pd.DataFrame()) if dispf else pd.DataFrame()
@@ -121,13 +125,15 @@ def analisar(
     if disponibilidade is not None and len(disponibilidade.horaria):
         c = conferencias["disponibilidade"]
         res.disponibilidade = analisar_disponibilidade(disponibilidade, df, indicadores, res.programacao, cobertura,
-                                                       c.tabelas["resumo"], c.tabelas["divergencias"])
+                                                       c.tabelas["resumo"], c.tabelas["divergencias"],
+                                                       _obtido_em(datas, CONJUNTO_DISPONIBILIDADE))
     if hidrologia is not None and len(hidrologia.horaria):
-        res.hidrologia = analisar_hidrologia(hidrologia, conferencias["vazoes"].tabelas["alinhamento"], df, cobertura)
+        res.hidrologia = analisar_hidrologia(hidrologia, conferencias["vazoes"].tabelas["alinhamento"], df, cobertura,
+                                             _obtido_em(datas, CONJUNTO_HIDROLOGIA))
     if geracao is not None and len(geracao.horaria):
         c = conferencias["geracao"]
         res.geracao_oficial = analisar_geracao_oficial(geracao, df, cobertura, c.tabelas["resumo"], c.tabelas["mensal"],
-                                                       c.tabelas["divergencias"])
+                                                       c.tabelas["divergencias"], _obtido_em(datas, CONJUNTO_GERACAO))
     if cadastro is not None and len(cadastro):
         res.cadastro = analisar_cadastro(cadastro, auditoria_cadastro)
     if dicionarios is not None and len(dicionarios):
@@ -137,6 +143,10 @@ def analisar(
     res.serie_diaria = calcular_serie_diaria(df)
     res.vazoes_anuais = calcular_vazoes_anuais(df)
     return res
+
+
+def _obtido_em(datas: Dict[str, Dict[str, Any]], conjunto: str) -> str:
+    return str((datas.get(conjunto) or {}).get("obtencao_mais_recente") or "")
 
 
 # ---------------------------------------------------------------------------
@@ -161,6 +171,17 @@ def ficha_do_cadastro(coleta: Path, conferencia: Optional[ResultadoConferencia])
     return ficha
 
 
+def datas_da_coleta(coleta: Path) -> Dict[str, Dict[str, Any]]:
+    """``datas_obtencao.csv`` da Coleta: conjunto -> arquivos registrados, publicação e obtenção mais recentes."""
+    tabela = _ler_csv(coleta / caminhos.ARQUIVOS_COLETA["datas_obtencao"], dtype=str, keep_default_na=False)
+    if tabela is None:
+        return {}
+    return {linha["conjunto"]: {"arquivos_registrados": int(linha["arquivos_registrados"] or 0),
+                                "publicacao_mais_recente": linha["publicacao_mais_recente"],
+                                "obtencao_mais_recente": linha["obtencao_mais_recente"]}
+            for linha in tabela.to_dict("records")}
+
+
 def carregar_entradas(slug: str) -> Dict[str, Any]:
     """Dados tratados, conferências e registros da Coleta da usina, prontos para ``analisar``."""
     coleta = caminhos.pasta_etapa(slug, "coleta")
@@ -177,7 +198,7 @@ def carregar_entradas(slug: str) -> Dict[str, Any]:
         "df": pd.read_parquet(tratamento / caminhos.ARQUIVOS_TRATAMENTO["evt_parquet"]),
         "conferencias": conferencias,
         "caminho_auditoria": coleta / caminhos.ARQUIVOS_COLETA["auditoria_evt"],
-        "caminho_manifesto": caminhos.RAW_DATA_DIR / caminhos.RAW_MANIFEST_FILE.name,
+        "datas_obtencao": datas_da_coleta(coleta),
         "indicadores": carregar_indicadores_tratados(tratamento),
         "programacao": carregar_programacao_tratada(tratamento, auditoria_prog),
         "disponibilidade": carregar_disponibilidade_tratada(tratamento),

@@ -23,8 +23,8 @@ def df_preparado(df_sintetico: pd.DataFrame) -> pd.DataFrame:
 
 @pytest.fixture
 def resultados(df_preparado: pd.DataFrame, tmp_path: Path):
-    # Caminhos inexistentes: a análise não depende de auditoria/manifesto do projeto
-    return analisar(df_preparado, {}, tmp_path / "sem_auditoria.csv", tmp_path / "sem_manifesto.json")
+    # Auditoria inexistente e sem datas de obtenção: a análise não depende dos arquivos do projeto
+    return analisar(df_preparado, {}, tmp_path / "sem_auditoria.csv")
 
 
 def test_identificar_eventos_quebra_em_lacunas() -> None:

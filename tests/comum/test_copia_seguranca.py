@@ -80,3 +80,53 @@ def test_copia_que_ja_existe_nao_e_sobrescrita(tmp_path: Path) -> None:
     raiz = _projeto(tmp_path)
     assert criar_copia("igual", raiz=raiz, hoje=date(2026, 10, 7)) == 0
     assert criar_copia("igual", raiz=raiz, hoje=date(2026, 10, 7)) == 1
+
+
+# ---------------------------------------------------------------------------
+# Relatórios de referência (spec 006, decisão R22; tarefa T014)
+# ---------------------------------------------------------------------------
+
+
+def _referencia(raiz: Path, slug: str = "usina_a", sha_errado: bool = False) -> Path:
+    import hashlib
+
+    pasta = raiz / "relatorios_referencia" / slug
+    (pasta / "coleta").mkdir(parents=True)
+    (pasta / "relatorio_analise_estatistica.md").write_text("# Relatório aprovado\n", encoding="utf-8")
+    (pasta / "perfil.toml").write_text("[usina]\n", encoding="utf-8")
+    (pasta / "coleta" / "evt_extraido.csv").write_text("a;b\n", encoding="utf-8")
+
+    def sha(p: Path) -> str:
+        return hashlib.sha256(p.read_bytes()).hexdigest()
+
+    md = pasta / "relatorio_analise_estatistica.md"
+    ref = {"usina": slug, "data_geracao": "07/10/2026 08:53", "aprovado_em": "08/10/2026",
+           "periodo": {"inicio": "2024-01-01 00:00:00", "fim": "2024-02-29 23:00:00"},
+           "arquivos": [{"nome": md.name, "bytes": md.stat().st_size, "sha256": "0" * 64 if sha_errado else sha(md)}],
+           "perfil": sha(pasta / "perfil.toml"),
+           "coleta": [{"nome": "evt_extraido.csv", "bytes": 4, "sha256": sha(pasta / "coleta" / "evt_extraido.csv")}]}
+    (pasta / "referencia.json").write_text(json.dumps(ref), encoding="utf-8")
+    return pasta
+
+
+def test_copia_leva_os_relatorios_de_referencia(tmp_path: Path) -> None:
+    raiz = _projeto(tmp_path)
+    _referencia(raiz)
+    assert criar_copia("com_referencia", raiz=raiz, hoje=date(2026, 10, 9)) == 0
+    copia = raiz / "_backup_2026-10-09_com_referencia"
+    for rel in ("relatorios_referencia/usina_a/referencia.json", "relatorios_referencia/usina_a/perfil.toml",
+                "relatorios_referencia/usina_a/coleta/evt_extraido.csv",
+                "relatorios_referencia/usina_a/relatorio_analise_estatistica.md"):
+        assert (copia / rel).is_file(), rel
+    leia_me = (copia / "LEIA-ME.txt").read_text(encoding="utf-8")
+    assert "usina_a" in leia_me and "07/10/2026 08:53" in leia_me and "08/10/2026" in leia_me
+
+
+def test_referencia_com_sha_divergente_impede_a_copia(tmp_path: Path) -> None:
+    raiz = _projeto(tmp_path)
+    assert criar_copia("primeira", raiz=raiz, hoje=date(2026, 10, 1)) == 0
+    assert criar_copia("segunda", raiz=raiz, hoje=date(2026, 10, 2)) == 0
+    _referencia(raiz, sha_errado=True)
+    assert criar_copia("terceira", raiz=raiz, hoje=date(2026, 10, 3)) == 1
+    assert [p.name for p in copias_existentes(raiz)] == ["_backup_2026-10-01_primeira", "_backup_2026-10-02_segunda"]
+    assert not (raiz / "_backup_2026-10-03_terceira").exists()

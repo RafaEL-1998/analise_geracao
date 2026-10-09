@@ -9,11 +9,9 @@ import numpy as np
 import pandas as pd
 
 from src.analises.comum import _resumo_serie
-from src.coleta.conjuntos import data_obtencao
-from src.comum import caminhos
 from src.comum.formatacao import numero_por_extenso
 from src.comum.perfil import perfil_ativo
-from src.comum.regras import LIMIAR_GERACAO_PARADA_MW, PASTA_HIDROLOGIA_RAW
+from src.comum.regras import LIMIAR_GERACAO_PARADA_MW
 from src.tratamento.hidrologia import limpos
 from src.tratamento.series import SerieConjunto
 
@@ -129,6 +127,7 @@ def analisar_hidrologia(
     alinhamento: pd.DataFrame,
     df: pd.DataFrame,
     cobertura: Dict[str, Any],
+    obtido_em: str = "",
 ) -> Dict[str, Any]:
     """Afluência, vertimento e nível do reservatório cruzados com a base de EVT (US2).
 
@@ -146,7 +145,7 @@ def analisar_hidrologia(
         "alinhamento": alinhamento,
         "auditoria": serie.auditoria,
         "ausencias": serie.ausencias,
-        "obtido_em": data_obtencao(caminhos.RAW_DATA_DIR / PASTA_HIDROLOGIA_RAW),
+        "obtido_em": obtido_em,
         "publicado": bool(alinhamento.iloc[0]["confirmado"]),
     }
     if not resultado["publicado"]:
