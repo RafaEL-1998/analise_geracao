@@ -1,37 +1,43 @@
-# Specification Quality Checklist: Tratamento, Padronização e Validação Física dos Dados - UHE São Domingos
+# Specification Quality Checklist: Etapa 2, Tratamento de dados
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2026-09-30
-**Revalidated**: 2026-10-05 (spec revisada retroativamente; versão anterior deste checklist em `requirements.md.2026-10-05.bak`)
+**Created**: 2026-10-07
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 
-- [ ] No implementation details (languages, frameworks, APIs) — *Desvio aceito*: a spec revisada cita `float64`, NaN, tipos do Parquet (`double`, `timestamp`), nomes de colunas e de arquivos e, nas notas de revisão, módulos de `src/`. Como a revisão é retroativa e documenta um sistema já implementado, esses termos foram mantidos para permitir a conferência com o código.
+- [x] No implementation details (languages, frameworks, APIs)
 - [x] Focused on user value and business needs
-- [ ] Written for non-technical stakeholders — *Desvio aceito*: o público é a fiscalização técnica (desempenho de usinas); as regras R1 a R9 exigem fórmulas e unidades físicas.
+- [x] Written for non-technical stakeholders
 - [x] All mandatory sections completed
 
 ## Requirement Completeness
 
 - [x] No [NEEDS CLARIFICATION] markers remain
-- [x] Requirements are testable and unambiguous — limites, tolerâncias e faixas estão explícitos (50,4 MW; 171,2 m³/s; 1,0 MW; 0,214 a 0,398 MW/(m³/s); $10^{-4}$).
-- [x] Success criteria are measurable — SC-002 e SC-005 trazem as contagens da execução de 30/09/2026.
-- [x] Success criteria are technology-agnostic (no implementation details) — SC-003 cita `.xlsx` e `.parquet` porque os formatos são entregas pedidas pelo usuário.
-- [x] All acceptance scenarios are defined — US1 com 6 cenários, US2 com 6; US3 transferida para a Feature 003.
-- [x] Edge cases are identified — 12 casos, incluindo ausentes, instante inválido, colunas faltantes, violação de R1 e validação desligada.
-- [x] Scope is clearly bounded — entrada da Feature 001; perfil estatístico anual na Feature 003.
-- [x] Dependencies and assumptions identified — dicionário v2.0, parâmetros da usina com fonte (RF 0009/2017-AGEPAN-SFG, Tabelas 1 a 3), natureza de triagem das tolerâncias, período da base.
+- [x] Requirements are testable and unambiguous
+- [x] Success criteria are measurable
+- [x] Success criteria are technology-agnostic (no implementation details)
+- [x] All acceptance scenarios are defined
+- [x] Edge cases are identified
+- [x] Scope is clearly bounded
+- [x] Dependencies and assumptions identified
 
 ## Feature Readiness
 
-- [ ] All functional requirements have clear acceptance criteria — FR-001 a FR-016, FR-018 e FR-019 têm cenário ou caso de borda correspondente; **FR-017** (parâmetros centralizados, com fonte, e limites calculados) é verificável apenas por inspeção de `src/config.py` e não tem cenário Given/When/Then nem teste automatizado.
+- [x] All functional requirements have clear acceptance criteria
 - [x] User scenarios cover primary flows
-- [x] Feature meets measurable outcomes defined in Success Criteria — conferido em 2026-10-05 nos arquivos de 30/09/2026: 10 métricas `float64` sem texto e sem ausentes convertidos (SC-001); 9 regras com contagens documentadas (SC-002); `.xlsx` com células numéricas e `.parquet` com `double` (SC-003); ressalva sobre R1 a R5 no relatório (SC-004); 70.895 registros na base consolidada e na tratada (SC-005); 526 sinalizados localizáveis por `qualidade_registro`, incluindo 15/05/2019 14h `R6;R7;R8` (SC-006).
-- [ ] No implementation details leak into specification — ver o primeiro item de Content Quality.
+- [x] Feature meets measurable outcomes defined in Success Criteria
+- [x] No implementation details leak into specification
 
 ## Notes
 
-- Revalidação de 2026-10-05: os itens desmarcados são desvios aceitos (linguagem técnica em uma spec retroativa) ou lacunas registradas (FR-017 sem critério de aceite automatizado).
-- Pendência: a suíte `tests/test_processor.py` e `tests/test_validator.py` não foi executada nesta revisão (tarefa T050 em `tasks.md`); a conferência dos critérios de sucesso foi feita sobre as saídas gravadas em `data/processed/`.
-- Checklist original (30/09/2026): todos os itens marcados e a nota "All items reviewed and satisfied for requirements quality. Ready for planning phase (`/speckit-plan`)". A marcação foi refeita porque a spec mudou e porque SC-004 original ("comprova documentalmente a legitimidade dos valores") não era atingível.
+- Validação em 07/10/2026, primeira iteração: todos os itens aprovados.
+- **Interface da etapa citada de propósito**: comando `tratamento`, códigos de saída, pastas, nomes de arquivos, colunas, abas, campos do perfil e formatos (Parquet, planilha, CSV e Markdown). São o que a etapa entrega às seguintes e o que a não regressão compara. `double` e `timestamp` são tipos do formato Parquet; o SHA-256 e a propriedade `assinatura_dados` descrevem como a gravação é conferida. Nenhuma linguagem, biblioteca, módulo ou função é citado.
+- **Usina**: os limites de R6 e R8 são expressos por campos do perfil; as tolerâncias gerais (ε = 0,0001; 5 %; 70 % a 130 %; 1,0 MW; 0,01 MW; 10 m; 0,1 h) aparecem com os números. Valores da São Domingos só nos cenários marcados "(perfil da São Domingos)", nas Decisões do usuário e na SC-001.
+- **Fronteira**: a extração, a leitura numérica e a auditoria de extração ficam na Coleta; as conferências entre fontes, inclusive o alinhamento das vazões com a meta de 99 %, ficam na Conferência; o uso dos valores sinalizados segue a coluna "Sai do uso nas etapas seguintes" da FR-019, aplicada pela Conferência e pelas Análises.
+- **Sem marcadores de esclarecimento**. Cinco escolhas têm default razoável e ficam para confirmação na aprovação:
+  1. valor negativo na EVT (R1) sai com o código 1, e não mais com o 3: a etapa só tem os códigos 0, 1 e 5, e o 3 é da Conferência; como antes, nada é gravado;
+  2. `indicadores.xlsx` fica só com as abas do Tratamento; o recálculo da TEIFa e da TEIP e as divergências DISPF × horas vão para a Conferência, e a auditoria dos arquivos fica na Coleta;
+  3. a aba da planilha da EVT leva o nome da usina do perfil, normalizado, o que mantém `UHE_SAO_DOMINGOS` para a São Domingos;
+  4. o `resumo` do `etapa.json` reúne números que hoje só aparecem no log;
+  5. o limite de 10 minutos da SC-010 vem do limite que já valia para as bases complementares; ainda não foi medido para a etapa isolada.
