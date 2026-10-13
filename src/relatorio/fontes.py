@@ -21,7 +21,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 import pandas as pd
 
 from src.coleta import registro
-from src.comum.formatacao import fmt_data, fmt_int, fmt_num, fmt_pct
+from src.comum.formatacao import fmt_data, fmt_int, fmt_lista, fmt_num, fmt_pct
 from src.comum.logger import setup_logger
 from src.comum.perfil import perfil_ativo
 from src.comum.regras import (
@@ -103,6 +103,7 @@ class Conferencia:
     dado: str
     base: str  # conjunto cuja presença permite a conferência
     texto: Callable[[Any], str]
+    texto_curto: Callable[[Any], str]  # forma curta, com os mesmos números, para o resumo executivo
 
 
 @dataclass(frozen=True)
@@ -156,28 +157,38 @@ def _conf_vazoes(res: Any) -> str:
     return texto
 
 
-def _conf_teifa_teip(res: Any) -> str:
+def _reproducao_taxas(res: Any) -> Optional[Tuple[Any, Any, Any]]:
+    """Meses reproduzidos, meses comparados e diferença máxima (p.p.) da TEIFa e da TEIP; None sem conferência."""
     rr = res.ons.get("recalculo_resumo") or {}
     if "reproduzidos" in rr:  # contagem da Conferência, levada pelas Análises
         if not rr["meses"]:
-            return "TEIFa e TEIP: conferência com Taxas TEIFa e TEIP não feita nesta execução"
-        return (f"TEIFa e TEIP recalculadas conferidas com as publicadas em Taxas TEIFa e TEIP: "
-                f"{fmt_int(rr['reproduzidos'])} de {fmt_int(rr['meses'])} meses reproduzidos (diferença máxima de "
-                f"{fmt_num(rr['diferenca_maxima_pp'], 3)} p.p.)")
+            return None
+        return rr["reproduzidos"], rr["meses"], rr["diferenca_maxima_pp"]
     recalculo = res.ons.get("recalculo_taxas")
     completos = recalculo.dropna(subset=["teifa_recalculada"]) if recalculo is not None else pd.DataFrame()
     if completos.empty:
-        return "TEIFa e TEIP: conferência com Taxas TEIFa e TEIP não feita nesta execução"
+        return None
     diferencas = completos[["diferenca_teifa_pp", "diferenca_teip_pp"]].abs()
     reproduzidos = int((diferenca_absoluta(diferencas) <= TOLERANCIA_REPRODUCAO_TAXAS_PP).all(axis=1).sum())
-    maxima = float(diferencas.max().max())
+    return reproduzidos, len(completos), float(diferencas.max().max())
+
+
+def _conf_teifa_teip(res: Any) -> str:
+    reproducao = _reproducao_taxas(res)
+    if reproducao is None:
+        return "TEIFa e TEIP: conferência com Taxas TEIFa e TEIP não feita nesta execução"
+    reproduzidos, meses, maxima = reproducao
     return (f"TEIFa e TEIP recalculadas conferidas com as publicadas em Taxas TEIFa e TEIP: {fmt_int(reproduzidos)} de "
-            f"{fmt_int(len(completos))} meses reproduzidos (diferença máxima de {fmt_num(maxima, 3)} p.p.)")
+            f"{fmt_int(meses)} meses reproduzidos (diferença máxima de {fmt_num(maxima, 3)} p.p.)")
+
+
+def _divergencias_dispf(res: Any) -> int:
+    divergencias = res.ons.get("divergencias")
+    return 0 if divergencias is None else len(divergencias)
 
 
 def _conf_dispf_horas(res: Any) -> str:
-    divergencias = res.ons.get("divergencias")
-    n = 0 if divergencias is None else len(divergencias)
+    n = _divergencias_dispf(res)
     texto = "DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): "
     return texto + (f"{fmt_int(n)} divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS" if n
                     else "sem divergência")
@@ -189,13 +200,60 @@ def _conf_cadastro(res: Any) -> str:
     return texto + (f"divergências ({divergencias})" if divergencias else "sem divergência")
 
 
+# Formas curtas, para o bloco "Sobre os dados" do resumo executivo: os mesmos resultados e números das longas
+
+
+def _curto_horas(c: Dict[str, Any], base: str) -> str:
+    texto = f"coincidente com {base} em {fmt_pct(c['pct_coincidentes'])} das horas"
+    if c.get("divergentes"):
+        texto += f", com {fmt_int(c['divergentes'])} divergências"
+    return texto
+
+
+def _curto_geracao(res: Any) -> str:
+    return "geração " + _curto_horas(res.geracao_oficial["conferencia"], "Geração por usina")
+
+
+def _curto_disponibilidade(res: Any) -> str:
+    return "disponibilidade declarada " + _curto_horas(res.disponibilidade["conferencia"], "Disponibilidade por usina")
+
+
+def _curto_vazoes(res: Any) -> str:
+    a = res.hidrologia["alinhamento"].iloc[0]
+    texto = (f"vazões turbinada e vertida coincidentes com Dados hidrológicos horários em "
+             f"{fmt_pct(a['pct_coincidencia'])} das horas")
+    if not bool(a["confirmado"]):
+        texto += f", abaixo da meta de {fmt_num(META_ALINHAMENTO_HIDROLOGIA_PCT, 0)}%"
+    return texto
+
+
+def _curto_teifa_teip(res: Any) -> str:
+    reproducao = _reproducao_taxas(res)
+    if reproducao is None:
+        return "TEIFa e TEIP: conferência não feita nesta execução"
+    reproduzidos, meses, _ = reproducao
+    return f"TEIFa e TEIP refeitas em {fmt_int(reproduzidos)} de {fmt_int(meses)} meses"
+
+
+def _curto_dispf_horas(res: Any) -> str:
+    n = _divergencias_dispf(res)
+    return "DISPF e horas por estado operativo " + (f"com {fmt_int(n)} divergências (meses-unidade)" if n
+                                                    else "sem divergência")
+
+
+def _curto_cadastro(res: Any) -> str:
+    divergencias = str(res.cadastro.get("divergencias") or "").strip()
+    return "cadastro " + (f"com divergências ({divergencias})" if divergencias else "sem divergência")
+
+
 CONFERENCIAS: Dict[str, Conferencia] = {
-    "geracao": Conferencia("geração", "geracao", _conf_geracao),
-    "disponibilidade": Conferencia("disponibilidade declarada", "disponibilidade", _conf_disponibilidade),
-    "vazoes": Conferencia("vazões turbinada e vertida", "hidrologia", _conf_vazoes),
-    "teifa_teip": Conferencia("TEIFa e TEIP", "teif_teip", _conf_teifa_teip),
-    "dispf_horas": Conferencia("DISPF", "teif_teip_parametro", _conf_dispf_horas),
-    "cadastro": Conferencia("potência autorizada e estado", "cadastro", _conf_cadastro),
+    "geracao": Conferencia("geração", "geracao", _conf_geracao, _curto_geracao),
+    "disponibilidade": Conferencia("disponibilidade declarada", "disponibilidade", _conf_disponibilidade,
+                                   _curto_disponibilidade),
+    "vazoes": Conferencia("vazões turbinada e vertida", "hidrologia", _conf_vazoes, _curto_vazoes),
+    "teifa_teip": Conferencia("TEIFa e TEIP", "teif_teip", _conf_teifa_teip, _curto_teifa_teip),
+    "dispf_horas": Conferencia("DISPF", "teif_teip_parametro", _conf_dispf_horas, _curto_dispf_horas),
+    "cadastro": Conferencia("potência autorizada e estado", "cadastro", _conf_cadastro, _curto_cadastro),
 }
 
 
@@ -375,6 +433,33 @@ def texto_conferencia(res: Any, cid: str) -> str:
     return conferencia.texto(res)
 
 
+def texto_conferencia_curto(res: Any, cid: str) -> str:
+    """Forma curta do resultado da conferência, para o resumo executivo, ou o aviso de que não foi feita."""
+    conferencia = CONFERENCIAS[cid]
+    if conferencia.base not in _carregados(res):
+        return f"{conferencia.dado}: conferência não feita nesta execução"
+    return conferencia.texto_curto(res)
+
+
+def fontes_resumo(res: Any) -> List[str]:
+    """Conjuntos carregados nesta execução, agrupados por identificador da usina e data de obtenção (resumo executivo).
+
+    Cada texto: "<nomes> (<identificador>), obtido(s) em dd/mm/aaaa", na ordem em que os conjuntos são carregados.
+    """
+    obtencao = (getattr(res, "fontes", None) or {}).get("obtencao") or {}
+    grupos: Dict[Tuple[str, str], List[str]] = {}
+    for cid in _carregados(res):
+        if cid not in CONJUNTOS or not CONJUNTOS[cid].catalogo:
+            continue
+        data = str(obtencao.get(cid) or "")
+        grupos.setdefault((identificador_da_usina(cid), fmt_data(data) if data else ""), []).append(CONJUNTOS[cid].nome)
+    textos = []
+    for (identificador, data), nomes in grupos.items():
+        quando = f"{'obtidos' if len(nomes) > 1 else 'obtido'} em {data}" if data else SEM_REGISTRO
+        textos.append(f"{fmt_lista(nomes)} ({identificador}), {quando}")
+    return textos
+
+
 def _textos_entrada(res: Any, entrada: Entrada) -> Tuple[List[str], List[str]]:
     carregados = _carregados(res)
     conjuntos = list(entrada.conjuntos) if entrada.todos else (
@@ -443,6 +528,6 @@ def tabela_fontes_abas(res: Any, abas: Sequence[str]) -> pd.DataFrame:
 
 __all__ = [
     "CONFERENCIAS", "CONJUNTOS", "MAPA_FONTES", "PREFIXO_CALCULADO", "PREFIXO_FONTE", "conjuntos_carregados",
-    "datas_obtencao", "identificador_da_usina", "legenda_fonte", "origem_dos_dados", "tabela_fontes_abas",
-    "texto_conferencia", "texto_conjunto",
+    "datas_obtencao", "fontes_resumo", "identificador_da_usina", "legenda_fonte", "origem_dos_dados",
+    "tabela_fontes_abas", "texto_conferencia", "texto_conferencia_curto", "texto_conjunto",
 ]

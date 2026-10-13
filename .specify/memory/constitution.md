@@ -8,6 +8,8 @@ Operador Nacional do Sistema Elétrico (ONS), para subsidiar a fiscalização.
 - **Geração distribuída** (MMGD): o ONS a publica só em agregado, por isso entra apenas como panorama.
 - **Produtos**:
   - o relatório de uma usina, em PDF, em Markdown e em planilha, com as figuras;
+  - o resumo executivo de uma usina, em PDF e em Markdown, com no máximo duas páginas e sem figuras, gerado junto
+    com o relatório completo e com a conclusão dele copiada igual;
   - o relatório de carteira, que reúne as usinas de um estado ou de um tipo.
 - **Origem do conteúdo**: todo o conteúdo vem dos dados, do perfil da usina e das regras gerais do projeto.
 
@@ -128,6 +130,9 @@ O trabalho segue um único fluxo de cinco etapas. Cada etapa tem uma spec, na me
 - **Legendas**: cada figura e cada tabela DEVE ter, logo abaixo, a legenda com a fonte dos dados:
   - os conjuntos do ONS usados, com o identificador da usina e a data de obtenção, e as conferências com o resultado;
   - ou "calculado neste relatório a partir de", quando for derivada.
+- **Resumo executivo**: no lugar da legenda por tabela, PODE trazer um bloco único de fontes ("Sobre os dados"),
+  com as mesmas informações de fonte e de conferência. Cada tabela do resumo DEVE indicar a seção de origem no
+  relatório completo.
 - **Formatos**: o PDF e o Markdown DEVEM ter o mesmo conteúdo, na mesma ordem. A planilha DEVE trazer todas as tabelas
   calculadas e uma aba com a origem de cada aba.
 - **Figuras**: toda figura DEVE ser produzida com `seaborn`, com paleta, tipografia, tamanhos e resolução definidos de
@@ -220,4 +225,4 @@ O trabalho segue um único fluxo de cinco etapas. Cada etapa tem uma spec, na me
    - **PATCH**: redação e esclarecimentos sem mudança de escopo.
 5. **Conformidade**: todo plano de implementação DEVE conferir a aderência a esta constituição antes do código.
 
-**Version**: 3.0.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-09
+**Version**: 3.1.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-13

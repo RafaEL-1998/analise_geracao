@@ -108,6 +108,8 @@ ARQUIVOS_RELATORIO = {
     "xlsx": "perfil_estatistico_anual.xlsx",
     "csv": "perfil_estatistico_anual.csv",
     "figuras": "figures",
+    "resumo_pdf": "resumo_executivo.pdf",  # resumo executivo (spec da Geração do relatório)
+    "resumo_md": "resumo_executivo.md",
 }
 
 

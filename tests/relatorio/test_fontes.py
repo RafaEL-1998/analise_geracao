@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from types import SimpleNamespace
 from typing import Any, Dict
 
@@ -13,9 +14,11 @@ from src.relatorio.fontes import (
     CONJUNTOS,
     MAPA_FONTES,
     conjuntos_carregados,
+    fontes_resumo,
     legenda_fonte,
     tabela_fontes_abas,
     texto_conferencia,
+    texto_conferencia_curto,
 )
 
 IDS = {"evt", "dispf_mensal", "dispf_anual", "teif_teip", "teif_teip_parametro", "programacao", "disponibilidade",
@@ -145,3 +148,45 @@ def test_rotulo_das_horas_sem_programacao() -> None:
     from src.relatorio.conteudo import _ROTULOS_CLASSES_PARADA
 
     assert _ROTULOS_CLASSES_PARADA[SEM_PROGRAMACAO] == "sem programação: fora do período ou sem valor programado"
+
+
+# ---------------------------------------------------------------------------
+# Resumo executivo: conferências em texto curto e fontes agrupadas (spec 007, data-model 3)
+# ---------------------------------------------------------------------------
+
+_NUMERO = re.compile(r"\d[\d.]*(?:,\d+)?%?")
+
+
+@pytest.mark.parametrize("cid", sorted(CONFERENCIAS))
+def test_texto_curto_usa_os_numeros_do_texto_longo(cid: str) -> None:
+    res = _res()
+    res.geracao_oficial = {"conferencia": _conferencia(divergentes=3)}
+    curto, longo = texto_conferencia_curto(res, cid), texto_conferencia(res, cid)
+    assert curto and len(curto) < len(longo)
+    for numero in _NUMERO.findall(curto):
+        assert numero in longo, (cid, numero)
+
+
+def test_texto_curto_das_conferencias() -> None:
+    res = _res()
+    res.geracao_oficial = {"conferencia": _conferencia(divergentes=3)}
+    assert texto_conferencia_curto(res, "geracao") == (
+        "geração coincidente com Geração por usina em 100,0% das horas, com 3 divergências")
+    assert texto_conferencia_curto(res, "teifa_teip") == "TEIFa e TEIP refeitas em 2 de 2 meses"
+    assert texto_conferencia_curto(res, "dispf_horas") == (
+        "DISPF e horas por estado operativo com 4 divergências (meses-unidade)")
+    assert texto_conferencia_curto(res, "cadastro") == "cadastro sem divergência"
+
+
+def test_texto_curto_sem_a_base() -> None:
+    assert texto_conferencia_curto(_res(completo=False), "geracao") == "geração: conferência não feita nesta execução"
+
+
+def test_fontes_do_resumo_agrupadas_por_identificador_e_data() -> None:
+    fontes = fontes_resumo(_res())
+    texto = " | ".join(fontes)
+    for cid in IDS:
+        assert texto.count(CONJUNTOS[cid].nome) == 1, cid
+    assert fontes[0] == "Energia Vertida Turbinável (cod_usina 153), obtido em 01/10/2026"
+    assert "Disponibilidade por usina e Geração por usina (id ONS MSUHSD), obtidos em 05/10/2026" in fontes
+    assert fontes_resumo(_res(completo=False)) == fontes[:1]

@@ -81,6 +81,7 @@ from src.relatorio.conteudo import (
     pares_parametros,
     texto_taxas_ons,
     textos_tabelas,
+    titulo_capa_relatorio,
 )
 from src.relatorio.estrutura import constatacoes_da_secao, secoes_presentes, sumario
 from src.relatorio.figuras import NOMES_FIGURAS
@@ -458,8 +459,7 @@ class PDFReportGenerator:
 
     def _capa(self, story: List[Any]) -> None:
         c = self.res.cobertura
-        story.append(self._p(f"{perfil_ativo().usina.nome} — energia vertida turbinável e desempenho operacional",
-                             "titulo"))
+        story.append(self._p(escape(titulo_capa_relatorio()), "titulo"))
         self.subtitulo_capa = (
             f"Análise dos dados abertos do ONS · {fmt_data_hora(c['inicio'])} a {fmt_data_hora(c['fim'])} · "
             f"{fmt_int(c['horas_observadas'])} registros horários · Gerado em "

@@ -83,6 +83,11 @@ def orgao_garantia_fisica() -> str:
     return perfil_ativo().parametros.fontes.garantia_fisica.split(",")[0].strip()
 
 
+def titulo_capa_relatorio() -> str:
+    """Título da capa do PDF do relatório, citado também no cabeçalho do resumo executivo."""
+    return f"{perfil_ativo().usina.nome} — Análise do desempenho operacional"
+
+
 def _rotulo_secoes(chaves: Sequence[str], numeros: Dict[str, int]) -> str:
     presentes = sorted({numeros[c] for c in chaves if c in numeros})
     if not presentes:

@@ -1,13 +1,15 @@
-"""Geração do relatório: PDF, Markdown, planilha, CSV e figuras da usina, só a partir do que as etapas anteriores gravaram.
+"""Geração do relatório: PDF, Markdown, planilha, CSV e figuras da usina, e o resumo executivo, só a partir do que as
+etapas anteriores gravaram.
 
 Lê ``data/usinas/<slug>/analises/resultados.pkl``, monta a tabela de parâmetros (perfil, regras gerais e datas de
-obtenção) e a origem dos dados, desenha as figuras e grava ``reports/<slug>/`` (spec da Geração do relatório).
+obtenção) e a origem dos dados, desenha as figuras e grava ``reports/<slug>/`` (spec da Geração do relatório). O resumo
+executivo (até duas páginas, em PDF e em Markdown) é gerado depois do PDF do relatório, cujo número de páginas cita, e
+entra na mesma conferência e na mesma troca das saídas.
 """
 
 from __future__ import annotations
 
 import os
-import re
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -33,6 +35,8 @@ from src.relatorio.parametros import (
 )
 from src.relatorio.pdf import PDFReportGenerator
 from src.relatorio.planilha import exportar_tabelas
+from src.relatorio.resumo import gerar_resumo
+from src.relatorio.resumo_pdf import paginas_do_pdf
 
 logger = setup_logger("relatorio")
 
@@ -52,11 +56,6 @@ def completar_resultados(res: ResultadosAnalise) -> ResultadosAnalise:
     res.parametros = parametros
     res.fontes = origem_dos_dados(res)
     return res
-
-
-def paginas_do_pdf(caminho: Path) -> int:
-    """Quantidade de páginas: objetos de página do PDF (o objeto da árvore de páginas é /Pages)."""
-    return len(re.findall(rb"/Type\s*/Page(?![a-z])", Path(caminho).read_bytes()))
 
 
 def _conferir_saidas(arquivos: List[Path]) -> None:
@@ -129,7 +128,10 @@ def executar_relatorio(perfil: Any, data_geracao: Optional[datetime] = None) -> 
         gerador = PDFReportGenerator(res, figuras, temporaria / arq["pdf"], data_geracao=gerado_em,
                                      invariante=data_geracao is not None)
         pdf = gerador.build_pdf()
-        novos: List[Path] = [pdf, md, xlsx, csv, *sorted(figuras.values())]
+        paginas = paginas_do_pdf(pdf)
+        resumo_pdf, resumo_md, info_resumo = gerar_resumo(res, temporaria / arq["resumo_pdf"], temporaria / arq["resumo_md"],
+                                                          gerado_em, data_geracao is not None, paginas)
+        novos: List[Path] = [pdf, md, xlsx, csv, resumo_pdf, resumo_md, *sorted(figuras.values())]
         _conferir_saidas(novos)
         planilha = load_workbook(xlsx, read_only=True)
         abas = len(planilha.sheetnames)
@@ -137,9 +139,10 @@ def executar_relatorio(perfil: Any, data_geracao: Optional[datetime] = None) -> 
         resumo = {
             "data_geracao": gerado_em.strftime("%d/%m/%Y %H:%M"),
             "secoes": len(secoes_presentes(res)),
-            "paginas_pdf": paginas_do_pdf(pdf),
+            "paginas_pdf": paginas,
             "figuras": len(figuras),
             "abas_planilha": abas,
+            "resumo_executivo": info_resumo,
         }
         arquivos = _trocar_saidas(temporaria, pasta, novos)
     finally:

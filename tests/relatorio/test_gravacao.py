@@ -15,7 +15,8 @@ from src.relatorio import etapa as etapa_relatorio
 PERFIL = type("Perfil", (), {"usina": type("Usina", (), {"slug": "usina_teste"})()})()
 
 
-def _preparar(tmp_path: Path, monkeypatch, versao: str, falhar_pdf: bool = False) -> Path:
+def _preparar(tmp_path: Path, monkeypatch, versao: str, falhar_pdf: bool = False,
+              falhar_resumo: bool = False) -> Path:
     monkeypatch.setattr(caminhos, "REPORTS_DIR", tmp_path / "reports")
     monkeypatch.setattr(caminhos, "DATA_DIR", tmp_path / "data")
     monkeypatch.setattr(etapa_relatorio, "carregar_resultados", lambda caminho: object())
@@ -50,6 +51,14 @@ def _preparar(tmp_path: Path, monkeypatch, versao: str, falhar_pdf: bool = False
             self.destino.write_bytes(f"%PDF-1.4 {versao}".encode())
             return self.destino
 
+    def resumo(res, caminho_pdf, caminho_md, data_geracao, invariante, paginas_relatorio):
+        if falhar_resumo:
+            raise RuntimeError("falha simulada no resumo executivo")
+        caminho_pdf.write_bytes(f"%PDF-1.4 resumo {versao}".encode())
+        caminho_md.write_text(f"# resumo {versao}\n", encoding="utf-8")
+        return caminho_pdf, caminho_md, {"paginas": 1, "evolucao_anual": True, "palavras": 2}
+
+    monkeypatch.setattr(etapa_relatorio, "gerar_resumo", resumo)
     monkeypatch.setattr(etapa_relatorio, "gerar_graficos", figuras)
     monkeypatch.setattr(etapa_relatorio, "exportar_tabelas", tabelas)
     monkeypatch.setattr(etapa_relatorio, "gerar_relatorio_md", markdown)
@@ -65,9 +74,11 @@ def test_saidas_trocadas_so_no_fim_e_sem_pasta_temporaria(tmp_path: Path, monkey
     pasta = _preparar(tmp_path, monkeypatch, "v1")
     resultado = etapa_relatorio.executar_relatorio(PERFIL)
     assert resultado.codigo == 0 and resultado.resumo["abas_planilha"] == 1
+    assert resultado.resumo["resumo_executivo"] == {"paginas": 1, "evolucao_anual": True, "palavras": 2}
     assert sorted(p.relative_to(pasta).as_posix() for p in resultado.arquivos) == [
         "figures/01_serie_temporal_disponibilidade_geracao_evt.png", "perfil_estatistico_anual.csv",
-        "perfil_estatistico_anual.xlsx", "relatorio_analise_estatistica.md", "relatorio_analise_estatistica.pdf"]
+        "perfil_estatistico_anual.xlsx", "relatorio_analise_estatistica.md", "relatorio_analise_estatistica.pdf",
+        "resumo_executivo.md", "resumo_executivo.pdf"]
     assert not (pasta / etapa_relatorio.PASTA_TEMPORARIA).exists()
     assert (pasta / "relatorio_analise_estatistica.pdf").read_bytes() == b"%PDF-1.4 v1"
 
@@ -78,6 +89,18 @@ def test_falha_na_geracao_mantem_as_saidas_anteriores(tmp_path: Path, monkeypatc
     antes = _conteudo(pasta)
     _preparar(tmp_path, monkeypatch, "v2", falhar_pdf=True)
     with pytest.raises(RuntimeError):
+        etapa_relatorio.executar_relatorio(PERFIL)
+    assert _conteudo(pasta) == antes
+    assert not (pasta / etapa_relatorio.PASTA_TEMPORARIA).exists()
+
+
+def test_falha_no_resumo_executivo_mantem_as_saidas_anteriores(tmp_path: Path, monkeypatch) -> None:
+    """Spec 007, FR-006: resumo acima de duas páginas é erro, e nenhuma saída nova substitui as anteriores."""
+    pasta = _preparar(tmp_path, monkeypatch, "v1")
+    etapa_relatorio.executar_relatorio(PERFIL)
+    antes = _conteudo(pasta)
+    _preparar(tmp_path, monkeypatch, "v2", falhar_resumo=True)
+    with pytest.raises(RuntimeError, match="resumo executivo"):
         etapa_relatorio.executar_relatorio(PERFIL)
     assert _conteudo(pasta) == antes
     assert not (pasta / etapa_relatorio.PASTA_TEMPORARIA).exists()

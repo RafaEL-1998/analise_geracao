@@ -14,7 +14,7 @@ O projeto segue o Spec-Driven Development (Spec Kit):
 - a constituição fica em `.specify/memory/constitution.md`;
 - cada etapa do fluxo tem uma spec em `specs/`.
 
-Os resultados não são repetidos aqui, para não ficarem desatualizados. Veja `reports/<slug>/relatorio_analise_estatistica.pdf`, gerado a partir dos dados a cada execução.
+Os resultados não são repetidos aqui, para não ficarem desatualizados. Veja `reports/<slug>/relatorio_analise_estatistica.pdf`, gerado a partir dos dados a cada execução. Junto com ele sai `reports/<slug>/resumo_executivo.pdf`: até duas páginas, para a direção, com a conclusão do relatório, os indicadores principais, a evolução anual e as fontes.
 
 ---
 
@@ -145,8 +145,8 @@ Uma falha ao obter um dicionário de dados não muda o código de saída. Com `-
 │   ├── raw/                    arquivos do ONS, compartilhados por todas as usinas, com manifestos,
 │   │                           _versoes_anteriores/ e _dicionarios/
 │   └── usinas/<slug>/          coleta/, tratamento/, conferencia/ e analises/, cada uma com o seu etapa.json
-├── reports/<slug>/             relatorio_analise_estatistica.pdf e .md, perfil_estatistico_anual.xlsx e .csv,
-│                               figures/ (8 figuras, 300 DPI) e etapa.json
+├── reports/<slug>/             relatorio_analise_estatistica.pdf e .md, resumo_executivo.pdf e .md,
+│                               perfil_estatistico_anual.xlsx e .csv, figures/ (8 figuras, 300 DPI) e etapa.json
 ├── specs/                      uma spec por etapa (001-coleta-dados a 005-geracao-relatorio)
 ├── .specify/                   constituição e modelos do Spec Kit
 ├── referencias/                documentos gerais de consulta (fora do git)

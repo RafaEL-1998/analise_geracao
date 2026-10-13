@@ -73,6 +73,21 @@ def test_relatorio_sem_mencao_a_sao_domingos(execucao) -> None:
         assert literal.encode("utf-8") not in pdf and literal.encode("latin-1", "ignore") not in pdf, literal
 
 
+def test_resumo_executivo_entre_as_saidas(execucao) -> None:
+    """Spec 007: o resumo sai junto com o relatório, listado no etapa.json, sem literal da São Domingos."""
+    relatorio = execucao["relatorio"]
+    manifesto = json.loads((relatorio / "etapa.json").read_text(encoding="utf-8"))
+    assert {"resumo_executivo.pdf", "resumo_executivo.md"} <= {a["nome"] for a in manifesto["arquivos"]}
+    info = manifesto["resumo"]["resumo_executivo"]
+    assert set(info) == {"paginas", "evolucao_anual", "palavras"} and 1 <= info["paginas"] <= 2
+    md = (relatorio / "resumo_executivo.md").read_text(encoding="utf-8")
+    pdf = (relatorio / "resumo_executivo.pdf").read_bytes()
+    assert md.startswith("# UHE Fictícia — resumo executivo") and pdf[:5] == b"%PDF-"
+    for literal in PROIBIDOS:
+        assert literal not in md, literal
+        assert literal.encode("utf-8") not in pdf and literal.encode("latin-1", "ignore") not in pdf, literal
+
+
 def test_faixas_de_afluencia_com_tres_unidades(execucao) -> None:
     md = (execucao["relatorio"] / "relatorio_analise_estatistica.md").read_text(encoding="utf-8")
     assert "entre uma e três unidades" in md

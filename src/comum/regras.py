@@ -132,3 +132,26 @@ LIMIAR_CONCLUSAO_INDISPONIBILIDADE_DIAS: int = 30  # C10: indisponibilidade tota
 LIMIAR_CONCLUSAO_PROGRAMADA_UG_PCT: float = 20.0  # C10: indisponibilidade programada de uma unidade num ano
 LIMIAR_CONCLUSAO_R9_HORAS: int = 24  # C11: geração com vazão turbinada nula
 MAXIMO_ITENS_CONCLUSAO: int = 5  # itens por lista no PDF e no Markdown (a planilha traz todos)
+
+# ---------------------------------------------------------------------------
+# Resumo executivo: limites e glossário (iguais para todas as usinas)
+# ---------------------------------------------------------------------------
+
+RESUMO_MAXIMO_PAGINAS: int = 2  # páginas A4 do PDF do resumo
+RESUMO_CORPO_PT: float = 10.0  # corpo do texto do resumo, em pontos
+RESUMO_TABELA_PT: float = 9.0  # corpo das tabelas do resumo, em pontos
+RESUMO_MAXIMO_PALAVRAS: int = 1000  # palavras fora das tabelas: leitura em até 5 minutos
+RESUMO_MAXIMO_PALAVRAS_DADOS: int = 250  # palavras do bloco "Sobre os dados"
+# Siglas e grandezas explicadas na linha de termos do resumo, só as que aparecem nele
+GLOSSARIO_RESUMO: Dict[str, str] = {
+    "EVT": "energia vertida turbinável, a que a água vertida poderia ter gerado nas turbinas disponíveis",
+    "ONS": "Operador Nacional do Sistema Elétrico",
+    "DISPF": "disponibilidade das unidades geradoras apurada pelo ONS",
+    "TEIFa": "taxa de indisponibilidade forçada apurada pelo ONS em 60 meses",
+    "TEIF": "taxa de indisponibilidade forçada de referência, usada no cálculo da garantia física",
+    "TEIP": "taxa de indisponibilidade programada apurada pelo ONS em 60 meses",
+    "UG": "unidade geradora",
+    "GF": "garantia física",
+    "Pinst": "potência instalada",
+    "MWmed": "megawatt médio, a energia dividida pelas horas do período",
+}

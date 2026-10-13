@@ -2,8 +2,8 @@
  "etapa": "relatorio",
  "usina": "sao_domingos",
  "versao_formato": 1,
- "iniciada_em": "2026-10-09T17:21:51Z",
- "concluida_em": "2026-10-09T17:22:11Z",
+ "iniciada_em": "2026-10-13T12:47:44Z",
+ "concluida_em": "2026-10-13T12:48:03Z",
  "status": "concluida",
  "codigo_saida": 0,
  "etapa_anterior": {
@@ -13,8 +13,8 @@
  "arquivos": [
   {
    "nome": "relatorio_analise_estatistica.pdf",
-   "bytes": 2337866,
-   "sha256": "c8515216cd2c11fa64670025421eb78c1a4d2d47644b0c2b33439bec1429b9dc"
+   "bytes": 2339635,
+   "sha256": "2a3edcb99392ac15d1cc29e3697d3cd20d95341544a99e031798ceec5c4c7d3d"
   },
   {
    "nome": "relatorio_analise_estatistica.md",
@@ -23,13 +23,23 @@
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
-   "bytes": 2926158,
-   "sha256": "65523d1f861e0bcc5ce62a24a3011b126b18ceba903d8f21111bad03ad6c7882"
+   "bytes": 2926159,
+   "sha256": "745c9b361d1447117e7f83b075bfb548a44e2b4cf3c6048d85677f0332bc3a91"
   },
   {
    "nome": "perfil_estatistico_anual.csv",
    "bytes": 4281,
    "sha256": "ebcf2db6dd66e1e6c51cca172b658dfc92422c9dbd0d8a62c40ba9691a962f00"
+  },
+  {
+   "nome": "resumo_executivo.pdf",
+   "bytes": 83886,
+   "sha256": "f39df404b5bcdf47f3e9887fdc13d97e970d632acc6b2e40dc14fcae3c62ba66"
+  },
+  {
+   "nome": "resumo_executivo.md",
+   "bytes": 7329,
+   "sha256": "1d8805ed3a6af6a031c22e1e1b3c02c109d0a73bf46e6c18584e173f4c5dba5b"
   },
   {
    "nome": "figures/01_serie_temporal_disponibilidade_geracao_evt.png",
@@ -38,8 +48,8 @@
   },
   {
    "nome": "figures/02_evt_mensal.png",
-   "bytes": 103866,
-   "sha256": "460c95479cfd44f85164947ff7b04e0d02f8cd6982807a4499d61665705bb1aa"
+   "bytes": 104215,
+   "sha256": "35889e9ad91bc29a6c3253fef092a8b31db21f35d580f3e1ca0b4118c7028298"
   },
   {
    "nome": "figures/03_perfil_horario_geracao_evt.png",
@@ -58,8 +68,8 @@
   },
   {
    "nome": "figures/06_disponibilidade_operacional_sincronizada_mensal.png",
-   "bytes": 339500,
-   "sha256": "5a76334c166a9fa5fda2c8d62d1dcf29f90e097095bbefa98b13e6afe61eb2e1"
+   "bytes": 342235,
+   "sha256": "e7504f0808c0ea1bf45559042b7f382b47082850d870ce70ae4a00d2ef7ae1d6"
   },
   {
    "nome": "figures/07_evt_por_faixa_de_afluencia.png",
@@ -77,6 +87,11 @@
   "secoes": 17,
   "paginas_pdf": 30,
   "figuras": 8,
-  "abas_planilha": 58
+  "abas_planilha": 58,
+  "resumo_executivo": {
+   "paginas": 2,
+   "evolucao_anual": true,
+   "palavras": 933
+  }
  }
 }

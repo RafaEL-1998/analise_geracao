@@ -207,7 +207,7 @@ def _grafico_serie_temporal(res: ResultadosAnalise, caminho: Path, dpi: int) -> 
 
 def _grafico_evt_mensal(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
     m = res.evt_mensal
-    rotulo_minimo = f"EVT em horas com vertimento de até {fmt_num(perfil_ativo().analises.vertimento_minimo_m3s, 0)} m³/s (patamar contínuo)"
+    rotulo_minimo = f"EVT, em horas, com vertimento de até {fmt_num(perfil_ativo().analises.vertimento_minimo_m3s, 0)} m³/s (patamar contínuo)"
     rotulo_demais = "EVT nas demais horas"
     cores = {rotulo_minimo: COR_CONTEXTO, rotulo_demais: COR_EVT}
     longo = pd.concat([
@@ -395,7 +395,7 @@ def _grafico_disponibilidade_sincronizada(res: ResultadosAnalise, caminho: Path,
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     ax.grid(axis="x", visible=False)
-    ax.set_title("Disponibilidade operacional e sincronizada e geração: médias mensais (ONS)")
+    ax.set_title("Comparativo de Disponibilidade Operacional, Sincronizada e Geração Efetiva (MW)")
     ax.legend(handles=[plt.Line2D([], [], color=cor, lw=2, label=nome) for nome, (_, cor) in series.items()],
               loc="upper center", bbox_to_anchor=(0.5, -0.09), ncol=3)
     fig.subplots_adjust(left=0.07, right=0.80, top=0.89, bottom=0.2)
