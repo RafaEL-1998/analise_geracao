@@ -2,8 +2,8 @@
  "etapa": "relatorio",
  "usina": "william_arjona",
  "versao_formato": 1,
- "iniciada_em": "2026-10-19T15:08:07Z",
- "concluida_em": "2026-10-19T15:08:12Z",
+ "iniciada_em": "2026-10-19T16:28:13Z",
+ "concluida_em": "2026-10-19T16:28:18Z",
  "status": "concluida",
  "codigo_saida": 0,
  "etapa_anterior": {
@@ -14,22 +14,32 @@
   {
    "nome": "relatorio_analise_estatistica.pdf",
    "bytes": 742444,
-   "sha256": "79ee6b232bb3448015bf0f883f8d5298df5deb52b3cb529bbd9202a050c1817f"
+   "sha256": "d800e35dde60e48c16e4ef7251e8e621b3e5600302cdd80497c692f283968538"
   },
   {
    "nome": "relatorio_analise_estatistica.md",
    "bytes": 32443,
-   "sha256": "5fd1dbea6bf391c39c3823b080ed16b3cc46cffd79c5583612bc727b65f2905e"
+   "sha256": "535c1df61b39fb7ec97c96db09facf9382a753c9d07281658df66c37126c35a4"
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
-   "bytes": 65834,
-   "sha256": "ecf30d87923662a90ad06064f4ea9aa28bc8b1b30f4689373cbdf357c7a044c6"
+   "bytes": 65833,
+   "sha256": "205afc808a0ebdb657ecbf2a739ac0091673ce353e12cc941f1368fb7bd46c31"
   },
   {
    "nome": "perfil_estatistico_anual.csv",
    "bytes": 909,
    "sha256": "04c8395babffb7bc233fadbec90ae87ebc6a193e8672d6cd643b4267be4f3415"
+  },
+  {
+   "nome": "resumo_executivo.pdf",
+   "bytes": 80902,
+   "sha256": "967b6b652e495a6e4b6a77a62fb3a9cff396131f657391dc86181e7fbb5aeb44"
+  },
+  {
+   "nome": "resumo_executivo.md",
+   "bytes": 3539,
+   "sha256": "c26f906ff5805304f5dffd86953cad02e66fb32e86c7d58377e37bf626040d00"
   },
   {
    "nome": "figures/01_serie_temporal_geracao_disponibilidade.png",
@@ -58,11 +68,15 @@
   }
  ],
  "resumo": {
-  "data_geracao": "19/10/2026 11:08",
+  "data_geracao": "19/10/2026 12:28",
   "secoes": 12,
   "paginas_pdf": 18,
   "figuras": 5,
   "abas_planilha": 28,
-  "resumo_executivo": null
+  "resumo_executivo": {
+   "paginas": 2,
+   "evolucao_anual": true,
+   "palavras": 399
+  }
  }
 }

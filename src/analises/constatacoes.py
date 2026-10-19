@@ -786,8 +786,10 @@ def _achado_qualidade_comum(res: ResultadosAnalise) -> Tuple[str, str]:
     q = res.comum["qualidade"]
     if q["horas_sinalizadas"]:
         itens = [f"{r.codigo}, {r.descricao}: {fmt_int(r.horas)} h" for r in q["sinalizacoes"].itertuples()]
-        texto = (f"{fmt_int(q['horas_sinalizadas'])} horas sinalizadas ({'; '.join(itens)}), mantidas na base e "
-                 f"nos totais.")
+        # a parcela total, citada também no resumo executivo (uma hora pode ter mais de um código)
+        parcela = fmt_pct(_pct(q["horas_sinalizadas"], res.cobertura["horas_observadas"]), 2)
+        texto = (f"{fmt_int(q['horas_sinalizadas'])} horas sinalizadas ({parcela} das horas; {'; '.join(itens)}), "
+                 f"mantidas na base e nos totais.")
     else:
         texto = "Nenhuma hora sinalizada na base horária."
     if q["horas_sem_valor"]:

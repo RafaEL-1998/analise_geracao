@@ -11,6 +11,9 @@ nesta ordem:
 
 O PDF (``src.relatorio.resumo_pdf``) e o Markdown saem do mesmo objeto, com o mesmo conteúdo e na mesma ordem. Se o PDF
 passar de duas páginas, a evolução anual sai; se ainda passar, é erro, e a etapa não troca nenhuma saída.
+
+Vale para os dois caminhos da spec 006: nas usinas sem EVT, os indicadores, a tabela anual e os textos vêm de
+``src.relatorio.comum``, e os números do conjunto aparecem como do conjunto, como no relatório completo.
 """
 
 from __future__ import annotations
@@ -22,8 +25,8 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from src.analises.comum import _pct
-from src.analises.conclusao import FRASE_ABERTURA_CONCLUSAO, FRASE_CONCLUSAO_VAZIA
-from src.analises.resultados import ResultadosAnalise
+from src.analises.conclusao import FRASE_ABERTURA_CONCLUSAO, frase_sem_itens
+from src.analises.resultados import ResultadosAnalise, sem_evt
 from src.comum.formatacao import fmt_data, fmt_data_hora, fmt_int, fmt_lista, fmt_num, fmt_pct, plural
 from src.comum.logger import setup_logger
 from src.comum.perfil import perfil_ativo
@@ -40,17 +43,30 @@ from src.relatorio.conteudo import (
     pares_identificacao,
     titulo_capa_relatorio,
 )
+from src.relatorio import comum
 from src.relatorio.estrutura import secoes_presentes
-from src.relatorio.fontes import CONFERENCIAS, conjuntos_carregados, fontes_resumo, texto_conferencia_curto
+from src.relatorio.fontes import (
+    CONFERENCIAS,
+    CONFERENCIAS_SEM_EVT,
+    conjuntos_carregados,
+    fontes_resumo,
+    texto_conferencia_curto,
+)
 from src.relatorio.resumo_pdf import gerar_resumo_pdf, paginas_do_pdf
 
 logger = setup_logger("relatorio")
 
 CAMINHO_EVT = "evt"  # hidrelétrica com série própria na Energia Vertida Turbinável
-# Colunas da tabela anual do relatório que entram no resumo, por caminho (no máximo seis)
+CAMINHO_SEM_EVT = "sem_evt"  # demais usinas, sobre a base horária comum (spec 006, decisão R30)
+# Colunas da tabela anual do relatório que entram no resumo, por caminho (no máximo seis). No caminho sem EVT, as que a
+# tabela da usina tem, nesta ordem (decisão R6 da spec 007): o nível do número, a geração, a energia, o fator de
+# capacidade (eólicas e solares) e a disponibilidade (quando o ONS a publica). A geração ÷ garantia física e o
+# indicador de perda do tipo entram com as seções do tipo (fases B e C da 006).
 COLUNAS_RESUMO_ANUAL: Dict[str, List[str]] = {
     CAMINHO_EVT: ["Ano", "Disp. média (% Pinst)", "Fator de capacidade", "Geração / GF", "EVT (MWh)",
                   "Horas parada c/ EVT"],
+    CAMINHO_SEM_EVT: ["Ano", "Nível", "Geração média (MWmed)", "Energia (MWh)", "Fator de capacidade",
+                      "Disp. (% Pinst)"],
 }
 TITULOS_BLOCOS: Tuple[Tuple[str, str], ...] = (  # ordem fixa do documento; a conclusão fecha o resumo
     ("indicadores", "Indicadores-chave"),
@@ -146,16 +162,20 @@ def palavras_fora_das_tabelas(markdown: str) -> int:
 
 
 def _caminho(res: ResultadosAnalise) -> str:
-    """Caminho da usina para as colunas anuais; o das usinas sem EVT entra com a ampliação para todos os tipos."""
-    return CAMINHO_EVT
+    """Caminho da usina, pelo mesmo critério do relatório completo (spec 006, decisão R14)."""
+    return CAMINHO_SEM_EVT if sem_evt(res) else CAMINHO_EVT
 
 
 def _identificacao(res: ResultadosAnalise) -> List[str]:
-    """Tipo, estado, modalidade e potência; agentes com o período de cada um, como na capa do relatório."""
+    """Tipo, estado, modalidade e potência; agentes com o período de cada um, como na capa do relatório (só no
+    caminho da EVT, que os traz da base de EVT)."""
     perfil = perfil_ativo()
     usina = perfil.usina
     potencia = f"{fmt_num(perfil.parametros.potencia_instalada_mw, 1)} MW"
-    linhas = [" · ".join(p for p in (usina.tipo, usina.estado, usina.modalidade, potencia) if p)]
+    tipo = getattr(res, "tipo", "") or usina.tipo
+    linhas = [" · ".join(p for p in (tipo, usina.estado, usina.modalidade, potencia) if p)]
+    if sem_evt(res):
+        return linhas
     agentes = dict(pares_identificacao(res)).get("Agente")
     if agentes:
         quantidade = len(res.cobertura.get("agentes", []))
@@ -165,12 +185,15 @@ def _identificacao(res: ResultadosAnalise) -> List[str]:
 
 def _evolucao_anual(res: ResultadosAnalise, secao: Optional[int],
                     com_evolucao_anual: bool) -> Tuple[Optional[Tabela], str]:
-    cabecalho, linhas = linhas_tabela_anual(res)
+    caminho = _caminho(res)
+    cabecalho, linhas = comum.linhas_tabela_anuais(res) if caminho == CAMINHO_SEM_EVT else linhas_tabela_anual(res)
     if not linhas:
         return None, ""
     if not com_evolucao_anual:
         return None, f"A evolução anual está na seção {secao} do relatório completo."
-    colunas = COLUNAS_RESUMO_ANUAL[_caminho(res)]
+    colunas = COLUNAS_RESUMO_ANUAL[caminho]
+    if caminho == CAMINHO_SEM_EVT:  # as colunas que a tabela da usina tem
+        colunas = [c for c in colunas if c in cabecalho]
     ausentes = [c for c in colunas if c not in cabecalho]
     if ausentes:
         raise KeyError(f"colunas do resumo ausentes na tabela anual do relatório: {', '.join(ausentes)}")
@@ -180,8 +203,31 @@ def _evolucao_anual(res: ResultadosAnalise, secao: Optional[int],
     return Tabela(colunas, escolhidas, f"{parcial}Colunas e definições na seção {secao} do relatório completo."), ""
 
 
+def _dados_sem_evt(res: ResultadosAnalise) -> str:
+    """Parágrafo "Dados" das usinas sem EVT: a série de referência, com o nível, e as horas sinalizadas."""
+    c, q = res.cobertura, res.comum["qualidade"]
+    dados = (f"Dados: série horária de referência, {comum.serie_referencia_texto(res)}, de "
+             f"{fmt_data_hora(c['inicio'])} a {fmt_data_hora(c['fim'])}, com {fmt_int(c['horas_observadas'])} registros")
+    parciais = [str(a) for a in c.get("anos_parciais", [])]
+    if parciais:
+        dados += f"; {fmt_lista(parciais)} {plural(len(parciais), 'é ano parcial', 'são anos parciais')}"
+    if c.get("horas_ausentes"):
+        dados += f"; {fmt_int(c['horas_ausentes'])} horas ausentes, não preenchidas"
+    total = q["horas_sinalizadas"]
+    if total:
+        return dados + (f". {fmt_int(total)} horas ({fmt_pct(_pct(total, c['horas_observadas']), 2)}) estão sinalizadas "
+                        "e foram mantidas nos totais.")
+    return dados + ". Nenhuma hora sinalizada."
+
+
 def _sobre_os_dados(res: ResultadosAnalise) -> List[str]:
     """Três parágrafos: dados (cobertura e sinalizações), conferências e limites, fontes (data-model 1.2)."""
+    if sem_evt(res):
+        carregados = (getattr(res, "fontes", None) or {}).get("carregados") or conjuntos_carregados(res)
+        feitas = [texto_conferencia_curto(res, cid) for cid in CONFERENCIAS_SEM_EVT
+                  if CONFERENCIAS[cid].base in carregados]
+        conferencias = (f"Conferências: {'; '.join(feitas)}. " if feitas else "") + FRASE_LIMITES
+        return _limitar([_dados_sem_evt(res), conferencias, f"Fontes: {'; '.join(fontes_resumo(res))}."])
     c, g, anuais = res.cobertura, res.globais, res.indicadores_anuais
     dados = (f"Dados: série horária de {fmt_data_hora(c['inicio'])} a {fmt_data_hora(c['fim'])}, com "
              f"{fmt_int(c['horas_observadas'])} registros")
@@ -197,7 +243,10 @@ def _sobre_os_dados(res: ResultadosAnalise) -> List[str]:
     carregados = (getattr(res, "fontes", None) or {}).get("carregados") or conjuntos_carregados(res)
     feitas = [texto_conferencia_curto(res, cid) for cid, conf in CONFERENCIAS.items() if conf.base in carregados]
     conferencias = (f"Conferências: {'; '.join(feitas)}. " if feitas else "") + FRASE_LIMITES
-    paragrafos = [dados, conferencias, f"Fontes: {'; '.join(fontes_resumo(res))}."]
+    return _limitar([dados, conferencias, f"Fontes: {'; '.join(fontes_resumo(res))}."])
+
+
+def _limitar(paragrafos: List[str]) -> List[str]:
     total_palavras = palavras(paragrafos)
     if total_palavras > RESUMO_MAXIMO_PALAVRAS_DADOS:
         raise ValueError(f"'Sobre os dados' com {total_palavras} palavras, acima do máximo de "
@@ -212,8 +261,10 @@ def montar_resumo(res: ResultadosAnalise, paginas_relatorio: int, data_geracao: 
     nome = perfil_ativo().usina.nome
     numeros = {s.chave: n for n, s in secoes_presentes(res)}
     listas = listas_conclusao(res)
-    tiles, _ = indicadores_capa(res)
-    evolucao, remissao = _evolucao_anual(res, numeros.get("indicadores_anuais"), com_evolucao_anual)
+    sem = sem_evt(res)
+    tiles, _ = comum.indicadores_capa(res) if sem else indicadores_capa(res)
+    evolucao, remissao = _evolucao_anual(res, numeros.get("anuais_comum" if sem else "indicadores_anuais"),
+                                         com_evolucao_anual)
     resumo = ResumoExecutivo(
         nome_usina=nome,
         titulo=f"{nome} — resumo executivo",
@@ -223,7 +274,7 @@ def montar_resumo(res: ResultadosAnalise, paginas_relatorio: int, data_geracao: 
         identificacao=_identificacao(res),
         referencia_relatorio=(f'Resume o relatório completo "{titulo_capa_relatorio()}", de '
                               f"{fmt_int(paginas_relatorio)} páginas, gerado na mesma data."),
-        frase_conclusao=FRASE_ABERTURA_CONCLUSAO if listas else FRASE_CONCLUSAO_VAZIA,
+        frase_conclusao=FRASE_ABERTURA_CONCLUSAO if listas else frase_sem_itens(res),
         listas_conclusao=listas,
         indicadores=Tabela(["Indicador", "Valor", "Detalhe"], [list(t) for t in tiles], NOTA_INDICADORES),
         evolucao_anual=evolucao,

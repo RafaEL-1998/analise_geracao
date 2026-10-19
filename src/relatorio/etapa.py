@@ -135,16 +135,9 @@ def executar_relatorio(perfil: Any, data_geracao: Optional[datetime] = None) -> 
                                      invariante=data_geracao is not None)
         pdf = gerador.build_pdf()
         paginas = paginas_do_pdf(pdf)
-        if sem_evt(res):  # o resumo executivo das usinas sem EVT é a US3 da spec 007 (tarefas T027 a T030)
-            logger.warning("Resumo executivo não gerado: ainda não disponível para as usinas sem EVT.")
-            resumos: List[Path] = []
-            info_resumo = None
-        else:
-            resumo_pdf, resumo_md, info_resumo = gerar_resumo(res, temporaria / arq["resumo_pdf"],
-                                                              temporaria / arq["resumo_md"], gerado_em,
-                                                              data_geracao is not None, paginas)
-            resumos = [resumo_pdf, resumo_md]
-        novos: List[Path] = [pdf, md, xlsx, csv, *resumos, *sorted(figuras.values())]
+        resumo_pdf, resumo_md, info_resumo = gerar_resumo(res, temporaria / arq["resumo_pdf"], temporaria / arq["resumo_md"],
+                                                          gerado_em, data_geracao is not None, paginas)
+        novos: List[Path] = [pdf, md, xlsx, csv, resumo_pdf, resumo_md, *sorted(figuras.values())]
         _conferir_saidas(novos)
         planilha = load_workbook(xlsx, read_only=True)
         abas = len(planilha.sheetnames)

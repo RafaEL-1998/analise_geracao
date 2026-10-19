@@ -37,3 +37,19 @@ Redação final. Os requisitos novos seguem a numeração da spec da Conferênci
 |---|---|
 | 09/10/2026 | Ampliação para todos os tipos de usina (spec 006, aprovada). As conferências que não se aplicam ficam registradas em `nao_aplicaveis.csv`, inclusive na UHE, sem mudar o relatório dela. |
 | 19/10/2026 | Ajustes da conferência do código da fase A contra este rascunho (tarefa T073), aprovados pelo usuário. |
+
+## Fase B — térmicas e nucleares (rascunho para aprovação, tarefa T077)
+
+### Requisitos novos
+
+- **FR-020** (G3, `programacao_despacho.csv`): em UTE e UTN, a Programação diária (média horária dos patamares) DEVE ser comparada com a geração programada do despacho, hora a hora, com a tolerância de hoje (0,01 MW) e sem meta.
+- **FR-021** (G4, `verificada_despacho.csv`): em UTE e UTN, a geração verificada do despacho DEVE ser comparada com a Geração por usina, hora a hora, com a mesma tolerância e sem meta.
+- **FR-022** (indicadores das térmicas): a DISPF × horas por estado operativo e a TEIFa e a TEIP refeitas usam o código de hoje, pelo CEG. No fim da fase A, as taxas refeitas da William Arjona não reproduziram nenhum dos 4 meses com a janela completa (diferenças de até 2,07 p.p.): a fase B DEVE apurar a causa. Se for uma regra própria das térmicas publicada pelo ONS, a regra entra nesta spec, com a fonte; sem fonte, a divergência continua registrada como hoje, sem ajuste.
+- As conferências novas só registram (decisão R13); uma meta só depois das pilotos, com a aprovação do usuário.
+
+### Aplicabilidade por tipo (fase B, acréscimo)
+
+| Conferência | UTE, UTN com despacho | UTE, UTN sem despacho | Demais tipos |
+|---|---|---|---|
+| G3 (programação × despacho) | sim | não aplicável: sem o despacho | não aplicável: tipo |
+| G4 (verificada do despacho × Geração por usina) | sim | não aplicável: sem o despacho | não aplicável: tipo |

@@ -43,3 +43,19 @@ Redação final. Os requisitos novos seguem a numeração da spec do Tratamento 
 |---|---|
 | 09/10/2026 | Ampliação para todos os tipos de usina (spec 006, aprovada). O Tratamento deixa de ler `data/raw/`. |
 | 19/10/2026 | Ajustes da conferência do código da fase A contra este rascunho (tarefa T073), aprovados pelo usuário. |
+
+## Fase B — térmicas e nucleares (rascunho para aprovação, tarefa T077)
+
+### Requisitos novos
+
+- **FR-037** (despacho por hora): o Tratamento DEVE gravar `despacho_horario.csv` (soma das unidades de planejamento por hora) e `despacho_unidades_horario.csv` (por unidade), com a geração programada e a verificada de cada motivo de despacho, na hora de início do intervalo (decisão R11). A convenção é conferida pela G4: se a coincidência melhorar com uma hora de deslocamento, a convenção declarada está errada e vira correção, nunca ajuste automático.
+- **FR-038** (CVU): um valor por unidade de planejamento e semana operativa, o da revisão mais recente, em `cvu_semanal.csv`, com `sinal_cvu` para o CVU ausente ou negativo, sem descarte (FR-017 da spec 006).
+- **FR-039** (CMO): um valor por subsistema e semana operativa, o da publicação mais recente, em `cmo_semanal.csv`; as duplicatas são contadas.
+- **FR-040** (semanais em hora): o CVU e o CMO são levados à hora pelo intervalo da semana operativa, só para os cruzamentos.
+- Ausências e duplicatas seguem as regras de hoje (FR-016), com `<chave>_ausencias.csv` e `auditoria_<chave>.csv`; a base horária comum (FR-035) não muda de colunas.
+
+### Aplicabilidade por tipo (fase B, acréscimo)
+
+| Tratamento | UTE, UTN | Demais tipos |
+|---|---|---|
+| Despacho por hora e por unidade, CVU, CMO e sinal do CVU | com a cobertura | não se aplica |

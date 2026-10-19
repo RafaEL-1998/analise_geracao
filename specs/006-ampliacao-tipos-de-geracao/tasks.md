@@ -464,8 +464,8 @@ python -m pytest tests -q -p no:cacheprovider
 
 ### Preparação da fase B
 
-- [ ] T075 [US2] Criar a cópia de segurança `python -m src copia-seguranca --motivo antes_fase_B` e conferir `relatorios_referencia/` na cópia nova. Registrar.
-- [ ] T076 [P] [US2] Acrescentar a fase B aos rascunhos:
+- [X] T075 [US2] Criar a cópia de segurança `python -m src copia-seguranca --motivo antes_fase_B` e conferir `relatorios_referencia/` na cópia nova. Registrar.
+- [X] T076 [P] [US2] Acrescentar a fase B aos rascunhos:
   - `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/001-coleta-dados.md`: despacho, CVU e CMO no registro, com a identificação da decisão R9; `planejamento.csv` no catálogo; `subsistema` e `[[identificacao.planejamento]]` no perfil;
   - `002-tratamento-dados.md`: despacho por hora e por unidade, CVU pela revisão mais recente, CMO sem duplicatas, semanais em hora e o sinal do CVU (decisão R11);
   - `003-conferencia.md`: G3, G4 e DISPF, TEIFa e TEIP das térmicas (decisão R13);
@@ -1133,7 +1133,7 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 
 ## Phase 9: Convergence
 
-- [ ] T149 Gerar o resumo executivo das usinas sem EVT executando a US3 da spec 007 (T027 a T030), cuja dependência (a tabela anual da base horária comum) a fase A cumpriu, antes de levar o relatório da William Arjona à aprovação per Constituição, Produtos (partial)
+- [X] T149 Gerar o resumo executivo das usinas sem EVT executando a US3 da spec 007 (T027 a T030), cuja dependência (a tabela anual da base horária comum) a fase A cumpriu, antes de levar o relatório da William Arjona à aprovação per Constituição, Produtos (partial)
 - [ ] T150 Implementar na fase D a seção "Afluência, vertimento e nível do reservatório" das hidrelétricas sem EVT com Dados hidrológicos (análise sem os cruzamentos com a EVT, seção e figura em seaborn, teste com uma hidrelétrica fictícia sem EVT e com hidrologia), hoje omitida com o motivo per FR-020 e decisão R14, seção 13 (missing)
 - [X] T151 Tratar na conferência do cadastro (`src/conferencia/cadastro.py`) o perfil sem id ONS (PCH, CGH, EOL e UFV em conjunto): "não informado" no texto, no lugar de "None", e divergência só quando o cadastro e o perfil diferem de fato, com teste per FR-019 e FR-025 (partial)
 - [X] T152 Usar `Secao.legenda` nas legendas das seções do caminho sem EVT ou retirá-lo de `src/relatorio/estrutura.py`, ajustando o data-model 6.5 per data-model 6.5 (partial)
@@ -1148,3 +1148,19 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 - **Primeiro portão**: suíte com 677 aprovados; `comparar --todas --coleta` com código 6, só na Coleta refeita: além do cadastro (decisão de 19/10), o ONS publicou em 18/10/2026 setembro/2026 nas horas por estado operativo (`taxa_teif_teip_parametro`, 16 linhas) e nas taxas TEIFa/TEIP (`taxa_teif_teip`, 2 linhas). O relatório refeito a partir da Coleta congelada não mudou.
 - **Decisão do usuário** (pergunta, resposta "Aceitar também esta"): as diferenças da Coleta causadas por republicação do ONS (cadastro e indicadores/taxas) contam como aprovadas até o próximo congelamento da referência; o relatório refeito a partir da Coleta congelada continua tendo de dar "nenhuma diferença".
 - **Portão do fim da fase A** (depois da T151 e da T152): suíte com 678 aprovados, sem rede; pyflakes sem aviso; `python -m src comparar --todas --coleta`: código 6 com as mesmas 4 diferenças da Coleta refeita aceitas pelo usuário (`auditoria_cadastro.csv`, `cadastro_ficha.csv`, `auditoria_indicadores.csv` e `indicadores_extraido.parquet`, por republicação do ONS em 18/10/2026) e nenhuma no relatório refeito a partir da Coleta congelada. **Fase A concluída.**
+
+### 19/10/2026 — T149 (resumo executivo das usinas sem EVT)
+
+- Feita pela US3 da spec 007 (T027 a T030, registradas no `tasks.md` da 007): o resumo sai para todas as usinas, com os indicadores e a tabela anual do caminho de cada uma e os números do conjunto identificados. Resumo da William Arjona: 2 páginas, 399 palavras.
+- Portão: suíte com 687 aprovados; pyflakes sem aviso; `comparar --todas --coleta` só com as diferenças da Coleta aceitas pelo usuário (republicação do ONS); relatório e resumo da São Domingos sem diferença.
+
+### 19/10/2026 — preparação da fase B (T075 e T076)
+
+- **T075** `python -m src copia-seguranca --motivo antes_fase_B`: código 0; `_backup_2026-10-19_antes_fase_B` criada e conferida (309 arquivos), com `relatorios_referencia/sao_domingos/` (`referencia.json` com o mesmo SHA-256 do projeto) e o `LEIA-ME.txt` listando a referência. Excluída a mais antiga, `_backup_2026-10-13_antes_resumo_executivo`; ficam `_backup_2026-10-19_antes_fase_A_catalogo` e `_backup_2026-10-19_antes_fase_B`. Antes da cópia, o portão: suíte com 687 aprovados, pyflakes sem aviso e `comparar --todas --coleta` só com as diferenças da Coleta aceitas pelo usuário.
+- **T076**: seção "Fase B — térmicas e nucleares" acrescentada aos cinco rascunhos de `ajustes-specs/`:
+  - Coleta: FR-055 (despacho pelo CEG com o código de planejamento como conferência; CVU pelo código e pelo subsistema; CMO pelo subsistema, nível agregado), FR-056 (`usina.subsistema` e `[[identificacao.planejamento]]` no perfil), FR-051 e FR-053 ajustadas (`planejamento.csv` no catálogo e no rascunho);
+  - Tratamento: FR-037 a FR-040 (despacho por hora e por unidade, CVU pela revisão mais recente com o sinal, CMO sem duplicatas, semanais em hora);
+  - Conferência: FR-020 (G3), FR-021 (G4) e FR-022 (DISPF, TEIFa e TEIP das térmicas, com a apuração da divergência da William Arjona);
+  - Análises: FR-056 (seções de térmica, decisão R18) e FR-057 (C12 a C15, limiares calibrados na William Arjona);
+  - Geração do relatório: FR-044 (três seções de térmica e as figuras), capa, legendas, notas e o resumo executivo das térmicas (indicador de perda e termos CVU e CMO).
+- **T077**: rascunhos levados ao usuário; nenhum código da fase B antes da aprovação.

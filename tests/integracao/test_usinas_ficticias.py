@@ -137,3 +137,65 @@ def test_ufv_com_serie_curta(execucoes) -> None:
     md = execucoes["ufv"]["md"]
     assert "Sazonalidade omitida" in md and "| Fator de capacidade |" in md
     assert "10/02/2024 00h" in md  # o período começa na primeira hora da série da usina
+
+
+# ---------------------------------------------------------------------------
+# Resumo executivo de cada tipo (spec 007, US3; tarefas T027 a T030 da 007 e T149 da 006)
+# ---------------------------------------------------------------------------
+
+
+def _resumo(execucoes, tipo: str) -> str:
+    return (execucoes[tipo]["relatorio"] / "resumo_executivo.md").read_text(encoding="utf-8")
+
+
+def _bloco(md: str, titulo: str) -> str:
+    return md.split(f"## {titulo}\n", 1)[1].split("\n## ", 1)[0]
+
+
+def _cabecalho_tabela(bloco: str) -> str:
+    return next(linha for linha in bloco.splitlines() if linha.startswith("|"))
+
+
+@pytest.mark.parametrize("tipo", TIPOS)
+def test_resumo_executivo_de_cada_tipo(execucoes, tipo: str) -> None:
+    from src.comum.regras import RESUMO_MAXIMO_PAGINAS, RESUMO_MAXIMO_PALAVRAS_DADOS
+    from src.relatorio.resumo import COLUNAS_RESUMO_ANUAL, palavras
+
+    e = execucoes[tipo]
+    manifesto = json.loads((e["relatorio"] / "etapa.json").read_text(encoding="utf-8"))
+    info = manifesto["resumo"]["resumo_executivo"]
+    assert info and 1 <= info["paginas"] <= RESUMO_MAXIMO_PAGINAS, (tipo, info)
+    assert {"resumo_executivo.pdf", "resumo_executivo.md"} <= {a["nome"] for a in manifesto["arquivos"]}
+    md = _resumo(execucoes, tipo)
+    assert md.startswith(f"# {e['md'].splitlines()[0][2:].split(' — ')[0]} — resumo executivo")
+    caminho = "evt" if tipo == "uhe" else "sem_evt"
+    if info["evolucao_anual"]:
+        cabecalho = [c.strip() for c in _cabecalho_tabela(_bloco(md, "Evolução anual")).strip("|").split("|")]
+        assert cabecalho[0] == "Ano" and set(cabecalho) <= set(COLUNAS_RESUMO_ANUAL[caminho]), cabecalho
+        assert len(cabecalho) <= 6
+    sobre = [linha for linha in _bloco(md, "Sobre os dados").splitlines() if linha.strip()]
+    assert palavras(sobre) <= RESUMO_MAXIMO_PALAVRAS_DADOS
+    if tipo != "uhe":
+        assert "EVT" not in md and "energia vertida" not in md.lower(), tipo
+    # todo número do resumo está no relatório completo (FR-014 e SC-003 da 007); exceção: as páginas do relatório
+    for linha in md.splitlines():
+        if not linha.startswith("Resume o relatório completo"):
+            for numero in re.findall(r"\d[\d.]*(?:,\d+)?", linha):
+                assert numero in e["md"], (tipo, numero, linha)
+
+
+def test_resumo_da_pch_com_os_numeros_do_conjunto(execucoes) -> None:
+    md = _resumo(execucoes, "pch")
+    assert "Geração média do conjunto CONJ. HIDRAULICO FICTICIO" in md
+    anual = _bloco(md, "Evolução anual")
+    assert "| Nível |" in _cabecalho_tabela(anual) and "| conjunto |" in anual
+    assert "Sem itens: as regras da conclusão usam só dados do nível da usina" in md  # a conclusão do relatório
+
+
+def test_resumo_da_termica_com_a_conclusao_do_relatorio(execucoes) -> None:
+    md, relatorio = _resumo(execucoes, "ute"), execucoes["ute"]["md"]
+    conclusao_relatorio = relatorio.split("Conclusão\n", 1)[1].split("\n## ", 1)[0]
+    itens = [linha for linha in conclusao_relatorio.splitlines() if linha.startswith("- ")]
+    assert itens and all(item in md for item in itens)
+    assert "| Disp. (% Pinst) |" in _cabecalho_tabela(_bloco(md, "Evolução anual"))
+

@@ -1,7 +1,7 @@
 # UTE William Arjona — Análise do desempenho operacional
 
 **Período**: 10/07/2021 00h a 17/10/2026 23h (46.219 registros horários da série de referência, Geração por usina (id ONS MSUTWI))
-**Gerado em**: 19/10/2026 11:08
+**Gerado em**: 19/10/2026 12:28
 
 ### Identificação nos dados do ONS
 

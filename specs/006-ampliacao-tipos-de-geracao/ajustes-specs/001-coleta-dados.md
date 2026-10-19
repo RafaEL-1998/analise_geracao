@@ -127,3 +127,27 @@ A Coleta passa a atender qualquer usina que os dados abertos do ONS cobrem: UHE,
 | 09/10/2026 | Ampliação para todos os tipos de usina (spec 006, aprovada); correções P1 a P5 na fase A; implementação antes da fiscalização, com a versão de fiscalização congelada fora do projeto. |
 | 19/10/2026 | O catálogo usa os Reservatórios do ONS para ligar o CEG ao `cod_usina` e ao reservatório da EVT e dos dados hidrológicos (decisão R31). |
 | 19/10/2026 | Ajustes da conferência do código da fase A contra este rascunho (tarefa T073), aprovados pelo usuário. |
+
+## Fase B — térmicas e nucleares (rascunho para aprovação, tarefa T077)
+
+### Requisitos alterados
+
+- **FR-051** (catálogo): o catálogo passa a verificar também a cobertura do despacho térmico e do CVU (arquivo mais recente de cada um) e a gravar `planejamento.csv`: os códigos de planejamento de cada CEG no despacho, com o primeiro e o último mês em que aparecem (data-model 2.5).
+- **FR-053** (rascunho do perfil): nas térmicas, o rascunho traz `usina.subsistema` e a lista `[[identificacao.planejamento]]` (`codigo`, `inicio`, `fim`) a partir de `planejamento.csv`, com a origem em comentário.
+
+### Requisitos novos
+
+- **FR-055** (conjuntos das térmicas): em UTE e UTN, conforme a `[cobertura]`, a Coleta DEVE obter (decisão R9):
+  - **Geração térmica por motivo de despacho** (`geracao-termica-despacho-2`): identificador o CEG; conferência o código de planejamento entre os do perfil, no período de cada um, comparado como número (o ONS o publica ora inteiro, ora decimal); linha com o CEG e código fora da lista conta como "só identificador";
+  - **CVU das usinas térmicas** (`cvu-usitermica`): identificador o código de planejamento do perfil (o CVU não tem CEG); conferência o subsistema do perfil; todas as revisões, cuja escolha fica com o Tratamento;
+  - **CMO semanal** (`cmo-semanal`): identificador o subsistema do perfil, sem conferência; nível agregado (contexto do subsistema); sempre obtido em UTE e UTN.
+  - Grava `despacho_extraido.parquet`, `cvu_extraido.parquet` e `cmo_extraido.parquet`, com as auditorias de hoje (data-model 6.1). Nomes nunca identificam nem conferem (grafias "Willian" e "William").
+- **FR-056** (perfil das térmicas): `usina.subsistema` é obrigatório com `cvu` na `[cobertura]`; `[[identificacao.planejamento]]` é obrigatório, com pelo menos um código, com `despacho` ou `cvu` na `[cobertura]` (contrato perfil-multitipo.md).
+
+### Aplicabilidade por tipo (fase B, acréscimo)
+
+| Conjunto | UHE | PCH | CGH | UTE | UTN | EOL | UFV |
+|---|---|---|---|---|---|---|---|
+| Geração térmica por motivo de despacho | — | — | — | S | S | — | — |
+| CVU das usinas térmicas | — | — | — | S | S | — | — |
+| CMO semanal | — | — | — | sempre | sempre | — | — |

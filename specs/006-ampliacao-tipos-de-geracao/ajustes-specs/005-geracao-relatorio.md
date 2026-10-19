@@ -69,3 +69,25 @@ Redação final. Os requisitos novos seguem a numeração da spec da Geração d
 |---|---|
 | 09/10/2026 | Ampliação para todos os tipos de usina (spec 006, aprovada). Relatórios aprovados guardados com a Coleta e o perfil congelados e comparados num espaço isolado. |
 | 19/10/2026 | Ajustes da conferência do código da fase A contra este rascunho (tarefa T073), aprovados pelo usuário. |
+
+## Fase B — térmicas e nucleares (rascunho para aprovação, tarefa T077)
+
+### Requisitos novos
+
+- **FR-044** (seções de térmica, item 8 da FR-041): nas UTE e UTN com o despacho, em ordem fixa:
+  1. geração por motivo de despacho e inflexibilidade;
+  2. atendimento ao despacho;
+  3. disponível sem despacho e CVU × CMO (esta parte só com o CVU).
+  - Figuras em seaborn: geração mensal por motivo (empilhada); inflexibilidade programada × verificada; CVU das unidades × CMO do subsistema, por semana.
+  - Seção sem base é omitida, com o motivo nas notas.
+- **Capa das térmicas** (data-model 6.5): geração média, horas com despacho, disponibilidade média e TEIFa, quando há.
+- **Legendas**: o despacho cita o CEG e os códigos de planejamento; o CVU, os códigos de planejamento; o CMO, o subsistema com o nível escrito ("subsistema SE, agregado").
+- **Notas**: os limiares de C12 a C15 na nota da conclusão gerada do catálogo; o CMO como contexto do subsistema.
+- **Resumo executivo** (spec 007, decisão R6): nas térmicas, a evolução anual ganha o principal indicador de perda do tipo (horas disponíveis sem despacho); os termos novos (CVU, CMO) entram no glossário do resumo com o texto aprovado pelo usuário.
+
+### Aplicabilidade por tipo (fase B, acréscimo)
+
+| Elemento | UTE, UTN | Demais tipos |
+|---|---|---|
+| Seções de térmica (FR-044) | com o despacho | não se aplica |
+| Indicadores da capa de térmica | com o despacho e a disponibilidade | não se aplica |

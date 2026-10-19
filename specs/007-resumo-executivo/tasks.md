@@ -196,7 +196,7 @@ description: "Tarefas da spec 007: resumo executivo do relatório de desempenho"
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T027 [P] [US3] Em `tests/integracao/test_usinas_ficticias.py` (da 006), para cada usina fictícia:
+- [X] T027 [P] [US3] Em `tests/integracao/test_usinas_ficticias.py` (da 006), para cada usina fictícia:
   - o resumo tem no máximo `RESUMO_MAXIMO_PAGINAS` páginas;
   - a evolução anual tem os cabeçalhos de `COLUNAS_RESUMO_ANUAL` do caminho da usina;
   - nas usinas sem EVT, o resumo não contém "EVT" nem "energia vertida";
@@ -205,12 +205,12 @@ description: "Tarefas da spec 007: resumo executivo do relatório de desempenho"
 
 ### Implementation for User Story 3
 
-- [ ] T028 [US3] Em `src/relatorio/resumo.py`:
+- [X] T028 [US3] Em `src/relatorio/resumo.py`:
   - acrescentar a `COLUNAS_RESUMO_ANUAL` a entrada do caminho sem EVT, com os cabeçalhos exatos da tabela anual da base horária comum da 006, pela regra da decisão R6: Ano e até cinco colunas, com a disponibilidade, o fator de capacidade, a geração ÷ garantia física (quando o tipo tem) e o principal indicador de perda do tipo;
   - escolher a entrada pelo mesmo critério de caminho da 006 (registrado na T005);
   - a linha de tipo do cabeçalho passa a usar `res.tipo` quando existir.
-- [ ] T029 [US3] Em `src/comum/regras.py`, acrescentar ao `GLOSSARIO_RESUMO` os termos dos tipos novos que aparecerem nos resumos das usinas fictícias, como constrained-off e CVU, com o texto aprovado pelo usuário. Registrar a aprovação.
-- [ ] T030 [US3] Rodar `tests/integracao/test_usinas_ficticias.py` e a suíte; corrigir até passar.
+- [X] T029 [US3] Em `src/comum/regras.py`, acrescentar ao `GLOSSARIO_RESUMO` os termos dos tipos novos que aparecerem nos resumos das usinas fictícias, como constrained-off e CVU, com o texto aprovado pelo usuário. Registrar a aprovação.
+- [X] T030 [US3] Rodar `tests/integracao/test_usinas_ficticias.py` e a suíte; corrigir até passar.
 
 **Checkpoint**: todas as histórias funcionando.
 
@@ -232,7 +232,7 @@ description: "Tarefas da spec 007: resumo executivo do relatório de desempenho"
 - [X] T033 Levar ao usuário o `reports/sao_domingos/resumo_executivo.pdf` e as cinco perguntas da SC-005. Registrar a aprovação ou os ajustes pedidos. Ajuste no texto gerado volta às tarefas da história afetada.
 - [X] T034 Com a aprovação da T033 (princípio IX): `python -m src referencia --usina sao_domingos --data-geracao "07/10/2026 08:53" --aprovado-em "<data da aprovação>"`. Conferir em `relatorios_referencia/sao_domingos/referencia.json` os dois arquivos do resumo, depois `python -m src comparar --todas --coleta` com código 0. Registrar.
 - [X] T035 [P] Em `README.md`, na árvore de pastas (linha de `reports/<slug>/`) e onde as saídas são citadas, acrescentar `resumo_executivo.pdf` e `.md`, com uma frase sobre o resumo.
-- [ ] T036 Portão final: suíte sem rede; `pyflakes` de fora do `venv` em `src/` e `tests/` (`pip install --target <pasta temporária> pyflakes`, usado com `PYTHONPATH`); `/speckit-converge`. Registrar.
+- [X] T036 Portão final: suíte sem rede; `pyflakes` de fora do `venv` em `src/` e `tests/` (`pip install --target <pasta temporária> pyflakes`, usado com `PYTHONPATH`); `/speckit-converge`. Registrar.
 - [ ] T037 Incorporar a mudança à spec da etapa (Governança 2):
   - em `specs/005-geracao-relatorio/spec.md`: objetivo, entradas e saídas, a história do resumo, as FR-001 a FR-021 desta spec (com A1 e A2), os casos de borda e os critérios de sucesso, renumerados no padrão da 005;
   - no `plan.md`, no `data-model.md` e nos `contracts/` da 005, o que vier do plano, do data-model e do contrato desta spec;
@@ -345,3 +345,20 @@ Task: "T019 gerar_resumo_pdf em src/relatorio/resumo_pdf.py"
 | — | 13/10/2026 | `python -m pytest tests -q -p no:cacheprovider`, depois do glossário e da contagem de palavras | 515 aprovados (171 s) |
 | Revisão 1: T039 a T041 | 13/10/2026 | Pedido do usuário ("resumo ficou EXCELENTE! porém troque a ordem, a conclusão deve ficar por último"): spec (FR-007, cenário 2 da US1, premissa e decisão), contrato, quickstart, `test_blocos_na_ordem_fixa` (falhou antes do código), `TITULOS_BLOCOS` e `texto_corrido` em `src/relatorio/resumo.py` | `tests/relatorio`: 135 aprovados; suíte: 515 aprovados (154 s). `relatorio` da São Domingos: 2 páginas, 933 palavras; página 1 com cabeçalho, termos, indicadores, evolução anual e "Sobre os dados"; página 2 só com a conclusão. `comparar` com a linha de base da 007: só os dois arquivos do resumo |
 | T032 a T034 | 19/10/2026 | Aprovação do usuário ("esse relatório está aprovado"), inclusive das edições dele no título da capa e nos títulos das figuras 02 e 06 e do texto da linha de termos; `referencia --usina sao_domingos --data-geracao "07/10/2026 08:53" --aprovado-em "19/10/2026"`; `comparar --todas --coleta` | `referencia`: código 0, já com `resumo_executivo.pdf` e `.md`. `comparar --todas --coleta`: código 0, sem diferença |
+| T027 | 19/10/2026 | `tests/integracao/test_usinas_ficticias.py` (+3, escritos antes do código) | Para as sete usinas fictícias: resumo com até 2 páginas e listado no `etapa.json`; evolução anual com os cabeçalhos de `COLUNAS_RESUMO_ANUAL` do caminho; sem "EVT" nem "energia vertida" nas usinas sem EVT; "Sobre os dados" dentro do limite; na PCH em conjunto, os números do conjunto como do conjunto (indicadores e coluna Nível) e a frase da conclusão sem itens; na UTE, a conclusão do relatório copiada igual. |
+| T028 | 19/10/2026 | `src/relatorio/resumo.py` e `src/relatorio/etapa.py` | Caminho pelo mesmo critério da 006 (`sem_evt`); `COLUNAS_RESUMO_ANUAL["sem_evt"]` = Ano, Nível, Geração média (MWmed), Energia (MWh), Fator de capacidade e Disp. (% Pinst), nas que a tabela da usina tem (regra R6; a geração ÷ garantia física e o indicador de perda do tipo entram com as seções do tipo, fases B e C da 006); indicadores e tabela anual de `src/relatorio/comum.py`; linha de tipo com `res.tipo`; sem agentes fora do caminho da EVT; "Sobre os dados" com a série de referência e o nível, as horas sinalizadas e só as conferências que não dependem da EVT; frase da conclusão vazia por caminho (`frase_sem_itens`). A etapa do relatório volta a gerar o resumo para todas as usinas. |
+| T029 | 19/10/2026 | resumos das sete usinas fictícias e da William Arjona | Nenhum termo novo na fase A: os resumos usam as siglas do glossário (ONS, MWmed, Pinst, DISPF, TEIFa, TEIP, TEIF); CEG, R7 e o código do tipo já apareciam sem glossário no resumo aprovado da São Domingos. CVU, CMO e constrained-off entram com as fases B e C da 006, com o texto aprovado pelo usuário (rascunho 005 da fase B). |
+| T030 | 19/10/2026 | suíte, pyflakes e `comparar --todas --coleta` | 687 aprovados; pyflakes sem aviso; `comparar` só com as diferenças da Coleta aceitas pelo usuário (republicação do ONS), sem diferença no relatório e no resumo da São Domingos. Resumo da William Arjona: 2 páginas, 399 palavras, com a evolução anual. |
+
+## Phase 7: Convergence
+
+- [X] T042 Pôr a parcela total de horas sinalizadas na constatação de qualidade das usinas sem EVT (`src/analises/constatacoes.py`), para que o número citado em "Sobre os dados" esteja no relatório completo também quando uma hora tem mais de um código, e estender a verificação "todo número do resumo está no relatório" aos resumos das sete usinas fictícias (`tests/integracao/test_usinas_ficticias.py`) per FR-014 e SC-003 (partial)
+- [ ] T043 Decidir com o usuário os agentes do cabeçalho nas usinas sem EVT, que hoje saem sem agente: o agente atual de cada unidade da Capacidade de geração, identificado como tal na capa e no resumo, ou a limitação registrada na FR-008 per FR-008 (partial)
+
+### Registro da convergência (19/10/2026)
+
+| Tarefa | Data | Comando | Resultado |
+|---|---|---|---|
+| T036 | 19/10/2026 | suíte, `pyflakes` (Python do sistema, fora do `venv`) e `/speckit-converge` | 687 aprovados; pyflakes sem aviso; converge com 2 achados, anexados como Phase 7: Convergence (T042 e T043). |
+| T042 | 19/10/2026 | `src/analises/constatacoes.py` e `tests/integracao/test_usinas_ficticias.py` | A constatação de qualidade das usinas sem EVT traz a parcela total das horas sinalizadas (citada em "Sobre os dados"); a verificação "todo número do resumo está no relatório" vale para os sete resumos fictícios. |
+| T043 | 19/10/2026 | — | Em aberto: decisão do usuário sobre os agentes do cabeçalho nas usinas sem EVT. |
