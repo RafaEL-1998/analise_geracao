@@ -351,7 +351,7 @@ Campos novos em `ResultadosAnalise`:
 | `caminhos` | `evt` (hidrelétrica com EVT), `sem_evt` ou os dois; cada caminho vê só as suas seções, numa lista única |
 | `tipos` | tipos em que a seção existe (filtra o caminho sem EVT) |
 | `presente` | condição sobre os resultados e a cobertura, como hoje |
-| `legenda` | chave da legenda de fonte (`fontes.py`) por tipo |
+| `legenda` | não é campo da seção: a legenda de fonte é de cada tabela e figura (chave declarada com o bloco da seção, em `src/relatorio/comum.py`; tarefa T152) |
 | `periodo_minimo_meses` | opcional (R17) |
 
 A lista e a ordem das seções de cada caminho estão na R14.

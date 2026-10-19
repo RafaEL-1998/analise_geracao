@@ -34,7 +34,7 @@ from src.comum import caminhos, perfil_campos
 from src.comum.formatacao import fmt_data, fmt_num
 from src.comum.logger import setup_logger
 from src.comum.persistencia import gravar_bytes
-from src.comum.regras import MODALIDADES_TIPO_III, PREFIXO_CONJUNTO, TIPOS_USINA, TOLERANCIA_POTENCIA_PERFIL_MW
+from src.comum.regras import MODALIDADES_TIPO_III, TIPOS_USINA, TOLERANCIA_POTENCIA_PERFIL_MW
 
 logger = setup_logger("coleta")
 

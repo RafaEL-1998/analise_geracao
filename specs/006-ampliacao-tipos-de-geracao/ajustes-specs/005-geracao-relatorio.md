@@ -11,7 +11,10 @@ Redação final. Os requisitos novos seguem a numeração da spec da Geração d
   - **usina sem EVT**: as seções da tabela da FR-041, com numeração contínua; seção sem base é omitida, com o motivo nas notas.
 - **Capa e título**:
   - **hidrelétrica com EVT**: como hoje; a modalidade já vem da ficha do cadastro;
-  - **usina sem EVT**: o título "<nome> — desempenho operacional", a linha de tipo e modalidade no bloco de identificação, os parâmetros do tipo e os indicadores da capa do tipo.
+  - **usina sem EVT**: o mesmo título da capa da hidrelétrica com EVT aprovada em 19/10/2026 ("<nome> — Análise do desempenho operacional", que não cita a EVT), a linha de tipo e modalidade no bloco de identificação, os parâmetros do tipo e os indicadores da capa do tipo.
+- **Conclusão**: a mesma seção nos dois caminhos; sem itens, a frase de hoje nas hidrelétricas com EVT e, nas usinas sem EVT, a frase que diz por que não há itens.
+- **Título por tipo**: nas eólicas e solares, que não têm a disponibilidade no ONS, a seção 5 da FR-041 se chama "Série temporal da geração".
+- **Resumo executivo**: nas usinas sem EVT, só a partir da US3 da spec 007; até lá, a etapa avisa e não o gera.
 - **Legendas**: citam o identificador da usina, como hoje. Num dado de conjunto ou de agregado, citam o identificador dele com o nível escrito, por exemplo "(conjunto de usinas, id ONS CJU_…)". As datas de obtenção vêm das Análises, que as leem da Coleta.
 - **Planilha**: as abas DICIONARIOS e FONTES listam só os conjuntos da usina. Na hidrelétrica com EVT, os dez de hoje, na mesma ordem.
 - **Notas**: nas usinas sem EVT, entram as omissões, os níveis dos dados e as conferências não aplicáveis. Na hidrelétrica com EVT, as notas de hoje, sem parágrafo novo.
@@ -30,7 +33,7 @@ Redação final. Os requisitos novos seguem a numeração da spec da Geração d
   8. seções do tipo (fases B a D);
   9. programação diária × verificada;
   10. disponibilidade operacional e sincronizada;
-  11. afluência, vertimento e nível do reservatório (hidrelétrica sem EVT, com hidrologia);
+  11. afluência, vertimento e nível do reservatório (hidrelétrica sem EVT, com hidrologia; fase D, omitida na fase A com o motivo nas notas);
   12. conferência da geração entre fontes;
   13. qualidade dos dados;
   14. conclusão;
@@ -65,3 +68,4 @@ Redação final. Os requisitos novos seguem a numeração da spec da Geração d
 | Data | Decisão |
 |---|---|
 | 09/10/2026 | Ampliação para todos os tipos de usina (spec 006, aprovada). Relatórios aprovados guardados com a Coleta e o perfil congelados e comparados num espaço isolado. |
+| 19/10/2026 | Ajustes da conferência do código da fase A contra este rascunho (tarefa T073), aprovados pelo usuário. |

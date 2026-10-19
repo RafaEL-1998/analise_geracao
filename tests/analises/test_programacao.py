@@ -59,9 +59,9 @@ def test_classificacao_resumo_eventos_e_perfil() -> None:
     assert perfil["horas"].sum() == 3
 
 
-@pytest.fixture
-def resultados_com_programacao(df_sintetico: pd.DataFrame, tmp_path: Path):
-    """Programação de 22 MW em todo o período, zero durante a parada de 10/02/2024 (9h a 13h)."""
+def montar_resultados_com_programacao(df_sintetico: pd.DataFrame, tmp_path: Path):
+    """Programação de 22 MW em todo o período, zero durante a parada de 10/02/2024 (9h a 13h) (também usado pelos
+    testes do relatório)."""
     df = preparar_dados(df_sintetico)
     horaria = pd.DataFrame({"din_instante": df["din_instante"], "geracao_programada_mw": 22.0, "patamares": 2})
     parada = (horaria["din_instante"] >= "2024-02-10 09:00") & (horaria["din_instante"] <= "2024-02-10 13:00")
@@ -70,6 +70,11 @@ def resultados_com_programacao(df_sintetico: pd.DataFrame, tmp_path: Path):
     prog = ProgramacaoONS(horaria=horaria, dias_ausentes=pd.DataFrame({"dia": [pd.Timestamp("2024-01-20")]}),
                           auditoria=pd.DataFrame({"arquivo": ["x"], "status": ["PROCESSADO"]}))
     return analisar(df, {}, tmp_path / "a.csv", programacao=prog)
+
+
+@pytest.fixture
+def resultados_com_programacao(df_sintetico: pd.DataFrame, tmp_path: Path):
+    return montar_resultados_com_programacao(df_sintetico, tmp_path)
 
 
 def test_analise_inclui_a_constatacao_da_programacao(resultados_com_programacao) -> None:

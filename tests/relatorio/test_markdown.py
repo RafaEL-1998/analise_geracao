@@ -22,10 +22,25 @@ from src.relatorio.etapa import completar_resultados
 from src.relatorio.figuras import gerar_graficos
 from src.relatorio.markdown import gerar_relatorio_md
 from src.relatorio.pdf import PDFReportGenerator
-from tests.analises.test_conclusao import _tudo, df_base  # noqa: F401 (fixture)
-from tests.analises.test_indicadores import resultados_com_indicadores  # noqa: F401 (fixture)
-from tests.analises.test_programacao import resultados_com_programacao  # noqa: F401 (fixture)
+from tests.analises.test_conclusao import _tudo
+from tests.analises.test_indicadores import montar_resultados_com_indicadores
+from tests.analises.test_programacao import montar_resultados_com_programacao
 from tests.relatorio.apoio import analisar_com_bases
+
+
+@pytest.fixture
+def df_base(df_sintetico: pd.DataFrame) -> pd.DataFrame:
+    return preparar_dados(df_sintetico)
+
+
+@pytest.fixture
+def resultados_com_indicadores(df_sintetico: pd.DataFrame, tmp_path: Path):
+    return montar_resultados_com_indicadores(df_sintetico, tmp_path)
+
+
+@pytest.fixture
+def resultados_com_programacao(df_sintetico: pd.DataFrame, tmp_path: Path):
+    return montar_resultados_com_programacao(df_sintetico, tmp_path)
 
 
 @pytest.fixture

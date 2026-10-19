@@ -386,3 +386,14 @@ def test_nota_da_conclusao_por_caminho(sem_evt) -> None:
         assert f"{codigo} " in nota
     assert "C1 " not in nota and "Não avaliadas" in nota
 
+
+def test_c10_das_usinas_sem_evt_agrupa_unidades_e_anos() -> None:
+    """Nas usinas sem EVT, as paradas programadas longas saem agrupadas (texto da UHE sem mudança)."""
+    from src.analises.conclusao import _unidades_agrupadas
+
+    linhas = [{"ano": a, "ug": u} for a in (2022, 2023, 2024) for u in range(1, 6)] + [{"ano": 2025, "ug": 1}]
+    assert _unidades_agrupadas(pd.DataFrame(linhas), 5) == ("de todas as unidades em 2022, 2023 e 2024; "
+                                                             "da UG1 em 2025")
+    assert _unidades_agrupadas(pd.DataFrame([{"ano": 2022, "ug": 2}, {"ano": 2022, "ug": 3}]), 5) == \
+        "das UG2 e UG3 em 2022"
+

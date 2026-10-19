@@ -35,9 +35,9 @@ COM_DISPONIBILIDADE: Tuple[str, ...] = HIDRELETRICAS + TERMICAS
 class Secao:
     """Seção do relatório (data-model 6.5): chave estável, título, condição de presença, caminhos e tipos.
 
-    ``titulo`` é um texto ou um mapa tipo -> título (com a chave "" como padrão); ``legenda`` é a chave da legenda de
-    fonte da seção, quando ela tem uma só, ou o mapa tipo -> chave; ``periodo_minimo_meses`` é o período que a seção
-    (ou parte dela) pede (decisão R17). Os tipos só filtram o caminho sem EVT.
+    ``titulo`` é um texto ou um mapa tipo -> título (com a chave "" como padrão); ``periodo_minimo_meses`` é o
+    período que a seção (ou parte dela) pede (decisão R17). Os tipos só filtram o caminho sem EVT. A legenda de fonte
+    é de cada tabela e figura da seção (a chave vem com o bloco, em ``src/relatorio/comum.py``), não da seção.
     """
 
     chave: str
@@ -45,7 +45,6 @@ class Secao:
     presente: Callable[[Any], bool] = _sempre
     caminhos: Tuple[str, ...] = (COM_EVT,)
     tipos: Tuple[str, ...] = TIPOS_USINA
-    legenda: Union[str, Dict[str, str]] = ""
     periodo_minimo_meses: Optional[int] = None
 
     def titulo_para(self, tipo: str = "") -> str:
@@ -61,9 +60,9 @@ def _comum(chave: str, titulo: str, presente: Callable[[Any], bool] = _sempre,
 
 SECOES: Tuple[Secao, ...] = (
     Secao("cobertura", "Fonte e cobertura dos dados"),
-    _comum("fonte_cobertura", "Fonte e cobertura dos dados", legenda="tab_fonte_cobertura"),
+    _comum("fonte_cobertura", "Fonte e cobertura dos dados"),
     Secao("indicadores_anuais", "Indicadores anuais"),
-    _comum("anuais_comum", "Indicadores anuais", legenda="tab_anuais_comum"),
+    _comum("anuais_comum", "Indicadores anuais"),
     Secao("disponibilidade_geracao", "Disponibilidade e geração por ano"),
     _comum("disponibilidade_geracao_comum", "Disponibilidade e geração por ano",
            lambda res: bool(res.comum.get("disponibilidade")), COM_DISPONIBILIDADE),
@@ -73,13 +72,12 @@ SECOES: Tuple[Secao, ...] = (
     Secao("serie_temporal", "Série temporal de disponibilidade, geração e EVT"),
     # eólicas e solares não têm a disponibilidade no ONS: o título só com a geração
     _comum("serie_temporal_comum", {"": "Série temporal da geração e da disponibilidade",
-                                    "EOL": "Série temporal da geração", "UFV": "Série temporal da geração"},
-           legenda="serie_temporal_comum"),
+                                    "EOL": "Série temporal da geração", "UFV": "Série temporal da geração"}),
     Secao("evt_mensal", "Energia vertida turbinável mensal"),
     _comum("geracao_mensal", "Geração mensal e sazonalidade",
            periodo_minimo_meses=PERIODO_MINIMO_SAZONALIDADE_MESES),  # o período mínimo vale para a sazonalidade
     Secao("perfil_horario", "Perfil horário da geração e da EVT"),
-    _comum("perfil_horario_comum", "Perfil horário da geração", legenda="perfil_horario_comum"),
+    _comum("perfil_horario_comum", "Perfil horário da geração"),
     Secao("eventos", "EVT por nível de geração e eventos de usina parada"),
     Secao("programacao", "Operação verificada e programação diária do ONS", lambda res: bool(res.programacao)),
     _comum("programacao_comum", "Programação diária × geração verificada",
@@ -87,7 +85,7 @@ SECOES: Tuple[Secao, ...] = (
     Secao("disponibilidade_sincronizada", "Disponibilidade operacional e sincronizada (ONS)",
           lambda res: bool(res.disponibilidade)),
     _comum("disponibilidade_sincronizada_comum", "Disponibilidade operacional e sincronizada (ONS)",
-           lambda res: bool(res.comum.get("disponibilidade")), COM_DISPONIBILIDADE, legenda="disponibilidade_comum"),
+           lambda res: bool(res.comum.get("disponibilidade")), COM_DISPONIBILIDADE),
     Secao("hidrologia", "Afluência, vertimento e nível do reservatório (ONS)", lambda res: bool(res.hidrologia)),
     Secao("geracao_zero", "Horas com geração zero por mês"),
     Secao("vazoes", "Vazões defluentes por ano"),
@@ -97,7 +95,7 @@ SECOES: Tuple[Secao, ...] = (
     # spec da Geração do relatório, US4: sempre presente, antes das notas; a mesma nos dois caminhos (decisão R16)
     Secao("conclusao", "Conclusão", caminhos=(COM_EVT, SEM_EVT)),
     Secao("notas", "Notas metodológicas e limitações"),
-    _comum("notas_comum", "Notas metodológicas e limitações", legenda="tab_parametros_comum"),
+    _comum("notas_comum", "Notas metodológicas e limitações"),
 )
 SECAO_PADRAO = "cobertura"
 SECAO_PADRAO_SEM_EVT = "fonte_cobertura"

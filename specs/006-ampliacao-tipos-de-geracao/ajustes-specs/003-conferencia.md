@@ -8,6 +8,7 @@ Redação final. Os requisitos novos seguem a numeração da spec da Conferênci
 
 - **FR-002** (as seis conferências): continuam as mesmas. As que comparam com a base de EVT (geração, disponibilidade e vazões) só se aplicam à hidrelétrica com EVT. As conferências novas das fases B e C entram no catálogo da FR-019.
 - **FR-004** (não aplicável): o registro passa a ser também o arquivo da FR-018.
+- **Formato e resultados**: a Conferência passa ao formato 2 (`nao_aplicaveis.csv`, que as Análises leem nas usinas sem EVT). Nas hidrelétricas com EVT, `conferencias.pkl` traz as seis de hoje, como hoje; nas usinas sem EVT, só as conferências aplicadas.
 
 ## Requisitos novos
 
@@ -35,3 +36,4 @@ Redação final. Os requisitos novos seguem a numeração da spec da Conferênci
 | Data | Decisão |
 |---|---|
 | 09/10/2026 | Ampliação para todos os tipos de usina (spec 006, aprovada). As conferências que não se aplicam ficam registradas em `nao_aplicaveis.csv`, inclusive na UHE, sem mudar o relatório dela. |
+| 19/10/2026 | Ajustes da conferência do código da fase A contra este rascunho (tarefa T073), aprovados pelo usuário. |

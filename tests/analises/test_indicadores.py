@@ -73,11 +73,16 @@ def test_recalculo_e_decomposicao_das_taxas() -> None:
     assert (maior["ug"], maior["parcela"]) == (2, "HEDF")
 
 
-@pytest.fixture
-def resultados_com_indicadores(df_sintetico: pd.DataFrame, tmp_path: Path):
+def montar_resultados_com_indicadores(df_sintetico: pd.DataFrame, tmp_path: Path):
+    """Resultados com os indicadores sintéticos (também usado pelos testes do relatório)."""
     df = preparar_dados(df_sintetico)
     ind = _indicadores_sinteticos()
     return analisar(df, _conferencias(ind), tmp_path / "sem_auditoria.csv", indicadores=ind)
+
+
+@pytest.fixture
+def resultados_com_indicadores(df_sintetico: pd.DataFrame, tmp_path: Path):
+    return montar_resultados_com_indicadores(df_sintetico, tmp_path)
 
 
 def test_analise_inclui_constatacoes_dos_indicadores(resultados_com_indicadores) -> None:

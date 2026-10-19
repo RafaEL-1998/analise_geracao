@@ -17,7 +17,8 @@ def divergencias_cadastro(ficha: Dict[str, Any], perfil: Any) -> pd.DataFrame:
     """Campos conferidos da ficha: valor do cadastro, valor do perfil, situação e texto da divergência."""
     potencia = pd.to_numeric(pd.Series([ficha.get("val_potenciaautorizada", "")]), errors="coerce").iloc[0]
     esperada = perfil.potencia_autorizada_esperada_mw
-    estado, id_ons = perfil.usina.estado, perfil.identificacao.id_ons
+    # id ONS ausente no perfil (usinas em conjunto sem id próprio; spec 006): "não informado", nunca "None"
+    estado, id_ons = perfil.usina.estado, perfil.identificacao.id_ons or ""
     linhas_ceg = int(pd.to_numeric(pd.Series([ficha.get("linhas_ceg", 1)]), errors="coerce").fillna(1).iloc[0])
     estado_ficha = str(ficha.get("id_estado", "") or "")
     id_ficha = str(ficha.get("id_ons", "") or "")
@@ -30,7 +31,7 @@ def divergencias_cadastro(ficha: Dict[str, Any], perfil: Any) -> pd.DataFrame:
          "texto": f"estado {estado_ficha or 'não informado'} (projeto: {estado})"},
         {"campo": "id ONS", "valor_cadastro": id_ficha, "valor_perfil": id_ons,
          "diverge": id_ficha.upper() != id_ons,
-         "texto": f"id ONS {id_ficha or 'não informado'} (projeto: {id_ons})"},
+         "texto": f"id ONS {id_ficha or 'não informado'} (projeto: {id_ons or 'não informado'})"},
         {"campo": "linhas com o CEG", "valor_cadastro": linhas_ceg, "valor_perfil": 1,
          "diverge": linhas_ceg > 1,
          "texto": f"{linhas_ceg} linhas com o CEG do projeto (usada a primeira)"},

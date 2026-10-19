@@ -7,7 +7,7 @@ Redação final. Os requisitos novos seguem a numeração da spec das Análises 
 ## Requisitos alterados
 
 - **Entradas**: as datas de obtenção e o resumo do manifesto (linha "Versão dos arquivos" da cobertura) passam a vir de `datas_obtencao.csv`, gravado pela Coleta. A etapa não lê nada de `data/raw/`. Os valores da São Domingos não mudam.
-- **Formato** (`resultados.pkl`): passa ao `VERSAO_FORMATO` 2, com os campos:
+- **Formato** (`resultados.pkl`): passa ao `VERSAO_FORMATO` 3 (o 2 foi usado no item 4 da fase A, com as datas de obtenção da Coleta), com os campos:
   - `tipo` e `modalidade`;
   - `niveis` (chave da tabela ou da figura, nível e identificador);
   - `trechos`;
@@ -34,7 +34,7 @@ Redação final. Os requisitos novos seguem a numeração da spec das Análises 
     - perfil horário;
     - programação × verificada;
     - disponibilidade sincronizada, quando há;
-    - afluência e nível, quando há hidrologia sem EVT;
+    - afluência e nível, quando há hidrologia sem EVT (fase D; na fase A, omitida, com o motivo em `omitidos`);
     - qualidade dos dados.
 - **FR-053** (período mínimo): a sazonalidade (distribuição por mês do ano) DEVE pedir 12 meses distintos. Sem eles, é omitida e entra em `omitidos`. Uma regra nova com limiar anual só é avaliada nos anos com o período mínimo dela.
 - **FR-054** (regra só com dado da usina): uma regra cujas entradas são do nível do conjunto ou do agregado NÃO DEVE gerar item. Ela entra em `omitidos`. Na usina em conjunto sem base própria, a conclusão não tem itens e traz a frase que explica a falta de base no nível da usina.
@@ -46,10 +46,11 @@ Redação final. Os requisitos novos seguem a numeração da spec das Análises 
 |---|---|---|
 | EVT, eventos de parada, perfis da EVT, faixas de afluência | como hoje | não se aplica |
 | Seções comuns sobre a base horária comum (FR-052) | não se aplica (o caminho de hoje já as tem) | sempre, conforme a cobertura |
-| Conclusão C1 a C11 | como hoje | não se aplica (as regras do tipo entram nas fases B a D) |
+| Conclusão C1 a C11 | como hoje | as regras comuns C2, C5, C8 e C10 sobre a base horária comum, só com dado da usina (decisão R16; sem IP e TEIF de referência no perfil, a C5 não é avaliada); as demais em `omitidos`; as regras do tipo entram nas fases B a D |
 
 ## Decisões do usuário (acréscimo)
 
 | Data | Decisão |
 |---|---|
 | 09/10/2026 | Ampliação para todos os tipos de usina (spec 006, aprovada). Indícios da conclusão só com dado da usina. |
+| 19/10/2026 | Ajustes da conferência do código da fase A contra este rascunho (tarefa T073), aprovados pelo usuário. |

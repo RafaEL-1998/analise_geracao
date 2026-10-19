@@ -440,17 +440,17 @@ python -m pytest tests -q -p no:cacheprovider
   - `python -m src coleta --usina william_arjona` com o perfil em rascunho dá código 4, com a lista dos pendentes;
   - `perfil` de uma CGH Tipo III de MS dá código 2, sem criar pasta.
   - Registrar.
-- [ ] T071 [US1] Levar ao usuário o catálogo de MS (`data/catalogo/usinas.csv`, filtrado por MS) e o rascunho `usinas/william_arjona/perfil.toml`.
+- [X] T071 [US1] Levar ao usuário o catálogo de MS (`data/catalogo/usinas.csv`, filtrado por MS) e o rascunho `usinas/william_arjona/perfil.toml`.
   - O usuário confere e completa o perfil, com `situacao = "conferido"`.
   - Registrar a aprovação.
-- [ ] T072 [US1] Rodar `python -m src completo --usina william_arjona` (quickstart 3.6) e conferir:
+- [X] T072 [US1] Rodar `python -m src completo --usina william_arjona` (quickstart 3.6) e conferir:
   - série de referência "geracao" desde 10/07/2021;
   - só as seções comuns, sem EVT nem hidrologia;
   - legendas com o identificador;
   - notas com o que não se aplica.
   - Registrar o tempo do `etapa.json`.
-- [ ] T073 [US1] Conferir o código da fase A contra os rascunhos aprovados em `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/`. Uma divergência necessária vira ajuste do rascunho, com aprovação do usuário.
-- [ ] T074 [US1] Portão do fim da fase A: suíte sem rede; `pyflakes` de fora do `venv`; `/speckit-converge`; `python -m src comparar --todas --coleta` com código 0. Registrar.
+- [X] T073 [US1] Conferir o código da fase A contra os rascunhos aprovados em `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/`. Uma divergência necessária vira ajuste do rascunho, com aprovação do usuário.
+- [X] T074 [US1] Portão do fim da fase A: suíte sem rede; `pyflakes` de fora do `venv`; `/speckit-converge`; `python -m src comparar --todas --coleta` com código 0. Registrar.
 
 **Checkpoint**: qualquer usina com dado próprio ou de conjunto tem catálogo, rascunho do perfil e relatório com as seções comuns; a São Domingos não mudou.
 
@@ -1114,3 +1114,37 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 - **T069** `python -m src perfil --ceg UTE.GN.MS.027075-0.01 --slug william_arjona`: código 0, em 1,1 s (meta de 1 minuto, SC-003). Rascunho com 18 campos do ONS e 4 pendentes (fonte dos parâmetros, garantia física, IP e TEIF de referência, estes três opcionais): cinco unidades ativas (39,16; 39,16; 33,0; 33,1 e 32,696 MW), combustível GÁS, início da operação em 2021 (primeira unidade ativa em 10/07/2021) e o código de programação MSUTWI. Segunda execução: código 0 ("sem diferença em relação ao catálogo"), com o arquivo igual byte a byte (SHA-256 `4a6cdc87…432c`).
 - **T070** recusas: `python -m src coleta --usina william_arjona --sem-portal` com o rascunho dá código 4, com a situação e os quatro pendentes listados; `python -m src perfil --ceg CGH.PH.MS.030451-4.01` (CGH Bela Miragem, TIPO III, só agregado) dá código 2, com a mensagem que remete ao panorama da carteira, sem criar pasta em `usinas/`.
 - **`comparar --todas --coleta` depois do catálogo** (T068): código 6, "sao_domingos: 2 diferenças", só na Coleta refeita: `cadastro_ficha.csv` (1 linha) e `auditoria_cadastro.csv` (1 arquivo), mais `datas_obtencao.csv` e `dicionarios.csv` (informação). Causa: o catálogo baixou a Modalidade das usinas republicada pelo ONS em 18/10/2026. A ficha da São Domingos tem o mesmo conteúdo; mudaram só `data_consulta_utc` (05/10 → 19/10/2026), a data de publicação e as linhas lidas do cadastro nacional (6.017 → 6.024). O relatório de referência não muda (usa a Coleta congelada). Levado ao usuário com a T071, para decidir entre aceitar a diferença como republicação ou refazer o congelamento.
+
+### 19/10/2026 — decisão do usuário sobre a republicação do cadastro e o pyflakes
+
+- **Decisão (a)** do usuário: aceitar como republicação as diferenças da Coleta refeita da São Domingos depois do catálogo (`cadastro_ficha.csv` e `auditoria_cadastro.csv`, pela Modalidade das usinas republicada em 18/10/2026; ficha com o mesmo conteúdo). A referência não é congelada de novo agora; nos próximos portões, `comparar --todas --coleta` com essas diferenças da Coleta (e só elas) conta como aprovado, até o próximo congelamento.
+- **pyflakes** 4.0.3 instalado no Python 3.14 do sistema, fora do `venv` (`py -3.14 -m pyflakes src tests`), para a T074. Primeira execução: um import não usado em `src/coleta/perfil_rascunho.py` (`PREFIXO_CONJUNTO`, sobra do item 6), retirado; e as fixtures importadas de outros módulos de teste em `tests/relatorio/test_markdown.py` (padrão anterior à spec 006), a tratar na T074.
+
+### 19/10/2026 — validação real da fase A (T071 a T073)
+
+- **T071**: catálogo de MS e rascunho levados ao usuário. O usuário pediu para seguir ("ok, continue") sem completar ele mesmo o perfil; o perfil foi completado só com dados do ONS: fonte dos parâmetros "ONS, dados abertos: Capacidade de geração e Modalidade das usinas, publicados em 18/10/2026"; nome "UTE William Arjona" (curto "William Arjona"); sem garantia física, IP e TEIF de referência, que não têm fonte nos dados abertos (a C5 não é avaliada); `situacao = "conferido"`. O usuário pode acrescentar esses valores com a fonte a qualquer momento.
+- **T072** `python -m src completo --usina william_arjona` (com o portal): código 0, em 311 s (meta de 15 minutos, SC-006). Tempos dos `etapa.json`: Coleta 4 min 59 s (varredura de toda a Geração por usina e a programação desde 2021), Tratamento 6 s, Conferência < 1 s, Análises 1 s, Relatório 5 s.
+  - Série de referência "geracao" (id ONS MSUTWI) de 10/07/2021 00h a 17/10/2026 23h: 46.219 horas, 5 ausentes; trecho único, nível usina.
+  - Relatório com 12 seções, só as comuns (sem EVT nem hidrologia; a EVT só aparece na tabela das conferências que não se aplicam), 18 páginas, 5 figuras e 28 abas; legendas com o identificador ("Geração por usina (id ONS MSUTWI), obtido em 19/10/2026"); notas com as omissões e as conferências não aplicáveis. Resumo executivo não gerado (US3 da spec 007).
+  - Achados dos dados: geração até 1 MW em 92,8% das horas; disponibilidade operacional média de 21,6% da potência instalada e DISPF de 39,7%; indisponibilidade total de 30/01/2023 a 27/08/2025 (22.558 h); 1.322 h com geração acima da disponibilidade declarada (regra R7). Conclusão com C8 e C10; C5 omitida (sem IP e TEIF de referência).
+  - Conferência: DISPF × horas com 52 divergências em 309 meses-unidade; TEIFa e TEIP refeitas não reproduzem nenhum dos 4 meses com a janela completa (diferenças de 0,08 a 2,07 p.p. na TEIFa e de cerca de 1 p.p. na TEIP), ao contrário da São Domingos. A causa provável (fórmula ou ponderação das taxas das térmicas) fica para a fase B (decisão R18); o relatório registra a divergência.
+  - Corrigido ao ler o relatório: a C10 das usinas sem EVT agrupa as unidades e os anos ("de todas as unidades em 2022, 2023, 2024 e 2025"), em vez de repetir "da UG1 e da UG2 e …" a cada ano; o texto das hidrelétricas com EVT não muda. Teste novo em `tests/analises/test_conclusao.py`.
+- **T073**: código da fase A conferido contra os rascunhos de `ajustes-specs/`. Oito divergências necessárias, aprovadas pelo usuário ("aprovado, siga") e aplicadas aos rascunhos: formato 3 das Análises; regras comuns C2, C5, C8 e C10 nas usinas sem EVT; afluência e nível das hidrelétricas sem EVT na fase D; título das usinas sem EVT igual ao da capa aprovada, conclusão única nos dois caminhos, título por tipo da série temporal e resumo executivo só com a US3 da spec 007; base horária por hora da série, soma estrita dos códigos de programação e formato 2 do Tratamento; regra dos agregados aplicada pelo catálogo; vários códigos de programação e conferência só pelo estado fora das hidrelétricas; formato 2 da Conferência, com só as conferências aplicadas nas usinas sem EVT.
+
+## Phase 9: Convergence
+
+- [ ] T149 Gerar o resumo executivo das usinas sem EVT executando a US3 da spec 007 (T027 a T030), cuja dependência (a tabela anual da base horária comum) a fase A cumpriu, antes de levar o relatório da William Arjona à aprovação per Constituição, Produtos (partial)
+- [ ] T150 Implementar na fase D a seção "Afluência, vertimento e nível do reservatório" das hidrelétricas sem EVT com Dados hidrológicos (análise sem os cruzamentos com a EVT, seção e figura em seaborn, teste com uma hidrelétrica fictícia sem EVT e com hidrologia), hoje omitida com o motivo per FR-020 e decisão R14, seção 13 (missing)
+- [X] T151 Tratar na conferência do cadastro (`src/conferencia/cadastro.py`) o perfil sem id ONS (PCH, CGH, EOL e UFV em conjunto): "não informado" no texto, no lugar de "None", e divergência só quando o cadastro e o perfil diferem de fato, com teste per FR-019 e FR-025 (partial)
+- [X] T152 Usar `Secao.legenda` nas legendas das seções do caminho sem EVT ou retirá-lo de `src/relatorio/estrutura.py`, ajustando o data-model 6.5 per data-model 6.5 (partial)
+- [ ] T153 Registrar na incorporação (fase F) os desvios do plano aprovados na fase A: `VERSAO_FORMATO` 3 das Análises e os módulos `src/relatorio/comum.py` e `src/relatorio/figuras_comum.py` per plan.md, estrutura de módulos (contradicts)
+
+### 19/10/2026 — T074 (portão do fim da fase A), convergência (T151 e T152) e decisão sobre as republicações
+
+- **pyflakes** (Python 3.14 do sistema, fora do `venv`): o import não usado em `src/coleta/perfil_rascunho.py` saiu antes; as fixtures que `tests/relatorio/test_markdown.py` importava de outros testes passaram a fixtures locais, sobre as funções `montar_resultados_com_indicadores` e `montar_resultados_com_programacao` (em `tests/analises/`). Resultado: nenhum aviso em `src/` e `tests/`.
+- **`/speckit-converge`** (limitado à fase A, a pedido): 5 achados, anexados como Phase 9: Convergence (T149 a T153). T149 (resumo executivo das usinas sem EVT, pela US3 da spec 007), T150 (afluência das hidrelétricas sem EVT, fase D) e T153 (desvios do plano, fase F) ficam para as fases deles. Já cobertos: TEIFa e TEIP das térmicas (T087) e as seções de térmica, eólica/solar e conjunto (fases B a D).
+- **T151**: a conferência do cadastro trata o perfil sem id ONS ("não informado", nunca "None"; sem divergência quando o cadastro e o perfil não informam), com teste em `tests/conferencia/test_conferencias.py`.
+- **T152**: `Secao` sem o campo `legenda`: a legenda de fonte é de cada tabela e figura (chave declarada com o bloco da seção), como já era; data-model 6.5 ajustado.
+- **Primeiro portão**: suíte com 677 aprovados; `comparar --todas --coleta` com código 6, só na Coleta refeita: além do cadastro (decisão de 19/10), o ONS publicou em 18/10/2026 setembro/2026 nas horas por estado operativo (`taxa_teif_teip_parametro`, 16 linhas) e nas taxas TEIFa/TEIP (`taxa_teif_teip`, 2 linhas). O relatório refeito a partir da Coleta congelada não mudou.
+- **Decisão do usuário** (pergunta, resposta "Aceitar também esta"): as diferenças da Coleta causadas por republicação do ONS (cadastro e indicadores/taxas) contam como aprovadas até o próximo congelamento da referência; o relatório refeito a partir da Coleta congelada continua tendo de dar "nenhuma diferença".
+- **Portão do fim da fase A** (depois da T151 e da T152): suíte com 678 aprovados, sem rede; pyflakes sem aviso; `python -m src comparar --todas --coleta`: código 6 com as mesmas 4 diferenças da Coleta refeita aceitas pelo usuário (`auditoria_cadastro.csv`, `cadastro_ficha.csv`, `auditoria_indicadores.csv` e `indicadores_extraido.parquet`, por republicação do ONS em 18/10/2026) e nenhuma no relatório refeito a partir da Coleta congelada. **Fase A concluída.**

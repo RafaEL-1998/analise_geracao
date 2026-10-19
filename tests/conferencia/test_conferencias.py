@@ -330,3 +330,17 @@ def test_mes_unidade_incompleto_nao_entra_nas_divergencias() -> None:
     r = conferencia_dispf_horas(ind)
     assert (r.comparados, r.coincidentes, r.divergentes, r.tabelas["sem_valor"]) == (7, 6, 1, 1)
     assert pd.Timestamp("2023-12-01") not in set(r.tabelas["divergencias"]["mes"])
+
+
+def test_cadastro_com_perfil_sem_id_ons() -> None:
+    """Usina em conjunto sem id ONS próprio (spec 006): sem divergência quando os dois não informam, e o texto
+    nunca traz "None"."""
+    from dataclasses import replace
+
+    perfil = replace(PERFIL, identificacao=replace(PERFIL.identificacao, id_ons=None))
+    r = conferencia_cadastro(_ficha(id_ons=""), perfil)
+    assert r.divergentes == 0
+    r = conferencia_cadastro(_ficha(id_ons="MSXXXX"), perfil)
+    assert r.divergentes == 1 and "id ONS MSXXXX (projeto: não informado)" in r.tabelas["divergencias"]
+    assert "None" not in r.tabelas["divergencias"]
+

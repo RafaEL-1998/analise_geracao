@@ -11,19 +11,21 @@ Redação final. Os requisitos novos seguem a numeração da spec do Tratamento 
 - **FR-004** (período de referência): o da série de referência gravada pela Coleta. Na hidrelétrica com EVT, o da base de EVT, como hoje.
 - **FR-006** (dicionário da EVT): a conferência das dez grandezas usa `data/usinas/<slug>/coleta/dicionario_evt.json`.
 - **FR-028 a FR-032** (cópia `.bak` e conferência da gravação): valem também para os arquivos novos desta fase.
+- **Formato**: o Tratamento passa ao formato 2 (a base horária comum, que as Análises leem nas usinas sem EVT).
+- **Programação diária** (programação horária): com mais de um código, os códigos são somados em cada patamar antes da média da hora. O patamar só tem soma quando todos os códigos da extração têm valor nele; sem a linha ou sem o valor de algum código, a soma fica ausente, nunca completada.
 
 ## Requisitos novos
 
-- **FR-035** (base horária comum): nas usinas sem EVT, a etapa DEVE gravar `base_horaria.csv`, uma linha por hora do período, com:
+- **FR-035** (base horária comum): nas usinas sem EVT, a etapa DEVE gravar `base_horaria.csv`, uma linha por hora da série de referência no período, com:
   - `din_instante`;
   - `geracao_mw`, da série de referência tratada;
   - `nivel` (`usina` ou `conjunto`);
   - `disponibilidade_operacional_mw` e `disponibilidade_sincronizada_mw`, quando há cobertura;
   - `geracao_programada_mw`, quando há;
   - `trecho`, o número do trecho de `trechos.csv`;
-  - `sinalizacoes`.
-  - As horas sem valor ficam listadas nas ausências, nunca preenchidas, e nenhum registro é excluído.
-- **FR-036** (panorama dos agregados): a soma mensal dos agregados do catálogo (Coleta, `agregados.csv`) DEVE seguir as regras desta spec:
+  - `sinalizacoes`: os códigos da geração (G1), da disponibilidade (D1 a D4) e a regra R7 (geração acima da disponibilidade declarada), esta só com a geração e a disponibilidade da usina.
+  - As horas ausentes da série de referência ficam listadas nas ausências, nunca preenchidas, e nenhum registro é excluído.
+- **FR-036** (panorama dos agregados): a soma mensal dos agregados do catálogo (`agregados.csv`, montado pelo catálogo da Coleta, que aplica estas regras) DEVE seguir as regras desta spec:
   - um valor por hora, o do arquivo publicado por último (FR-016);
   - as horas sem registro, contadas.
 
@@ -40,3 +42,4 @@ Redação final. Os requisitos novos seguem a numeração da spec do Tratamento 
 | Data | Decisão |
 |---|---|
 | 09/10/2026 | Ampliação para todos os tipos de usina (spec 006, aprovada). O Tratamento deixa de ler `data/raw/`. |
+| 19/10/2026 | Ajustes da conferência do código da fase A contra este rascunho (tarefa T073), aprovados pelo usuário. |

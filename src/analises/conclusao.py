@@ -319,10 +319,34 @@ def _regra_c9(res: ResultadosAnalise) -> List[Dict[str, Any]]:
     return [_item("pontos_atencao", "C9", _maiuscula("; ".join(partes)), ["indicadores_anuais"])]
 
 
-def _regra_c10(res: ResultadosAnalise, eventos: Optional[pd.DataFrame] = None) -> List[Dict[str, Any]]:
+def _unidades_agrupadas(sel: pd.DataFrame, total_unidades: int) -> str:
+    """Unidades e anos das paradas programadas longas, com os anos seguidos de mesmas unidades juntos:
+    "de todas as unidades em 2022, 2023 e 2024; da UG1 em 2025" (usinas sem EVT, com muitas unidades)."""
+    blocos: List[Tuple[Tuple[int, ...], List[int]]] = []
+    for ano, g in sel.groupby("ano"):
+        unidades = tuple(sorted(int(u) for u in g["ug"]))
+        if blocos and blocos[-1][0] == unidades:
+            blocos[-1][1].append(int(ano))
+        else:
+            blocos.append((unidades, [int(ano)]))
+    textos = []
+    for unidades, anos in blocos:
+        if len(unidades) == total_unidades > 1:
+            quem = "de todas as unidades"
+        elif len(unidades) == 1:
+            quem = f"da UG{unidades[0]}"
+        else:
+            quem = "das " + fmt_lista(f"UG{u}" for u in unidades)
+        textos.append(f"{quem} em {fmt_lista(str(a) for a in anos)}")
+    return "; ".join(textos)
+
+
+def _regra_c10(res: ResultadosAnalise, eventos: Optional[pd.DataFrame] = None,
+               agrupar_unidades: bool = False) -> List[Dict[str, Any]]:
     """Indisponibilidade longa: total ≥ 30 dias, ou programada ≥ 20 % numa unidade num ano completo.
 
     ``eventos``: os de indisponibilidade total; sem eles, os da base de EVT (nas usinas sem EVT, vêm da base comum).
+    ``agrupar_unidades``: unidades e anos agrupados no texto (usinas sem EVT); o texto de hoje sem ele.
     """
     partes: List[str] = []
     secoes: List[str] = []
@@ -341,9 +365,12 @@ def _regra_c10(res: ResultadosAnalise, eventos: Optional[pd.DataFrame] = None) -
         completos = ug_anual[~ug_anual["ano_parcial"]] if "ano_parcial" in ug_anual.columns else ug_anual
         sel = completos[completos["indisppf"] >= LIMIAR_CONCLUSAO_PROGRAMADA_UG_PCT]
         if len(sel):
-            grupos = [f"{' e '.join(f'da UG{int(u)}' for u in sorted(g['ug']))} em {int(ano)}"
-                      for ano, g in sel.groupby("ano")]
-            partes.append(f"das paradas programadas longas {fmt_lista(grupos)}")
+            if agrupar_unidades:
+                quem = _unidades_agrupadas(sel, ug_anual["ug"].nunique())
+            else:
+                quem = fmt_lista(f"{' e '.join(f'da UG{int(u)}' for u in sorted(g['ug']))} em {int(ano)}"
+                                 for ano, g in sel.groupby("ano"))
+            partes.append(f"das paradas programadas longas {quem}")
             secoes.append("indicadores_ons")
             anos |= {int(a) for a in sel["ano"]}
     if not partes:
@@ -443,7 +470,7 @@ def _regra_c8_comum(res: ResultadosAnalise) -> List[Dict[str, Any]]:
 def _regra_c10_comum(res: ResultadosAnalise) -> List[Dict[str, Any]]:
     """C10 sobre a base comum: os eventos de indisponibilidade total da usina; a parte do ONS como na C10."""
     eventos = (res.comum.get("disponibilidade") or {}).get("eventos_indisponibilidade_total")
-    return _regra_c10(res, eventos if eventos is not None else pd.DataFrame())
+    return _regra_c10(res, eventos if eventos is not None else pd.DataFrame(), agrupar_unidades=True)
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,68 @@
+{
+ "etapa": "relatorio",
+ "usina": "william_arjona",
+ "versao_formato": 1,
+ "iniciada_em": "2026-10-19T15:08:07Z",
+ "concluida_em": "2026-10-19T15:08:12Z",
+ "status": "concluida",
+ "codigo_saida": 0,
+ "etapa_anterior": {
+  "etapa": "analises",
+  "concluida_em": "2026-10-19T15:08:06Z"
+ },
+ "arquivos": [
+  {
+   "nome": "relatorio_analise_estatistica.pdf",
+   "bytes": 742444,
+   "sha256": "79ee6b232bb3448015bf0f883f8d5298df5deb52b3cb529bbd9202a050c1817f"
+  },
+  {
+   "nome": "relatorio_analise_estatistica.md",
+   "bytes": 32443,
+   "sha256": "5fd1dbea6bf391c39c3823b080ed16b3cc46cffd79c5583612bc727b65f2905e"
+  },
+  {
+   "nome": "perfil_estatistico_anual.xlsx",
+   "bytes": 65834,
+   "sha256": "ecf30d87923662a90ad06064f4ea9aa28bc8b1b30f4689373cbdf357c7a044c6"
+  },
+  {
+   "nome": "perfil_estatistico_anual.csv",
+   "bytes": 909,
+   "sha256": "04c8395babffb7bc233fadbec90ae87ebc6a193e8672d6cd643b4267be4f3415"
+  },
+  {
+   "nome": "figures/01_serie_temporal_geracao_disponibilidade.png",
+   "bytes": 161572,
+   "sha256": "7aa3d8c09f3d87258848d77f94c26ad67c2aa248020315c0eb605500ed6f3c3c"
+  },
+  {
+   "nome": "figures/02_geracao_mensal.png",
+   "bytes": 69301,
+   "sha256": "f1b820377549b040b618001c52d1500a462c8ce265f837b1682fc3b2a6d5dd2c"
+  },
+  {
+   "nome": "figures/03_geracao_por_mes_do_ano.png",
+   "bytes": 82041,
+   "sha256": "000ac1e8e1300f60010729f0ccc980ec6759e2d7afe4c95bac7b5ef8f38a24fe"
+  },
+  {
+   "nome": "figures/04_perfil_horario_geracao.png",
+   "bytes": 85314,
+   "sha256": "750e69d36445ab1d4234ddbb3dd4fc8d224acd4ff257363ba31b400544a8c2af"
+  },
+  {
+   "nome": "figures/05_disponibilidade_operacional_sincronizada_mensal.png",
+   "bytes": 146896,
+   "sha256": "bd0cecf91d19ccb0f69ac7895b223be8eee588dbc7a6d24a7facbf416248b0d4"
+  }
+ ],
+ "resumo": {
+  "data_geracao": "19/10/2026 11:08",
+  "secoes": 12,
+  "paginas_pdf": 18,
+  "figuras": 5,
+  "abas_planilha": 28,
+  "resumo_executivo": null
+ }
+}

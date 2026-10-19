@@ -35,6 +35,7 @@ A Coleta passa a atender qualquer usina que os dados abertos do ONS cobrem: UHE,
 - **FR-031** (dicionários): a coleta obtém os dicionários dos conjuntos da usina. O registro `dicionarios.csv` lista só esses conjuntos. Na UHE sem `[cobertura]`, os dez de hoje, na mesma ordem.
 - **FR-035** (comparação de textos): a mesma normalização (sem acento, sem espaços nas pontas, maiúsculas) vale na extração e nos pré-filtros. O filtro do Parquet usa o valor publicado e o normalizado (correção P3).
 - **FR-036** (extração): num conjunto com conferência declarada, a coluna de conferência ausente torna o arquivo `FALHA`, com o motivo (correção P4).
+- **Programação diária** (FR da extração da programação): a usina pode ter mais de um código de exibição (usina ou conjunto programado por barra; `codigos_programacao` no perfil). Com mais de um código, cada linha extraída traz o código (`cod_exibicaousina`), e a soma por patamar fica com o Tratamento. Nas hidrelétricas, a conferência continua pelo nome (`nome_ons`) e pelo estado; nos demais tipos, que não têm `nome_ons`, só pelo estado.
 - **FR-039** (valores numéricos): a vírgula decimal é aceita em todos os conjuntos, inclusive nos horários e na potência da ficha (correção P2).
 - **FR-046** (auditoria): o CSV vazio da EVT fica `FALHA` com o motivo "arquivo vazio" (correção P5).
 - **FR-047 e FR-048** (resultados e resumo):
@@ -90,7 +91,7 @@ A Coleta passa a atender qualquer usina que os dados abertos do ONS cobrem: UHE,
   - Fora da hidrelétrica com EVT, DEVEM ser gravados:
     - `trechos.csv`, com mudança de modalidade, de composição ou de código e a marca `mostrar`;
     - `geracao_complemento.parquet`;
-    - `composicao_conjunto.csv` e `capacidade_ficha.csv`, quando há cobertura.
+    - `composicao_conjunto.csv`, na usina em conjunto (com `id_conjunto`), e `capacidade_ficha.csv`, as unidades do CEG.
 
 ## Aplicabilidade por tipo (fase A)
 
@@ -125,3 +126,4 @@ A Coleta passa a atender qualquer usina que os dados abertos do ONS cobrem: UHE,
 |---|---|
 | 09/10/2026 | Ampliação para todos os tipos de usina (spec 006, aprovada); correções P1 a P5 na fase A; implementação antes da fiscalização, com a versão de fiscalização congelada fora do projeto. |
 | 19/10/2026 | O catálogo usa os Reservatórios do ONS para ligar o CEG ao `cod_usina` e ao reservatório da EVT e dos dados hidrológicos (decisão R31). |
+| 19/10/2026 | Ajustes da conferência do código da fase A contra este rascunho (tarefa T073), aprovados pelo usuário. |

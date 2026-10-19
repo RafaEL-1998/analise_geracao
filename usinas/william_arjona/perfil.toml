@@ -1,25 +1,25 @@
-# Rascunho gerado por "python -m src perfil" a partir do catálogo de usinas (data/catalogo/, montado em 2026-10-19 14:41:30 UTC).
-# Confira cada valor com a fonte, complete os pendentes e troque situacao para "conferido".
-# Identificação só pelos códigos (CEG, id ONS, id do conjunto e códigos de programação), nunca pelo nome.
+# Perfil gerado por "python -m src perfil" a partir do catálogo de usinas (data/catalogo/, montado em 2026-10-19 14:41:30 UTC)
+# e completado em 19/10/2026 só com dados do ONS (pedido do usuário para seguir): sem garantia física, IP e TEIF de
+# referência, que não têm fonte nos dados abertos do ONS (a regra C5 da conclusão não é avaliada sem eles).
+# Identificação só pelos códigos (CEG, id ONS e código de programação), nunca pelo nome.
 
 [usina]
 slug = "william_arjona"
-nome = "UTE WILLIAM ARJONA (UTWI)"    # Modalidade das usinas, publicado em 18/10/2026; ajuste para o nome do relatório
-nome_curto = "UTE WILLIAM ARJONA (UTWI)" # a conferir
+nome = "UTE William Arjona"           # Modalidade das usinas: "UTE WILLIAM ARJONA (UTWI)", publicado em 18/10/2026
+nome_curto = "William Arjona"
 estado = "MS"                         # Modalidade das usinas
 tipo = "UTE"                          # prefixo do CEG
 modalidade = "TIPO I"                 # Modalidade das usinas
-subsistema = "SE"                     # Capacidade de geração ou Composição dos conjuntos
-inicio_operacao_comercial = 2021      # Capacidade de geração: primeira unidade ativa em 10/07/2021; a conferir
-situacao = "rascunho"
-pendentes = ["parametros.fontes.geral", "parametros.garantia_fisica_mwmed (opcional)", "parametros.ip_referencia (opcional)", "parametros.teif_referencia (opcional)"]
+subsistema = "SE"                     # Capacidade de geração
+inicio_operacao_comercial = 2021      # Capacidade de geração: primeira unidade ativa em 10/07/2021
+situacao = "conferido"
 
 [identificacao]
 ceg = "UTE.GN.MS.027075-0.01"         # Modalidade das usinas
 id_ons = "MSUTWI"                     # Modalidade das usinas
 codigos_programacao = ["MSUTWI"]      # Programação diária, publicado em 18/10/2026
 
-[cobertura]                           # catálogo de usinas; a conferir
+[cobertura]                           # catálogo de usinas
 indicadores = "proprio"
 programacao = "proprio"
 disponibilidade = "proprio"
@@ -30,9 +30,6 @@ potencia_instalada_mw = 177.116       # Capacidade de geração: 5 unidades ativ
 unidades_geradoras = 5
 potencias_unidades_mw = [39.16, 39.16, 33.0, 33.1, 32.696]
 combustivel = "GÁS"                   # Capacidade de geração
-# garantia_fisica_mwmed =             # pendente: opcional; valor e fonte
-# ip_referencia =                     # pendente: opcional; valor e fonte
-# teif_referencia =                   # pendente: opcional; valor e fonte
 
 [parametros.fontes]
-# geral =                             # pendente: documento e data dos parâmetros
+geral = "ONS, dados abertos: Capacidade de geração e Modalidade das usinas, publicados em 18/10/2026"
