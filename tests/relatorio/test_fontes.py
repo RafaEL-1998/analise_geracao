@@ -54,7 +54,7 @@ def _res(completo: bool = True, **mudancas: Any) -> SimpleNamespace:
 
 
 def test_catalogo_e_mapa_consistentes() -> None:
-    assert set(CONJUNTOS) == IDS | {"projeto"}
+    assert set(CONJUNTOS) == IDS | {"projeto", "composicao"}  # composição: usinas em conjunto (spec 006)
     for chave, entrada in MAPA_FONTES.items():
         assert set(entrada.conjuntos) <= set(CONJUNTOS), chave
         assert set(entrada.conferencias) <= set(CONFERENCIAS), chave

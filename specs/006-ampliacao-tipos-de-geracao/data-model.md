@@ -35,7 +35,7 @@ Gravado pela Coleta (`python -m src usinas`), sem `.bak`, por inteiro a cada mon
 | `versao_formato` | int | 1; muda quando os arquivos do catálogo mudam de formato |
 | `montado_em_utc` | texto | data e hora da montagem |
 | `sem_portal` | bool | montado só com os arquivos locais |
-| `cadastro` | objeto | arquivo e data de publicação de Modalidade das usinas, Composição dos conjuntos e Capacidade de geração |
+| `cadastro` | objeto | arquivo e data de publicação de Modalidade das usinas, Composição dos conjuntos, Capacidade de geração e Reservatórios (R31) |
 | `cobertura` | lista | por conjunto do ONS: pacote, arquivo verificado e data de publicação (FR-004) |
 | `agregados` | objeto | arquivos de geração e meses usados no panorama |
 | `contagens` | objeto | linhas por tipo e por estado (SC-002) |
@@ -55,7 +55,8 @@ Uma linha por linha do cadastro do ONS. São 6.017 em 09/10/2026, sem filtro (SC
 | `subsistema` | da Capacidade de geração ou da Composição dos conjuntos |
 | `potencia_autorizada_mw` | número; vírgula decimal aceita (P2) |
 | `id_conjunto`, `nom_conjunto` | conjunto vigente, da Composição dos conjuntos; vazio fora de conjunto |
-| `unidades_geradoras`, `potencia_efetiva_mw`, `combustivel`, `entrada_operacao` | da Capacidade de geração, só unidades ativas |
+| `unidades_geradoras`, `potencia_efetiva_mw`, `potencias_unidades_mw`, `combustivel`, `entrada_operacao` | da Capacidade de geração, só unidades ativas; `potencias_unidades_mw` é a potência de cada unidade, separada por `;`, na ordem do número da unidade, para o rascunho do perfil (R5) |
+| `cod_usina`, `nom_reservatorio`, `id_reservatorio` | dos Reservatórios, pelo CEG (R31); vazios sem linha nos Reservatórios |
 | `cobertura_resumo` | o melhor nível entre os conjuntos de série do tipo |
 | `divergencias` | por exemplo, o tipo do ONS diferente do tipo do CEG (R1), ou a potência autorizada diferente da soma das unidades |
 
@@ -216,6 +217,7 @@ Cada entrada é uma `DescricaoConjunto`. Ela traz o que a de hoje já tem (pacot
 | `cadastro` | `modalidade-usina` | todos | usina | estática | CEG | id ONS, estado | não | hoje |
 | `composicao` | `usina_conjunto` | em conjunto | conjunto | estática | id do conjunto | CEG da usina | não | A |
 | `capacidade` | `capacidade-geracao` | todos | usina | estática | CEG | estado | não | A |
+| `reservatorio` | `reservatorio` | UHE, PCH, CGH | usina | estática | CEG | — | não | A (R31): só no catálogo |
 | `despacho` | `geracao-termica-despacho-2` | UTE, UTN | usina | horária | CEG | código de planejamento do perfil | não | B |
 | `cvu` | `cvu-usitermica` | UTE, UTN | usina | semanal | código de planejamento do perfil | subsistema | não | B |
 | `cmo` | `cmo-semanal` | UTE, UTN | agregado | semanal | subsistema | — | não | B |
@@ -255,7 +257,7 @@ Um trecho é um intervalo sem mudança de modalidade, de composição do conjunt
 
 ## 6. Resultados das etapas: o que muda
 
-O `VERSAO_FORMATO` de uma etapa sobe quando muda um arquivo que ela já grava, ou quando a etapa seguinte passa a exigir um arquivo novo; arquivo novo opcional não muda o formato (R8). A etapa seguinte recusa o formato antigo (código 5), como hoje. A Coleta passa ao formato 2 no item 1 da fase A. A referência de cada usina é refeita a partir da Coleta congelada (seção 8).
+O `VERSAO_FORMATO` de uma etapa sobe quando muda um arquivo que ela já grava, ou quando a etapa seguinte passa a exigir um arquivo novo; arquivo novo opcional não muda o formato (R8). A etapa seguinte recusa o formato antigo (código 5), como hoje. A Coleta passa ao formato 2 no item 1 da fase A. No item 8, o Tratamento e a Conferência passam ao formato 2 (a base horária comum e `nao_aplicaveis.csv`, que a etapa seguinte lê) e as Análises ao 3. A referência de cada usina é refeita a partir da Coleta congelada (seção 8).
 
 ### 6.1 Coleta (`data/usinas/<slug>/coleta/`)
 
@@ -317,7 +319,9 @@ O `VERSAO_FORMATO` de uma etapa sobe quando muda um arquivo que ela já grava, o
 - Cada resultado traz o de hoje: bases, período, quantidade comparada, coincidências, divergências e tolerância.
 - Nas hidrelétricas com EVT, o relatório e a planilha não leem `nao_aplicaveis.csv` e ficam como hoje (R29).
 
-### 6.4 Análises (`resultados.pkl`, `VERSAO_FORMATO` 2)
+### 6.4 Análises (`resultados.pkl`, `VERSAO_FORMATO` 3)
+
+O formato 2 já foi usado no item 4 da fase A, com as datas de obtenção da Coleta (R22); os campos abaixo levam ao 3.
 
 Campos novos em `ResultadosAnalise`:
 
@@ -344,7 +348,8 @@ Campos novos em `ResultadosAnalise`:
 |---|---|
 | `chave` | estável, como hoje |
 | `titulo` | texto; ou mapa tipo → título, com o da UHE igual ao de hoje |
-| `tipos` | tipos em que a seção existe |
+| `caminhos` | `evt` (hidrelétrica com EVT), `sem_evt` ou os dois; cada caminho vê só as suas seções, numa lista única |
+| `tipos` | tipos em que a seção existe (filtra o caminho sem EVT) |
 | `presente` | condição sobre os resultados e a cobertura, como hoje |
 | `legenda` | chave da legenda de fonte (`fontes.py`) por tipo |
 | `periodo_minimo_meses` | opcional (R17) |
@@ -355,7 +360,7 @@ A lista e a ordem das seções de cada caminho estão na R14.
 
 | Elemento | Hidrelétrica com EVT | Usina sem EVT |
 |---|---|---|
-| Título | o de hoje: "<nome> — energia vertida turbinável e desempenho operacional" | "<nome> — desempenho operacional" |
+| Título | o de hoje: "<nome> — Análise do desempenho operacional" (capa do relatório aprovado em 19/10/2026; o Markdown mantém o título anterior) | o mesmo da capa: "<nome> — Análise do desempenho operacional" |
 | Subtítulo | o de hoje: dados abertos do ONS, período, registros horários e data de geração | o mesmo, com o período e os registros da série de referência e o nível dela |
 | Bloco "Identificação nos dados do ONS" | o de hoje | os identificadores do perfil, com a linha de tipo e modalidade e o conjunto, quando há |
 | Bloco "Cadastro no ONS" | o de hoje (ficha do cadastro, com a modalidade) | o mesmo |

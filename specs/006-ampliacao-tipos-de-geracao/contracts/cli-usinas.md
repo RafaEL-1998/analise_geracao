@@ -25,7 +25,7 @@ python -m src usinas [--estado <UF>] [--tipo <tipo>] [--modalidade <modalidade>]
 ## O que faz
 
 1. **Sincroniza** (exceto com `--sem-portal`), com o catálogo CKAN, o cache e as versões de hoje:
-   - Modalidade das usinas, Composição dos conjuntos e Capacidade de geração;
+   - Modalidade das usinas, Composição dos conjuntos, Capacidade de geração e Reservatórios (R31);
    - o arquivo mais recente de cada conjunto de série já implementado;
    - todos os arquivos do despacho térmico (a partir da fase B);
    - os arquivos de geração dos últimos 12 meses completos;
@@ -43,7 +43,7 @@ python -m src usinas [--estado <UF>] [--tipo <tipo>] [--modalidade <modalidade>]
 |---|---|
 | 0 | catálogo montado e listado, inclusive quando o filtro não tem nenhuma usina (com aviso) |
 | 1 | catálogo do ONS inacessível depois das tentativas, falha de gravação, interrupção pelo usuário ou erro inesperado |
-| 2 | opção inválida (argparse); Modalidade, Composição ou Capacidade não obtida: download sem sucesso ou, com `--sem-portal`, arquivo local ausente |
+| 2 | opção inválida (argparse); Modalidade, Composição, Capacidade ou Reservatórios não obtido: download sem sucesso ou, com `--sem-portal`, arquivo local ausente |
 
 Falha num dicionário não muda o código, como na Coleta de hoje.
 

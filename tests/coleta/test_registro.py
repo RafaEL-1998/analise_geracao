@@ -30,11 +30,15 @@ PACOTES_DE_HOJE = {
     "modalidade-usina": "modalidade_usina",
 }
 CHAVES_DE_HOJE = ["evt", "indicadores", "programacao", "disponibilidade", "hidrologia", "geracao", "cadastro"]
+# Fase A (tarefa T054; decisão R31): os cadastrais do catálogo e da Coleta das usinas com [cobertura]
+CHAVES_DO_REGISTRO = [*CHAVES_DE_HOJE, "composicao", "capacidade", "reservatorio"]
+PACOTES_NOVOS = {"usina_conjunto": "usina_conjunto", "capacidade-geracao": "capacidade_geracao",
+                 "reservatorio": "reservatorio"}
 
 
 def _perfil(ceg: str, tipo=None, cobertura=None) -> SimpleNamespace:
     ident = SimpleNamespace(ceg=ceg, id_ons="XXUSIN", cod_usina=1, nome_ons="USINA", id_reservatorio="XXRES",
-                            cod_programacao="XXUSIN")
+                            cod_programacao="XXUSIN", id_conjunto="CJU_XXCONJ")
     usina = SimpleNamespace(estado="MS", **({"tipo": tipo} if tipo else {}))
     return SimpleNamespace(identificacao=ident, usina=usina, **({"cobertura": cobertura} if cobertura else {}))
 
@@ -44,8 +48,8 @@ def _perfil(ceg: str, tipo=None, cobertura=None) -> SimpleNamespace:
 # ---------------------------------------------------------------------------
 
 
-def test_entradas_de_hoje_na_ordem_da_coleta() -> None:
-    assert [e.chave for e in registro.REGISTRO] == CHAVES_DE_HOJE
+def test_entradas_na_ordem_da_coleta() -> None:
+    assert [e.chave for e in registro.REGISTRO] == CHAVES_DO_REGISTRO
     for entrada in registro.REGISTRO:
         assert entrada.resolucao in registro.RESOLUCOES
         assert set(entrada.niveis) <= set(registro.NIVEIS)
@@ -63,11 +67,15 @@ def test_tipos_e_atributos_da_tabela_do_data_model() -> None:
     assert e["geracao"].tipos == registro.TIPOS_USINA and e["geracao"].referencia
     assert e["geracao"].niveis == ("usina", "conjunto")
     assert e["cadastro"].tipos == registro.TIPOS_USINA and e["cadastro"].resolucao == "estatica"
+    assert e["composicao"].niveis == ("conjunto",) and e["composicao"].resolucao == "estatica"
+    assert e["capacidade"].tipos == registro.TIPOS_USINA and e["capacidade"].resolucao == "estatica"
+    assert e["reservatorio"].tipos == ("UHE", "PCH", "CGH") and e["reservatorio"].so_catalogo
+    assert not any(e[c].na_cobertura for c in ("cadastro", "composicao", "capacidade", "reservatorio"))
 
 
 def test_conjuntos_pipeline_sai_do_registro() -> None:
-    assert registro.CONJUNTOS_PIPELINE == PACOTES_DE_HOJE
-    assert list(registro.CONJUNTOS_PIPELINE) == list(PACOTES_DE_HOJE)
+    assert registro.CONJUNTOS_PIPELINE == {**PACOTES_DE_HOJE, **PACOTES_NOVOS}
+    assert list(registro.CONJUNTOS_PIPELINE) == [*PACOTES_DE_HOJE, *PACOTES_NOVOS]
 
 
 def test_descricoes_horarias_reproduzem_as_de_hoje() -> None:
@@ -121,7 +129,7 @@ def test_com_cobertura_so_os_conjuntos_proprio_ou_conjunto_e_sempre_os_cadastrai
         "evt": "ausente", "indicadores": "proprio", "programacao": "conjunto", "hidrologia": "agregado",
         "geracao": ["proprio", "conjunto"]})
     assert [e.chave for e in registro.conjuntos_da_usina(perfil)] == [
-        "indicadores", "programacao", "geracao", "cadastro"]
+        "indicadores", "programacao", "geracao", "cadastro", "composicao", "capacidade"]
 
 
 def test_nivel_da_descricao_pela_cobertura() -> None:
@@ -134,8 +142,26 @@ def test_nivel_da_descricao_pela_cobertura() -> None:
 def test_uhe_sem_cobertura_coleta_os_dez_de_hoje_e_nao_pede_composicao_nem_capacidade() -> None:
     entradas = registro.conjuntos_da_usina(carregar_perfil("sao_domingos"))
     assert [e.chave for e in entradas] == CHAVES_DE_HOJE
-    assert not {"composicao", "capacidade"} & {e.chave for e in entradas}
+    assert not {"composicao", "capacidade", "reservatorio"} & {e.chave for e in entradas}
     assert registro.pacotes(entradas) == PACOTES_DE_HOJE
+
+
+def test_reservatorios_so_no_catalogo() -> None:
+    """Decisão R31: os Reservatórios ligam o CEG ao cod_usina no catálogo; a Coleta da usina não os obtém."""
+    perfil = _perfil("PCH.PH.MS.032163-0.01", cobertura={"geracao": "conjunto", "evt": "proprio"})
+    assert "reservatorio" not in [e.chave for e in registro.conjuntos_da_usina(perfil)]
+
+
+def test_geracao_do_conjunto_pelo_id_do_conjunto_e_pelo_estado() -> None:
+    """Decisão R9: a geração do conjunto é identificada pelo id do conjunto e conferida pelo estado (CEG "-")."""
+    perfil = _perfil("PCH.PH.MS.032163-0.01", cobertura={"geracao": "conjunto"})
+    d = registro.descricoes(perfil)["geracao"]
+    assert d.identificador == registro.Regra("id_ons", "CJU_XXCONJ")
+    assert d.conferencias == (registro.Regra("id_estado", "MS"),)
+    assert d.filtro_parquet == ((("id_ons", "in", ("CJU_XXCONJ",)),),)
+    assert d.nivel == "conjunto"
+    usina = registro.descricao_geracao(perfil, "usina")
+    assert usina.identificador == registro.Regra("id_ons", "XXUSIN") and usina.nivel == "usina"
 
 
 # ---------------------------------------------------------------------------

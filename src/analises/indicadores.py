@@ -69,7 +69,10 @@ def analisar_indicadores_ons(
     A disponibilidade da usina pelo DISPF é a média das unidades ponderada pela potência e
     pelas horas da base de EVT em cada mês.
     """
-    referencia = perfil_ativo().disponibilidade_referencia * 100.0
+    try:
+        referencia = perfil_ativo().disponibilidade_referencia * 100.0
+    except ValueError:  # perfil sem IP e TEIF de referência (usinas sem EVT; spec 006, decisão R16)
+        referencia = math.nan
     parciais = set(cobertura["anos_parciais"])
     resultado: Dict[str, Any] = {}
 

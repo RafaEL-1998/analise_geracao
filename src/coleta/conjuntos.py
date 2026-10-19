@@ -316,6 +316,9 @@ def extrair_arquivo(desc: DescricaoConjunto, caminho: Path) -> Tuple[pd.DataFram
         invalidos += ruim.astype(int)
         nao_numerico |= ruim
         dados[coluna] = numerico.astype(float)
+    for coluna in desc.colunas_texto:
+        dados[coluna] = (usina[coluna].astype("string").str.strip().fillna("") if coluna in usina.columns
+                         else pd.Series("", index=usina.index, dtype="string"))
     auditoria["valores_invalidos"] = int(invalidos.sum())
     dados.insert(0, COLUNA_INSTANTE, instantes)
     dados[COLUNA_NAO_NUMERICO] = nao_numerico.astype(bool)
@@ -377,7 +380,7 @@ def extrair_conjunto(
     for coluna in ("data_publicacao", "mensagem"):
         auditoria_df[coluna] = auditoria_df[coluna].fillna("")
     auditoria_df["obtido"] = auditoria_df["obtido"].astype(bool)
-    colunas = [COLUNA_INSTANTE, *desc.colunas_valor, COLUNA_NAO_NUMERICO, "arquivo_origem"]
+    colunas = [COLUNA_INSTANTE, *desc.colunas_valor, *desc.colunas_texto, COLUNA_NAO_NUMERICO, "arquivo_origem"]
     extraido = pd.concat(partes, ignore_index=True)[colunas] if partes else pd.DataFrame(columns=colunas)
     logger.info("%s: %d linhas da usina em %d arquivos.", desc.pacote, len(extraido), len(arquivos))
     return extraido, auditoria_df

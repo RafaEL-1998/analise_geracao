@@ -14,7 +14,7 @@ from __future__ import annotations
 import concurrent.futures
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
 import pyarrow as pa
@@ -46,6 +46,7 @@ _RE_DATA_ISO = re.compile(r"^(\d{4})-(\d{2})-(\d{2})")
 _RE_DATA_BR = re.compile(r"^(\d{2})/(\d{2})/(\d{4})")
 COLUNAS_LIDAS = ["din_programacaodia", "num_patamar", "cod_exibicaousina", "nom_usina", "id_estado", "val_geracaoprogramada"]
 COLUNAS_EXTRAIDAS = ["dia", "num_patamar", "geracao_programada_mw", "arquivo_origem"]
+COLUNA_CODIGO = "cod_exibicaousina"  # só com mais de um código (usina ou conjunto programado por barra; spec 006)
 DOWNLOADS_SIMULTANEOS = 8
 
 # Auditoria: uma linha por dia do período com arquivo publicado, lido ou não obtido
@@ -161,23 +162,36 @@ def _preenchido(serie: pd.Series) -> pd.Series:
     return serie.notna() & (serie.astype(str).str.strip() != "")
 
 
-def ler_arquivo(caminho: Path, cod_programacao: str, nome_ons: str, estado: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+def _codigos(cod_programacao: Union[str, Sequence[str]]) -> List[str]:
+    return [cod_programacao] if isinstance(cod_programacao, str) else list(cod_programacao)
+
+
+def _colunas_extraidas(codigos: Sequence[str]) -> List[str]:
+    return COLUNAS_EXTRAIDAS + ([COLUNA_CODIGO] if len(codigos) > 1 else [])
+
+
+def ler_arquivo(caminho: Path, cod_programacao: Union[str, Sequence[str]], nome_ons: Optional[str],
+                estado: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """Patamares da usina num arquivo diário e a auditoria do arquivo.
 
-    A usina é identificada pelo código de exibição e conferida pelo nome (contém ``nome_ons``) e pelo estado. Num
-    patamar repetido no arquivo prevalece a última ocorrência; sem os 48 patamares, o arquivo fica ``INCOMPLETO``.
+    A usina é identificada pelo código de exibição (um ou mais, como um conjunto programado por barra) e conferida
+    pelo estado e, quando há ``nome_ons`` (hidrelétricas, como hoje), pelo nome. Com mais de um código, cada linha traz
+    o código, e a soma por patamar fica com o Tratamento. Num patamar repetido no arquivo (por código) prevalece a
+    última ocorrência; sem os 48 patamares, o arquivo fica ``INCOMPLETO``.
     """
+    codigos = _codigos(cod_programacao)
     dia = dia_do_arquivo(caminho.name)
     auditoria: Dict[str, Any] = {
         "arquivo": caminho.name, "dia": dia, "formato": FORMATO_PROGRAMACAO_DIARIA, "data_publicacao": "",
         "obtido": True, "mensagem": "",
     }
-    vazio = pd.DataFrame(columns=COLUNAS_EXTRAIDAS)
+    vazio = pd.DataFrame(columns=_colunas_extraidas(codigos))
     try:
         tabela = pq.read_table(caminho, columns=COLUNAS_LIDAS)
         # Só as linhas com o código ou com o estado da usina podem conferir em todo ou em parte
-        interesse = pc.or_kleene(_igual(tabela["cod_exibicaousina"], cod_programacao),
-                                 _igual(tabela["id_estado"], estado))
+        interesse = _igual(tabela["id_estado"], estado)
+        for codigo_usina in codigos:
+            interesse = pc.or_kleene(interesse, _igual(tabela["cod_exibicaousina"], codigo_usina))
         bruto = tabela.filter(interesse).to_pandas()
     except Exception as e:  # arquivo corrompido ou sem as colunas esperadas
         logger.error("Falha ao ler %s: %s", caminho.name, e)
@@ -185,11 +199,14 @@ def ler_arquivo(caminho: Path, cod_programacao: str, nome_ons: str, estado: str)
                        "linhas_so_conferencia": 0, "valores_invalidos": 0, "patamares": 0,
                        "data_interna_confere": False, "status": "FALHA", "mensagem": str(e)}
 
-    alvo = normalizar_texto(nome_ons)
-    codigo = _normalizar(bruto["cod_exibicaousina"]) == normalizar_texto(cod_programacao)
-    nomes = bruto["nom_usina"].astype(str)
-    contem = {nome: alvo in normalizar_texto(nome) for nome in nomes.unique()}  # um nome por usina, 48 linhas cada
-    conferencia = nomes.map(contem).astype(bool) & (_normalizar(bruto["id_estado"]) == normalizar_texto(estado))
+    alvos = {normalizar_texto(c) for c in codigos}
+    codigo = _normalizar(bruto["cod_exibicaousina"]).isin(alvos)
+    conferencia = _normalizar(bruto["id_estado"]) == normalizar_texto(estado)
+    if nome_ons:  # hidrelétricas: também o nome, como hoje
+        alvo = normalizar_texto(nome_ons)
+        nomes = bruto["nom_usina"].astype(str)
+        contem = {nome: alvo in normalizar_texto(nome) for nome in nomes.unique()}  # um nome por usina, 48 linhas cada
+        conferencia &= nomes.map(contem).astype(bool)
     sel = bruto[codigo & conferencia]
     patamares = numero_publicado(sel["num_patamar"]).astype("Int64")
     geracao = numero_publicado(sel["val_geracaoprogramada"])
@@ -201,10 +218,14 @@ def ler_arquivo(caminho: Path, cod_programacao: str, nome_ons: str, estado: str)
         "geracao_programada_mw": geracao.to_numpy(),
         "arquivo_origem": caminho.name,
     })
-    duplicados = int(linhas["num_patamar"].duplicated().sum())
+    chave_patamar = ["num_patamar"]
+    if len(codigos) > 1:
+        linhas[COLUNA_CODIGO] = sel["cod_exibicaousina"].astype(str).str.strip().to_numpy()
+        chave_patamar = [COLUNA_CODIGO, "num_patamar"]
+    duplicados = int(linhas.duplicated(chave_patamar).sum())
     if duplicados:
         logger.warning("%s: %d patamares repetidos; prevalece a última ocorrência.", caminho.name, duplicados)
-        linhas = linhas.drop_duplicates("num_patamar", keep="last")
+        linhas = linhas.drop_duplicates(chave_patamar, keep="last")
     n_patamares = int(linhas["num_patamar"].nunique())
     confere = data_interna_confere(sel["din_programacaodia"], dia) if len(sel) else True
     if not confere:
@@ -250,8 +271,8 @@ def extrair_programacao(
     pasta: Path,
     inicio: pd.Timestamp,
     fim: pd.Timestamp,
-    cod_programacao: str,
-    nome_ons: str,
+    cod_programacao: Union[str, Sequence[str]],
+    nome_ons: Optional[str],
     estado: str,
     falhas: Optional[List[Dict[str, Any]]] = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -275,7 +296,8 @@ def extrair_programacao(
     auditoria["data_interna_confere"] = auditoria["data_interna_confere"].eq(True)
     auditoria["obtido"] = auditoria["obtido"].astype(bool)
     auditoria["dia"] = pd.to_datetime(auditoria["dia"])
-    extraido = pd.concat(partes, ignore_index=True) if partes else pd.DataFrame(columns=COLUNAS_EXTRAIDAS)
+    extraido = (pd.concat(partes, ignore_index=True) if partes
+                else pd.DataFrame(columns=_colunas_extraidas(_codigos(cod_programacao))))
     logger.info("Programação: %d arquivos lidos, %d patamares da usina, %d arquivos com status diferente de "
                 "PROCESSADO.", len(arquivos), len(extraido), int((auditoria["status"] != "PROCESSADO").sum()))
     return extraido, auditoria

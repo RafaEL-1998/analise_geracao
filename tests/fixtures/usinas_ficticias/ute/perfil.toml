@@ -1,0 +1,31 @@
+# Usina fictícia do tipo UTE (spec 006, decisão R23), só para testes: geração, disponibilidade e programação próprias,
+# sem os indicadores do ONS. Valores inventados; identificadores que não existem no ONS.
+
+[usina]
+slug = "ute_ficticia"
+nome = "UTE Fictícia"
+nome_curto = "Fictícia"
+estado = "GO"
+inicio_operacao_comercial = 2019
+tipo = "UTE"
+modalidade = "TIPO I"
+
+[identificacao]
+ceg = "UTE.GN.GO.000104-0.01"
+id_ons = "GOUTFI"
+codigos_programacao = ["GOUTFI"]
+
+[cobertura]
+indicadores = "ausente"
+programacao = "proprio"
+disponibilidade = "proprio"
+geracao = "proprio"
+
+[parametros]
+potencia_instalada_mw = 120.0
+unidades_geradoras = 2
+potencia_unitaria_mw = 60.0
+combustivel = "GÁS NATURAL"
+
+[parametros.fontes]
+geral = "Ficha técnica fictícia da UTE, Tabela 1"

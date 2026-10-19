@@ -1,13 +1,13 @@
-"""Planilha e CSV do relatório: uma aba por tabela."""
+"""Planilha e CSV do relatório: uma aba por tabela (nas usinas sem EVT, as abas das seções comuns)."""
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Tuple
+from typing import Dict, Optional, Tuple
 
 import pandas as pd
 
-from src.analises.resultados import ResultadosAnalise
+from src.analises.resultados import ResultadosAnalise, sem_evt
 from src.comum.logger import setup_logger
 from src.relatorio.conteudo import tabela_conclusao
 from src.relatorio.fontes import tabela_fontes_abas
@@ -31,6 +31,32 @@ def _globais_como_tabela(res: ResultadosAnalise) -> pd.DataFrame:
     return pd.DataFrame(linhas)
 
 
+def _abas_sem_evt(res: ResultadosAnalise) -> Dict[str, pd.DataFrame]:
+    """Abas das usinas sem EVT: as seções comuns, os indicadores do ONS, a qualidade, os trechos e as omissões."""
+    c = res.comum
+    abas: Dict[str, Optional[pd.DataFrame]] = {
+        "CONSTATACOES": pd.DataFrame(res.achados, columns=["tema", "constatacao"]),
+        "CONCLUSAO": tabela_conclusao(res),
+        "BASE_ANUAL": c["anuais"],
+        "BASE_MENSAL": c["mensal"],
+        "BASE_MES_DO_ANO": c["sazonalidade"],
+        "BASE_HORA_DO_DIA": c["perfil_horario"],
+        "BASE_SINALIZACOES": c["qualidade"]["sinalizacoes"],
+        "GER_AUSENCIAS": c["qualidade"]["ausencias"],
+        "TRECHOS": res.trechos,
+        "OMITIDOS": pd.DataFrame(res.omitidos, columns=["item", "tipo", "motivo"]),
+        "CONF_NAO_APLICAVEIS": c.get("conferencias_nao_aplicaveis"),
+        "PARAMETROS": res.parametros,
+    }
+    d = c.get("disponibilidade") or {}
+    abas.update({"DISP_MENSAL": d.get("mensal"), "DISP_ANUAL": d.get("anual"),
+                 "DISP_EVENTOS_INDISP_TOTAL": d.get("eventos_indisponibilidade_total")})
+    p = c.get("programacao") or {}
+    abas.update({"PROG_RESUMO_MENSAL": p.get("mensal"), "PROG_EVENTOS_DESVIO": p.get("eventos")})
+    return {nome: t for nome, t in abas.items()
+            if t is not None and (len(t) or nome in ("CONSTATACOES", "CONCLUSAO", "BASE_ANUAL", "OMITIDOS"))}
+
+
 def exportar_tabelas(
     res: ResultadosAnalise,
     caminho_xlsx: Path,
@@ -39,6 +65,8 @@ def exportar_tabelas(
     """Exporta todas as tabelas calculadas para Excel e os indicadores anuais para CSV."""
     dest_xlsx, dest_csv = Path(caminho_xlsx), Path(caminho_csv)
     dest_xlsx.parent.mkdir(parents=True, exist_ok=True)
+    if sem_evt(res):
+        return _exportar_sem_evt(res, dest_xlsx, dest_csv)
 
     abas = {
         "CONSTATACOES": pd.DataFrame(res.achados, columns=["tema", "constatacao"]),
@@ -130,6 +158,46 @@ def exportar_tabelas(
         abas["DICIONARIOS"] = registro_dicionarios
     # spec da Geração do relatório (FR-028): origem e conferências de cada aba, por último
     abas["FONTES"] = tabela_fontes_abas(res, list(abas))
+    _gravar_planilha(abas, dest_xlsx)
+
+    logger.info("Exportando indicadores anuais para CSV: %s", dest_csv)
+    res.indicadores_anuais.to_csv(dest_csv, sep=";", index=False, encoding="utf-8")
+    return dest_xlsx, dest_csv
+
+
+def _abas_complementares(res: ResultadosAnalise, abas: Dict[str, pd.DataFrame]) -> None:
+    """Indicadores do ONS, cadastro e dicionários, comuns aos dois caminhos."""
+    o = res.ons
+    abas_ons = {
+        "ONS_DISP_ANUAL_USINA": o.get("disp_anual"),
+        "ONS_UG_ANUAL": o.get("ug_anual"),
+        "ONS_HORAS_UG_ANUAL": o.get("horas_anual"),
+        "ONS_HORAS_UG_MENSAL": o.get("horas_mensal"),
+        "ONS_TEIFA_TEIP": o.get("recalculo_taxas"),
+        "ONS_DECOMPOSICAO_TAXAS": o.get("decomposicao"),
+        "ONS_DIVERGENCIAS": o.get("divergencias"),
+    }
+    abas.update({nome: t for nome, t in abas_ons.items() if t is not None and len(t)})
+    if res.cadastro:
+        abas["CAD_FICHA"] = pd.DataFrame([res.cadastro["ficha"]])
+        if len(res.cadastro.get("auditoria", [])):
+            abas["CAD_AUDITORIA"] = res.cadastro["auditoria"]
+    registro_dicionarios = res.dicionarios.get("registro")
+    if registro_dicionarios is not None and len(registro_dicionarios):
+        abas["DICIONARIOS"] = registro_dicionarios
+
+
+def _exportar_sem_evt(res: ResultadosAnalise, dest_xlsx: Path, dest_csv: Path) -> Tuple[Path, Path]:
+    abas = _abas_sem_evt(res)
+    _abas_complementares(res, abas)
+    abas["FONTES"] = tabela_fontes_abas(res, list(abas))
+    _gravar_planilha(abas, dest_xlsx)
+    logger.info("Exportando indicadores anuais para CSV: %s", dest_csv)
+    res.comum["anuais"].to_csv(dest_csv, sep=";", index=False, encoding="utf-8")
+    return dest_xlsx, dest_csv
+
+
+def _gravar_planilha(abas: Dict[str, pd.DataFrame], dest_xlsx: Path) -> None:
     logger.info("Exportando tabelas analíticas para Excel: %s", dest_xlsx)
     with pd.ExcelWriter(dest_xlsx, engine="openpyxl") as writer:
         for nome, tabela in abas.items():
@@ -139,7 +207,3 @@ def exportar_tabelas(
                 letra = planilha.cell(row=1, column=idx).column_letter
                 planilha.column_dimensions[letra].width = min(max(len(str(coluna)), 12) + 3, 60)
             planilha.freeze_panes = "A2"
-
-    logger.info("Exportando indicadores anuais para CSV: %s", dest_csv)
-    res.indicadores_anuais.to_csv(dest_csv, sep=";", index=False, encoding="utf-8")
-    return dest_xlsx, dest_csv

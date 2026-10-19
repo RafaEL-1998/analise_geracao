@@ -2,8 +2,8 @@
  "etapa": "relatorio",
  "usina": "sao_domingos",
  "versao_formato": 1,
- "iniciada_em": "2026-10-13T12:47:44Z",
- "concluida_em": "2026-10-13T12:48:03Z",
+ "iniciada_em": "2026-10-19T11:59:16Z",
+ "concluida_em": "2026-10-19T11:59:45Z",
  "status": "concluida",
  "codigo_saida": 0,
  "etapa_anterior": {
@@ -23,8 +23,8 @@
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
-   "bytes": 2926159,
-   "sha256": "745c9b361d1447117e7f83b075bfb548a44e2b4cf3c6048d85677f0332bc3a91"
+   "bytes": 2926158,
+   "sha256": "3d5f19875a18471d0f8b32a2858e2299c331a10437e282f9b95aca84b88f8618"
   },
   {
    "nome": "perfil_estatistico_anual.csv",

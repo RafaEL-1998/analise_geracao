@@ -51,6 +51,8 @@ MODALIDADES_COM_PERFIL: Tuple[str, ...] = ("TIPO I", "TIPO II-A", "TIPO II-B", "
 MODALIDADES_TIPO_III: Tuple[str, ...] = ("TIPO III", "TIPO III (EM DIT)")  # só o agregado: sem perfil
 SUBSISTEMAS: Tuple[str, ...] = ("SE", "S", "NE", "N")
 COBERTURAS: Tuple[str, ...] = ("proprio", "conjunto", "agregado", "ausente")
+TIPOS_COM_FATOR_CAPACIDADE: Tuple[str, ...] = ("EOL", "UFV")  # fator de capacidade nos indicadores anuais (R14)
+PERIODO_MINIMO_SAZONALIDADE_MESES: int = 12  # sazonalidade: meses distintos na série de referência (decisão R17)
 
 # ---------------------------------------------------------------------------
 # Conjuntos do ONS e leitura
@@ -67,6 +69,10 @@ CONJUNTO_DISPONIBILIDADE: str = "disponibilidade_usina"
 CONJUNTO_HIDROLOGIA: str = "dados_hidrologicos_ho"
 CONJUNTO_GERACAO: str = "geracao-usina-2"
 CONJUNTO_CADASTRO: str = "modalidade-usina"
+# Cadastrais do catálogo de usinas (spec 006, decisões R2 e R31)
+CONJUNTO_COMPOSICAO: str = "usina_conjunto"
+CONJUNTO_CAPACIDADE: str = "capacidade-geracao"
+CONJUNTO_RESERVATORIO: str = "reservatorio"
 CONJUNTOS_INDICADORES_ONS: Dict[str, str] = {
     "ind_disponibilidade_fgeracao_uge_mensal": "Indicadores de disponibilidade da função geração por unidade geradora (base mensal)",
     "ind_disponibilidade_fgeracao_uge_anual": "Indicadores de disponibilidade da função geração por unidade geradora (base anual)",
@@ -81,6 +87,9 @@ PASTA_DISPONIBILIDADE_RAW: str = "disponibilidade_usina"
 PASTA_HIDROLOGIA_RAW: str = "dados_hidrologicos_ho"
 PASTA_GERACAO_RAW: str = "geracao_usina_2"
 PASTA_CADASTRO_RAW: str = "modalidade_usina"
+PASTA_COMPOSICAO_RAW: str = "usina_conjunto"
+PASTA_CAPACIDADE_RAW: str = "capacidade_geracao"
+PASTA_RESERVATORIO_RAW: str = "reservatorio"
 # Pacote -> pasta de todos os conjuntos: CONJUNTOS_PIPELINE, derivado do registro (src/coleta/registro.py)
 DIRETORIO_DICIONARIOS: str = "_dicionarios"  # subpasta com os dicionários de dados de cada conjunto
 
@@ -109,6 +118,24 @@ RETRY_BACKOFF_FACTOR: float = 2.0
 
 # Versões anteriores de cada arquivo bruto republicado (dados e dicionários): ficam as mais recentes
 MAXIMO_VERSOES_ANTERIORES: int = 2
+
+# ---------------------------------------------------------------------------
+# Catálogo de usinas (spec 006, decisões R1 a R3 e R21)
+# ---------------------------------------------------------------------------
+
+MESES_AGREGADOS_CATALOGO: int = 12  # meses completos de geração no panorama dos agregados
+# Modalidades da Geração por usina: grupos agregados do estado (Tipo III e MMGD) e linhas de conjunto de usinas
+MODALIDADES_AGREGADAS_GERACAO: Tuple[str, ...] = ("PEQUENAS USINAS (TIPO III)", "PEQUENAS USINAS (MMGD)", "TIPO III")
+MODALIDADES_PREVISAO_GERACAO: Tuple[str, ...] = ("PEQUENAS USINAS (TIPO III)", "TIPO III")  # valor previsto (A3)
+PREFIXO_CONJUNTO: str = "CJU_"  # id ONS dos conjuntos de usinas
+# Tipo publicado pelo ONS (sem acento, maiúsculas) -> tipos pelo prefixo do CEG que ele admite (decisão R1)
+TIPOS_ONS: Dict[str, Tuple[str, ...]] = {
+    "HIDROELETRICA": ("UHE", "PCH", "CGH"), "TERMICA": ("UTE",), "NUCLEAR": ("UTN",), "EOLIELETRICA": ("EOL",),
+    "FOTOVOLTAICA": ("UFV",), "UHE": ("UHE", "PCH", "CGH"), "UTE": ("UTE",), "UEE": ("EOL",), "UFV": ("UFV",),
+}
+# Datas sentinela de "vigente" ou "sem desativação" nos cadastrais do ONS
+DATAS_SENTINELA: Tuple[str, ...] = ("9999-12-31", "2999-12-31", "0001-01-01", "31/12/9999", "31/12/2999",
+                                    "01/01/0001")
 
 # ---------------------------------------------------------------------------
 # Figuras

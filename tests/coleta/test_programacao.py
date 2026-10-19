@@ -126,3 +126,22 @@ def test_identificacao_parcial_e_avisada_no_log(tmp_path: Path, caplog) -> None:
     with caplog.at_level(logging.WARNING, logger="coleta"):
         ler_arquivo(caminho, *IDENTIFICACAO)
     assert caminho.name in caplog.text and "verificar mudança de cadastro" in caplog.text
+
+
+def test_varios_codigos_conferidos_pelo_estado_sem_nome(tmp_path: Path) -> None:
+    """Spec 006 (decisão R5; data-model 4): conjunto programado em mais de um código, conferido só pelo estado; a
+    extração traz o código de cada linha, e a soma por patamar fica com o Tratamento."""
+    extras = [{"din_programacaodia": "2026-07-01", "num_patamar": p, "cod_exibicaousina": codigo,
+               "nom_usina": f"CONJ {codigo}", "id_estado": estado, "val_geracaoprogramada": "3.00"}
+              for p in range(1, 49) for codigo, estado in (("GOCJA-101", "GO"), ("GOCJA-102", "GO"))]
+    extras.append({"din_programacaodia": "2026-07-01", "num_patamar": 1, "cod_exibicaousina": "GOCJA-101",
+                   "nom_usina": "CONJ", "id_estado": "MT", "val_geracaoprogramada": "9.00"})  # só o código confere
+    caminho = _gravar_dia(tmp_path, "2026-07-01", extras=extras)
+    linhas, auditoria = ler_arquivo(caminho, ("GOCJA-101", "GOCJA-102"), None, "GO")
+    assert list(linhas.columns) == [*COLUNAS_EXTRAIDAS, "cod_exibicaousina"]
+    assert len(linhas) == 96 and set(linhas["cod_exibicaousina"]) == {"GOCJA-101", "GOCJA-102"}
+    assert set(linhas["geracao_programada_mw"]) == {3.0}
+    assert (auditoria["status"], auditoria["patamares"], auditoria["linhas_codigo_sem_conferencia"]) == (
+        "PROCESSADO", 48, 1)
+    um, _ = ler_arquivo(caminho, ("GOCJA-101",), None, "GO")
+    assert list(um.columns) == COLUNAS_EXTRAIDAS and len(um) == 48  # um código: as colunas de hoje

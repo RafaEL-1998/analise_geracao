@@ -1,0 +1,28 @@
+# Usina fictícia do tipo EOL (spec 006, decisão R23), só para testes: geração própria.
+# Valores inventados; identificadores que não existem no ONS.
+
+[usina]
+slug = "eol_ficticia"
+nome = "EOL Fictícia"
+nome_curto = "Fictícia"
+estado = "GO"
+inicio_operacao_comercial = 2018
+tipo = "EOL"
+modalidade = "TIPO I"
+
+[identificacao]
+ceg = "EOL.CV.GO.000106-0.01"
+id_ons = "GOEOFI"
+codigos_programacao = ["GOEOFI"]  # exigido em todo tipo (contrato do perfil); sem programação publicada
+
+[cobertura]
+programacao = "ausente"
+geracao = "proprio"
+
+[parametros]
+potencia_instalada_mw = 40.0
+unidades_geradoras = 10
+potencia_unitaria_mw = 4.0
+
+[parametros.fontes]
+geral = "Ficha técnica fictícia da EOL, Tabela 1"

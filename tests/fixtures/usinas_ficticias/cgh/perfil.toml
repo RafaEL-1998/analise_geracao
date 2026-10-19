@@ -1,0 +1,32 @@
+# Usina fictícia do tipo CGH (spec 006, decisão R23), só para testes: geração própria, sem os demais conjuntos.
+# Valores inventados; identificadores que não existem no ONS.
+
+[usina]
+slug = "cgh_ficticia"
+nome = "CGH Fictícia"
+nome_curto = "Fictícia"
+estado = "GO"
+inicio_operacao_comercial = 2012
+tipo = "CGH"
+modalidade = "TIPO II-C"
+
+[identificacao]
+ceg = "CGH.PH.GO.000103-0.01"
+id_ons = "GOCGFI"
+codigos_programacao = ["GOCGFI"]  # exigido em todo tipo (contrato do perfil); sem programação publicada
+
+[cobertura]
+evt = "ausente"
+indicadores = "ausente"
+programacao = "ausente"
+disponibilidade = "ausente"
+hidrologia = "ausente"
+geracao = "proprio"
+
+[parametros]
+potencia_instalada_mw = 4.0
+unidades_geradoras = 2
+potencia_unitaria_mw = 2.0
+
+[parametros.fontes]
+geral = "Ficha técnica fictícia da CGH, Tabela 1"

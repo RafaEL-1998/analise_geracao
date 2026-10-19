@@ -23,7 +23,7 @@ python -m src perfil --ceg <CEG> [--slug <slug>] [--log-level <nível>]
 3. Usina Tipo III, ou só com cobertura agregada ou ausente em todos os conjuntos de série (FR-009): código 2, sem gravar nada, com a mensagem da tabela abaixo.
 4. Perfil existente (`usinas/<slug>/perfil.toml`, ou outro perfil com o mesmo CEG): nada é gravado. Mostra as diferenças entre o perfil e o catálogo (campo, valor no perfil, valor no catálogo), inclusive as chaves novas de `[cobertura]` de uma fase posterior. Sai com 6, ou com 0 sem diferença.
 5. Grava `usinas/<slug>/perfil.toml` com `situacao = "rascunho"` ([perfil-multitipo.md](perfil-multitipo.md), seção "Rascunho"), com:
-   - os identificadores, o subsistema e a `[cobertura]` do catálogo, só com os conjuntos já implementados;
+   - os identificadores, o subsistema e a `[cobertura]` do catálogo, só com os conjuntos já implementados; nas hidrelétricas com linha nos Reservatórios, também `cod_usina`, `nome_ons` e `id_reservatorio` (R31);
    - os códigos de programação de `programacao.csv`: o código igual ao id ONS, ou os que começam pelo id do conjunto sem `CJU_`. Sem nenhum dos dois, o campo fica pendente, com a lista dos códigos do estado para o fiscal escolher;
    - os códigos de planejamento de `planejamento.csv` (a partir da fase B);
    - os membros do conjunto vigente;

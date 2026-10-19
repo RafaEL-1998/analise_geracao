@@ -1,4 +1,5 @@
-"""Relatório em Markdown, com as mesmas seções, tabelas e figuras do PDF."""
+"""Relatório em Markdown, com as mesmas seções, tabelas e figuras do PDF (nas usinas sem EVT, os mesmos blocos de
+``src.relatorio.comum``)."""
 
 from __future__ import annotations
 
@@ -7,9 +8,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from src.analises.conclusao import FRASE_ABERTURA_CONCLUSAO, FRASE_CONCLUSAO_VAZIA
+from src.analises.conclusao import FRASE_ABERTURA_CONCLUSAO, frase_sem_itens
 from src.analises.constatacoes import texto_conferencia_geracao
-from src.analises.resultados import ResultadosAnalise
+from src.analises.resultados import ResultadosAnalise, sem_evt
 from src.comum.formatacao import fmt_data, fmt_data_hora, fmt_int, fmt_lista
 from src.comum.logger import setup_logger
 from src.comum.perfil import perfil_ativo
@@ -53,7 +54,8 @@ from src.relatorio.conteudo import (
     texto_taxas_ons,
     textos_tabelas,
 )
-from src.relatorio.estrutura import constatacoes_da_secao, secoes_presentes, sumario
+from src.relatorio import comum
+from src.relatorio.estrutura import constatacoes_da_secao, secoes_presentes, sumario, titulo_da_secao
 from src.relatorio.fontes import legenda_fonte
 
 logger = setup_logger("relatorio")
@@ -106,6 +108,31 @@ def _md_figura(res: ResultadosAnalise, figuras: Optional[Dict[str, Path]], chave
     if caminho is None:
         return []
     return [f"![{titulo}](figures/{Path(caminho).name})", "", legenda_figura(res, chave), "", legenda_fonte(res, chave), ""]
+
+
+def _md_blocos(res: ResultadosAnalise, chave: str, titulo: str, figuras: Optional[Dict[str, Path]],
+               textos: Dict[str, Tuple[str, str]]) -> List[str]:
+    """Seção do caminho sem EVT: os blocos de ``comum.blocos_secao``, na mesma ordem do PDF."""
+    saida: List[str] = []
+    for b in comum.blocos_secao(res, chave):
+        if b.tipo == "chave_valor":
+            saida += _md_chave_valor(res, "", b.pares, b.chave)
+        elif b.tipo == "tabela":
+            saida += _md_tabela(res, textos, b.chave, b.cabecalho, b.linhas, b.intro)
+        elif b.tipo == "figura":
+            caminho = (figuras or {}).get(b.chave)
+            if caminho is not None:
+                saida += [f"![{titulo}](figures/{Path(caminho).name})", "", comum.legenda_figura(res, b.chave), "",
+                          legenda_fonte(res, b.chave), ""]
+        elif b.tipo == "texto":
+            for texto in b.textos:
+                saida += [texto, ""]
+        elif b.tipo == "notas":
+            saida += [f"- {texto}" for texto in b.textos] + [""]
+        elif b.tipo == "sem_linhas":
+            subtitulo = textos.get(b.chave, ("", ""))[0]
+            saida += ([f"### {subtitulo}", ""] if subtitulo else []) + [b.textos[0], ""]
+    return saida
 
 
 def _md_conteudo_secao(res: ResultadosAnalise, chave: str, titulo: str, figuras: Optional[Dict[str, Path]],
@@ -202,7 +229,7 @@ def _md_conteudo_secao(res: ResultadosAnalise, chave: str, titulo: str, figuras:
             for titulo_lista, textos_lista in listas:
                 saida += [f"### {titulo_lista}", ""] + [f"- {texto}" for texto in textos_lista] + [""]
         else:
-            saida += [FRASE_CONCLUSAO_VAZIA, ""]
+            saida += [frase_sem_itens(res), ""]
     elif chave == "notas":
         saida += [f"- {nota}" for nota in notas_metodologicas(res)] + [""]
         saida += tab("tab_parametros", linhas_tabela_parametros(res))
@@ -225,32 +252,50 @@ def gerar_relatorio_md(
     destino = Path(caminho_md)
     destino.parent.mkdir(parents=True, exist_ok=True)
     c = res.cobertura
-    textos = textos_tabelas(res)
-    tiles, nota_capa = indicadores_capa(res)
+    sem = sem_evt(res)
+    textos = comum.textos_tabelas(res) if sem else textos_tabelas(res)
+    tiles, nota_capa = comum.indicadores_capa(res) if sem else indicadores_capa(res)
 
-    linhas: List[str] = [
-        f"# {perfil_ativo().usina.nome} — energia vertida turbinável e desempenho operacional (dados ONS)",
-        "",
-        f"**Período**: {fmt_data_hora(c['inicio'])} a {fmt_data_hora(c['fim'])} "
-        f"({fmt_int(c['horas_observadas'])} registros horários)",
-        f"**Gerado em**: {(data_geracao or datetime.now()).strftime('%d/%m/%Y %H:%M')}",
-        "",
-    ]
-    linhas += _md_chave_valor(res, "Identificação nos dados do ONS", pares_identificacao(res), "bloco_identificacao")
+    if sem:
+        linhas: List[str] = [
+            f"# {comum.titulo_relatorio()}",
+            "",
+            f"**Período**: {fmt_data_hora(c['inicio'])} a {fmt_data_hora(c['fim'])} "
+            f"({fmt_int(c['horas_observadas'])} registros horários da série de referência, "
+            f"{comum.serie_referencia_texto(res)})",
+            f"**Gerado em**: {(data_geracao or datetime.now()).strftime('%d/%m/%Y %H:%M')}",
+            "",
+        ]
+        linhas += _md_chave_valor(res, "Identificação nos dados do ONS", comum.pares_identificacao(res),
+                                  "bloco_identificacao_comum")
+    else:
+        linhas = [
+            f"# {perfil_ativo().usina.nome} — energia vertida turbinável e desempenho operacional (dados ONS)",
+            "",
+            f"**Período**: {fmt_data_hora(c['inicio'])} a {fmt_data_hora(c['fim'])} "
+            f"({fmt_int(c['horas_observadas'])} registros horários)",
+            f"**Gerado em**: {(data_geracao or datetime.now()).strftime('%d/%m/%Y %H:%M')}",
+            "",
+        ]
+        linhas += _md_chave_valor(res, "Identificação nos dados do ONS", pares_identificacao(res),
+                                  "bloco_identificacao")
     if res.cadastro:
         linhas += _md_chave_valor(res, "Cadastro no ONS", pares_identificacao_cadastro(res), "bloco_cadastro")
-    linhas += _md_chave_valor(res, "Parâmetros técnicos da usina", pares_parametros(), "bloco_parametros")
+    linhas += _md_chave_valor(res, "Parâmetros técnicos da usina", comum.pares_parametros() if sem else pares_parametros(),
+                              "bloco_parametros")
     linhas += ["### Indicadores principais", ""]
     linhas += _tabela_md(["Indicador", "Valor", "Detalhe"], [[r, v, s] for r, v, s in tiles]) + ["", nota_capa, ""]
-    linhas += _fonte_md(res, "tab_capa_indicadores")
+    linhas += _fonte_md(res, "tab_capa_indicadores_comum" if sem else "tab_capa_indicadores")
     linhas += ["## Sumário", ""]
     linhas += [f"{n}. [{titulo}](#{_ancora_md(f'{n}. {titulo}')})" for n, titulo in sumario(res)]
 
     for n, secao in secoes_presentes(res):
-        linhas += ["", f"## {n}. {secao.titulo}", ""]
+        titulo = titulo_da_secao(secao, res)
+        linhas += ["", f"## {n}. {titulo}", ""]
         for titulo_c, texto in constatacoes_da_secao(res, secao.chave):
             linhas += [f"**{titulo_c}.** {texto}", ""]
-        linhas += _md_conteudo_secao(res, secao.chave, secao.titulo, figuras, textos)
+        conteudo = _md_conteudo_secao if "evt" in secao.caminhos else _md_blocos  # a conclusão serve aos dois
+        linhas += conteudo(res, secao.chave, titulo, figuras, textos)
     linhas.append("")
 
     with open(destino, mode="w", encoding="utf-8") as f:

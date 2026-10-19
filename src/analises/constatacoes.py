@@ -684,3 +684,126 @@ def montar_achados(res: ResultadosAnalise) -> List[Tuple[str, str]]:
         *[a for a in (_achado_mudanca_classificacao(res), _achado_conferencia_geracao(res)) if a is not None],
         _achado_qualidade(res),
     ]
+
+
+# ---------------------------------------------------------------------------
+# Usinas sem EVT (spec 006, decisões R14, R15 e R30): constatações sobre a base horária comum
+# ---------------------------------------------------------------------------
+
+
+def do_nivel(res: ResultadosAnalise, nivel: str) -> str:
+    """" do conjunto <nome>" quando o número é do conjunto (decisão R15); vazio quando é da usina."""
+    if nivel != "conjunto":
+        return ""
+    g = res.niveis.get("geracao", {})
+    return f" do conjunto {g.get('nome') or g.get('identificador_conjunto') or ''}".rstrip()
+
+
+def _serie_referencia_texto(res: ResultadosAnalise) -> str:
+    """"Geração por usina (id ONS X)" ou "Geração por usina do conjunto <nome> (id ONS CJU_...)"."""
+    g = res.niveis.get("geracao", {})
+    partes = []
+    if g.get("identificador_usina"):
+        partes.append(f"(id ONS {g['identificador_usina']})")
+    if g.get("identificador_conjunto"):
+        nome = f" {g['nome']}" if g.get("nome") else ""
+        partes.append(f"do conjunto{nome} (id ONS {g['identificador_conjunto']})")
+    return "Geração por usina " + " e ".join(partes)
+
+
+def _achado_cobertura_comum(res: ResultadosAnalise) -> Tuple[str, str]:
+    c = res.comum["cobertura"]
+    texto = (
+        f"Série de referência: {_serie_referencia_texto(res)}, de {fmt_data_hora(c['inicio'])} a "
+        f"{fmt_data_hora(c['fim'])}: {fmt_int(c['horas_observadas'])} horas com registro de "
+        f"{fmt_int(c['horas_esperadas'])} no período ({fmt_pct(_pct(c['horas_observadas'], c['horas_esperadas']), 2)})."
+    )
+    if c["horas_ausentes"]:
+        texto += (f" {fmt_int(c['horas_ausentes'])} {plural(c['horas_ausentes'], 'hora ausente', 'horas ausentes')}, "
+                  f"listadas na planilha, sem preenchimento.")
+    if c["trechos"] > 1:
+        texto += (f" O período tem {fmt_int(c['trechos'])} trechos, com mudança de modalidade, de composição do "
+                  f"conjunto ou de código.")
+    return "Cobertura dos dados", texto
+
+
+def _achado_geracao_comum(res: ResultadosAnalise) -> Tuple[str, str]:
+    anuais = res.comum["anuais"]
+    frases = []
+    for nivel, g in anuais.groupby("nivel", sort=True):
+        horas = int(g["horas_com_valor"].sum())
+        energia = float(g["energia_mwh"].sum())
+        media = energia / horas if horas else float("nan")
+        paradas = int(g["horas_paradas"].sum())
+        frase = (f"Geração média{do_nivel(res, nivel)} de {fmt_num(media, 1)} MWmed nas {fmt_int(horas)} horas com "
+                 f"valor ({fmt_num(energia, 0)} MWh); geração até {fmt_num(LIMIAR_GERACAO_PARADA_MW, 0)} MW em "
+                 f"{fmt_pct(_pct(paradas, horas))} das horas")
+        completos = g[~g["ano_parcial"]]
+        if len(completos) > 1:
+            maior = completos.loc[completos["geracao_media_mw"].idxmax()]
+            menor = completos.loc[completos["geracao_media_mw"].idxmin()]
+            frase += (f"; entre os anos completos, maior média em {int(maior['ano'])} "
+                      f"({fmt_num(maior['geracao_media_mw'], 1)} MWmed) e menor em {int(menor['ano'])} "
+                      f"({fmt_num(menor['geracao_media_mw'], 1)} MWmed)")
+        frases.append(frase + ".")
+    return "Geração", " ".join(frases)
+
+
+def _achado_disponibilidade_comum(res: ResultadosAnalise) -> Optional[Tuple[str, str]]:
+    d = res.comum.get("disponibilidade")
+    if not d:
+        return None
+    r = d["resumo"]
+    texto = (
+        f"Disponibilidade operacional média de {fmt_num(r['disp_operacional_media_mw'], 1)} MW "
+        f"({fmt_pct(r['disponibilidade_relativa_pct'])} da potência instalada) e sincronizada de "
+        f"{fmt_num(r['disp_sincronizada_media_mw'], 1)} MW, nas {fmt_int(r['horas'])} horas com o dado; "
+        f"indisponibilidade total em {fmt_int(r['horas_indisponibilidade_total'])} horas "
+        f"({fmt_int(r['eventos_indisponibilidade_total'])} "
+        f"{plural(r['eventos_indisponibilidade_total'], 'evento', 'eventos')}); geração acima da disponibilidade "
+        f"declarada em {fmt_int(r['horas_geracao_acima_disponibilidade'])} horas."
+    )
+    return "Disponibilidade", texto
+
+
+def _achado_programacao_comum(res: ResultadosAnalise) -> Optional[Tuple[str, str]]:
+    p = res.comum.get("programacao")
+    if not p:
+        return None
+    r = p["resumo"]
+    texto = (
+        f"Nas {fmt_int(r['horas_comuns'])} horas com programação e geração verificada{do_nivel(res, p['nivel'])}, "
+        f"geração verificada média de {fmt_num(r['geracao_media_mw'], 1)} MW e programada de "
+        f"{fmt_num(r['programada_media_mw'], 1)} MW (desvio médio absoluto de {fmt_num(r['desvio_medio_absoluto_mw'], 1)} "
+        f"MW; correlação de {fmt_num(r['correlacao'], 2)}); {fmt_int(r['horas_desvio_programacao'])} horas com geração "
+        f"até {fmt_num(LIMIAR_GERACAO_PARADA_MW, 0)} MW e programação acima de "
+        f"{fmt_num(LIMIAR_DESVIO_PROGRAMACAO_MW, 0)} MW."
+    )
+    return "Programação diária do ONS", texto
+
+
+def _achado_qualidade_comum(res: ResultadosAnalise) -> Tuple[str, str]:
+    q = res.comum["qualidade"]
+    if q["horas_sinalizadas"]:
+        itens = [f"{r.codigo}, {r.descricao}: {fmt_int(r.horas)} h" for r in q["sinalizacoes"].itertuples()]
+        texto = (f"{fmt_int(q['horas_sinalizadas'])} horas sinalizadas ({'; '.join(itens)}), mantidas na base e "
+                 f"nos totais.")
+    else:
+        texto = "Nenhuma hora sinalizada na base horária."
+    if q["horas_sem_valor"]:
+        texto += f" {fmt_int(q['horas_sem_valor'])} horas da série de referência sem valor, fora das médias."
+    if q["linhas_usina_sem_valor"]:
+        texto += (f" A Geração por usina traz {fmt_int(q['linhas_usina_sem_valor'])} linhas próprias da usina sem "
+                  f"valor no período; a série usada é a do conjunto.")
+    return "Qualidade dos dados", texto
+
+
+def montar_achados_comum(res: ResultadosAnalise) -> List[Tuple[str, str]]:
+    """Constatações das usinas sem EVT, só a partir das seções comuns (decisão R30)."""
+    return [
+        _achado_cobertura_comum(res),
+        *[a for a in (_achado_cadastro(res),) if a is not None],
+        _achado_geracao_comum(res),
+        *[a for a in (_achado_disponibilidade_comum(res), _achado_programacao_comum(res)) if a is not None],
+        _achado_qualidade_comum(res),
+    ]

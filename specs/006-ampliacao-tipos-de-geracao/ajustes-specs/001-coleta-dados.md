@@ -59,7 +59,7 @@ A Coleta passa a atender qualquer usina que os dados abertos do ONS cobrem: UHE,
   - As etapas seguintes DEVEM ler esses arquivos, e nunca `data/raw/`. A etapa seguinte recusa a Coleta no formato 1 com o código 5.
 - **FR-051** (catálogo de usinas): `python -m src usinas [--estado] [--tipo] [--modalidade] [--sem-portal] [--forcar-download]` DEVE:
   - sincronizar, sem `--sem-portal`:
-    - a Modalidade das usinas, a Composição dos conjuntos e a Capacidade de geração;
+    - a Modalidade das usinas, a Composição dos conjuntos, a Capacidade de geração e os Reservatórios (decisão R31, do usuário, em 19/10/2026: ligam o CEG ao `cod_usina` e ao reservatório da EVT e dos dados hidrológicos);
     - o arquivo mais recente de cada conjunto de série;
     - a geração dos últimos 12 meses completos;
     - os dicionários desses conjuntos;
@@ -76,7 +76,7 @@ A Coleta passa a atender qualquer usina que os dados abertos do ONS cobrem: UHE,
   - recusar, sem gravar: o CEG fora do catálogo (2); a usina Tipo III ou só com agregado (2); o catálogo ausente (5);
   - com perfil existente, só mostrar as diferenças (0 ou 6);
   - gravar o rascunho de [cli-perfil.md](../contracts/cli-perfil.md), com:
-    - os identificadores e o subsistema;
+    - os identificadores e o subsistema; nas hidrelétricas, o `cod_usina`, o `nome_ons` e o `id_reservatorio` dos Reservatórios;
     - a `[cobertura]` dos conjuntos implementados;
     - os códigos de programação ligados pelo id ONS ou pelo prefixo do conjunto (os demais ficam pendentes, com a lista do estado);
     - os membros do conjunto;
@@ -124,3 +124,4 @@ A Coleta passa a atender qualquer usina que os dados abertos do ONS cobrem: UHE,
 | Data | Decisão |
 |---|---|
 | 09/10/2026 | Ampliação para todos os tipos de usina (spec 006, aprovada); correções P1 a P5 na fase A; implementação antes da fiscalização, com a versão de fiscalização congelada fora do projeto. |
+| 19/10/2026 | O catálogo usa os Reservatórios do ONS para ligar o CEG ao `cod_usina` e ao reservatório da EVT e dos dados hidrológicos (decisão R31). |

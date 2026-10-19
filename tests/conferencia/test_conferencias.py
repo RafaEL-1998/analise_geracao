@@ -266,7 +266,7 @@ def test_etapa_grava_os_resultados_e_sai_com_3_abaixo_da_meta(tmp_path: Path, mo
     assert r.resumo["vazoes"]["meta_atingida"] is False and r.resumo["disponibilidade"]["aplicavel"] is False
     nomes = sorted(p.name for p in r.arquivos)
     assert nomes == sorted(["conferencias.pkl", "geracao.csv", "geracao_divergencias.csv", "vazoes.csv",
-                            "dispf_horas.csv", "teifa_teip.csv", "cadastro.csv"])
+                            "dispf_horas.csv", "teifa_teip.csv", "cadastro.csv", "nao_aplicaveis.csv"])
     assert not (pasta / "disponibilidade.csv").exists() and not list(pasta.glob("*.bak"))
     lidos = carregar_conferencias(pasta / "conferencias.pkl")
     assert set(lidos) == set(resultados) and lidos["vazoes"].meta_atingida is False

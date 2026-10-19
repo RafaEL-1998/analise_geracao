@@ -11,6 +11,9 @@ Mapa único e declarativo usado pelo Markdown, pelo PDF e pela planilha (FR-027)
 Os textos são gerados a partir dos resultados da análise (``ResultadosAnalise``), com as datas de obtenção
 gravadas pela Coleta; nenhum resultado de conferência é fixo (FR-026). As conferências manuais com outras
 instituições ficam fora (decisão do usuário em 06/10/2026).
+
+Nas usinas sem EVT (spec 006, decisão R15), a legenda de um dado de conjunto cita o identificador dele com o nível
+escrito ("conjunto de usinas, id ONS CJU_..."); a da usina continua como hoje.
 """
 
 from __future__ import annotations
@@ -24,8 +27,10 @@ from src.coleta import registro
 from src.comum.formatacao import fmt_data, fmt_int, fmt_lista, fmt_num, fmt_pct
 from src.comum.logger import setup_logger
 from src.comum.perfil import perfil_ativo
+from src.analises.resultados import sem_evt
 from src.comum.regras import (
     CONJUNTO_CADASTRO,
+    CONJUNTO_COMPOSICAO,
     CONJUNTO_DISPONIBILIDADE,
     CONJUNTO_EVT,
     CONJUNTO_GERACAO,
@@ -51,6 +56,7 @@ AFLUENCIA = "afluência"
 AFLUENCIA_NIVEL = "afluência e nível do reservatório"
 AFLUENCIA_NIVEIS_VOLUME = "afluência, níveis e volume útil"
 PROGRAMACAO = "programação diária"
+GERACAO = "geração"
 
 
 # ---------------------------------------------------------------------------
@@ -84,6 +90,8 @@ CONJUNTOS: Dict[str, Conjunto] = {
                            CONJUNTO_HIDROLOGIA),
     "geracao": Conjunto("Geração por usina", "id ONS {id_ons}", CONJUNTO_GERACAO),
     "cadastro": Conjunto("Modalidade das usinas", "CEG {ceg}", CONJUNTO_CADASTRO),
+    "composicao": Conjunto("Composição dos conjuntos de usinas", "conjunto de usinas, id ONS {id_conjunto}",
+                           CONJUNTO_COMPOSICAO),
     "projeto": Conjunto("parâmetros do projeto", ""),
 }
 
@@ -92,7 +100,25 @@ def identificador_da_usina(cid: str) -> str:
     """Identificador da usina no conjunto ``cid``, com os valores do perfil ativo."""
     i = perfil_ativo().identificacao
     return CONJUNTOS[cid].identificador.format(cod_usina=i.cod_usina, ceg=i.ceg, id_ons=i.id_ons,
-                                               cod_programacao=i.cod_programacao, id_reservatorio=i.id_reservatorio)
+                                               cod_programacao=i.cod_programacao, id_reservatorio=i.id_reservatorio,
+                                               id_conjunto=getattr(i, "id_conjunto", "") or "")
+
+
+def identificador_com_nivel(res: Any, cid: str) -> Optional[str]:
+    """Identificador do dado com o nível escrito, nas usinas sem EVT (decisão R15); None no caminho de hoje."""
+    if not sem_evt(res):
+        return None
+    niveis = getattr(res, "niveis", {}) or {}
+    if cid == "geracao" and "geracao" in niveis:
+        g = niveis["geracao"]
+        partes = [f"id ONS {g['identificador_usina']}"] if g.get("identificador_usina") else []
+        if g.get("identificador_conjunto"):
+            partes.append(f"conjunto de usinas, id ONS {g['identificador_conjunto']}")
+        return "; ".join(partes)
+    if cid == "programacao" and "programacao" in niveis:
+        n = niveis["programacao"]
+        return f"conjunto de usinas, {n['identificador']}" if n["nivel"] == "conjunto" else n["identificador"]
+    return None
 INDICADORES = ("dispf_mensal", "dispf_anual", "teif_teip", "teif_teip_parametro")
 
 
@@ -261,6 +287,7 @@ CONFERENCIAS: Dict[str, Conferencia] = {
 # Mapa das figuras, tabelas e blocos (PDF e Markdown)
 # ---------------------------------------------------------------------------
 
+CONFERENCIAS_SEM_EVT: Tuple[str, ...] = ("teifa_teip", "dispf_horas", "cadastro")
 _CONF_EVT = ("geracao", "disponibilidade")
 _CONF_EVT_VAZOES = ("geracao", "disponibilidade", "vazoes")
 
@@ -315,6 +342,30 @@ MAPA_FONTES: Dict[str, Entrada] = {
                                        calculado=True),
     "faixas_afluencia": _e(["hidrologia", "evt"], ["vazoes"], [AFLUENCIA, EVT], calculado=True),
     "perfil_hidrologico": _e(["hidrologia", "evt"], ["vazoes"], [AFLUENCIA_NIVEL], calculado=True),
+    # Usinas sem EVT (spec 006, decisões R14 e R15): a série de referência (Geração por usina) no lugar da EVT
+    "bloco_identificacao_comum": _e(["cadastro", "geracao"]),
+    "tab_capa_indicadores_comum": _e(["geracao", "disponibilidade", "dispf_mensal", "teif_teip"],
+                                     ["dispf_horas", "teifa_teip"], [GERACAO], calculado=True),
+    "tab_fonte_cobertura": _e(["geracao"]),
+    "tab_niveis": _e(["geracao", "programacao", "disponibilidade", "dispf_mensal", "cadastro", "composicao"]),
+    "tab_trechos": _e(["geracao", "composicao"], calculado=True),
+    "tab_anuais_comum": _e(["geracao", "disponibilidade", "projeto"], (), [GERACAO], calculado=True),
+    "tab_disponibilidade_anual_comum": _e(["disponibilidade", "geracao"], (), [SINCRONIZADA, GERACAO],
+                                          calculado=True),
+    "tab_eventos_indisponibilidade_comum": _e(["disponibilidade", "geracao"], calculado=True),
+    "tab_ons_disp_anual_comum": _e(["disponibilidade", "dispf_mensal"], ["dispf_horas"], calculado=True),
+    "tab_programacao_mensal_comum": _e(["programacao", "geracao"], (), [PROGRAMACAO, GERACAO], calculado=True),
+    "tab_programacao_eventos_comum": _e(["programacao", "geracao"], (), [PROGRAMACAO, GERACAO], calculado=True),
+    "tab_sinalizacoes": _e(["geracao", "disponibilidade"], calculado=True),
+    "tab_ausencias": _e(["geracao"]),
+    "tab_omitidos": _e(["projeto"], calculado=True),
+    "tab_nao_aplicaveis": _e(["projeto"], calculado=True),
+    "tab_parametros_comum": _e(["projeto"]),
+    "serie_temporal_comum": _e(["geracao", "disponibilidade"], (), [GERACAO], calculado=True),
+    "geracao_mensal": _e(["geracao"], (), [GERACAO], calculado=True),
+    "sazonalidade": _e(["geracao"], (), [GERACAO], calculado=True),
+    "perfil_horario_comum": _e(["geracao"], (), [GERACAO], calculado=True),
+    "disponibilidade_comum": _e(["disponibilidade", "geracao"], (), [SINCRONIZADA], calculado=True),
 }
 
 
@@ -364,6 +415,24 @@ _ABAS_EXATAS: Dict[str, Entrada] = {
     "GER_AUDITORIA": _e(["geracao"]),
     "CAD_FICHA": MAPA_FONTES["bloco_cadastro"],
     "CAD_AUDITORIA": _e(["cadastro"]),
+    # Usinas sem EVT (spec 006)
+    "BASE_ANUAL": MAPA_FONTES["tab_anuais_comum"],
+    "BASE_MENSAL": MAPA_FONTES["geracao_mensal"],
+    "BASE_MES_DO_ANO": MAPA_FONTES["sazonalidade"],
+    "BASE_HORA_DO_DIA": MAPA_FONTES["perfil_horario_comum"],
+    "BASE_SINALIZACOES": MAPA_FONTES["tab_sinalizacoes"],
+    "TRECHOS": MAPA_FONTES["tab_trechos"],
+    "OMITIDOS": MAPA_FONTES["tab_omitidos"],
+    "CONF_NAO_APLICAVEIS": MAPA_FONTES["tab_nao_aplicaveis"],
+    "DISP_EVENTOS_INDISP_TOTAL": MAPA_FONTES["tab_eventos_indisponibilidade_comum"],
+}
+# Abas das usinas sem EVT com o mesmo nome de uma aba de hoje, mas sem a EVT na origem
+_ABAS_SEM_EVT: Dict[str, Entrada] = {
+    "PROG_RESUMO_MENSAL": MAPA_FONTES["tab_programacao_mensal_comum"],
+    "PROG_EVENTOS_DESVIO": MAPA_FONTES["tab_programacao_eventos_comum"],
+    "DISP_MENSAL": MAPA_FONTES["disponibilidade_comum"],
+    "DISP_ANUAL": MAPA_FONTES["tab_disponibilidade_anual_comum"],
+    "ONS_DISP_ANUAL_USINA": MAPA_FONTES["tab_ons_disp_anual_comum"],
 }
 _ABAS_POR_PREFIXO: List[Tuple[str, Entrada]] = [
     ("PROG_", MAPA_FONTES["tab_programacao_mensal"]),
@@ -378,8 +447,26 @@ _ABAS_POR_PREFIXO: List[Tuple[str, Entrada]] = [
 # ---------------------------------------------------------------------------
 
 
+def _carregados_sem_evt(res: Any) -> List[str]:
+    """Usinas sem EVT: a série de referência sempre entra; os demais, quando entraram nas seções comuns."""
+    carregados = ["geracao"]
+    if res.ons:
+        carregados += list(INDICADORES)
+    if res.comum.get("programacao_coletada"):
+        carregados.append("programacao")
+    if res.comum.get("disponibilidade"):
+        carregados.append("disponibilidade")
+    if res.cadastro:
+        carregados.append("cadastro")
+    if getattr(perfil_ativo().identificacao, "id_conjunto", None):
+        carregados.append("composicao")
+    return carregados
+
+
 def conjuntos_carregados(res: Any) -> List[str]:
     """Conjuntos do ONS cujos dados entraram nesta análise; a base de EVT sempre entra (N do rodapé)."""
+    if sem_evt(res):
+        return _carregados_sem_evt(res)
     carregados = ["evt"]
     if res.ons:
         carregados += list(INDICADORES)
@@ -422,7 +509,7 @@ def texto_conjunto(res: Any, cid: str) -> str:
     conjunto = CONJUNTOS[cid]
     data = ((getattr(res, "fontes", None) or {}).get("obtencao") or {}).get(cid, "")
     quando = f"obtido em {fmt_data(data)}" if data else SEM_REGISTRO
-    return f"{conjunto.nome} ({identificador_da_usina(cid)}), {quando}"
+    return f"{conjunto.nome} ({identificador_com_nivel(res, cid) or identificador_da_usina(cid)}), {quando}"
 
 
 def texto_conferencia(res: Any, cid: str) -> str:
@@ -464,7 +551,10 @@ def _textos_entrada(res: Any, entrada: Entrada) -> Tuple[List[str], List[str]]:
     carregados = _carregados(res)
     conjuntos = list(entrada.conjuntos) if entrada.todos else (
         [c for c in entrada.conjuntos if c == "projeto" or c in carregados] or list(entrada.conjuntos))
-    return [texto_conjunto(res, c) for c in conjuntos], [texto_conferencia(res, c) for c in entrada.conferencias]
+    conferencias = list(entrada.conferencias)
+    if sem_evt(res):  # sem a base, a conferência não se aplica e fica nas notas, não "não feita" (decisão R13)
+        conferencias = [c for c in conferencias if CONFERENCIAS[c].base in carregados]
+    return [texto_conjunto(res, c) for c in conjuntos], [texto_conferencia(res, c) for c in conferencias]
 
 
 def _entrada(chave: str) -> Optional[Entrada]:
@@ -497,12 +587,16 @@ def legenda_fonte(res: Any, chave: str) -> str:
 def _entrada_aba(res: Any, aba: str) -> Optional[Entrada]:
     if aba in ("CONSTATACOES", "CONCLUSAO"):
         carregados = _carregados(res)
-        return _e(carregados, [c for c, conf in CONFERENCIAS.items() if conf.base in carregados], calculado=True)
+        # nas usinas sem EVT, só as conferências que não dependem da EVT (spec 006, decisão R13)
+        candidatas = CONFERENCIAS_SEM_EVT if sem_evt(res) else tuple(CONFERENCIAS)
+        return _e(carregados, [c for c in candidatas if CONFERENCIAS[c].base in carregados], calculado=True)
     if aba == "PARAMETROS":
         return _e(["projeto", *_carregados(res)])
     if aba == "DICIONARIOS":  # só os conjuntos do tipo e da cobertura da usina (spec 006, decisão R8)
         da_usina = registro.pacotes(registro.conjuntos_da_usina(perfil_ativo()))
         return _e([c for c, conjunto in CONJUNTOS.items() if conjunto.catalogo in da_usina], todos=True)
+    if sem_evt(res) and aba in _ABAS_SEM_EVT:
+        return _ABAS_SEM_EVT[aba]
     if aba in _ABAS_EXATAS:
         return _ABAS_EXATAS[aba]
     for prefixo, entrada in _ABAS_POR_PREFIXO:

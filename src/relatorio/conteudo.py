@@ -7,7 +7,7 @@ from typing import Callable, Dict, List, Sequence, Tuple
 import pandas as pd
 
 from src.analises.comum import _data_obtencao_texto, _pct, _rotulo_ano, _rotulo_janela
-from src.analises.conclusao import LISTAS_CONCLUSAO
+from src.analises.conclusao import LISTAS_CONCLUSAO, regras_do_tipo, regras_omitidas
 from src.analises.constatacoes import _texto_alinhamento
 from src.analises.disponibilidade import SEM_PROGRAMACAO
 from src.analises.hidrologia import (
@@ -71,7 +71,7 @@ from src.comum.regras import (
     TOLERANCIA_COINCIDENCIA_MW,
     TOLERANCIA_DIVERGENCIA_HORAS,
 )
-from src.relatorio.estrutura import secoes_presentes
+from src.relatorio.estrutura import secoes_presentes, titulo_da_secao
 from src.tratamento.indicadores import INSUMOS_HORAS, TOLERANCIA_IDENTIDADE_HORAS
 from src.tratamento.validacao import faixa_produtividade
 
@@ -113,7 +113,7 @@ def listas_conclusao(res: ResultadosAnalise) -> List[Tuple[str, List[str]]]:
 def tabela_conclusao(res: ResultadosAnalise) -> pd.DataFrame:
     """Aba CONCLUSAO: todos os itens gerados, inclusive os que passam do limite por lista."""
     titulos = dict(LISTAS_CONCLUSAO)
-    nomes = {s.chave: f"{n}. {s.titulo}" for n, s in secoes_presentes(res)}
+    nomes = {s.chave: f"{n}. {titulo_da_secao(s, res)}" for n, s in secoes_presentes(res)}
     linhas = [{"lista": titulos[i["lista"]], "ordem": i["ordem"], "regra": i["regra"], "texto": i["texto"],
                "secoes": "; ".join(nomes[c] for c in i["secoes"] if c in nomes)} for i in res.conclusao]
     return pd.DataFrame(linhas, columns=["lista", "ordem", "regra", "texto", "secoes"])
@@ -147,6 +147,23 @@ def nota_conclusao() -> str:
         + f". O relatório mostra até {MAXIMO_ITENS_CONCLUSAO} itens por lista, na ordem das regras; todos estão na aba "
         "CONCLUSAO da planilha."
     )
+
+
+def nota_conclusao_catalogo(res: ResultadosAnalise) -> str:
+    """Item das notas das usinas sem EVT com as regras do catálogo do tipo e os limiares (spec 006, decisão R16)."""
+    regras = regras_do_tipo(res)
+    if not regras:
+        return f"Conclusão: o catálogo da conclusão ainda não tem regras para usinas do tipo {res.tipo}."
+    descritas = [r.descricao() for r in regras if r.descricao is not None]
+    texto = (f"Conclusão: indícios gerados pelas regras do catálogo para {res.tipo}, iguais para as usinas do tipo e só "
+             "com dados do nível da usina, a partir dos resultados das seções"
+             + (": " + "; ".join(descritas) if descritas else "")
+             + f". O relatório mostra até {MAXIMO_ITENS_CONCLUSAO} itens por lista, na ordem das regras; todos estão "
+             "na aba CONCLUSAO da planilha.")
+    omitidas = [o["item"] for o in regras_omitidas(res)]
+    if omitidas:
+        texto += f" Não avaliadas nesta usina: {fmt_lista(omitidas)} (motivos na tabela abaixo)."
+    return texto
 
 
 def notas_metodologicas(res: ResultadosAnalise) -> List[str]:

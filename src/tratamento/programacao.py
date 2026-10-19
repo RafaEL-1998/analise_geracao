@@ -1,7 +1,8 @@
 """Programação diária do ONS no Tratamento de dados: base horária e dias sem arquivo.
 
 A partir dos patamares de 30 minutos extraídos pela Coleta: média dos patamares de cada hora (convenção de hora de
-início), recorte no período da base de EVT e lista dos dias do período sem arquivo publicado.
+início), recorte no período da série de referência e lista dos dias do período sem arquivo publicado. Com mais de um
+código (usina ou conjunto programado por barra; spec 006), os códigos são somados em cada patamar antes da média.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ from typing import List, Optional
 
 import pandas as pd
 
+from src.coleta.programacao import COLUNA_CODIGO
 from src.comum.caminhos import ARQUIVOS_TRATAMENTO
 from src.comum.logger import setup_logger
 from src.comum.persistencia import gravar_csv
@@ -34,11 +36,27 @@ class ProgramacaoONS:
     auditoria: pd.DataFrame = field(default_factory=pd.DataFrame)
 
 
+def somar_codigos(patamares: pd.DataFrame) -> pd.DataFrame:
+    """Soma dos códigos em cada patamar (``cod_exibicaousina`` presente só com mais de um código).
+
+    O patamar só tem soma quando todos os códigos da extração têm valor nele; sem a linha ou sem o valor de algum
+    código, a soma fica ausente, nunca completada (princípio V).
+    """
+    if COLUNA_CODIGO not in patamares.columns:
+        return patamares
+    p = patamares.dropna(subset=["num_patamar"])
+    codigos = p[COLUNA_CODIGO].nunique()
+    somas = p.groupby(["dia", "num_patamar"]).agg(geracao_programada_mw=("geracao_programada_mw", "sum"),
+                                                  _valores=("geracao_programada_mw", "count")).reset_index()
+    somas.loc[somas["_valores"] < codigos, "geracao_programada_mw"] = float("nan")
+    return somas.drop(columns="_valores")
+
+
 def programacao_horaria(patamares: pd.DataFrame) -> pd.DataFrame:
     """Média dos patamares de cada hora; hora = (patamar − 1) ÷ 2, convenção de hora de início."""
     if patamares.empty:
         return pd.DataFrame(columns=["din_instante", "geracao_programada_mw", "patamares"])
-    p = patamares.dropna(subset=["num_patamar"]).copy()
+    p = somar_codigos(patamares).dropna(subset=["num_patamar"]).copy()
     p["din_instante"] = p["dia"] + pd.to_timedelta((p["num_patamar"].astype(int) - 1) // 2, unit="h")
     horaria = p.groupby("din_instante").agg(
         geracao_programada_mw=("geracao_programada_mw", "mean"),

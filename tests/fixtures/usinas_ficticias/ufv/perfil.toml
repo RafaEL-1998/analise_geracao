@@ -1,0 +1,29 @@
+# Usina fictícia do tipo UFV (spec 006, decisões R17 e R23), só para testes: geração própria só nas últimas semanas
+# do período (série curta), com unidades de potências diferentes. Valores inventados; identificadores que não
+# existem no ONS.
+
+[usina]
+slug = "ufv_ficticia"
+nome = "UFV Fictícia"
+nome_curto = "Fictícia"
+estado = "GO"
+inicio_operacao_comercial = 2024
+tipo = "UFV"
+modalidade = "TIPO II-C"
+
+[identificacao]
+ceg = "UFV.RS.GO.000107-0.01"
+id_ons = "GOUFFI"
+codigos_programacao = ["GOUFFI"]  # exigido em todo tipo (contrato do perfil); sem programação publicada
+
+[cobertura]
+programacao = "ausente"
+geracao = "proprio"
+
+[parametros]
+potencia_instalada_mw = 25.0
+unidades_geradoras = 2
+potencias_unidades_mw = [10.0, 15.0]
+
+[parametros.fontes]
+geral = "Ficha técnica fictícia da UFV, Tabela 1"

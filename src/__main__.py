@@ -4,6 +4,8 @@ Comandos de etapa: ``coleta``, ``tratamento``, ``conferencia``, ``analises``, ``
 Ferramentas: ``copia-seguranca --motivo <texto>``; ``comparar --usina <slug> --referencia <pasta>`` ou
 ``comparar --todas [--coleta]``, que refaz e compara cada relatório de ``relatorios_referencia/``; e
 ``referencia --usina <slug> --data-geracao <data> --aprovado-em <data>``, que registra o relatório aprovado.
+Catálogo: ``usinas [--estado <UF>] [--tipo <tipo>] [--modalidade <modalidade>] [--sem-portal] [--forcar-download]``.
+Rascunho do perfil: ``perfil --ceg <CEG> [--slug <slug>]``, só a partir do catálogo.
 Códigos de saída: 0 sucesso; 1 erro; 2 dado não obtido ou opção inválida; 3 meta das vazões não atingida;
 4 perfil inválido; 5 etapa anterior sem resultado concluído; 6 o ``comparar`` encontrou diferenças.
 """
@@ -11,6 +13,7 @@ Códigos de saída: 0 sucesso; 1 erro; 2 dado não obtido ou opção inválida; 
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from datetime import date, datetime
 from pathlib import Path
@@ -37,6 +40,24 @@ def ler_data_aprovacao(texto: str) -> date:
         return datetime.strptime(texto.strip(), "%d/%m/%Y").date()
     except ValueError as exc:
         raise argparse.ArgumentTypeError(f"data de aprovação inválida: {texto!r} (use \"DD/MM/AAAA\")") from exc
+
+
+TIPOS_CATALOGO = ("UHE", "PCH", "CGH", "UTE", "UTN", "EOL", "UFV", "conjunto")
+
+
+def ler_estado(texto: str) -> str:
+    """``--estado``: a sigla do estado, com 2 letras."""
+    if not re.fullmatch(r"[A-Za-z]{2}", texto.strip()):
+        raise argparse.ArgumentTypeError(f"estado inválido: {texto!r} (use a sigla, com 2 letras)")
+    return texto.strip().upper()
+
+
+def ler_tipo(texto: str) -> str:
+    """``--tipo``: um dos tipos do catálogo, sem diferença entre maiúsculas e minúsculas."""
+    for tipo in TIPOS_CATALOGO:
+        if texto.strip().upper() == tipo.upper():
+            return tipo
+    raise argparse.ArgumentTypeError(f"tipo inválido: {texto!r} (use {', '.join(TIPOS_CATALOGO)})")
 
 
 class _Parser(argparse.ArgumentParser):
@@ -93,6 +114,16 @@ def construir_parser() -> argparse.ArgumentParser:
                           help="refaz, num espaço isolado, cada relatório de relatorios_referencia/ e compara")
     comparar.add_argument("--coleta", action="store_true",
                           help="com --todas, refaz também a Coleta (--sem-portal) e a compara com a congelada")
+    usinas = sub.add_parser("usinas", parents=[comum],
+                            help="catálogo de usinas do ONS: monta data/catalogo/ e lista as usinas do filtro")
+    usinas.add_argument("--estado", type=ler_estado, help="sigla do estado (2 letras) para filtrar a listagem")
+    usinas.add_argument("--tipo", type=ler_tipo, help=f"tipo da usina: {', '.join(TIPOS_CATALOGO)}")
+    usinas.add_argument("--modalidade", help='modalidade de operação, como no cadastro ("TIPO I" ... "TIPO III")')
+    opcoes_coleta(usinas)
+    perfil = sub.add_parser("perfil", parents=[comum],
+                            help="rascunho do perfil de uma usina a partir do catálogo (nunca sobrescreve)")
+    perfil.add_argument("--ceg", required=True, help="CEG da usina, como no catálogo")
+    perfil.add_argument("--slug", help="nome da pasta em usinas/ (padrão: derivado do nome da usina)")
     referencia = com_usina("referencia", "registra o relatório aprovado em relatorios_referencia/<slug>/")
     referencia.add_argument("--data-geracao", type=ler_data_geracao, required=True,
                             help='data de geração do relatório aprovado ("DD/MM/AAAA HH:MM")')
@@ -109,6 +140,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         from src.comum.copia_seguranca import criar_copia
 
         return criar_copia(args.motivo)
+    if args.comando == "usinas":
+        from src.coleta.catalogo_usinas import executar_usinas
+
+        return executar_usinas(estado=args.estado, tipo=args.tipo, modalidade=args.modalidade,
+                               sem_portal=args.sem_portal, forcar_download=args.forcar_download)
+    if args.comando == "perfil":
+        from src.coleta.perfil_rascunho import executar_perfil
+
+        return executar_perfil(args.ceg, args.slug)
     if args.comando == "comparar" and args.todas:
         from src.comum.comparacao import executar_comparacao_todas
 

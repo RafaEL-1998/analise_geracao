@@ -1,0 +1,260 @@
+"""Figuras das usinas sem EVT, em seaborn, desenhadas só a partir das seções comuns (spec 006, decisões R14 e R15).
+
+Mesmo tema, paleta e tamanho das figuras de hoje (``src/relatorio/figuras.py``). Cada série leva o nível no rótulo
+quando não é da usina ("do conjunto ..."); níveis diferentes nunca são somados na mesma barra ou linha.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Dict, List
+
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+
+from src.analises.resultados import ResultadosAnalise
+from src.comum.formatacao import MESES_ABREVIADOS, fmt_num
+from src.comum.logger import setup_logger
+from src.comum.perfil import perfil_ativo
+from src.comum.regras import TAMANHO_FIGURA_PADRONIZADA
+from src.relatorio.figuras import (
+    COR_DISPONIBILIDADE,
+    COR_GERACAO,
+    COR_SINCRONIZADA,
+    COR_TINTA_SUAVE,
+    _rotulo_referencia,
+    _tema_graficos,
+)
+
+logger = setup_logger("relatorio")
+
+NOMES_FIGURAS_COMUM: Dict[str, str] = {
+    "serie_temporal_comum": "01_serie_temporal_geracao_disponibilidade.png",
+    "geracao_mensal": "02_geracao_mensal.png",
+    "perfil_horario_comum": "04_perfil_horario_geracao.png",
+}
+# Geradas só com a base: sazonalidade com 12 meses distintos (decisão R17) e disponibilidade da usina
+NOMES_FIGURAS_COMUM_OPCIONAIS: Dict[str, str] = {
+    "sazonalidade": "03_geracao_por_mes_do_ano.png",
+    "disponibilidade_comum": "05_disponibilidade_operacional_sincronizada_mensal.png",
+}
+COR_CONJUNTO = "#184f95"  # azul escuro da rampa: a série do conjunto, ao lado da azul da usina
+
+
+def rotulo_nivel(res: ResultadosAnalise, nivel: str) -> str:
+    """Rótulo da série no nível: "Geração" (usina) ou "Geração do conjunto <nome>"."""
+    if nivel != "conjunto":
+        return "Geração"
+    g = res.niveis.get("geracao", {})
+    return f"Geração do conjunto {g.get('nome') or g.get('identificador_conjunto') or ''}".rstrip()
+
+
+def _cores(res: ResultadosAnalise, niveis: List[str]) -> Dict[str, str]:
+    return {rotulo_nivel(res, n): (COR_GERACAO if n == "usina" else COR_CONJUNTO) for n in niveis}
+
+
+def _potencia_se_usina(ax: plt.Axes, res: ResultadosAnalise, niveis: List[str]) -> None:
+    if "usina" in niveis:
+        p = perfil_ativo().parametros.potencia_instalada_mw
+        ax.axhline(p, color=COR_TINTA_SUAVE, lw=0.9, ls=(0, (4, 3)), zorder=1)
+        _rotulo_referencia(ax, p, f"Potência instalada\n{fmt_num(p, 0)} MW")
+
+
+# Valores do eixo y sem arredondar a fração (2,5 não vira "2")
+_FORMATADOR_Y = plt.FuncFormatter(lambda v, _: fmt_num(v, 0 if float(v).is_integer() else 1))
+ANOS_COM_MARCA_ANUAL = 3  # séries a partir de 3 anos: uma marca por ano; mais curtas, por mês
+DIAS_COM_MARCA_DIARIA = 62  # séries de até dois meses: marcas por dia
+
+
+def _rotulo_mes(valor: float, _: object = None) -> str:
+    data = mdates.num2date(valor)
+    return f"{MESES_ABREVIADOS[data.month - 1]}/{data.year}"
+
+
+def _eixo_tempo(ax: plt.Axes, inicio: pd.Timestamp, fim: pd.Timestamp, diario: bool = True) -> None:
+    """Marcas por ano nas séries longas; nas curtas, por mês ("set/2025"); nas de até dois meses de dados diários,
+    por dia ("10/02"), como as séries das UFV (decisão R17). Os dados mensais nunca têm marcas por dia."""
+    dias = (pd.Timestamp(fim) - pd.Timestamp(inicio)).days
+    if dias >= ANOS_COM_MARCA_ANUAL * 365:
+        ax.xaxis.set_major_locator(mdates.YearLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+        return
+    if diario and dias <= DIAS_COM_MARCA_DIARIA:
+        ax.xaxis.set_major_locator(mdates.DayLocator(interval=max(1, int(round(dias / 8)))))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%d/%m"))
+        return
+    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=max(1, int(round(dias / 30.4 / 8)))))
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(_rotulo_mes))
+
+
+def _grafico_serie_temporal(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    diario = res.comum["serie_diaria"]
+    niveis = sorted(diario["nivel"].unique())
+    cores = _cores(res, niveis)
+    longo = diario.assign(serie=diario["nivel"].map(lambda n: rotulo_nivel(res, n)))[["din_instante", "serie",
+                                                                                      "geracao_mw"]]
+    longo = longo.rename(columns={"geracao_mw": "mw"})
+    disp = diario[diario["disponibilidade_operacional_mw"].notna()]
+    if len(disp):
+        cores["Disponibilidade operacional"] = COR_DISPONIBILIDADE
+        longo = pd.concat([longo, pd.DataFrame({"din_instante": disp["din_instante"],
+                                                "serie": "Disponibilidade operacional",
+                                                "mw": disp["disponibilidade_operacional_mw"]})], ignore_index=True)
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    poucos_dias = longo["din_instante"].nunique() <= 62  # série curta: os pontos também, para dias isolados
+    sns.lineplot(data=longo, x="din_instante", y="mw", hue="serie", hue_order=list(cores), palette=cores,
+                 estimator=None, errorbar=None, linewidth=1.0, legend=False, ax=ax,
+                 marker="o" if poucos_dias else None, markersize=3)
+    _potencia_se_usina(ax, res, niveis)
+    if len(diario):
+        ax.set_xlim(diario["din_instante"].min(), diario["din_instante"].max())
+    ax.set_ylim(bottom=0)
+    ax.set_xlabel("")
+    ax.set_ylabel("MW médios (média diária)")
+    ax.yaxis.set_major_formatter(_FORMATADOR_Y)
+    _eixo_tempo(ax, diario["din_instante"].min(), diario["din_instante"].max())
+    ax.set_title("Geração e disponibilidade (médias diárias)" if len(disp) else "Geração (médias diárias)")
+    ax.legend(handles=[plt.Line2D([], [], color=cor, lw=2, label=nome) for nome, cor in cores.items()],
+              loc="upper center", bbox_to_anchor=(0.5, -0.09), ncol=len(cores))
+    fig.subplots_adjust(left=0.07, right=0.86, top=0.9, bottom=0.2)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
+def _grafico_geracao_mensal(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    m = res.comum["mensal"]
+    niveis = sorted(m["nivel"].unique())
+    cores = _cores(res, niveis)
+    longo = m.assign(serie=m["nivel"].map(lambda n: rotulo_nivel(res, n)), gwh=m["energia_mwh"] / 1000.0)
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    if len(m):
+        meses = sorted(m["mes"].unique())
+        limites = list(meses) + [pd.Timestamp(meses[-1]) + pd.offsets.MonthBegin(1)]
+        sns.histplot(data=longo, x="mes", weights="gwh", hue="serie", hue_order=list(cores), palette=cores,
+                     multiple="dodge" if len(niveis) > 1 else "layer",
+                     bins=[float(b) for b in mdates.date2num(limites)], shrink=0.85, alpha=1, edgecolor="white",
+                     linewidth=0.3, legend=False, ax=ax)
+        ax.set_xlim(pd.Timestamp(meses[0]) - pd.Timedelta(days=5), pd.Timestamp(meses[-1]) + pd.Timedelta(days=36))
+    ax.set_xlabel("")
+    ax.set_ylabel("Energia mensal (GWh)")
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: fmt_num(v, 1)))
+    if len(m):
+        _eixo_tempo(ax, m["mes"].min(), m["mes"].max(), diario=False)
+    ax.grid(axis="x", visible=False)
+    ax.set_title("Energia gerada por mês")
+    ax.legend(handles=[plt.Rectangle((0, 0), 1, 1, color=cor, label=nome) for nome, cor in cores.items()],
+              loc="upper center", bbox_to_anchor=(0.5, -0.09), ncol=len(cores))
+    fig.subplots_adjust(left=0.07, right=0.97, top=0.9, bottom=0.2)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
+def _grafico_sazonalidade(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    s = res.comum["sazonalidade"]
+    niveis = sorted(s["nivel"].unique())
+    cores = _cores(res, niveis)
+    longo = s.assign(serie=s["nivel"].map(lambda n: rotulo_nivel(res, n)),
+                     mes=s["mes_do_ano"].map(lambda i: MESES_ABREVIADOS[int(i) - 1]))
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    sns.barplot(data=longo, x="mes", y="geracao_media_mw", hue="serie", order=MESES_ABREVIADOS,
+                hue_order=list(cores), palette=cores, legend=False, ax=ax, width=0.8, saturation=1)
+    _potencia_se_usina(ax, res, niveis)
+    ax.set_xlabel("")
+    ax.set_ylabel("Geração média (MWmed)")
+    ax.yaxis.set_major_formatter(_FORMATADOR_Y)
+    ax.grid(axis="x", visible=False)
+    ax.set_title("Geração média por mês do ano")
+    ax.legend(handles=[plt.Rectangle((0, 0), 1, 1, color=cor, label=nome) for nome, cor in cores.items()],
+              loc="upper center", bbox_to_anchor=(0.5, -0.09), ncol=len(cores))
+    fig.subplots_adjust(left=0.07, right=0.86, top=0.9, bottom=0.2)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
+def _grafico_perfil_horario(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    p = res.comum["perfil_horario"]
+    niveis = sorted(p["nivel"].unique())
+    cores = _cores(res, niveis)
+    longo = p.assign(serie=p["nivel"].map(lambda n: rotulo_nivel(res, n)))
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    sns.lineplot(data=longo, x="hora", y="geracao_media_mw", hue="serie", hue_order=list(cores), palette=cores,
+                 linewidth=1.6, marker="o", markersize=3.5, legend=False, ax=ax)
+    _potencia_se_usina(ax, res, niveis)
+    ax.set_xticks(range(0, 24, 3))
+    ax.set_xticklabels([f"{h}h" for h in range(0, 24, 3)])
+    ax.set_xlim(-0.5, 23.5)
+    ax.set_ylim(bottom=0)
+    ax.set_xlabel("Hora do dia")
+    ax.set_ylabel("Geração média (MW)")
+    ax.yaxis.set_major_formatter(_FORMATADOR_Y)
+    ax.set_title("Geração média por hora do dia, no período")
+    ax.legend(handles=[plt.Line2D([], [], color=cor, lw=2, label=nome) for nome, cor in cores.items()],
+              loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=len(cores))
+    fig.subplots_adjust(left=0.07, right=0.86, top=0.9, bottom=0.2)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
+def _grafico_disponibilidade(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    m = res.comum["disponibilidade"]["mensal"].copy()
+    m["mes"] = pd.PeriodIndex(m["periodo"], freq="M").to_timestamp()
+    series = {
+        "Disponibilidade operacional": ("disp_operacional_media_mw", COR_DISPONIBILIDADE),
+        "Disponibilidade sincronizada": ("disp_sincronizada_media_mw", COR_SINCRONIZADA),
+        "Geração": ("geracao_media_mw", COR_GERACAO),
+    }
+    longo = pd.concat([pd.DataFrame({"mes": m["mes"], "serie": nome, "mw": m[coluna]})
+                       for nome, (coluna, _) in series.items()], ignore_index=True)
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    sns.lineplot(data=longo, x="mes", y="mw", hue="serie", hue_order=list(series),
+                 palette={nome: cor for nome, (_, cor) in series.items()}, linewidth=1.4, marker="o", markersize=3,
+                 legend=False, ax=ax)
+    _potencia_se_usina(ax, res, ["usina"])
+    if len(m):
+        ax.set_xlim(m["mes"].min() - pd.Timedelta(days=20), m["mes"].max() + pd.Timedelta(days=20))
+    ax.set_ylim(0, perfil_ativo().parametros.potencia_instalada_mw * 1.08)
+    ax.set_xlabel("")
+    ax.set_ylabel("MW (média mensal)")
+    ax.yaxis.set_major_formatter(_FORMATADOR_Y)
+    if len(m):
+        _eixo_tempo(ax, m["mes"].min(), m["mes"].max(), diario=False)
+    ax.grid(axis="x", visible=False)
+    ax.set_title("Disponibilidade operacional, sincronizada e geração da usina (MW)")
+    ax.legend(handles=[plt.Line2D([], [], color=cor, lw=2, label=nome) for nome, (_, cor) in series.items()],
+              loc="upper center", bbox_to_anchor=(0.5, -0.09), ncol=3)
+    fig.subplots_adjust(left=0.07, right=0.86, top=0.89, bottom=0.2)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
+_GERADORES = {
+    "serie_temporal_comum": _grafico_serie_temporal,
+    "geracao_mensal": _grafico_geracao_mensal,
+    "perfil_horario_comum": _grafico_perfil_horario,
+    "sazonalidade": _grafico_sazonalidade,
+    "disponibilidade_comum": _grafico_disponibilidade,
+}
+_CONDICOES = {
+    "sazonalidade": lambda res: len(res.comum["sazonalidade"]) > 0,
+    "disponibilidade_comum": lambda res: bool(res.comum.get("disponibilidade")),
+}
+
+
+def gerar_graficos_comum(res: ResultadosAnalise, pasta: Path, dpi: int) -> Dict[str, Path]:
+    """Figuras das usinas sem EVT; as opcionais só com a base. Remove as opcionais de uma execução anterior."""
+    pasta.mkdir(parents=True, exist_ok=True)
+    caminhos = {chave: pasta / nome for chave, nome in NOMES_FIGURAS_COMUM.items()}
+    caminhos.update({chave: pasta / nome for chave, nome in NOMES_FIGURAS_COMUM_OPCIONAIS.items()
+                     if _CONDICOES[chave](res)})
+    with _tema_graficos():
+        for chave, caminho in caminhos.items():
+            _GERADORES[chave](res, caminho, dpi)
+    for nome in NOMES_FIGURAS_COMUM_OPCIONAIS.values():
+        antiga = pasta / nome
+        if antiga not in caminhos.values() and antiga.exists():
+            antiga.unlink()
+            logger.info("Figura de execução anterior removida: %s", nome)
+    logger.info("Gráficos gerados: %d", len(caminhos))
+    return caminhos

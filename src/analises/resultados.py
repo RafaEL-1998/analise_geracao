@@ -13,7 +13,8 @@ from src.comum.persistencia import ResultadoGravacao, gravar_bytes
 
 # Muda quando os campos mudam; a Geração do relatório recusa um formato diferente.
 # 2: datas de obtenção da Coleta em ``datas_obtencao`` (spec 006, decisão R22).
-VERSAO_FORMATO = 2
+# 3: tipo, modalidade, níveis, trechos, seções comuns e omissões das usinas sem EVT (spec 006, data-model 6.4).
+VERSAO_FORMATO = 3
 
 
 @dataclass
@@ -60,6 +61,26 @@ class ResultadosAnalise:
     # Dados das figuras 01 (médias diárias) e 05 (vazões médias anuais), para a Geração do relatório só desenhar
     serie_diaria: pd.DataFrame = field(default_factory=pd.DataFrame)
     vazoes_anuais: pd.DataFrame = field(default_factory=pd.DataFrame)
+    # Spec 006 (data-model 6.4). Nas hidrelétricas com EVT, só ``tipo``, ``modalidade`` e ``indicadores_carteira``
+    # são preenchidos; os campos de EVT acima ficam vazios nas usinas sem EVT.
+    tipo: str = ""
+    modalidade: str = ""
+    # Chave da tabela ou da figura (ou do conjunto) -> {"nivel": usina | conjunto | agregado, "identificador": ...}
+    niveis: Dict[str, Dict[str, str]] = field(default_factory=dict)
+    trechos: pd.DataFrame = field(default_factory=pd.DataFrame)  # trechos.csv da Coleta (data-model 5.2)
+    # Seções comuns sobre a base horária comum (decisão R30); vazio nas hidrelétricas com EVT, o que define o caminho
+    comum: Dict[str, Any] = field(default_factory=dict)
+    termica: Dict[str, Any] = field(default_factory=dict)  # decisão R18 (fase B)
+    renovavel: Dict[str, Any] = field(default_factory=dict)  # decisão R19 (fase C)
+    conjunto: Dict[str, Any] = field(default_factory=dict)  # decisão R20 (fase D)
+    indicadores_carteira: Dict[str, Any] = field(default_factory=dict)  # decisão R21 (fase E)
+    # Seções e regras não avaliadas: {"item", "tipo" (secao | regra), "motivo"} (decisões R16 e R17, FR-024)
+    omitidos: List[Dict[str, str]] = field(default_factory=list)
+
+
+def sem_evt(res: ResultadosAnalise) -> bool:
+    """Caminho do relatório (decisão R14): as usinas sem EVT têm as seções comuns; as hidrelétricas com EVT, não."""
+    return bool(getattr(res, "comum", None))
 
 
 def salvar_resultados(res: ResultadosAnalise, destino: Path) -> ResultadoGravacao:

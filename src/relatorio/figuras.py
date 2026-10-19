@@ -497,6 +497,9 @@ def gerar_graficos(
     dpi: int = DEFAULT_PLOT_DPI,
 ) -> Dict[str, Path]:
     """Gera as figuras do relatório com seaborn, só a partir dos resultados, e retorna {chave: caminho}."""
+    if getattr(res, "comum", None):  # usinas sem EVT (spec 006, decisão R14)
+        from src.relatorio.figuras_comum import gerar_graficos_comum
+        return gerar_graficos_comum(res, Path(diretorio_figuras), dpi)
     pasta = Path(diretorio_figuras)
     pasta.mkdir(parents=True, exist_ok=True)
     logger.info("Gerando gráficos analíticos (%d DPI) em: %s", dpi, pasta)

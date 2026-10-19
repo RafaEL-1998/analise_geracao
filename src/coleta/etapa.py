@@ -14,7 +14,9 @@ from typing import Any, Callable, Dict, Iterable, List, Optional
 
 import pandas as pd
 
-from src.coleta import cadastro, conjuntos, indicadores, programacao, registro
+from src.coleta import cadastro, conjuntos, indicadores, programacao, registro, serie_referencia
+from src.coleta.catalogo_usinas import CADASTRAIS, CadastralNaoObtido, ler_cadastral, montar_conjuntos, sincronizar_cadastral
+from src.coleta.conjuntos import COLUNAS_AUDITORIA_COLETA
 from src.coleta.catalogo import load_manifest
 from src.coleta.dicionarios import NOME_REGISTRO, exportar_registro, sincronizar_dicionarios
 from src.coleta.evt import (
@@ -31,6 +33,7 @@ from src.comum.persistencia import gravar_bytes, gravar_csv, gravar_parquet
 from src.comum.regras import (
     CONJUNTO_CADASTRO,
     CONJUNTO_EVT,
+    CONJUNTO_GERACAO,
     CONJUNTO_PROGRAMACAO_DIARIA,
     CONJUNTOS_INDICADORES_ONS,
     PASTA_CADASTRO_RAW,
@@ -45,6 +48,9 @@ FORMATO_DATA = "%Y-%m-%d %H:%M:%S"
 ARQ = caminhos.ARQUIVOS_COLETA
 # Datas de obtenção por conjunto, só com os arquivos do escopo da usina (spec 006, decisão R22)
 COLUNAS_DATAS_OBTENCAO = ["conjunto", "arquivos_registrados", "publicacao_mais_recente", "obtencao_mais_recente"]
+# Unidades geradoras da usina (Capacidade de geração; data-model 6.1), todas as do CEG, com as datas
+COLUNAS_CAPACIDADE_FICHA = ["cod_equipamento", "num_unidadegeradora", "nom_unidadegeradora", "val_potenciaefetiva",
+                            "nom_combustivel", "dat_entradateste", "dat_entradaoperacao", "dat_desativacao"]
 
 
 def datas_do_escopo(pasta: Path, arquivos: Iterable[str]) -> Dict[str, Any]:
@@ -168,6 +174,10 @@ class _Coleta:
         # Conjuntos do tipo e da cobertura da usina, na ordem do registro (spec 006, decisão R8; FR-015)
         self.entradas = registro.conjuntos_da_usina(perfil)
         self.pacotes = registro.pacotes(self.entradas)
+        # Série de referência (decisão R6), complemento horário e composição do conjunto (para os trechos, R7)
+        self.escolha: Optional[serie_referencia.Escolha] = None
+        self.complemento: Optional[pd.DataFrame] = None
+        self.composicao = pd.DataFrame(columns=["id_conjunto", "ceg", "tipo", "inicio", "fim"])
 
     def anotar_datas(self, pacote: str, pasta: Path, arquivos: Iterable[str]) -> None:
         """Datas de obtenção do conjunto, só com os arquivos do escopo da usina (``datas_obtencao.csv``)."""
@@ -227,8 +237,105 @@ def _coletar_evt(c: _Coleta) -> Optional[ResultadoEtapa]:
     instantes = pd.to_datetime([r.din_instante for r in consolidados])
     c.inicio, c.fim = instantes.min(), instantes.max()
     c.resumo["periodo"] = {"inicio": c.inicio.strftime(FORMATO_DATA), "fim": c.fim.strftime(FORMATO_DATA)}
+    c.resumo["serie_referencia"] = serie_referencia.resumo(
+        c.escolha, c.perfil, c.inicio, c.fim, pd.DataFrame({"arquivo": [a.nome_arquivo for a in audits if a.obtido]}))
     logger.info("Período da base de EVT: %s a %s (%d registros).", c.inicio, c.fim, len(consolidados))
     return None
+
+
+def _coletar_referencia(c: _Coleta) -> Optional[ResultadoEtapa]:
+    """Série de referência das usinas sem EVT (decisões R6 e R7): a Geração por usina, da usina ou do conjunto,
+    varrida em todos os arquivos publicados; o período vai da primeira à última hora com valor."""
+    perfil, escolha = c.perfil, c.escolha
+    descricoes = serie_referencia.descricoes_referencia(perfil, escolha)
+    pasta = c.raw / next(iter(descricoes.values())).pasta
+    fim_aberto = pd.Timestamp.today().normalize() + pd.DateOffset(years=1)
+    falhas: List[Dict[str, Any]] = []
+    for nivel, desc in descricoes.items():
+        falhas += c.sincronizar(f"{desc.pacote}, série de referência ({nivel})", lambda d=desc: (
+            conjuntos.sincronizar_conjunto(d, serie_referencia.INICIO_VARREDURA, fim_aberto, pasta, c.forcar))) or []
+    series, auditoria = serie_referencia.extrair_referencia(perfil, escolha, c.raw, falhas)
+    auditoria = auditoria.drop(columns=["nivel"], errors="ignore")
+    inicio, fim = serie_referencia.periodo(series)
+    c.gravar_parquet(serie_referencia.combinar(series, inicio, fim), "geracao")
+    c.gravar_csv(auditoria, "auditoria_geracao")
+    complemento = serie_referencia.complemento(series)
+    if inicio is not None:
+        complemento = complemento[(complemento["din_instante"] >= inicio) & (complemento["din_instante"] <= fim)]
+    c.complemento = complemento.reset_index(drop=True)
+    c.gravar_parquet(c.complemento, "geracao_complemento")
+    c.anotar_datas(CONJUNTO_GERACAO, pasta, _obtidos(auditoria))
+    if c.registrar(CONJUNTO_GERACAO, auditoria, [pasta]):
+        return c.resultado(CODIGO_DADO_NAO_OBTIDO)
+    if inicio is None:
+        logger.error("A série de referência da usina '%s' (%s) não tem nenhuma hora com valor; os demais conjuntos "
+                     "não são coletados.", perfil.usina.slug, escolha.motivo)
+        return c.resultado(CODIGO_DADO_NAO_OBTIDO)
+    c.inicio, c.fim = inicio, fim
+    c.resumo["periodo"] = {"inicio": inicio.strftime(FORMATO_DATA), "fim": fim.strftime(FORMATO_DATA)}
+    c.resumo["serie_referencia"] = serie_referencia.resumo(escolha, perfil, inicio, fim, auditoria)
+    if "usina" not in escolha.niveis and perfil.identificacao.id_ons:  # linhas próprias sem valor (achado A3)
+        proprias, _ = conjuntos.extrair_conjunto(registro.descricao_geracao(perfil, "usina"), pasta, inicio, fim)
+        c.resumo["linhas_usina_sem_valor"] = int(proprias["val_geracao"].isna().sum()) if len(proprias) else 0
+    logger.info("Período da série de referência (%s): %s a %s.", escolha.motivo, inicio, fim)
+    return None
+
+
+def _coletar_cadastral(c: _Coleta, chave: str) -> Optional[ResultadoEtapa]:
+    """Composição do conjunto ou unidades geradoras da usina (estáticos), com a auditoria da leitura."""
+    cadastral, ident = CADASTRAIS[chave], c.perfil.identificacao
+    if chave == "composicao" and not getattr(ident, "id_conjunto", None):
+        return None  # fora de conjunto, não há composição a coletar
+    pasta = c.raw / cadastral.pasta
+    linha = {coluna: "" for coluna in COLUNAS_AUDITORIA_COLETA}
+    linha.update(formato="", periodo="estatico", obtido=True, linhas_lidas=0, linhas_formato_irregular=0, linhas_usina=0,
+                 linhas_so_identificador=0, linhas_so_conferencia=0, valores_invalidos=0, recursos_duplicados_catalogo=0)
+    try:
+        c.sincronizar(cadastral.pacote, lambda: sincronizar_cadastral(chave, c.raw, c.forcar))
+        tabela, arquivo = ler_cadastral(chave, c.raw)
+    except CadastralNaoObtido as exc:
+        linha.update(status="FALHA", mensagem=exc.motivo, obtido=False)
+        auditoria = pd.DataFrame([linha], columns=COLUNAS_AUDITORIA_COLETA)
+        c.gravar_csv(auditoria, f"auditoria_{chave}")
+        c.registrar(cadastral.pacote, auditoria, [pasta])
+        return c.resultado(CODIGO_DADO_NAO_OBTIDO)
+    publicacao = str((load_manifest(pasta / caminhos.RAW_MANIFEST_FILE.name).get(arquivo.name) or {})
+                     .get("ultima_modificacao") or "")
+    estado = registro.normalizar_texto(c.perfil.usina.estado)
+    if chave == "composicao":
+        alvo = registro.normalizar_texto(ident.id_conjunto)
+        identificador = tabela["id_ons_conjunto"].map(registro.normalizar_texto) == alvo
+        conferencia = tabela["estad_id"].map(registro.normalizar_texto) == estado
+    else:
+        identificador = tabela["ceg"].map(registro.normalizar_texto) == registro.normalizar_texto(ident.ceg)
+        conferencia = tabela["id_estado"].map(registro.normalizar_texto) == estado
+    linha.update(arquivo=arquivo.name, formato=arquivo.suffix[1:].upper(), data_publicacao=publicacao,
+                 linhas_lidas=len(tabela), linhas_usina=int((identificador & conferencia).sum()),
+                 linhas_so_identificador=int((identificador & ~conferencia).sum()),
+                 linhas_so_conferencia=0, status="PROCESSADO" if (identificador & conferencia).any() else "SEM_REGISTROS")
+    selecionadas = tabela[identificador & conferencia]
+    if chave == "composicao":
+        c.composicao = montar_conjuntos(selecionadas)
+        c.gravar_csv(c.composicao, "composicao")
+    else:
+        colunas = [col for col in COLUNAS_CAPACIDADE_FICHA if col in selecionadas.columns]
+        c.gravar_csv(selecionadas[colunas].reset_index(drop=True), "capacidade")
+    auditoria = pd.DataFrame([linha], columns=COLUNAS_AUDITORIA_COLETA)
+    c.gravar_csv(auditoria, f"auditoria_{chave}")
+    c.anotar_datas(cadastral.pacote, pasta, [arquivo.name])
+    c.registrar(cadastral.pacote, auditoria, [pasta])
+    return None
+
+
+def _gravar_trechos(c: _Coleta) -> None:
+    """``trechos.csv`` das usinas sem EVT (decisão R7), com a composição coletada e os códigos do perfil."""
+    if c.complemento is None:
+        return
+    ident = c.perfil.identificacao
+    tabela = serie_referencia.trechos(c.complemento, c.composicao, getattr(ident, "planejamento", ()) or (),
+                                      getattr(ident, "id_conjunto", None) or "")
+    c.gravar_csv(tabela, "trechos")
+    c.resumo["trechos"] = len(tabela)
 
 
 def _coletar_indicadores(c: _Coleta) -> Optional[ResultadoEtapa]:
@@ -251,8 +358,9 @@ def _coletar_programacao(c: _Coleta) -> Optional[ResultadoEtapa]:
     pasta = c.raw / PASTA_PROGRAMACAO_RAW
     falhas = c.sincronizar("Programação diária", lambda: programacao.sincronizar_programacao(
         c.inicio, c.fim, pasta, c.forcar)) or []
-    extraido, auditoria = programacao.extrair_programacao(pasta, c.inicio, c.fim, ident.cod_programacao,
-                                                          ident.nome_ons, estado, falhas)
+    codigos = getattr(ident, "codigos_programacao", None) or ident.cod_programacao
+    extraido, auditoria = programacao.extrair_programacao(pasta, c.inicio, c.fim, codigos, ident.nome_ons, estado,
+                                                          falhas)
     c.gravar_parquet(extraido, "programacao")
     c.gravar_csv(auditoria, "auditoria_programacao", date_format=FORMATO_DATA)
     c.anotar_datas(CONJUNTO_PROGRAMACAO_DIARIA, pasta, _obtidos(auditoria))
@@ -281,7 +389,9 @@ def _coletar_cadastro(c: _Coleta) -> Optional[ResultadoEtapa]:
     pasta = c.raw / PASTA_CADASTRO_RAW
     nome, falhas = c.sincronizar("Modalidade das usinas", lambda: cadastro.sincronizar_cadastro(pasta, c.forcar)) \
         or (None, [])
-    ficha, auditoria = cadastro.extrair_cadastro(pasta, ident.ceg, ident.id_ons, estado, ident.nome_ons, nome, falhas)
+    # Homônimos pelo nome: o do ONS nas hidrelétricas; nos demais tipos, o nome curto do perfil
+    nome_usina = ident.nome_ons or c.perfil.usina.nome_curto
+    ficha, auditoria = cadastro.extrair_cadastro(pasta, ident.ceg, ident.id_ons or "", estado, nome_usina, nome, falhas)
     c.gravar_csv(ficha, "cadastro_ficha")
     c.gravar_csv(auditoria, "auditoria_cadastro")
     c.anotar_datas(CONJUNTO_CADASTRO, pasta, _obtidos(auditoria))
@@ -331,7 +441,8 @@ def _coletar(c: _Coleta, chave: str) -> Optional[ResultadoEtapa]:
     if registro.entrada(chave).descricao is not None:
         return _coletar_horario(c, chave)
     proprios = {"evt": _coletar_evt, "indicadores": _coletar_indicadores, "programacao": _coletar_programacao,
-                "cadastro": _coletar_cadastro}
+                "cadastro": _coletar_cadastro, "composicao": lambda c: _coletar_cadastral(c, "composicao"),
+                "capacidade": lambda c: _coletar_cadastral(c, "capacidade")}
     return proprios[chave](c)
 
 
@@ -343,21 +454,32 @@ def executar_coleta(perfil: Any, sem_portal: bool = False, forcar_download: bool
     coletada); o erro (código 1, inclusive o catálogo inacessível) é tratado por ``src.pipeline``.
     """
     c = _Coleta(perfil, sem_portal, forcar_download)
-    chaves = [e.chave for e in c.entradas]
-    if chaves[:1] != ["evt"]:  # a série de referência das usinas sem EVT (decisão R6) ainda não é coletada
-        logger.error("A usina '%s' (%s) não tem a Energia Vertida Turbinável, que hoje define o período da "
-                     "Coleta; a série de referência do tipo ainda não é coletada.", perfil.usina.slug,
-                     registro.tipo_da_usina(perfil))
+    try:
+        c.escolha = serie_referencia.escolher(perfil)
+    except ValueError as exc:
+        logger.error("Coleta recusada: %s.", exc)
         return c.resultado(CODIGO_ERRO)
+    tipo, cobertura = registro.tipo_da_usina(perfil), registro.cobertura_da_usina(perfil)
+    c.resumo.update(
+        tipo=tipo, modalidade=getattr(perfil.usina, "modalidade", "") or "", trechos=0, linhas_usina_sem_valor=0,
+        conjuntos_nao_aplicaveis=[k for k in registro.chaves_da_cobertura(tipo) if cobertura
+                                  and k not in [e.chave for e in c.entradas]])
+    chaves = [e.chave for e in c.entradas]
     c.pasta.mkdir(parents=True, exist_ok=True)
     if sem_portal:
         logger.info("Coleta sem consulta ao portal (--sem-portal): só os arquivos locais de %s.", c.raw)
-    for chave in chaves:
-        interrompida = _coletar(c, chave)
+    etapas: List[Callable[[_Coleta], Optional[ResultadoEtapa]]] = []
+    if c.escolha.conjunto != "evt":  # a série de referência vem antes: ela define o período
+        etapas.append(_coletar_referencia)
+        chaves = [k for k in chaves if k != "geracao"]
+    etapas += [lambda c, k=k: _coletar(c, k) for k in chaves]
+    for etapa in etapas:
+        interrompida = etapa(c)
         if interrompida is not None:
             _coletar_dicionarios(c)  # a consulta ao portal obtém os dicionários mesmo com a coleta interrompida
             _gravar_formato_2(c)
             return c.resultado(interrompida.codigo)
+    _gravar_trechos(c)
     _coletar_dicionarios(c)
     _gravar_formato_2(c)
     return c.resultado(CODIGO_SUCESSO)

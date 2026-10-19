@@ -285,7 +285,7 @@ python -m pytest tests -q -p no:cacheprovider
   - **validação**: pela tabela da T039;
   - **valores derivados** do data-model 3.5: os hidráulicos só nas hidrelétricas com EVT ou hidrologia, com erro claro nos demais; `potencias_das_unidades_mw` e `codigos_planejamento_em(data)`.
 - [X] T041 Acrescentar `tipo = "UHE"` e `modalidade = "TIPO II-A"` a `usinas/sao_domingos/perfil.toml` (FR-011), e o tipo e a modalidade da usina fictícia a `tests/fixtures/usina_ficticia/perfil.toml`.
-- [ ] T042 Portão do perfil:
+- [X] T042 Portão do perfil:
   - suíte;
   - `python -m src completo --usina sao_domingos --sem-portal --data-geracao "07/10/2026 08:53"`;
   - `python -m src comparar --todas --coleta` com código 0.
@@ -293,7 +293,7 @@ python -m pytest tests -q -p no:cacheprovider
 
 ### Novo congelamento (item 4)
 
-- [ ] T043 Conferir se o formato da Coleta mudou desde a T026: compare o `versao_formato` do `etapa.json` congelado com o atual.
+- [X] T043 Conferir se o formato da Coleta mudou desde a T026: compare o `versao_formato` do `etapa.json` congelado com o atual.
   - Se mudou: depois do commit da referência pelo usuário, rodar de novo `python -m src referencia --usina sao_domingos --data-geracao "07/10/2026 08:53" --aprovado-em "08/10/2026"` e `comparar --todas --coleta` com código 0.
   - Registrar. A partir daqui, os downloads ficam liberados.
 
@@ -312,7 +312,7 @@ python -m pytest tests -q -p no:cacheprovider
 
 ### Tests for User Story 1
 
-- [ ] T044 [P] [US1] Escrever `tests/coleta/test_catalogo_usinas.py`, com catálogo CKAN e arquivos sintéticos:
+- [X] T044 [P] [US1] Escrever `tests/coleta/test_catalogo_usinas.py`, com catálogo CKAN e arquivos sintéticos:
   - **tipo pelo prefixo do CEG** (decisão R1): linha sem CEG = `conjunto`; prefixo fora da lista = `outro`; `divergencias` quando o tipo do ONS difere;
   - **cobertura** (decisão R3), no arquivo mais recente de cada conjunto: `proprio`, `conjunto` (inclusive com linhas próprias sem valor), `agregado` e `ausente`;
   - **arquivos e colunas** do data-model, seções 2.1 a 2.6: `usinas.csv`, com "Uma linha por linha do cadastro do ONS" e só unidades ativas, mais `conjuntos.csv`, `cobertura.csv`, `planejamento.csv`, `programacao.csv`, `agregados.csv` e `catalogo.json`;
@@ -321,7 +321,7 @@ python -m pytest tests -q -p no:cacheprovider
   - **listagem**: uma coluna por conjunto de série do tipo (`P`, `C`, `A` ou `-`) e o slug do perfil achado pelo CEG;
   - **`--sem-portal`**: sem rede;
   - **códigos**: 0, 1 e 2 (contracts/cli-usinas.md).
-- [ ] T045 [P] [US1] Escrever `tests/coleta/test_perfil_rascunho.py` (contracts/cli-perfil.md):
+- [X] T045 [P] [US1] Escrever `tests/coleta/test_perfil_rascunho.py` (contracts/cli-perfil.md):
   - **conteúdo do rascunho**:
     - `situacao = "rascunho"`, `pendentes`, comentários com a origem;
     - só as unidades ativas e o comentário de divergência de potência;
@@ -331,112 +331,112 @@ python -m pytest tests -q -p no:cacheprovider
   - **perfil existente**: nada gravado, com código 0 sem diferença e 6 com diferença;
   - **slug**: derivado do nome; `carteiras` reservado;
   - **leitura**: o comando não lê `data/raw/`.
-- [ ] T046 [P] [US1] Escrever `tests/coleta/test_serie_referencia.py`:
+- [X] T046 [P] [US1] Escrever `tests/coleta/test_serie_referencia.py`:
   - **escolha da série** (linhas da fase A da decisão R6): EVT nas hidrelétricas com EVT; Geração por usina pelo id ONS com geração própria; Geração por usina pelo id do conjunto em conjunto sem série própria;
   - **varredura**: em todos os arquivos publicados;
   - **período**: da primeira à última hora com valor; com cobertura `["proprio", "conjunto"]`, a união das duas séries;
   - **`trechos.csv`** (data-model 5.2): mudança de modalidade, de composição e de código, com `mostrar` só quando muda o nível ou a composição;
   - **hidrelétrica com EVT**: o caminho de hoje, sem trechos.
-- [ ] T047 [P] [US1] Escrever `tests/tratamento/test_base_horaria.py`:
+- [X] T047 [P] [US1] Escrever `tests/tratamento/test_base_horaria.py`:
   - `base_horaria.csv` nas usinas sem EVT, com as colunas `din_instante`, `geracao_mw`, `nivel`, `disponibilidade_operacional_mw`, `disponibilidade_sincronizada_mw`, `geracao_programada_mw`, `trecho` e `sinalizacoes`;
   - nível `conjunto` quando a série é do conjunto;
   - ausências listadas;
   - nenhum registro excluído (princípio V).
-- [ ] T048 [P] [US1] Escrever `tests/conferencia/test_aplicabilidade.py`:
+- [X] T048 [P] [US1] Escrever `tests/conferencia/test_aplicabilidade.py`:
   - `nao_aplicaveis.csv` com `conferencia` e `motivo`, com todas as conferências do catálogo que não se aplicam, inclusive na UHE;
   - o relatório e a planilha da UHE não o leem (T011).
-- [ ] T049 [P] [US1] Escrever `tests/analises/test_comum_tipos.py`, sobre a base horária comum de uma usina sem EVT:
+- [X] T049 [P] [US1] Escrever `tests/analises/test_comum_tipos.py`, sobre a base horária comum de uma usina sem EVT:
   - indicadores anuais, série temporal, geração mensal e perfil horário;
   - a sazonalidade só com 12 meses distintos; abaixo disso, omitida e listada em `omitidos` com o motivo (decisão R17);
-  - `ResultadosAnalise` com `VERSAO_FORMATO` 2, `tipo`, `modalidade`, `niveis`, `trechos`, `comum` e `omitidos`;
+  - `ResultadosAnalise` com `VERSAO_FORMATO` 3 (o 2 foi usado pela decisão R22), `tipo`, `modalidade`, `niveis`, `trechos`, `comum` e `omitidos`;
   - nas hidrelétricas com EVT, os campos de hoje com os mesmos valores.
-- [ ] T050 [P] [US1] Ampliar `tests/relatorio/test_estrutura.py`:
+- [X] T050 [P] [US1] Ampliar `tests/relatorio/test_estrutura.py`:
   - **dois caminhos** (decisão R14):
     - a hidrelétrica com EVT tem exatamente as 17 seções de hoje;
     - a usina sem EVT segue a tabela da decisão R14, com numeração contínua e as seções sem base omitidas;
   - **título e capa por caminho** (data-model 6.5);
   - **legendas** com o identificador e, no conjunto e no agregado, o nível escrito (decisão R15);
   - **notas**: com as omissões, os níveis e as conferências não aplicáveis só nas usinas sem EVT.
-- [ ] T051 [P] [US1] Ampliar `tests/analises/test_conclusao.py`:
+- [X] T051 [P] [US1] Ampliar `tests/analises/test_conclusao.py`:
   - **catálogo**: cada regra declara `codigo`, `tipos`, `listas`, `nivel_exigido`, `funcao`, `limiares`, `periodo_minimo_meses` e `secoes` (data-model 6.5);
   - **hidrelétricas com EVT**: C1 a C11 sem mudança, com a ordem por lista e por número;
   - **regra com entrada de nível conjunto**: não é avaliada e vai para `omitidos`;
   - **PCH em conjunto**: sem itens, com a frase que explica a falta de base no nível da usina;
   - **nota da conclusão**: nas usinas sem EVT, gerada do catálogo do tipo; nas hidrelétricas com EVT, o texto de hoje.
-- [ ] T052 [P] [US1] Criar as usinas fictícias da decisão R23 em `tests/fixtures/usinas_ficticias/{uhe,pch,cgh,ute,utn,eol,ufv}/perfil.toml`:
+- [X] T052 [P] [US1] Criar as usinas fictícias da decisão R23 em `tests/fixtures/usinas_ficticias/{uhe,pch,cgh,ute,utn,eol,ufv}/perfil.toml`:
   - valores inventados e nenhum valor de usina real;
   - os brutos sintéticos dos conjuntos da fase A em `tests/fixtures/brutos_ficticios.py`: geração da usina e do conjunto, programação, disponibilidade, indicadores, cadastro, composição e capacidade;
   - **a PCH**: composição que muda no período e linhas próprias sem valor;
   - **a UFV**: série curta.
-- [ ] T053 [P] [US1] Escrever `tests/integracao/test_usinas_ficticias.py`:
+- [X] T053 [P] [US1] Escrever `tests/integracao/test_usinas_ficticias.py`:
   - cada uma das sete usinas fictícias roda `completo --sem-portal` sem rede, com código 0 e as seções comuns;
   - nenhuma saída tem valor de outra usina.
   - Ampliar `tests/comum/test_literais.py` com os identificadores das pilotos: `MSUTWI`, `MSSRI1`, `CJU_MS4FINO`, `CEUFM`, `MSBDT`, `CJU_MSCAO` e os CEGs da spec.
 
 ### Implementation for User Story 1
 
-- [ ] T054 [US1] Acrescentar ao registro e às regras os conjuntos do catálogo e a geração do conjunto:
+- [X] T054 [US1] Acrescentar ao registro e às regras os conjuntos do catálogo e a geração do conjunto:
   - em `src/comum/regras.py`, os pacotes `usina_conjunto` e `capacidade-geracao`, com as pastas `usina_conjunto` e `capacidade_geracao`;
   - em `src/coleta/registro.py`, as entradas `composicao` e `capacidade` e o nível "usina ou conjunto" da `geracao`, com o identificador `id_conjunto` e a conferência pelo estado (decisão R9).
-- [ ] T055 [US1] Criar `src/coleta/catalogo_usinas.py` (decisões R1 a R3; contracts/cli-usinas.md):
+- [X] T055 [US1] Criar `src/coleta/catalogo_usinas.py` (decisões R1 a R3; contracts/cli-usinas.md):
   - **sincronização** (sem `--sem-portal`), com o catálogo CKAN, o cache e as versões de hoje:
-    - Modalidade das usinas, Composição dos conjuntos e Capacidade de geração;
+    - Modalidade das usinas, Composição dos conjuntos, Capacidade de geração e Reservatórios (decisão R31);
     - o arquivo mais recente de cada conjunto de série já implementado;
     - a geração dos últimos 12 meses completos;
     - os dicionários desses conjuntos;
   - **montagem** de todos os arquivos de `data/catalogo/`, sem `.bak`, numa pasta temporária, com conferência e troca;
   - **listagem** filtrada;
   - **mensagens** obrigatórias do contrato.
-- [ ] T056 [US1] Em `src/__main__.py`, o comando `usinas` com as opções do contrato (`--estado`, `--tipo`, `--modalidade`, `--sem-portal`, `--forcar-download`) e os códigos 0, 1 e 2.
-- [ ] T057 [US1] Portão do item 5: suíte e `python -m src comparar --todas --coleta` com código 0. Registrar em `specs/006-ampliacao-tipos-de-geracao/tasks.md`.
-- [ ] T058 [US1] Criar `src/coleta/perfil_rascunho.py` e o comando `perfil` em `src/__main__.py` (decisão R5; contracts/cli-perfil.md):
+- [X] T056 [US1] Em `src/__main__.py`, o comando `usinas` com as opções do contrato (`--estado`, `--tipo`, `--modalidade`, `--sem-portal`, `--forcar-download`) e os códigos 0, 1 e 2.
+- [X] T057 [US1] Portão do item 5: suíte e `python -m src comparar --todas --coleta` com código 0. Registrar em `specs/006-ampliacao-tipos-de-geracao/tasks.md`.
+- [X] T058 [US1] Criar `src/coleta/perfil_rascunho.py` e o comando `perfil` em `src/__main__.py` (decisão R5; contracts/cli-perfil.md):
   - leitura só de `data/catalogo/`;
   - recusas e diferenças com os códigos 0, 1, 2, 5 e 6;
   - o rascunho no formato de contracts/perfil-multitipo.md;
   - gravação de arquivo novo, conferida no disco, sem nunca sobrescrever.
   - Portão: suíte e `comparar --todas --coleta` com código 0.
-- [ ] T059 [US1] Criar `src/coleta/serie_referencia.py`: a escolha da série de referência (linhas da fase A da decisão R6), o período e os trechos (decisão R7), com o resumo do data-model 5.1.
-- [ ] T060 [US1] Integrar a série de referência e os arquivos novos em `src/coleta/etapa.py`:
+- [X] T059 [US1] Criar `src/coleta/serie_referencia.py`: a escolha da série de referência (linhas da fase A da decisão R6), o período e os trechos (decisão R7), com o resumo do data-model 5.1.
+- [X] T060 [US1] Integrar a série de referência e os arquivos novos em `src/coleta/etapa.py`:
   - **série**: nas usinas sem EVT, o período vem da série de referência; nas hidrelétricas com EVT, o caminho de hoje;
   - **arquivos novos**, só fora da UHE com EVT: `trechos.csv`, `geracao_complemento.parquet` (`cod_modalidadeoperacao` e `nivel` por hora), `composicao_conjunto.csv` e `capacidade_ficha.csv`;
   - **resumo do `etapa.json`**: `tipo`, `modalidade`, `serie_referencia`, `trechos`, `conjuntos_nao_aplicaveis` e `linhas_usina_sem_valor`.
   - Portão do item 7: suíte e `comparar --todas --coleta` com código 0.
-- [ ] T061 [US1] Criar `src/tratamento/base_horaria.py` com as colunas da T047 e chamá-lo em `src/tratamento/etapa.py` nas usinas sem EVT.
-- [ ] T062 [P] [US1] Criar `src/conferencia/aplicabilidade.py`: a lista das conferências do catálogo com a condição de cada uma; grava `nao_aplicaveis.csv` em `src/conferencia/etapa.py`, para todas as usinas.
-- [ ] T063 [US1] Ampliar as Análises:
-  - `src/analises/resultados.py`: os campos novos e `VERSAO_FORMATO = 2`;
+- [X] T061 [US1] Criar `src/tratamento/base_horaria.py` com as colunas da T047 e chamá-lo em `src/tratamento/etapa.py` nas usinas sem EVT.
+- [X] T062 [P] [US1] Criar `src/conferencia/aplicabilidade.py`: a lista das conferências do catálogo com a condição de cada uma; grava `nao_aplicaveis.csv` em `src/conferencia/etapa.py`, para todas as usinas.
+- [X] T063 [US1] Ampliar as Análises:
+  - `src/analises/resultados.py`: os campos novos e `VERSAO_FORMATO = 3`;
   - `src/analises/comum_tipos.py`, novo: as seções comuns sobre a base horária comum;
   - `src/analises/etapa.py`: escolhe o caminho pela presença da EVT;
   - `src/analises/constatacoes.py`: "do conjunto <nome>" quando o número é do conjunto.
-- [ ] T064 [US1] Ampliar a estrutura do relatório em `src/relatorio/estrutura.py`:
+- [X] T064 [US1] Ampliar a estrutura do relatório em `src/relatorio/estrutura.py`:
   - `Secao` com `tipos`, título por tipo, `legenda` e `periodo_minimo_meses`;
   - as seções novas da tabela da decisão R14, fora do caminho da EVT;
   - `secoes_presentes` por caminho.
-- [ ] T065 [US1] Título, capa, notas e legendas por caminho:
+- [X] T065 [US1] Título, capa, notas e legendas por caminho:
   - em `src/relatorio/conteudo.py`, `src/relatorio/pdf.py`, `src/relatorio/markdown.py` e `src/relatorio/planilha.py`:
     - o título e a capa do data-model 6.5;
     - as notas das usinas sem EVT: omissões, níveis e conferências não aplicáveis;
   - em `src/relatorio/fontes.py`: a legenda com o identificador e o nível (decisão R15).
   - Nas hidrelétricas com EVT, nada muda (T011).
   - Portão do item 8: suíte e `comparar --todas --coleta` com código 0.
-- [ ] T066 [US1] Reescrever o catálogo da conclusão em `src/analises/conclusao.py` como lista de `RegraConclusao` (decisão R16), sem mudar C1 a C11:
+- [X] T066 [US1] Reescrever o catálogo da conclusão em `src/analises/conclusao.py` como lista de `RegraConclusao` (decisão R16), sem mudar C1 a C11:
   - avaliar só com entradas do nível da usina;
   - mandar o que não é avaliado para `omitidos`;
   - gerar a nota da conclusão das usinas sem EVT a partir do catálogo, em `src/relatorio/conteudo.py`, mantendo `nota_conclusao()` como está para as hidrelétricas com EVT.
   - Portão do item 9: suíte e `comparar --todas --coleta` com código 0.
-- [ ] T067 [US1] Completar o item 10: rodar `tests/integracao/test_usinas_ficticias.py` com as sete usinas e corrigir o que faltar nos módulos da fase A, sem mudar os testes da T011.
+- [X] T067 [US1] Completar o item 10: rodar `tests/integracao/test_usinas_ficticias.py` com as sete usinas e corrigir o que faltar nos módulos da fase A, sem mudar os testes da T011.
 
 ### Validação real da User Story 1
 
-- [ ] T068 [US1] Montar o catálogo com o portal: `python -m src usinas --estado MS`, e de novo com `--sem-portal` (quickstart 3.3).
+- [X] T068 [US1] Montar o catálogo com o portal: `python -m src usinas --estado MS`, e de novo com `--sem-portal` (quickstart 3.3).
   - Conferir: 171 usinas em MS (UHE 5, PCH 16, CGH 9, UTE 33, UFV 86 e 22 linhas de conjunto, ou a contagem atual do ONS, explicada); `usinas.csv` com todas as linhas do cadastro; `catalogo.json`.
   - Depois, `comparar --todas --coleta` com código 0, ou as diferenças da Coleta por republicação levadas ao usuário.
   - Registrar.
-- [ ] T069 [US1] Gerar o rascunho da William Arjona: `python -m src perfil --ceg UTE.GN.MS.027075-0.01 --slug william_arjona` (quickstart 3.4).
+- [X] T069 [US1] Gerar o rascunho da William Arjona: `python -m src perfil --ceg UTE.GN.MS.027075-0.01 --slug william_arjona` (quickstart 3.4).
   - Medir o tempo (menos de 1 minuto, SC-003).
   - Conferir o conteúdo e rodar de novo: código 0 ou 6, com o arquivo igual byte a byte.
   - Registrar.
-- [ ] T070 [US1] Conferir as recusas (quickstart 3.5):
+- [X] T070 [US1] Conferir as recusas (quickstart 3.5):
   - `python -m src coleta --usina william_arjona` com o perfil em rascunho dá código 4, com a lista dos pendentes;
   - `perfil` de uma CGH Tipo III de MS dá código 2, sem criar pasta.
   - Registrar.
@@ -1034,3 +1034,83 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
   - `python -m src referencia --usina sao_domingos --data-geracao "07/10/2026 08:53" --aprovado-em "08/10/2026"`, que congela o perfil com `tipo` e `modalidade`;
   - `python -m src comparar --todas --coleta` com código 0.
 - **Ajuste da T043**: o plano previa um novo congelamento só se o formato da Coleta mudasse; ele também é necessário quando a validação do perfil muda.
+
+### 19/10/2026 — T042 e T043 (portão do perfil e novo congelamento)
+
+- **Congelamento novo**: o perfil congelado em `relatorios_referencia/sao_domingos/` já tem `tipo` e `modalidade` (commit `a098792`, de 13/10/2026). O formato da Coleta continua o 2.
+- **Relatório aprovado em 19/10/2026**: o de 13/10/2026, com o resumo executivo (spec 007) e as edições do usuário no título da capa e nos títulos das figuras 02 e 06 ("esse relatório está aprovado").
+- `python -m src relatorio --usina sao_domingos --data-geracao "07/10/2026 08:53"`: código 0 (30 páginas; resumo executivo com 2).
+- `python -m src referencia --usina sao_domingos --data-geracao "07/10/2026 08:53" --aprovado-em "19/10/2026"`: código 0. Sugestão de commit: `docs: relatório de referência de sao_domingos (gerado em 07/10/2026 08:53, aprovado em 19/10/2026)`.
+- `python -m src comparar --todas --coleta`: código 0, "sao_domingos: nenhuma diferença". A partir daqui, os downloads ficam liberados (catálogo e outras usinas).
+
+### 19/10/2026 — decisão R31 do usuário e cópia de segurança
+
+- **Decisão R31** (pergunta ao usuário, resposta "Usar 'reservatorio'"): o conjunto cadastral Reservatórios entra no catálogo para ligar o CEG ao `cod_usina` e ao reservatório da EVT e dos dados hidrológicos. Conferido na São Domingos: CEG `UHE.PH.MS.028761-0.01` → `cod_resplanejamento` 153 e `res_id` PNUHSD. Registrada no research (R31), no data-model (seções 2.1, 2.2 e 4), nos contratos `cli-usinas.md` e `cli-perfil.md` e no rascunho `ajustes-specs/001-coleta-dados.md`.
+- `python -m src copia-seguranca --motivo antes_fase_A_catalogo`: código 0, 271 arquivos; excluída a `_backup_2026-10-09_antes_fase_A`. Ficam `_backup_2026-10-13_antes_resumo_executivo` e `_backup_2026-10-19_antes_fase_A_catalogo`.
+
+### 19/10/2026 — itens 5 e 6 (T044, T045 e T054 a T058)
+
+- **T054**: `src/comum/regras.py` com os pacotes e pastas de Composição, Capacidade e Reservatórios e as regras do catálogo (modalidades agregadas da geração, prefixo `CJU_`, tipos do ONS, datas sentinela); `src/comum/caminhos.py` com `ARQUIVOS_CATALOGO`; `src/coleta/registro.py` com as entradas `composicao`, `capacidade` e `reservatorio` (esta `so_catalogo`, nunca obtida pela Coleta da usina) e `descricao_geracao(perfil, nivel)`, com a geração do conjunto pelo id do conjunto e pelo estado (decisão R9). A UHE sem `[cobertura]` continua com os dez conjuntos de hoje. Testes do registro e dos dicionários ajustados (13 pacotes no registro).
+- **T044 e T055**: `tests/fixtures/brutos_catalogo.py` (um Brasil fictício em GO e MT) e `tests/coleta/test_catalogo_usinas.py` (29 testes, escritos antes do código); `src/coleta/catalogo_usinas.py`. Dois ajustes no desenho, registrados no data-model 2.2:
+  - coluna `potencias_unidades_mw` em `usinas.csv` (potência de cada unidade ativa, separada por `;`), necessária para o rascunho com unidades diferentes, que lê só o catálogo;
+  - nos indicadores, a cobertura é verificada no DISPF mensal mais recente; nas séries, os formatos que a Coleta já lê (EVT e indicadores em CSV, programação em Parquet).
+  - O catálogo grava pela persistência (`gravar_csv` e `gravar_bytes` sem `.bak`), numa pasta temporária conferida antes da troca (`test_conformidade.py`).
+- **T056**: comando `usinas` em `src/__main__.py` (`--estado`, `--tipo`, `--modalidade`, `--sem-portal`, `--forcar-download`).
+- **T057** (portão do item 5): suíte com 545 aprovados e 1 falha de conformidade (gravação direta do catálogo), corrigida; `comparar --todas --coleta`: código 0.
+- **T045 e T058**: `tests/coleta/test_perfil_rascunho.py` (19 testes, escritos antes do código) e `src/coleta/perfil_rascunho.py`, com o comando `perfil` (`--ceg`, `--slug`). O rascunho traz a origem de cada valor em comentário e os pendentes como linhas comentadas; completado pelo fiscal, passa na validação do perfil (testado com a UTE e a PCH fictícias).
+- **Portão do item 6** (T058): suíte com 564 aprovados; `python -m src comparar --todas --coleta`: código 0, sem diferença.
+
+### 19/10/2026 — item 7 (T046, T059 e T060)
+
+- **T046**: `tests/coleta/test_serie_referencia.py` (15 testes, escritos antes do código): escolha da série pelas linhas da fase A da decisão R6, varredura de todos os arquivos, período da primeira à última hora com valor (união com `["proprio", "conjunto"]`), `trechos.csv` com `mostrar` só quando muda o nível ou a composição, e a hidrelétrica com EVT no caminho de hoje.
+- **T059**: `src/coleta/serie_referencia.py` (escolha, extração, período, complemento horário, combinação e trechos). Na extração genérica, `colunas_texto` na descrição do conjunto (`src/coleta/registro.py` e `src/coleta/conjuntos.py`) mantém a modalidade por hora como texto; vazia nos conjuntos de hoje, cujos arquivos extraídos não mudam (decisão R8).
+- **T060**: `src/coleta/etapa.py` com a série de referência antes dos demais conjuntos nas usinas sem EVT e os arquivos `geracao_complemento.parquet`, `trechos.csv`, `composicao_conjunto.csv` e `capacidade_ficha.csv`; o resumo do `etapa.json` com `tipo`, `modalidade`, `serie_referencia`, `trechos`, `conjuntos_nao_aplicaveis` e `linhas_usina_sem_valor`. A Programação diária aceita vários códigos (`cod_exibicaousina` em cada linha; a soma por patamar fica com o Tratamento) e, fora das hidrelétricas, confere só pelo estado. Testes: `tests/coleta/test_coleta_sem_evt.py` (3, com a UTE e a PCH fictícias) e o de vários códigos em `tests/coleta/test_programacao.py`.
+- **Portão do item 7**: suíte com 583 aprovados; `python -m src comparar --todas --coleta`: código 0, "sao_domingos: nenhuma diferença".
+
+### 19/10/2026 — item 8 (T047 a T050 e T061 a T065)
+
+- **Testes escritos antes do código**, sobre a UTE e a PCH fictícias dos brutos do catálogo (`tests/fixtures/sem_evt.py`, que roda as etapas numa pasta temporária; `tests/coleta/test_coleta_sem_evt.py` passou a usá-la):
+  - **T047** `tests/tratamento/test_base_horaria.py` (9): colunas da base horária, nível `conjunto`, disponibilidade com a regra R7 sinalizada e mantida, horas ausentes listadas e não preenchidas, soma dos códigos da programação por patamar;
+  - **T048** `tests/conferencia/test_aplicabilidade.py` (8): catálogo com as seis conferências de hoje e G1 a G5, `nao_aplicaveis.csv` em todas as usinas (na UHE, com as seis de hoje em `conferencias.pkl`), e o relatório sem ler o arquivo;
+  - **T049** `tests/analises/test_comum_tipos.py` (10): indicadores anuais por ano e nível, fator de capacidade só em EOL e UFV no nível da usina, sazonalidade só com 12 meses distintos (omitida e listada abaixo disso), programação e disponibilidade só no mesmo nível, `ResultadosAnalise` com os campos novos e o caminho da UHE sem as seções comuns;
+  - **T050** `tests/relatorio/test_estrutura.py` (+6): a UHE com as 17 seções de hoje; a UTE e a PCH com as seções da decisão R14, numeração contínua; título, capa, legendas com o nível e notas por caminho.
+- **T061** `src/tratamento/base_horaria.py` e o caminho sem EVT em `src/tratamento/etapa.py`: período da série de referência (do `etapa.json` da Coleta), só os conjuntos coletados, `base_horaria.csv` com G1, D1 a D4 e R7 (R7 só com a geração e a disponibilidade da usina). Na programação com vários códigos, a soma por patamar só existe quando todos os códigos da extração têm valor (princípio V).
+- **T062** `src/conferencia/aplicabilidade.py` (catálogo das conferências, com tipos, conjuntos e condições) e `src/conferencia/etapa.py`: nas hidrelétricas com EVT, as seis de hoje como hoje; nas demais, só as aplicáveis (por ora, cadastro e, com os indicadores, DISPF × horas e TEIFa e TEIP). `nao_aplicaveis.csv` para todas as usinas, com o motivo.
+- **T063** Análises: `src/analises/resultados.py` com `tipo`, `modalidade`, `niveis`, `trechos`, `comum`, `termica`, `renovavel`, `conjunto`, `indicadores_carteira` e `omitidos`; `src/analises/comum_tipos.py` (seções comuns e omissões); `src/analises/etapa.py` escolhe o caminho pela série de referência; `src/analises/constatacoes.py` com as constatações das usinas sem EVT ("do conjunto <nome>"). O construtor dos indicadores do ONS aceita perfil sem IP e TEIF de referência.
+- **T064** `src/relatorio/estrutura.py`: `Secao` com `caminhos`, `tipos`, título por tipo, `legenda` e `periodo_minimo_meses`; as seções do caminho sem EVT numa lista única com as de hoje.
+- **T065** `src/relatorio/comum.py` (capa, tabelas, legendas, notas e os blocos de cada seção), `src/relatorio/figuras_comum.py` (cinco figuras em seaborn), e os dois caminhos no PDF, no Markdown, na planilha, nas figuras, na tabela de parâmetros e em `src/relatorio/fontes.py` (legenda com o nível: "conjunto de usinas, id ONS CJU_..."; conferências sem base fora da legenda). Nas hidrelétricas com EVT, nada muda.
+- **Ajustes no desenho**, registrados no data-model:
+  - `VERSAO_FORMATO` das Análises 3, porque o 2 já foi usado pela decisão R22 no item 4; Tratamento e Conferência passam ao 2 (`src/pipeline.py`);
+  - título das usinas sem EVT igual ao da capa da UHE aprovada em 19/10/2026 ("<nome> — Análise do desempenho operacional"), que já não cita a EVT;
+  - seções do caminho sem EVT com chave própria (sufixo `_comum` ou nome novo), para que o PDF e o Markdown da UHE não mudem de código.
+- **Pendências registradas**:
+  - a conclusão das usinas sem EVT sai com uma frase provisória ("Sem itens: ..."), até o catálogo de regras do item 9 (T066);
+  - o resumo executivo das usinas sem EVT não é gerado (aviso no log; `resumo_executivo: null` no `etapa.json`), até a US3 da spec 007 (T027 a T030);
+  - nas hidrelétricas sem EVT, a seção de afluência e vertimento e a conferência da geração entre fontes ficam omitidas, com o motivo nas notas (fases B a D).
+- **Portão do item 8** (T065): suíte com 636 aprovados; `python -m src comparar --todas --coleta`: código 0, "sao_domingos: nenhuma diferença".
+
+### 19/10/2026 — item 9 (T051 e T066)
+
+- **T051** `tests/analises/test_conclusao.py` (+5, escritos antes do código): o catálogo declara os campos de cada regra (limiares que existem em `src/comum/regras.py`, sem período mínimo novo em C1 a C11); nas hidrelétricas com EVT, itens só nas listas declaradas e na ordem de hoje, sem regra omitida; a UTE fictícia com as regras comuns sobre a base horária (C8 com 720 h da regra R7; C2 e C5 omitidas, com o motivo); a PCH em conjunto sem itens, com as regras não avaliadas por falta de base no nível da usina e a frase que explica; a nota da conclusão por caminho.
+- **T066** `src/analises/conclusao.py`: `RegraConclusao` (código, tipos, listas, função, seções, limiares, nível exigido, período mínimo e, nas regras comuns, a função sobre a base comum, as bases da usina de que precisa, a exigência do IP e da TEIF de referência e o texto da nota) e o catálogo `CATALOGO_CONCLUSAO` com C1 a C11, sem mudar as funções de hoje (só a C2 aceita perfil sem TEIF de referência, avaliando então só a limitação recorrente; a C10 recebe os eventos por parâmetro). Nas usinas sem EVT: C2, C5, C8 e C10 sobre a base horária comum, com as seções do caminho sem EVT; as não avaliadas vão para `omitidos` (tipo `regra`), com o motivo; `frase_sem_itens` explica a conclusão vazia (na PCH em conjunto, a falta de base no nível da usina, decisão R20).
+- **Relatório**: a seção "Conclusão" passa a ser a mesma nos dois caminhos (`caminhos=("evt", "sem_evt")`), com a frase de hoje nas hidrelétricas com EVT; `nota_conclusao_catalogo` em `src/relatorio/conteudo.py` gera a nota das usinas sem EVT a partir do catálogo, e `nota_conclusao()` continua como está. A frase provisória do item 8 saiu.
+- **Portão do item 9**: suíte com 641 aprovados; `python -m src comparar --todas --coleta`: código 0, "sao_domingos: nenhuma diferença".
+
+### 19/10/2026 — item 10 (T052, T053 e T067)
+
+- **T052**: `tests/fixtures/usinas_ficticias/{uhe,pch,cgh,ute,utn,eol,ufv}/perfil.toml` (a UHE é a usina fictícia de hoje, com outro slug) e `gerar_brutos_tipos` em `tests/fixtures/brutos_ficticios.py`, que acrescenta aos brutos da UHE fictícia: a geração das seis usinas sem EVT e do conjunto (a PCH com as linhas próprias sem valor), a disponibilidade da UTE (com 140 h acima da geração declarada e uma parada de 72 h) e da UTN, os indicadores e taxas da UTN, três dias de Programação diária (o conjunto por dois códigos e a UTE), o cadastro, a Composição (com um membro que entra em 02/2024) e a Capacidade. A UFV tem série curta (a partir de 10/02/2024). Valores inventados.
+- **T053**: `tests/integracao/test_usinas_ficticias.py` (25): as sete usinas com `completo --sem-portal` e código 0, as seções comuns nas usinas sem EVT, a UHE no caminho de hoje (16 seções e o resumo executivo), nenhuma saída com o identificador de outra usina, os trechos e as linhas sem valor da PCH, a programação e a regra C8 da UTE, os indicadores da UTN e a série curta da UFV. `tests/comum/test_literais.py` com os identificadores do ONS e os CEGs das usinas piloto.
+- **T067**, o que faltava nos módulos da fase A, achado ao rodar as sete:
+  - perfis fictícios: o contrato do perfil exige o código de programação em todo tipo, mesmo com a programação `ausente` (CGH, EOL e UFV corrigidas no fixture; a validação não mudou);
+  - título por tipo da série temporal ("Série temporal da geração" nas eólicas e solares, que não têm a disponibilidade no ONS), com `titulo_da_secao` também na aba CONCLUSAO;
+  - eixo do tempo das figuras das usinas sem EVT: marcas por ano a partir de 3 anos, por mês abaixo disso e por dia nas séries diárias de até dois meses; as figuras mensais nunca por dia.
+  - Os testes da T011 (invariantes da UHE) não mudaram.
+- **Portão do item 10** (T067): suíte com 676 aprovados; `python -m src comparar --todas --coleta`: código 0, "sao_domingos: nenhuma diferença".
+
+### 19/10/2026 — validação real da fase A (T068 a T070)
+
+- **T068** `python -m src usinas --estado MS`: código 0, em 112 s, com o portal. Cadastro de 6.024 linhas (Modalidade das usinas publicada em 18/10/2026 22:04); **171 usinas em MS**: UHE 5, PCH 16, CGH 9, UTE 33, UFV 86 e 22 linhas de conjunto, a contagem prevista. `data/catalogo/` com `catalogo.json`, `usinas.csv` (todas as linhas do cadastro), `conjuntos.csv`, `cobertura.csv`, `planejamento.csv`, `programacao.csv` e `agregados.csv`. De novo com `--sem-portal`: código 0, mesmas 171 usinas.
+  - A William Arjona (UTE.GN.MS.027075-0.01, id ONS MSUTWI, TIPO I, 177,1 MW) aparece com cobertura própria em indicadores, programação, disponibilidade e geração; a São Domingos, com o perfil `sao_domingos`.
+- **T069** `python -m src perfil --ceg UTE.GN.MS.027075-0.01 --slug william_arjona`: código 0, em 1,1 s (meta de 1 minuto, SC-003). Rascunho com 18 campos do ONS e 4 pendentes (fonte dos parâmetros, garantia física, IP e TEIF de referência, estes três opcionais): cinco unidades ativas (39,16; 39,16; 33,0; 33,1 e 32,696 MW), combustível GÁS, início da operação em 2021 (primeira unidade ativa em 10/07/2021) e o código de programação MSUTWI. Segunda execução: código 0 ("sem diferença em relação ao catálogo"), com o arquivo igual byte a byte (SHA-256 `4a6cdc87…432c`).
+- **T070** recusas: `python -m src coleta --usina william_arjona --sem-portal` com o rascunho dá código 4, com a situação e os quatro pendentes listados; `python -m src perfil --ceg CGH.PH.MS.030451-4.01` (CGH Bela Miragem, TIPO III, só agregado) dá código 2, com a mensagem que remete ao panorama da carteira, sem criar pasta em `usinas/`.
+- **`comparar --todas --coleta` depois do catálogo** (T068): código 6, "sao_domingos: 2 diferenças", só na Coleta refeita: `cadastro_ficha.csv` (1 linha) e `auditoria_cadastro.csv` (1 arquivo), mais `datas_obtencao.csv` e `dicionarios.csv` (informação). Causa: o catálogo baixou a Modalidade das usinas republicada pelo ONS em 18/10/2026. A ficha da São Domingos tem o mesmo conteúdo; mudaram só `data_consulta_utc` (05/10 → 19/10/2026), a data de publicação e as linhas lidas do cadastro nacional (6.017 → 6.024). O relatório de referência não muda (usa a Coleta congelada). Levado ao usuário com a T071, para decidir entre aceitar a diferença como republicação ou refazer o congelamento.

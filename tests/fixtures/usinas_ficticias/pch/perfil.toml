@@ -1,0 +1,34 @@
+# Usina fictícia do tipo PCH (spec 006, decisão R23), só para testes: em conjunto de usinas, sem série própria (o ONS
+# publica as linhas da usina sem valor), com a composição do conjunto mudando no período e a programação por dois
+# códigos. Valores inventados; identificadores que não existem no ONS.
+
+[usina]
+slug = "pch_ficticia"
+nome = "PCH Fictícia"
+nome_curto = "Fictícia"
+estado = "GO"
+inicio_operacao_comercial = 2016
+tipo = "PCH"
+modalidade = "TIPO II-C"
+
+[identificacao]
+ceg = "PCH.PH.GO.000101-0.01"
+id_ons = "GOPCFI"
+id_conjunto = "CJU_GOCJFI"
+codigos_programacao = ["GOCJFI-1", "GOCJFI-2"]
+
+[cobertura]
+evt = "ausente"
+indicadores = "ausente"
+programacao = "conjunto"
+disponibilidade = "ausente"
+hidrologia = "ausente"
+geracao = "conjunto"
+
+[parametros]
+potencia_instalada_mw = 16.0
+unidades_geradoras = 2
+potencia_unitaria_mw = 8.0
+
+[parametros.fontes]
+geral = "Ficha técnica fictícia da PCH, Tabela 1"

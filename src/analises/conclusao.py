@@ -1,15 +1,24 @@
-"""Conclusão do relatório: regras C1 a C11, que apontam indícios sem afirmar causa (spec das Análises, FR-045)."""
+"""Conclusão do relatório: regras C1 a C11, que apontam indícios sem afirmar causa (spec das Análises, FR-045).
+
+As regras formam um catálogo declarado (spec 006, decisão R16): cada uma diz os tipos de usina, as listas em que pode
+gerar itens, o nível exigido (só dado da usina), os limiares, o período mínimo e as seções de origem. Nas hidrelétricas
+com EVT, C1 a C11 continuam como antes, com a mesma ordem, texto, limiares e listas (decisão R29). Nas usinas sem EVT,
+as regras comuns (C2, C5, C8 e C10) são avaliadas sobre a base horária comum, só com dados da usina; o que não é
+avaliado vai para ``omitidos``, com o motivo.
+"""
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import pandas as pd
 
 from src.analises.comum import _pct, _rotulo_ano, _rotulo_janela
 from src.analises.hidrologia import ATE_UMA_UNIDADE, entre_unidades
 from src.analises.indicadores import DESCRICAO_PARCELA
-from src.analises.resultados import ResultadosAnalise
+from src.analises.resultados import ResultadosAnalise, sem_evt
+from src.coleta.registro import HIDRELETRICAS, TERMICAS
 from src.comum.formatacao import fmt_data, fmt_data_hora, fmt_int, fmt_lista, fmt_mes_ano, fmt_num, fmt_pct, plural
 from src.comum.perfil import perfil_ativo
 from src.comum.regras import (
@@ -106,7 +115,8 @@ def _regra_c2(res: ResultadosAnalise) -> List[Dict[str, Any]]:
     if horas is None or not len(horas):
         return []
     t = o.get("taxa_ultima") or {}
-    teifa_acima = bool(t) and t["teifa_pct"] > perfil_ativo().parametros.teif_referencia * 100.0
+    teif = perfil_ativo().parametros.teif_referencia  # sem a TEIF de referência, só a limitação recorrente (R16)
+    teifa_acima = bool(t) and teif is not None and t["teifa_pct"] > teif * 100.0
     participacao: Dict[int, float] = {}
     parcela_dominante: Dict[int, str] = {}
     dec = o.get("decomposicao")
@@ -309,12 +319,15 @@ def _regra_c9(res: ResultadosAnalise) -> List[Dict[str, Any]]:
     return [_item("pontos_atencao", "C9", _maiuscula("; ".join(partes)), ["indicadores_anuais"])]
 
 
-def _regra_c10(res: ResultadosAnalise) -> List[Dict[str, Any]]:
-    """Indisponibilidade longa: total ≥ 30 dias, ou programada ≥ 20 % numa unidade num ano completo."""
+def _regra_c10(res: ResultadosAnalise, eventos: Optional[pd.DataFrame] = None) -> List[Dict[str, Any]]:
+    """Indisponibilidade longa: total ≥ 30 dias, ou programada ≥ 20 % numa unidade num ano completo.
+
+    ``eventos``: os de indisponibilidade total; sem eles, os da base de EVT (nas usinas sem EVT, vêm da base comum).
+    """
     partes: List[str] = []
     secoes: List[str] = []
     anos: set = set()
-    eventos = res.eventos_indisponibilidade_total
+    eventos = res.eventos_indisponibilidade_total if eventos is None else eventos
     if len(eventos):
         longos = eventos[eventos["duracao_h"] >= LIMIAR_CONCLUSAO_INDISPONIBILIDADE_DIAS * 24]
         if len(longos):
@@ -360,17 +373,219 @@ def _regra_c11(res: ResultadosAnalise) -> List[Dict[str, Any]]:
     return [_item("verificar_campo", "C11", _maiuscula("; ".join(partes)), secoes)]
 
 
-REGRAS_CONCLUSAO = (_regra_c1, _regra_c2, _regra_c3, _regra_c4, _regra_c5, _regra_c6, _regra_c7, _regra_c8, _regra_c9,
-                    _regra_c10, _regra_c11)
+# ---------------------------------------------------------------------------
+# Regras comuns sobre a base horária comum (usinas sem EVT; spec 006, decisões R16 e R30)
+# ---------------------------------------------------------------------------
+
+# Seção de origem no caminho sem EVT (decisão R14), para os itens das regras comuns
+SECOES_SEM_EVT: Dict[str, str] = {
+    "indicadores_ons": "indicadores_ons_comum", "qualidade": "qualidade_comum",
+    "disponibilidade_geracao": "disponibilidade_geracao_comum", "indicadores_anuais": "anuais_comum",
+}
+
+
+def _referencias() -> Optional[Tuple[float, float]]:
+    p = perfil_ativo().parametros
+    return None if p.ip_referencia is None or p.teif_referencia is None else (p.ip_referencia, p.teif_referencia)
+
+
+def _regra_c5_comum(res: ResultadosAnalise) -> List[Dict[str, Any]]:
+    """C5 sobre a base comum: disponibilidade operacional da usina e taxas do ONS contra as referências."""
+    ip, teif = _referencias()
+    referencia = (1.0 - ip) * (1.0 - teif) * 100.0
+    partes: List[str] = []
+    secoes: List[str] = []
+    d = (res.comum.get("disponibilidade") or {}).get("resumo")
+    if d and d["disponibilidade_relativa_pct"] < referencia:
+        partes.append(f"disponibilidade operacional média de {fmt_pct(d['disponibilidade_relativa_pct'])}, "
+                      f"{fmt_num(referencia - d['disponibilidade_relativa_pct'], 1)} p.p. abaixo da referência da "
+                      f"garantia física, de {fmt_pct(referencia)}")
+        secoes.append("disponibilidade_geracao")
+    o = res.ons or {}
+    p = o.get("disp_periodo")
+    if p and p["dispf_pct"] < referencia:
+        partes.append(f"DISPF médio de {fmt_pct(p['dispf_pct'])}, abaixo da referência de {fmt_pct(referencia)}")
+    t = o.get("taxa_ultima")
+    if t and t["teifa_pct"] > teif * 100.0:
+        partes.append(f"TEIFa de {fmt_pct(t['teifa_pct'], 2)} em {fmt_mes_ano(t['mes'])}, acima da TEIF de referência "
+                      f"de {fmt_pct(teif * 100, 3)}")
+    if t and t["teip_pct"] > ip * 100.0:
+        partes.append(f"TEIP de {fmt_pct(t['teip_pct'], 2)} em {fmt_mes_ano(t['mes'])}, acima do IP de referência "
+                      f"de {fmt_pct(ip * 100, 3)}")
+    if not partes:
+        return []
+    if len(partes) > len(secoes):
+        secoes.append("indicadores_ons")
+    return [_item("pontos_atencao", "C5", _maiuscula("; ".join(partes)), secoes)]
+
+
+def _horas_r7_comum(res: ResultadosAnalise) -> int:
+    s = (res.comum.get("qualidade") or {}).get("sinalizacoes")
+    if s is None or not len(s):
+        return 0
+    return int(s.loc[s["codigo"] == "R7", "horas"].sum())
+
+
+def _regra_c8_comum(res: ResultadosAnalise) -> List[Dict[str, Any]]:
+    """C8 sobre a base comum: geração da usina acima da disponibilidade declarada (R7); sem a C7, a pergunta ao
+    agente fica nesta regra."""
+    horas = _horas_r7_comum(res)
+    if horas < LIMIAR_CONCLUSAO_R7_HORAS:
+        return []
+    return [
+        _item("possiveis_problemas", "C8", f"Geração acima da disponibilidade declarada em {fmt_int(horas)} h, "
+              "segundo a regra R7", ["qualidade"]),
+        _item("confirmar_agente", "C8", "Critério e horário da declaração de disponibilidade ao ONS, dado que a geração "
+              f"superou a disponibilidade declarada em {fmt_int(horas)} h", ["qualidade"]),
+    ]
+
+
+def _regra_c10_comum(res: ResultadosAnalise) -> List[Dict[str, Any]]:
+    """C10 sobre a base comum: os eventos de indisponibilidade total da usina; a parte do ONS como na C10."""
+    eventos = (res.comum.get("disponibilidade") or {}).get("eventos_indisponibilidade_total")
+    return _regra_c10(res, eventos if eventos is not None else pd.DataFrame())
+
+
+# ---------------------------------------------------------------------------
+# Catálogo
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class RegraConclusao:
+    """Regra do catálogo da conclusão (data-model 6.5; decisão R16).
+
+    ``funcao`` é a regra de hoje, sobre a base de EVT; ``funcao_comum``, quando há, a mesma regra sobre a base horária
+    comum das usinas sem EVT, avaliada só com alguma das ``bases_comuns`` no nível da usina (e com o IP e a TEIF de
+    referência no perfil, quando ``exige_referencias``). ``descricao`` é o texto da nota da conclusão das usinas sem
+    EVT, com os limiares.
+    """
+
+    codigo: str
+    tipos: Tuple[str, ...]
+    listas: Tuple[str, ...]
+    funcao: Callable[[ResultadosAnalise], List[Dict[str, Any]]]
+    secoes: Tuple[str, ...]
+    limiares: Tuple[str, ...] = ()
+    nivel_exigido: str = "usina"
+    periodo_minimo_meses: Optional[int] = None
+    funcao_comum: Optional[Callable[[ResultadosAnalise], List[Dict[str, Any]]]] = None
+    bases_comuns: Tuple[str, ...] = ()
+    exige_referencias: bool = False
+    descricao: Optional[Callable[[], str]] = None
+
+
+_COM_DISPONIBILIDADE = HIDRELETRICAS + TERMICAS
+
+CATALOGO_CONCLUSAO: Tuple[RegraConclusao, ...] = (
+    RegraConclusao("C1", HIDRELETRICAS, ("pontos_atencao", "confirmar_agente", "verificar_campo"), _regra_c1,
+                   ("eventos", "programacao"), ("LIMIAR_CONCLUSAO_EVT_PARADA_PCT", "LIMIAR_CONCLUSAO_PROGRAMACAO_ZERO_PCT",
+                                                "LIMIAR_GERACAO_PARADA_MW")),
+    RegraConclusao("C2", _COM_DISPONIBILIDADE, ("possiveis_problemas", "confirmar_agente", "verificar_campo"), _regra_c2,
+                   ("indicadores_ons",), ("LIMIAR_CONCLUSAO_PARTICIPACAO_TEIFA", "LIMIAR_CONCLUSAO_MESES_LIMITACAO_PCT"),
+                   funcao_comum=_regra_c2, bases_comuns=("indicadores",),
+                   descricao=lambda: (f"C2 unidade com limitação forçada de potência em ≥ "
+                                      f"{fmt_pct(LIMIAR_CONCLUSAO_MESES_LIMITACAO_PCT, 0)} dos meses ou, com a TEIF de "
+                                      "referência no perfil, com ≥ 2/3 da TEIFa acima dela")),
+    RegraConclusao("C3", HIDRELETRICAS, ("pontos_atencao",), _regra_c3, ("hidrologia",),
+                   ("LIMIAR_CONCLUSAO_AFLUENCIA_ENGOLIMENTO_PCT",)),
+    RegraConclusao("C4", HIDRELETRICAS, ("pontos_atencao",), _regra_c4, ("perfil_horario",), ("RAZAO_DIURNA_RELEVANTE",)),
+    RegraConclusao("C5", _COM_DISPONIBILIDADE, ("pontos_atencao",), _regra_c5, ("indicadores_anuais", "indicadores_ons"),
+                   funcao_comum=_regra_c5_comum, bases_comuns=("disponibilidade", "indicadores"),
+                   exige_referencias=True,
+                   descricao=lambda: "C5 disponibilidade operacional, DISPF ou taxas piores que as referências do perfil"),
+    RegraConclusao("C6", HIDRELETRICAS, ("possiveis_problemas", "confirmar_agente", "verificar_campo"), _regra_c6,
+                   ("programacao",), ("LIMIAR_DESVIO_PROGRAMACAO_MW",)),
+    RegraConclusao("C7", HIDRELETRICAS, ("possiveis_problemas", "confirmar_agente"), _regra_c7,
+                   ("disponibilidade_sincronizada", "indicadores_ons", "qualidade"),
+                   ("LIMIAR_CONCLUSAO_DIFERENCA_RESERVA_GWH", "LIMIAR_CONCLUSAO_R7_HORAS")),
+    RegraConclusao("C8", _COM_DISPONIBILIDADE, ("possiveis_problemas", "confirmar_agente"), _regra_c8, ("qualidade",),
+                   ("LIMIAR_CONCLUSAO_R7_HORAS",), funcao_comum=_regra_c8_comum, bases_comuns=("disponibilidade",),
+                   descricao=lambda: (f"C8 geração acima da disponibilidade declarada em ≥ "
+                                      f"{fmt_int(LIMIAR_CONCLUSAO_R7_HORAS)} h")),
+    RegraConclusao("C9", HIDRELETRICAS, ("pontos_atencao",), _regra_c9, ("indicadores_anuais",)),
+    RegraConclusao("C10", _COM_DISPONIBILIDADE, ("confirmar_agente", "verificar_campo"), _regra_c10,
+                   ("disponibilidade_geracao", "indicadores_ons"),
+                   ("LIMIAR_CONCLUSAO_INDISPONIBILIDADE_DIAS", "LIMIAR_CONCLUSAO_PROGRAMADA_UG_PCT"),
+                   funcao_comum=_regra_c10_comum, bases_comuns=("disponibilidade", "indicadores"),
+                   descricao=lambda: (f"C10 indisponibilidade total ≥ {fmt_int(LIMIAR_CONCLUSAO_INDISPONIBILIDADE_DIAS)} "
+                                      f"dias, ou programada ≥ {fmt_pct(LIMIAR_CONCLUSAO_PROGRAMADA_UG_PCT, 0)} numa "
+                                      "unidade num ano completo")),
+    RegraConclusao("C11", HIDRELETRICAS, ("verificar_campo",), _regra_c11, ("hidrologia", "qualidade"),
+                   ("LIMIAR_CONCLUSAO_R9_HORAS",)),
+)
+# As funções de hoje, na ordem do catálogo (C1 a C11)
+REGRAS_CONCLUSAO = tuple(r.funcao for r in CATALOGO_CONCLUSAO)
+
+NOMES_BASES = {"disponibilidade": "a Disponibilidade por usina", "indicadores": "os Indicadores de desempenho do ONS"}
+
+
+def _bases_da_usina(res: ResultadosAnalise) -> Dict[str, bool]:
+    """Bases das regras comuns presentes no nível da usina (a disponibilidade e os indicadores são sempre da usina)."""
+    return {"disponibilidade": bool(res.comum.get("disponibilidade")), "indicadores": bool(res.ons)}
+
+
+def _motivo(regra: RegraConclusao, res: ResultadosAnalise) -> Optional[str]:
+    """Motivo pelo qual a regra não é avaliada na usina sem EVT; None quando é avaliada."""
+    if regra.funcao_comum is None:
+        return "regra da base de EVT, que a usina não tem"
+    presentes = _bases_da_usina(res)
+    if not any(presentes[b] for b in regra.bases_comuns):
+        nomes = [NOMES_BASES[b] for b in regra.bases_comuns]
+        return f"sem {' nem '.join(nomes)} no nível da usina"
+    if regra.exige_referencias and _referencias() is None:
+        return "sem IP e TEIF de referência no perfil da usina"
+    return None
+
+
+def regras_do_tipo(res: ResultadosAnalise) -> List[RegraConclusao]:
+    return [r for r in CATALOGO_CONCLUSAO if res.tipo in r.tipos]
+
+
+def regras_omitidas(res: ResultadosAnalise) -> List[Dict[str, str]]:
+    """Regras do tipo não avaliadas na usina sem EVT, com o motivo (``omitidos``); vazia nas hidrelétricas com EVT."""
+    if not sem_evt(res):
+        return []
+    return [{"item": r.codigo, "tipo": "regra", "motivo": motivo} for r in regras_do_tipo(res)
+            if (motivo := _motivo(r, res)) is not None]
+
+
+def _avaliar(res: ResultadosAnalise) -> List[Dict[str, Any]]:
+    if not sem_evt(res):
+        return [item for regra in REGRAS_CONCLUSAO for item in regra(res)]
+    itens = []
+    for regra in regras_do_tipo(res):
+        if _motivo(regra, res) is None:
+            for item in regra.funcao_comum(res):
+                itens.append({**item, "secoes": [SECOES_SEM_EVT.get(s, s) for s in item["secoes"]]})
+    return itens
+
+
+def frase_sem_itens(res: ResultadosAnalise) -> str:
+    """Frase da conclusão sem itens: a de hoje nas hidrelétricas com EVT; nas usinas sem EVT, o motivo (R16, R20)."""
+    if not sem_evt(res):
+        return FRASE_CONCLUSAO_VAZIA
+    regras = regras_do_tipo(res)
+    if not regras:
+        return f"Sem itens: o catálogo da conclusão ainda não tem regras para usinas do tipo {res.tipo}."
+    if len(regras_omitidas(res)) < len(regras):
+        return FRASE_CONCLUSAO_VAZIA
+    g = res.niveis.get("geracao", {})
+    if "conjunto" in str(g.get("nivel", "")):
+        nome = g.get("nome") or g.get("identificador_conjunto") or ""
+        return ("Sem itens: as regras da conclusão usam só dados do nível da usina, e o ONS publica para esta usina só "
+                f"os números do conjunto {nome}; os motivos estão nas notas metodológicas.")
+    return (f"Sem itens: nenhuma regra da conclusão do tipo {res.tipo} tem base para a usina; os motivos estão nas "
+            "notas metodológicas.")
 
 
 def montar_conclusao(res: ResultadosAnalise) -> List[Dict[str, Any]]:
-    """Itens da conclusão, gerados pelas regras C1 a C11 a partir dos resultados (spec das Análises, US4).
+    """Itens da conclusão, gerados pelas regras do catálogo a partir dos resultados (spec das Análises, US4).
 
     Cada item tem lista, ordem (na ordem do catálogo, dentro da lista), regra, texto de uma frase sem ponto final e as
     chaves das seções de origem. Uma regra cujas condições ou bases faltam não gera item.
     """
-    itens = [item for regra in REGRAS_CONCLUSAO for item in regra(res)]
+    itens = _avaliar(res)
     ordem_lista = {chave: i for i, (chave, _) in enumerate(LISTAS_CONCLUSAO)}
     itens.sort(key=lambda i: (ordem_lista[i["lista"]], int(i["regra"][1:])))
     contagem: Dict[str, int] = {}

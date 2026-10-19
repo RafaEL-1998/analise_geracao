@@ -64,7 +64,7 @@ Cada decisão traz a decisão, o motivo e as alternativas rejeitadas. Os número
 
 - **Decisão**:
   - O comando `python -m src usinas` é da Coleta (`src/coleta/catalogo_usinas.py`). Sem `--sem-portal`, sincroniza com o portal, com o mesmo catálogo CKAN, cache e versões de hoje:
-    - os conjuntos cadastrais: Modalidade das usinas, Composição dos conjuntos e Capacidade de geração;
+    - os conjuntos cadastrais: Modalidade das usinas, Composição dos conjuntos, Capacidade de geração e Reservatórios (R31);
     - o arquivo mais recente de cada conjunto de série usado na cobertura (R3);
     - todos os arquivos do despacho térmico, para os códigos de planejamento (a partir da fase B);
     - os arquivos de geração dos últimos 12 meses completos, para o panorama dos agregados (R21);
@@ -690,3 +690,15 @@ Cada decisão traz a decisão, o motivo e as alternativas rejeitadas. Os número
   - **Análises**: os campos de EVT de `ResultadosAnalise` ficam vazios nas usinas sem EVT. O caminho das hidrelétricas com EVT não muda.
 - **Motivo**: B4. As Análises de hoje partem da base de EVT, que os outros tipos não têm.
 - **Alternativas rejeitadas**: simular uma base de EVT com colunas vazias. Esconderia o tipo da usina nas Análises e arriscaria textos de UHE em outros tipos.
+
+### R31 — Reservatórios: o CEG das séries identificadas pelo código da usina (decisão do usuário, 19/10/2026)
+
+- **Problema**: a Energia Vertida Turbinável e os Dados hidrológicos horários identificam a usina só pelo `cod_usina` (código nos modelos de planejamento) e pelo reservatório, sem CEG nem id ONS. Sem uma ligação ao CEG, o catálogo não verifica a cobertura desses dois conjuntos (R3), e o rascunho do perfil não traz os códigos da hidrelétrica (R5).
+- **Decisão**:
+  - O conjunto cadastral Reservatórios (`reservatorio`, dados abertos do ONS) entra como o quarto cadastral do catálogo (R2). Ele traz, por reservatório, o CEG, o `cod_resplanejamento` (o mesmo `cod_usina` da EVT e dos dados hidrológicos), o `res_id` (o `id_reservatorio` dos dados hidrológicos) e o nome do reservatório.
+  - **Cobertura** (R3): na EVT, pelo `cod_usina`; nos dados hidrológicos, pelo `cod_usina`, no arquivo mais recente. Usina sem linha nos Reservatórios fica `ausente` nesses dois conjuntos.
+  - **Rascunho** (R5): nas hidrelétricas com linha nos Reservatórios, o perfil já traz `cod_usina`, `nome_ons` (o nome do reservatório, sem acento, em maiúsculas) e `id_reservatorio`, cada um com a fonte e a conferir.
+  - O registro ganha a entrada `reservatorio` (cadastral, estática, hidrelétricas), sempre obtida pelo catálogo; a Coleta da usina não o obtém.
+- **Conferido em 19/10/2026**: UHE São Domingos, CEG `UHE.PH.MS.028761-0.01` → `cod_resplanejamento` 153 e `res_id` PNUHSD, os mesmos do perfil aprovado.
+- **Motivo**: princípio IV (identificação pelos códigos, nunca pelo nome) e FR-003 (cobertura de cada conjunto no catálogo).
+- **Alternativa rejeitada**: deixar EVT e hidrologia `ausente` no catálogo e os códigos a cargo do fiscal. O catálogo diria que nenhuma hidrelétrica tem EVT.

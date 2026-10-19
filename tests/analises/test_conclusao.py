@@ -280,3 +280,109 @@ def test_conclusao_nao_repete_constatacoes(df_base: pd.DataFrame) -> None:
 def test_analisar_preenche_a_conclusao(df_base: pd.DataFrame) -> None:
     res = analisar(df_base, {})
     assert isinstance(res.conclusao, list) and res.conclusao == montar_conclusao(res)
+
+
+# ---------------------------------------------------------------------------
+# Catálogo da conclusão por tipo (spec 006, decisão R16; data-model 6.5; tarefas T051 e T066)
+# ---------------------------------------------------------------------------
+
+REGRAS_COMUNS = {"C2", "C5", "C8", "C10"}
+
+
+def test_catalogo_declara_os_campos_de_cada_regra() -> None:
+    from src.analises.conclusao import CATALOGO_CONCLUSAO
+    from src.comum import regras
+
+    assert [r.codigo for r in CATALOGO_CONCLUSAO] == [f"C{i}" for i in range(1, 12)]
+    for r in CATALOGO_CONCLUSAO:
+        assert r.tipos and set(r.listas) <= set(LISTAS) and r.nivel_exigido == "usina", r.codigo
+        assert callable(r.funcao) and r.secoes, r.codigo
+        assert all(hasattr(regras, nome) for nome in r.limiares), r.codigo
+        assert r.periodo_minimo_meses is None, r.codigo  # C1 a C11 sem período mínimo novo (decisões R17 e R29)
+    assert {r.codigo for r in CATALOGO_CONCLUSAO if r.funcao_comum is not None} == REGRAS_COMUNS
+
+
+def test_itens_so_nas_listas_declaradas_e_na_ordem_de_hoje(df_base: pd.DataFrame) -> None:
+    from src.analises.conclusao import CATALOGO_CONCLUSAO, regras_omitidas
+
+    res = _tudo(df_base)
+    listas = {r.codigo: set(r.listas) for r in CATALOGO_CONCLUSAO}
+    itens = montar_conclusao(res)
+    assert all(i["lista"] in listas[i["regra"]] for i in itens)
+    ordem = [(LISTAS.index(i["lista"]), int(i["regra"][1:])) for i in itens]
+    assert ordem == sorted(ordem)
+    assert regras_omitidas(res) == []  # nas hidrelétricas com EVT, as onze regras são avaliadas
+
+
+def _disponibilidade_do_mes_todo(raw) -> None:
+    """Disponibilidade da UTE fictícia em todo 09/2026: 50 MW contra 100 MW de geração (regra R7 em 720 h)."""
+    from tests.fixtures import brutos_catalogo as bc
+
+    horas = pd.date_range("2026-09-01", "2026-09-30 23:00", freq="h")
+    pd.DataFrame({"id_estado": "GO", "id_ons": bc.UTE["id_ons"], "ceg": bc.UTE["ceg"], "din_instante": horas,
+                  "val_dispoperacional": 50.0, "val_dispsincronizada": 40.0}).to_parquet(
+        raw / "disponibilidade_usina" / "DISPONIBILIDADE_USINA_2026_09.parquet", index=False)
+
+
+@pytest.fixture(scope="module")
+def sem_evt(tmp_path_factory):
+    from src.analises.resultados import carregar_resultados
+    from src.comum.perfil import carregar_perfil
+    from tests.fixtures.sem_evt import projeto_sem_evt
+
+    raiz = tmp_path_factory.mktemp("projeto")
+    usinas = projeto_sem_evt(raiz, ["coleta", "tratamento", "conferencia", "analises"],
+                             preparar=_disponibilidade_do_mes_todo)
+    return {slug: (carregar_resultados(u["pasta"] / "analises" / "resultados.pkl"), carregar_perfil(slug, raiz))
+            for slug, u in usinas.items()}
+
+
+def _ativar(perfil) -> None:
+    from src.comum.perfil import definir_perfil_ativo
+
+    definir_perfil_ativo(perfil)  # a fixture automática volta à São Domingos no fim do teste
+
+
+def test_termica_com_as_regras_comuns_na_base_horaria(sem_evt) -> None:
+    from src.analises.conclusao import regras_omitidas
+
+    res, perfil = sem_evt["ute_beta"]
+    _ativar(perfil)
+    c8 = {i["lista"]: i for i in res.conclusao if i["regra"] == "C8"}
+    assert set(c8) == {"possiveis_problemas", "confirmar_agente"}  # sem a C7, a pergunta ao agente fica na C8
+    assert "720 h" in c8["possiveis_problemas"]["texto"] and c8["possiveis_problemas"]["secoes"] == ["qualidade_comum"]
+    assert {i["regra"] for i in res.conclusao} <= REGRAS_COMUNS
+    omitidas = {o["item"]: o["motivo"] for o in regras_omitidas(res)}
+    assert "C2" in omitidas and "Indicadores" in omitidas["C2"]
+    assert "C5" in omitidas and "IP e TEIF de referência" in omitidas["C5"]
+    assert not any(c in omitidas for c in ("C1", "C3", "C4", "C6", "C7", "C9", "C11"))  # regras só de hidrelétricas
+    assert {o["item"] for o in res.omitidos if o["tipo"] == "regra"} == set(omitidas)
+
+
+def test_regra_com_entrada_de_nivel_conjunto_nao_e_avaliada(sem_evt) -> None:
+    from src.analises.conclusao import frase_sem_itens, regras_omitidas
+
+    res, perfil = sem_evt["pch_alfa"]
+    _ativar(perfil)
+    assert res.conclusao == [] and montar_conclusao(res) == []
+    omitidas = {o["item"]: o["motivo"] for o in regras_omitidas(res)}
+    assert REGRAS_COMUNS <= set(omitidas)
+    assert all("nível da usina" in omitidas[c] for c in REGRAS_COMUNS)
+    assert all("EVT" in omitidas[c] for c in ("C1", "C3", "C4", "C6", "C7", "C9", "C11"))
+    frase = frase_sem_itens(res)
+    assert "conjunto" in frase and "nível da usina" in frase
+
+
+def test_nota_da_conclusao_por_caminho(sem_evt) -> None:
+    from src.relatorio.conteudo import nota_conclusao, nota_conclusao_catalogo
+
+    texto_uhe = nota_conclusao()
+    assert texto_uhe.startswith("Conclusão: indícios gerados por regras fixas") and "C11" in texto_uhe
+    res, perfil = sem_evt["ute_beta"]
+    _ativar(perfil)
+    nota = nota_conclusao_catalogo(res)
+    assert nota.startswith("Conclusão: indícios gerados pelas regras do catálogo para UTE")
+    for codigo in REGRAS_COMUNS:
+        assert f"{codigo} " in nota
+    assert "C1 " not in nota and "Não avaliadas" in nota
+

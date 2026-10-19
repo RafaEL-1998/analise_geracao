@@ -18,18 +18,24 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 from src.comum.regras import (
     CONJUNTO_CADASTRO,
+    CONJUNTO_CAPACIDADE,
+    CONJUNTO_COMPOSICAO,
     CONJUNTO_DISPONIBILIDADE,
     CONJUNTO_EVT,
     CONJUNTO_GERACAO,
     CONJUNTO_HIDROLOGIA,
     CONJUNTO_PROGRAMACAO_DIARIA,
+    CONJUNTO_RESERVATORIO,
     CONJUNTOS_INDICADORES_ONS,
     PASTA_CADASTRO_RAW,
+    PASTA_CAPACIDADE_RAW,
+    PASTA_COMPOSICAO_RAW,
     PASTA_DISPONIBILIDADE_RAW,
     PASTA_GERACAO_RAW,
     PASTA_HIDROLOGIA_RAW,
     PASTA_INDICADORES_RAW,
     PASTA_PROGRAMACAO_RAW,
+    PASTA_RESERVATORIO_RAW,
     TIPOS_USINA,
 )
 
@@ -85,11 +91,14 @@ class DescricaoConjunto:
     resolucao: str = "horaria"
     referencia: bool = False
     variantes: Tuple[Tuple[str, str], ...] = ()  # (tipo, pacote) quando o pacote muda com o tipo
+    # Colunas mantidas como texto na extração (a modalidade por hora da série de referência, para os trechos); vazias
+    # nos conjuntos de hoje, cujos arquivos extraídos não mudam (decisão R8)
+    colunas_texto: Tuple[str, ...] = ()
 
     @property
     def colunas_leitura(self) -> List[str]:
         colunas = [self.identificador.coluna, *(r.coluna for r in self.conferencias), COLUNA_INSTANTE,
-                   *self.colunas_valor]
+                   *self.colunas_valor, *self.colunas_texto]
         return list(dict.fromkeys(colunas))
 
 
@@ -126,8 +135,22 @@ def _hidrologia(perfil: Any) -> DescricaoConjunto:
     )
 
 
-def _geracao(perfil: Any) -> DescricaoConjunto:
+def descricao_geracao(perfil: Any, nivel: str = "usina") -> DescricaoConjunto:
+    """Geração por usina no nível pedido (decisão R9).
+
+    Da usina: pelo id ONS, conferida pelo CEG e pelo estado. Do conjunto: pelo id do conjunto (``CJU_...``), conferida
+    pelo estado, porque o ONS publica o CEG "-" nas linhas de conjunto desde 05/2026.
+    """
     ident, estado = perfil.identificacao, perfil.usina.estado
+    if nivel == "conjunto":
+        return DescricaoConjunto(
+            pacote=CONJUNTO_GERACAO, pasta=PASTA_GERACAO_RAW,
+            identificador=Regra("id_ons", ident.id_conjunto),
+            conferencias=(Regra("id_estado", estado),),
+            colunas_valor=("val_geracao",),
+            filtro_parquet=((("id_ons", "in", _formas(ident.id_conjunto)),),),
+            nivel="conjunto",
+        )
     return DescricaoConjunto(
         pacote=CONJUNTO_GERACAO, pasta=PASTA_GERACAO_RAW,
         identificador=Regra("id_ons", ident.id_ons),
@@ -135,6 +158,12 @@ def _geracao(perfil: Any) -> DescricaoConjunto:
         colunas_valor=("val_geracao",),
         filtro_parquet=((("id_ons", "in", _formas(ident.id_ons)),), (("ceg", "in", _formas(ident.ceg)),)),
     )
+
+
+def _geracao(perfil: Any) -> DescricaoConjunto:
+    """Geração no nível da cobertura do perfil; com a lista ``["proprio", "conjunto"]``, a da usina (a do conjunto
+    vem de ``descricao_geracao``, na série de referência)."""
+    return descricao_geracao(perfil, _nivel(entrada("geracao"), cobertura_da_usina(perfil)))
 
 
 # ---------------------------------------------------------------------------
@@ -154,6 +183,7 @@ class EntradaRegistro:
     referencia: bool = False  # pode ser a série de referência (decisão R6)
     variantes: Tuple[Tuple[str, str], ...] = ()  # (tipo, pacote) quando o pacote muda com o tipo
     descricao: Optional[Callable[[Any], DescricaoConjunto]] = None  # conjuntos lidos pelo motor comum
+    so_catalogo: bool = False  # obtido só pelo catálogo de usinas, nunca pela Coleta da usina (decisão R31)
 
     @property
     def na_cobertura(self) -> bool:
@@ -174,6 +204,13 @@ REGISTRO: Tuple[EntradaRegistro, ...] = (
     EntradaRegistro("geracao", ((CONJUNTO_GERACAO, PASTA_GERACAO_RAW),), TIPOS_USINA, ("usina", "conjunto"),
                     "horaria", referencia=True, descricao=_geracao),
     EntradaRegistro("cadastro", ((CONJUNTO_CADASTRO, PASTA_CADASTRO_RAW),), TIPOS_USINA, ("usina",), "estatica"),
+    # Fase A (spec 006): composição dos conjuntos e unidades geradoras, fora da UHE sem [cobertura]
+    EntradaRegistro("composicao", ((CONJUNTO_COMPOSICAO, PASTA_COMPOSICAO_RAW),), TIPOS_USINA, ("conjunto",),
+                    "estatica"),
+    EntradaRegistro("capacidade", ((CONJUNTO_CAPACIDADE, PASTA_CAPACIDADE_RAW),), TIPOS_USINA, ("usina",), "estatica"),
+    # Decisão R31: liga o CEG ao cod_usina e ao reservatório da EVT e dos dados hidrológicos
+    EntradaRegistro("reservatorio", ((CONJUNTO_RESERVATORIO, PASTA_RESERVATORIO_RAW),), HIDRELETRICAS, ("usina",),
+                    "estatica", so_catalogo=True),
 )
 
 
@@ -230,7 +267,7 @@ def conjuntos_da_usina(perfil: Any) -> List[EntradaRegistro]:
     (ou a lista dos dois) e, sempre, os cadastrais e os do subsistema do tipo.
     """
     tipo, cobertura = tipo_da_usina(perfil), cobertura_da_usina(perfil)
-    do_tipo = [e for e in REGISTRO if tipo in e.tipos]
+    do_tipo = [e for e in REGISTRO if tipo in e.tipos and not e.so_catalogo]
     if not cobertura:
         return [e for e in do_tipo if e.chave in CHAVES_SEM_COBERTURA]
     return [e for e in do_tipo if not e.na_cobertura or _obtido(cobertura.get(e.chave))]
@@ -243,8 +280,17 @@ def _nivel(e: EntradaRegistro, cobertura: Dict[str, Any]) -> str:
     return niveis[0] if niveis else e.niveis[0]
 
 
+def nivel_coletado(perfil: Any, chave: str) -> Optional[str]:
+    """Nível do conjunto ``chave`` coletado para a usina (o primeiro, com a lista ``["proprio", "conjunto"]``); None
+    quando a Coleta não o obtém."""
+    if chave not in {e.chave for e in conjuntos_da_usina(perfil)}:
+        return None
+    return _nivel(entrada(chave), cobertura_da_usina(perfil))
+
+
 def descricoes(perfil: Any) -> Dict[str, DescricaoConjunto]:
-    """Descrições, com a identificação do perfil, dos conjuntos da usina lidos pelo motor comum."""
+    """Descrições, com a identificação do perfil, dos conjuntos da usina lidos pelo motor comum (a geração, no nível
+    da cobertura)."""
     cobertura = cobertura_da_usina(perfil)
     return {
         e.chave: replace(e.descricao(perfil), chave=e.chave, tipos=e.tipos, nivel=_nivel(e, cobertura),

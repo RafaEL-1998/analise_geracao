@@ -11,7 +11,15 @@ import pandas as pd
 import pytest
 
 from src.analises.evt import preparar_dados
-from src.relatorio.estrutura import MAPA_CONSTATACOES, SECOES, constatacoes_da_secao, secoes_presentes, sumario
+from src.relatorio.estrutura import (
+    COM_EVT,
+    MAPA_CONSTATACOES,
+    SECOES,
+    SEM_EVT,
+    constatacoes_da_secao,
+    secoes_presentes,
+    sumario,
+)
 from src.relatorio.figuras import gerar_graficos
 from src.relatorio.markdown import gerar_relatorio_md
 from tests.relatorio.apoio import analisar_com_bases
@@ -42,7 +50,8 @@ def _completo(df: pd.DataFrame):
 
 
 def test_secoes_em_ordem() -> None:
-    assert [s.chave for s in SECOES] == CHAVES
+    """A hidrelétrica com EVT tem exatamente as 17 seções de hoje, na ordem de hoje (spec 006, decisões R14 e R29)."""
+    assert [s.chave for s in SECOES if COM_EVT in s.caminhos] == CHAVES
     assert SECOES[0].titulo == "Fonte e cobertura dos dados" and SECOES[-1].titulo == "Notas metodológicas e limitações"
 
 
@@ -281,3 +290,111 @@ def test_figura_opcional_de_execucao_anterior_sai_da_pasta(tmp_path: Path, monke
     caminhos = figuras.gerar_graficos(SimpleNamespace(), tmp_path)
     assert not antiga.exists() and len(caminhos) == 5
     assert sorted(p.name for p in tmp_path.iterdir()) == sorted(figuras.NOMES_FIGURAS.values())
+
+
+# ---------------------------------------------------------------------------
+# Usinas sem EVT (spec 006, decisões R14 e R15; data-model 6.5; tarefa T050)
+# ---------------------------------------------------------------------------
+
+SECOES_UTE = ["fonte_cobertura", "anuais_comum", "disponibilidade_geracao_comum", "serie_temporal_comum",
+              "geracao_mensal", "perfil_horario_comum", "disponibilidade_sincronizada_comum", "qualidade_comum",
+              "conclusao", "notas_comum"]
+SECOES_PCH = ["fonte_cobertura", "anuais_comum", "serie_temporal_comum", "geracao_mensal", "perfil_horario_comum",
+              "qualidade_comum", "conclusao", "notas_comum"]
+
+
+@pytest.fixture(scope="module")
+def sem_evt_gerados(tmp_path_factory):
+    """As duas usinas fictícias sem EVT, da Coleta ao relatório, com os perfis para reativar nos testes."""
+    from src.comum.perfil import carregar_perfil
+    from tests.fixtures.sem_evt import projeto_sem_evt
+
+    raiz = tmp_path_factory.mktemp("projeto")
+    usinas = projeto_sem_evt(raiz, ["coleta", "tratamento", "conferencia", "analises", "relatorio"])
+    for slug, u in usinas.items():
+        u["perfil"] = carregar_perfil(slug, raiz)
+        u["relatorio"] = raiz / "reports" / slug
+        u["md"] = (u["relatorio"] / "relatorio_analise_estatistica.md").read_text(encoding="utf-8")
+    return usinas
+
+
+def _resultados_sem_evt(u):
+    from src.analises.resultados import carregar_resultados
+    from src.comum.perfil import definir_perfil_ativo
+    from src.relatorio.etapa import completar_resultados
+
+    definir_perfil_ativo(u["perfil"])  # a fixture automática volta à São Domingos no fim do teste
+    return completar_resultados(carregar_resultados(u["pasta"] / "analises" / "resultados.pkl"))
+
+
+@pytest.mark.parametrize("slug, esperadas", [("ute_beta", SECOES_UTE), ("pch_alfa", SECOES_PCH)])
+def test_usina_sem_evt_segue_a_tabela_da_decisao_r14(sem_evt_gerados, slug: str, esperadas: List[str]) -> None:
+    u = sem_evt_gerados[slug]
+    assert u["codigos"]["relatorio"] == 0, u["manifestos"]
+    res = _resultados_sem_evt(u)
+    presentes = secoes_presentes(res)
+    assert [s.chave for _, s in presentes] == esperadas
+    assert [n for n, _ in presentes] == list(range(1, len(esperadas) + 1))
+    assert all(SEM_EVT in s.caminhos for _, s in presentes)
+    assert [s.chave for _, s in presentes if COM_EVT in s.caminhos] == ["conclusao"]  # a única dos dois caminhos
+    assert _secoes_md(u["md"]) == [titulo for _, titulo in sumario(res)]
+
+
+def test_caminho_da_evt_sem_as_secoes_novas(df_base: pd.DataFrame) -> None:
+    res = _completo(df_base)
+    assert all(COM_EVT in s.caminhos for _, s in secoes_presentes(res))
+    novas = {s.chave for s in SECOES if SEM_EVT in s.caminhos and COM_EVT not in s.caminhos}
+    assert novas.isdisjoint(s.chave for _, s in secoes_presentes(res))
+
+
+def test_titulo_e_capa_por_caminho(sem_evt_gerados, df_base: pd.DataFrame, tmp_path: Path) -> None:
+    from src.relatorio.conteudo import titulo_capa_relatorio
+    from src.relatorio.figuras_comum import NOMES_FIGURAS_COMUM
+    from src.relatorio.pdf import PDFReportGenerator
+
+    # na hidrelétrica com EVT (perfil ativo da São Domingos), os títulos de hoje
+    md_uhe, _ = _md(_completo(df_base), df_base, tmp_path)
+    assert md_uhe.startswith("# UHE São Domingos — energia vertida turbinável e desempenho operacional (dados ONS)")
+    assert titulo_capa_relatorio() == "UHE São Domingos — Análise do desempenho operacional"
+    u = sem_evt_gerados["pch_alfa"]
+    capa = u["md"].split("\n## 1. ")[0]
+    assert capa.startswith("# PCH ALFA — Análise do desempenho operacional\n")
+    assert "série de referência, Geração por usina (conjunto de usinas, id ONS CJU_GOCJA)" in capa
+    assert "| Tipo · modalidade | PCH · TIPO II-C |" in capa
+    assert "| Conjunto de usinas | CJU_GOCJA (CONJ. HIDRAULICO ALFA) |" in capa
+    assert "| Geração média do conjunto CONJ. HIDRAULICO ALFA | 20,0 MWmed |" in capa
+    assert "cod_usina" not in capa and "Engolimento" not in capa  # sem os blocos hidráulicos da EVT
+    res = _resultados_sem_evt(u)
+    figuras = {chave: u["relatorio"] / "figures" / nome for chave, nome in NOMES_FIGURAS_COMUM.items()}
+    gerador = PDFReportGenerator(res, figuras, tmp_path / "pch.pdf")
+    gerador.build_pdf()
+    assert gerador.titulos_secoes == _secoes_md(u["md"])
+    assert "energia vertida" not in gerador.subtitulo_capa.lower()
+    assert gerador._legendas == gerador._desenhados  # cada tabela, bloco e figura com a legenda de fonte
+    assert sorted(gerador.constatacoes_emitidas) == sorted(t for t, _ in res.achados)
+
+
+def test_legendas_com_o_identificador_e_o_nivel(sem_evt_gerados) -> None:
+    pch, ute = sem_evt_gerados["pch_alfa"]["md"], sem_evt_gerados["ute_beta"]["md"]
+    assert "Geração por usina (conjunto de usinas, id ONS CJU_GOCJA)" in pch
+    assert "Geração por usina (id ONS GOUTEB)" in ute and "conjunto de usinas" not in ute
+    for md in (pch, ute):
+        assert "Energia Vertida Turbinável (cod_usina" not in md  # a EVT não é fonte de nada nas usinas sem EVT
+        assert "não feita nesta execução" not in md
+
+
+def test_notas_com_omissoes_niveis_e_nao_aplicaveis(sem_evt_gerados, df_base: pd.DataFrame, tmp_path: Path) -> None:
+    pch, ute = sem_evt_gerados["pch_alfa"]["md"], sem_evt_gerados["ute_beta"]["md"]
+    notas_pch = pch.split("Notas metodológicas e limitações\n")[-1]
+    notas_ute = ute.split("Notas metodológicas e limitações\n")[-1]
+    for notas in (notas_pch, notas_ute):
+        assert "### Seções e regras sem base para a usina" in notas
+        assert "### Conferências que não se aplicam à usina" in notas and "### Parâmetros utilizados" in notas
+    assert "Granularidade: o ONS publica a geração do conjunto CONJ. HIDRAULICO ALFA" in notas_pch
+    assert "Granularidade" not in notas_ute  # o parágrafo só entra com número do conjunto (decisão R15)
+    assert ("| Disponibilidade operacional e sincronizada | sem a Disponibilidade por usina (cobertura: ausente) |"
+            in notas_pch)
+    # na hidrelétrica com EVT, as notas de hoje, sem as tabelas novas
+    md_uhe, _ = _md(_completo(df_base), df_base, tmp_path)
+    assert "Granularidade" not in md_uhe and "Seções e regras sem base" not in md_uhe
+    assert "Conferências que não se aplicam" not in md_uhe

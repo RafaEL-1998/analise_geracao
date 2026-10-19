@@ -66,6 +66,13 @@ ARQUIVOS_COLETA = {
     # Formato 2 (spec 006, decisão R22): as etapas seguintes leem estes arquivos, nunca data/raw/
     "datas_obtencao": "datas_obtencao.csv",
     "dicionario_evt": "dicionario_evt.json",
+    # Usinas sem EVT (spec 006, data-model 6.1): série de referência, trechos e cadastrais da usina
+    "geracao_complemento": "geracao_complemento.parquet",
+    "trechos": "trechos.csv",
+    "composicao": "composicao_conjunto.csv",
+    "capacidade": "capacidade_ficha.csv",
+    "auditoria_composicao": "auditoria_composicao.csv",
+    "auditoria_capacidade": "auditoria_capacidade.csv",
 }
 ARQUIVOS_TRATAMENTO = {
     "evt_parquet": "evt_tratado.parquet",
@@ -89,6 +96,7 @@ ARQUIVOS_TRATAMENTO = {
     "geracao_horaria": "geracao_horaria.csv",
     "geracao_ausencias": "geracao_ausencias.csv",
     "auditoria_geracao": "auditoria_geracao.csv",
+    "base_horaria": "base_horaria.csv",  # só nas usinas sem EVT (spec 006, decisão R30)
 }
 ARQUIVOS_CONFERENCIA = {
     "resultados": "conferencias.pkl",
@@ -100,8 +108,19 @@ ARQUIVOS_CONFERENCIA = {
     "dispf_horas": "dispf_horas.csv",
     "teifa_teip": "teifa_teip.csv",
     "cadastro": "cadastro.csv",
+    "nao_aplicaveis": "nao_aplicaveis.csv",  # conferências do catálogo que não se aplicam (spec 006, decisão R13)
 }
 ARQUIVOS_ANALISES = {"resultados": "resultados.pkl"}
+# Catálogo de usinas (spec 006, data-model, seção 2), em data/catalogo/, sem .bak
+ARQUIVOS_CATALOGO = {
+    "catalogo": "catalogo.json",
+    "usinas": "usinas.csv",
+    "conjuntos": "conjuntos.csv",
+    "cobertura": "cobertura.csv",
+    "planejamento": "planejamento.csv",
+    "programacao": "programacao.csv",
+    "agregados": "agregados.csv",
+}
 ARQUIVOS_RELATORIO = {
     "pdf": "relatorio_analise_estatistica.pdf",
     "md": "relatorio_analise_estatistica.md",

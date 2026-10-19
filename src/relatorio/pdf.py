@@ -3,6 +3,9 @@
 O PDF não contém números nem conclusões fixos: textos, tabelas e legendas das figuras
 são montados a partir de ``ResultadosAnalise``. A ordem das seções e o lugar de cada constatação
 vêm da estrutura do relatório (``src.relatorio.estrutura``), a mesma do Markdown.
+
+Nas usinas sem EVT (spec 006, decisão R14), a capa e as seções vêm de ``src.relatorio.comum``: cada seção é uma lista
+de blocos (tabela, figura, texto, notas), desenhados pelos mesmos componentes do caminho de hoje.
 """
 
 from __future__ import annotations
@@ -36,9 +39,9 @@ from reportlab.platypus import (
 )
 from reportlab.platypus.tableofcontents import TableOfContents
 
-from src.analises.conclusao import FRASE_ABERTURA_CONCLUSAO, FRASE_CONCLUSAO_VAZIA
+from src.analises.conclusao import FRASE_ABERTURA_CONCLUSAO, frase_sem_itens
 from src.analises.constatacoes import texto_conferencia_geracao
-from src.analises.resultados import ResultadosAnalise
+from src.analises.resultados import ResultadosAnalise, sem_evt
 from src.comum.formatacao import fmt_data, fmt_data_hora, fmt_int, fmt_lista, fmt_utc
 from src.comum.logger import setup_logger
 from src.comum.perfil import perfil_ativo
@@ -83,7 +86,8 @@ from src.relatorio.conteudo import (
     textos_tabelas,
     titulo_capa_relatorio,
 )
-from src.relatorio.estrutura import constatacoes_da_secao, secoes_presentes, sumario
+from src.relatorio import comum
+from src.relatorio.estrutura import constatacoes_da_secao, secoes_presentes, sumario, titulo_da_secao
 from src.relatorio.figuras import NOMES_FIGURAS
 from src.relatorio.fontes import legenda_fonte
 from src.tratamento.indicadores import INSUMOS_HORAS
@@ -109,11 +113,15 @@ ALTURA_QUADRO = landscape(A4)[1] - MARGEM_SUPERIOR - MARGEM_INFERIOR - 12
 ALTURA_MAXIMA_FIGURA = 285
 # Figuras padronizadas (FR-036): mesma proporção do PNG e largura útil, fora do limite de altura
 FIGURAS_PADRONIZADAS = ("serie_temporal", "evt_mensal", "disponibilidade_sincronizada", "vazoes_defluentes")
+# As do caminho sem EVT (spec 006), também na largura útil
+FIGURAS_PADRONIZADAS_COMUM = ("serie_temporal_comum", "geracao_mensal", "sazonalidade", "perfil_horario_comum",
+                              "disponibilidade_comum")
 LINHAS_TABELA_INTEIRA = 12
 LINHAS_MINIMAS_NA_PAGINA = 6
 ALTURA_ABERTURA_CURTA = 150
 # Capa com a ficha do cadastro (FR-012): fração da largura e coluna das chaves de cada bloco, para caber numa página
-BLOCOS_CAPA_TRES = {"bloco_identificacao": (0.26, 62), "bloco_cadastro": (0.38, 112), "bloco_parametros": (0.36, 88)}
+BLOCOS_CAPA_TRES = {"bloco_identificacao": (0.26, 62), "bloco_cadastro": (0.38, 112), "bloco_parametros": (0.36, 88),
+                    "bloco_identificacao_comum": (0.26, 82)}
 
 
 def _registrar_fontes() -> Tuple[str, str]:
@@ -351,10 +359,11 @@ class PDFReportGenerator:
         if caminho is None or not Path(caminho).exists():
             return [self._p(f"Figura não disponível ({escape(NOMES_FIGURAS.get(chave, chave))}).", "legenda")]
         largura_px, altura_px = ImageReader(str(caminho)).getSize()
-        if chave in FIGURAS_PADRONIZADAS:
+        padronizada = chave in FIGURAS_PADRONIZADAS or chave in FIGURAS_PADRONIZADAS_COMUM
+        if padronizada:
             largura = LARGURA_UTIL - 10
         altura = largura * altura_px / largura_px
-        if altura > ALTURA_MAXIMA_FIGURA and chave not in FIGURAS_PADRONIZADAS:
+        if altura > ALTURA_MAXIMA_FIGURA and not padronizada:
             largura, altura = largura * ALTURA_MAXIMA_FIGURA / altura, ALTURA_MAXIMA_FIGURA
         self._desenhados += 1
         return [Image(str(caminho), width=largura, height=altura), Spacer(1, 3), self._p(legenda, "legenda"),
@@ -459,18 +468,27 @@ class PDFReportGenerator:
 
     def _capa(self, story: List[Any]) -> None:
         c = self.res.cobertura
-        story.append(self._p(escape(titulo_capa_relatorio()), "titulo"))
-        self.subtitulo_capa = (
-            f"Análise dos dados abertos do ONS · {fmt_data_hora(c['inicio'])} a {fmt_data_hora(c['fim'])} · "
-            f"{fmt_int(c['horas_observadas'])} registros horários · Gerado em "
-            f"{(self.data_geracao or datetime.now()).strftime('%d/%m/%Y %H:%M')}"
-        )
+        sem = sem_evt(self.res)
+        story.append(self._p(escape(comum.titulo_relatorio() if sem else titulo_capa_relatorio()), "titulo"))
+        if sem:
+            self.subtitulo_capa = escape(comum.subtitulo_capa(self.res, self.data_geracao))
+        else:
+            self.subtitulo_capa = (
+                f"Análise dos dados abertos do ONS · {fmt_data_hora(c['inicio'])} a {fmt_data_hora(c['fim'])} · "
+                f"{fmt_int(c['horas_observadas'])} registros horários · Gerado em "
+                f"{(self.data_geracao or datetime.now()).strftime('%d/%m/%Y %H:%M')}"
+            )
         story.append(self._p(self.subtitulo_capa, "subtitulo"))
         # Identificação, ficha do cadastro (se carregado; FR-012) e parâmetros, lado a lado
-        conteudo = [("Identificação nos dados do ONS", pares_identificacao(self.res), "bloco_identificacao")]
+        if sem:
+            conteudo = [("Identificação nos dados do ONS", comum.pares_identificacao(self.res),
+                         "bloco_identificacao_comum")]
+        else:
+            conteudo = [("Identificação nos dados do ONS", pares_identificacao(self.res), "bloco_identificacao")]
         if self.res.cadastro:
             conteudo.append(("Cadastro no ONS", pares_identificacao_cadastro(self.res), "bloco_cadastro"))
-        conteudo.append(("Parâmetros técnicos da usina", pares_parametros(), "bloco_parametros"))
+        conteudo.append(("Parâmetros técnicos da usina", comum.pares_parametros() if sem else pares_parametros(),
+                         "bloco_parametros"))
         medidas = ([BLOCOS_CAPA_TRES[chave] for _, _, chave in conteudo] if len(conteudo) == 3
                    else [(1 / len(conteudo), 118)] * len(conteudo))
         larguras = [fracao * LARGURA_UTIL for fracao, _ in medidas]
@@ -483,7 +501,7 @@ class PDFReportGenerator:
         story.append(blocos)
         story.append(Spacer(1, 5))
 
-        tiles, nota_capa = indicadores_capa(self.res)
+        tiles, nota_capa = comum.indicadores_capa(self.res) if sem else indicadores_capa(self.res)
         celulas = [[
             [self._p(escape(rotulo), "kpi_rotulo"), self._p(escape(valor), "kpi_valor"), self._p(escape(sub), "kpi_sub")]
             for rotulo, valor, sub in tiles
@@ -502,7 +520,7 @@ class PDFReportGenerator:
         story.append(tabela_kpi)
         story.append(Spacer(1, 4))
         story.append(self._p(nota_capa, "legenda_capa"))
-        legenda = self._legenda_fonte("tab_capa_indicadores")
+        legenda = self._legenda_fonte("tab_capa_indicadores_comum" if sem else "tab_capa_indicadores")
         legenda.style = self.estilos["legenda_capa"]
         story.append(legenda)
 
@@ -699,13 +717,37 @@ class PDFReportGenerator:
         self._inicio_secao(story, "conclusao", titulo, 200)
         listas = listas_conclusao(self.res)
         if not listas:
-            story.append(self._p(escape(FRASE_CONCLUSAO_VAZIA), "corpo"))
+            story.append(self._p(escape(frase_sem_itens(self.res)), "corpo"))
             return
         bloco: List[Any] = [self._p(escape(FRASE_ABERTURA_CONCLUSAO), "corpo")]
         for titulo_lista, textos in listas:
             bloco.append(self._p(escape(titulo_lista), "subsecao"))
             bloco += [self._p(f"• {escape(texto)}", "nota") for texto in textos]
         story.append(KeepTogether(bloco))
+
+    def _secao_blocos(self, story: List[Any], chave: str, titulo: str) -> None:
+        """Seção do caminho sem EVT: os blocos de ``comum.blocos_secao``, com os componentes de hoje."""
+        self._inicio_secao(story, chave, titulo, 200)
+        for b in comum.blocos_secao(self.res, chave):
+            if b.tipo == "chave_valor":
+                linhas = [[self._p(f"<b>{escape(k)}</b>", "celula"), self._p(escape(v), "celula")] for k, v in b.pares]
+                tabela = Table(linhas, colWidths=[130, LARGURA_UTIL - 130])
+                tabela.setStyle(TableStyle([("LINEBELOW", (0, 0), (-1, -1), 0.4, LINHA),
+                                            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                                            ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3)]))
+                self._desenhados += 1
+                story += [tabela, Spacer(1, 3), self._legenda_fonte(b.chave)]
+            elif b.tipo == "tabela":
+                story += self._bloco_tabela(b.chave, b.cabecalho, b.linhas, self._escala(b.larguras), b.numericas,
+                                            b.intro)
+            elif b.tipo == "figura":
+                story.append(KeepTogether(self._figura(b.chave, escape(comum.legenda_figura(self.res, b.chave)))))
+            elif b.tipo == "texto":
+                story += [self._p(escape(t), "corpo") for t in b.textos]
+            elif b.tipo == "notas":
+                story += [self._p(f"• {escape(t)}", "nota") for t in b.textos]
+            elif b.tipo == "sem_linhas":
+                story += self._sem_linhas(b.chave, escape(b.textos[0]))
 
     def _secao_notas(self, story: List[Any], titulo: str) -> None:
         self._inicio_secao(story, "notas", titulo, 200)
@@ -727,10 +769,11 @@ class PDFReportGenerator:
         self._desenhados = self._legendas = 0
         self.titulos_secoes, self.constatacoes_emitidas, self.legendas_emitidas = [], [], []
         self.paginas_secoes = {}
-        self._textos = textos_tabelas(self.res)
+        sem = sem_evt(self.res)
+        self._textos = comum.textos_tabelas(self.res) if sem else textos_tabelas(self.res)
         c = self.res.cobertura
 
-        cabecalho = (
+        cabecalho = comum.cabecalho_paginas(self.res) if sem else (
             f"{perfil_ativo().usina.nome} — energia vertida turbinável (dados ONS) · "
             f"{fmt_data(c['inicio'])} a {fmt_data(c['fim'])}"
         )
@@ -742,7 +785,8 @@ class PDFReportGenerator:
             rightMargin=MARGEM_LATERAL,
             topMargin=MARGEM_SUPERIOR,
             bottomMargin=MARGEM_INFERIOR,
-            title=f"{perfil_ativo().usina.nome} — energia vertida turbinável e desempenho operacional",
+            title=(comum.titulo_relatorio() if sem
+                   else f"{perfil_ativo().usina.nome} — energia vertida turbinável e desempenho operacional"),
             subject=f"Análise dos dados abertos do ONS, {fmt_data(c['inicio'])} a {fmt_data(c['fim'])}",
             author=f"Pipeline de análise {perfil_ativo().usina.nome} (dados ONS)",
         )
@@ -752,7 +796,11 @@ class PDFReportGenerator:
         for _, secao in secoes_presentes(self.res):
             itens: List[Any] = []
             self._n_abertura = 0
-            getattr(self, f"_secao_{secao.chave}")(itens, secao.titulo)
+            construtor = getattr(self, f"_secao_{secao.chave}", None)
+            if construtor is None:  # seções do caminho sem EVT
+                self._secao_blocos(itens, secao.chave, titulo_da_secao(secao, self.res))
+            else:
+                construtor(itens, titulo_da_secao(secao, self.res))
             story += self._abertura_com_primeiro_bloco(itens)
 
         # Com a data fixa, o modo invariante tira do PDF a data de criação e o identificador variáveis

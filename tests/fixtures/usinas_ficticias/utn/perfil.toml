@@ -1,0 +1,33 @@
+# Usina fictícia do tipo UTN (spec 006, decisões R23 e R28), só para testes: geração, disponibilidade e indicadores do
+# ONS próprios, com IP e TEIF de referência. Valores inventados; identificadores que não existem no ONS.
+
+[usina]
+slug = "utn_ficticia"
+nome = "UTN Fictícia"
+nome_curto = "Fictícia"
+estado = "GO"
+inicio_operacao_comercial = 2010
+tipo = "UTN"
+modalidade = "TIPO I"
+
+[identificacao]
+ceg = "UTN.NU.GO.000105-0.01"
+id_ons = "GOUNFI"
+codigos_programacao = ["GOUNFI"]
+
+[cobertura]
+indicadores = "proprio"
+programacao = "ausente"
+disponibilidade = "proprio"
+geracao = "proprio"
+
+[parametros]
+potencia_instalada_mw = 640.0
+unidades_geradoras = 2
+potencia_unitaria_mw = 320.0
+combustivel = "NUCLEAR"
+ip_referencia = 0.05
+teif_referencia = 0.02
+
+[parametros.fontes]
+geral = "Ficha técnica fictícia da UTN, Tabela 1"

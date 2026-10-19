@@ -31,7 +31,9 @@ ETAPAS: Tuple[str, ...] = ("coleta", "tratamento", "conferencia", "analises", "r
 ANTERIOR: Dict[str, str] = {b: a for a, b in zip(ETAPAS, ETAPAS[1:])}
 # Muda quando os arquivos da etapa mudam de formato; a etapa seguinte recusa um formato antigo (código 5).
 # Coleta 2 e Análises 2: datas de obtenção e dicionário da EVT na pasta da Coleta (spec 006, decisão R22).
-VERSAO_FORMATO: Dict[str, int] = {"coleta": 2, "tratamento": 1, "conferencia": 1, "analises": 2, "relatorio": 1}
+# Tratamento 2, Conferência 2 e Análises 3: base horária comum, conferências não aplicáveis e os campos das usinas
+# sem EVT (spec 006, decisões R13 e R30).
+VERSAO_FORMATO: Dict[str, int] = {"coleta": 2, "tratamento": 2, "conferencia": 2, "analises": 3, "relatorio": 1}
 
 CODIGO_SUCESSO = 0
 CODIGO_ERRO = 1

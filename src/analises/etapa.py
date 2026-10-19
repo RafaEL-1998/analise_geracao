@@ -3,6 +3,9 @@
 Parte só dos dados tratados, dos resultados da Conferência, do perfil e dos registros da Coleta, e grava
 ``data/usinas/<slug>/analises/resultados.pkl``. As conferências entram prontas, nos mesmos campos de antes, para que o
 mapa de fontes e o relatório não mudem. A tabela de parâmetros e a origem dos dados ficam com a Geração do relatório.
+
+O caminho segue a presença da EVT (spec 006, decisão R14): nas hidrelétricas com EVT, as análises de hoje sobre a base
+de EVT; nas demais usinas, as seções comuns sobre a base horária comum (decisão R30), com os campos de EVT vazios.
 """
 
 from __future__ import annotations
@@ -11,12 +14,15 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+import json
+
 import pandas as pd
 
 from src.analises.cadastro import analisar_cadastro
+from src.analises.comum_tipos import analisar_comum
 from src.analises.cobertura import analisar_cobertura
-from src.analises.conclusao import montar_conclusao
-from src.analises.constatacoes import montar_achados
+from src.analises.conclusao import montar_conclusao, regras_omitidas
+from src.analises.constatacoes import montar_achados, montar_achados_comum
 from src.analises.disponibilidade import analisar_disponibilidade
 from src.analises.evt import (
     calcular_distribuicao_mes_do_ano,
@@ -41,12 +47,15 @@ from src.analises.hidrologia import analisar_hidrologia
 from src.analises.indicadores import analisar_indicadores_ons
 from src.analises.programacao import analisar_programacao
 from src.analises.resultados import ResultadosAnalise, salvar_resultados
+from src.coleta import registro
+from src.coleta.serie_referencia import escolher
 from src.comum import caminhos
 from src.comum.logger import setup_logger
 from src.comum.regras import CONJUNTO_DISPONIBILIDADE, CONJUNTO_EVT, CONJUNTO_GERACAO, CONJUNTO_HIDROLOGIA
 from src.comum.persistencia import registrar_gravacoes
 from src.conferencia.resultado import ResultadoConferencia, carregar_conferencias
 from src.pipeline import CODIGO_SUCESSO, ResultadoEtapa
+from src.tratamento.base_horaria import carregar_base_horaria
 from src.tratamento.disponibilidade import carregar_disponibilidade_tratada
 from src.tratamento.geracao import carregar_geracao_tratada
 from src.tratamento.hidrologia import carregar_hidrologia_tratada
@@ -149,6 +158,92 @@ def _obtido_em(datas: Dict[str, Dict[str, Any]], conjunto: str) -> str:
     return str((datas.get(conjunto) or {}).get("obtencao_mais_recente") or "")
 
 
+def niveis_da_usina(perfil: Any, composicao: Optional[pd.DataFrame] = None) -> Dict[str, Dict[str, str]]:
+    """Nível e identificador da série de referência, da programação e da disponibilidade (decisão R15)."""
+    ident = perfil.identificacao
+    niveis_ref = escolher(perfil).niveis
+    nome = ""
+    if composicao is not None and len(composicao) and "nom_conjunto" in composicao.columns:
+        nome = str(composicao["nom_conjunto"].iloc[0] or "").strip()
+    saida: Dict[str, Dict[str, str]] = {"geracao": {
+        "nivel": " e ".join(niveis_ref),
+        "identificador_usina": str(ident.id_ons or "") if "usina" in niveis_ref else "",
+        "identificador_conjunto": str(getattr(ident, "id_conjunto", "") or "") if "conjunto" in niveis_ref else "",
+        "nome": nome,
+    }}
+    nivel_programacao = registro.nivel_coletado(perfil, "programacao")
+    if nivel_programacao:
+        codigos = getattr(ident, "codigos_programacao", ()) or (ident.cod_programacao,)
+        saida["programacao"] = {"nivel": nivel_programacao, "identificador": "; ".join(codigos)}
+    if registro.nivel_coletado(perfil, "disponibilidade"):
+        saida["disponibilidade"] = {"nivel": "usina", "identificador": str(ident.id_ons or "")}
+    return saida
+
+
+def analisar_sem_evt(
+    base: pd.DataFrame,
+    perfil: Any,
+    conferencias: Dict[str, ResultadoConferencia],
+    datas_obtencao: Optional[Dict[str, Dict[str, Any]]] = None,
+    indicadores: Optional[IndicadoresONS] = None,
+    programacao: Optional[ProgramacaoONS] = None,
+    ausencias_geracao: Optional[pd.DataFrame] = None,
+    linhas_usina_sem_valor: int = 0,
+    trechos: Optional[pd.DataFrame] = None,
+    composicao: Optional[pd.DataFrame] = None,
+    cadastro: Optional[pd.DataFrame] = None,
+    dicionarios: Optional[pd.DataFrame] = None,
+    auditoria_cadastro: Optional[pd.DataFrame] = None,
+    nao_aplicaveis: Optional[pd.DataFrame] = None,
+) -> ResultadosAnalise:
+    """Resultados das usinas sem EVT: as seções comuns sobre a base horária comum (decisões R14 e R30).
+
+    Os campos de EVT ficam vazios; ``cobertura`` traz o período da série de referência, e ``comum``, as seções.
+    """
+    tipo = registro.tipo_da_usina(perfil)
+    tem_indicadores = indicadores is not None and len(indicadores.ug_mensal) > 0
+    comum, omitidos = analisar_comum(
+        base, perfil, tipo, ausencias_geracao, linhas_usina_sem_valor,
+        registro.nivel_coletado(perfil, "programacao") if programacao is not None else None,
+        programacao.dias_ausentes if programacao is not None else None,
+        len(programacao.horaria) if programacao is not None else 0,
+        indicadores=tem_indicadores, hidrologia=registro.nivel_coletado(perfil, "hidrologia") is not None)
+    comum["conferencias_nao_aplicaveis"] = nao_aplicaveis if nao_aplicaveis is not None else pd.DataFrame(
+        columns=["conferencia", "motivo"])
+    vazio = pd.DataFrame()
+    res = ResultadosAnalise(
+        cobertura=comum["cobertura"], globais={}, indicadores_anuais=vazio, evt_mensal=vazio,
+        distribuicao_mes_do_ano=vazio, evt_por_faixa_geracao=vazio, perfil_horario_geracao=vazio,
+        perfil_horario_evt=vazio, eventos_parada_com_evt=vazio, eventos_indisponibilidade_total=vazio,
+        mudanca_classificacao={}, anomalias=vazio, resumo_anomalias=vazio, extremos=vazio, perfil_estatistico=vazio,
+    )
+    res.tipo, res.modalidade = tipo, str(getattr(perfil.usina, "modalidade", "") or "")
+    res.niveis = niveis_da_usina(perfil, composicao)
+    res.trechos = trechos if trechos is not None else pd.DataFrame()
+    res.comum, res.omitidos = comum, omitidos
+    res.datas_obtencao = datas_obtencao or {}
+    if tem_indicadores:
+        anuais = comum["anuais"]
+        da_usina = anuais[anuais["nivel"] == "usina"][["ano", "disponibilidade_relativa_pct"]]
+        dispf = conferencias.get("dispf_horas")
+        indicadores.divergencias = dispf.tabelas.get("divergencias", pd.DataFrame()) if dispf else pd.DataFrame()
+        taxas = conferencias.get("teifa_teip")
+        recalculo = taxas.tabelas.get("recalculo") if taxas else None
+        reproducao = ({"meses": taxas.comparados, "reproduzidos": taxas.coincidentes,
+                       "diferenca_maxima_pp": taxas.tabelas.get("diferenca_maxima_pp", float("nan"))}
+                      if taxas is not None and taxas.aplicavel else None)
+        res.ons = analisar_indicadores_ons(indicadores, base[base["nivel"] == "usina"], da_usina, res.cobertura,
+                                           recalculo, reproducao)
+    if cadastro is not None and len(cadastro):
+        res.cadastro = analisar_cadastro(cadastro, auditoria_cadastro)
+    if dicionarios is not None and len(dicionarios):
+        res.dicionarios = {"registro": dicionarios}
+    res.achados = montar_achados_comum(res)
+    res.conclusao = montar_conclusao(res)
+    res.omitidos = res.omitidos + regras_omitidas(res)
+    return res
+
+
 # ---------------------------------------------------------------------------
 # Leitura das etapas anteriores
 # ---------------------------------------------------------------------------
@@ -182,6 +277,44 @@ def datas_da_coleta(coleta: Path) -> Dict[str, Dict[str, Any]]:
             for linha in tabela.to_dict("records")}
 
 
+def _ler_csv_texto(caminho: Path) -> Optional[pd.DataFrame]:
+    return _ler_csv(caminho, dtype=str, keep_default_na=False)
+
+
+def carregar_entradas_sem_evt(slug: str) -> Dict[str, Any]:
+    """Base horária comum, conferências e registros da Coleta da usina sem EVT, prontos para ``analisar_sem_evt``."""
+    coleta = caminhos.pasta_etapa(slug, "coleta")
+    tratamento = caminhos.pasta_etapa(slug, "tratamento")
+    conferencia = caminhos.pasta_etapa(slug, "conferencia")
+    conferencias = carregar_conferencias(conferencia / caminhos.ARQUIVOS_CONFERENCIA["resultados"])
+    resumo_coleta = json.loads((coleta / caminhos.MANIFESTO_ETAPA).read_text(encoding="utf-8")).get("resumo", {})
+    auditoria_prog = _ler_csv(coleta / caminhos.ARQUIVOS_COLETA["auditoria_programacao"])
+    if auditoria_prog is not None and "dia" in auditoria_prog.columns:
+        auditoria_prog["dia"] = pd.to_datetime(auditoria_prog["dia"])
+    auditoria_cadastro = _ler_csv(coleta / caminhos.ARQUIVOS_COLETA["auditoria_cadastro"], keep_default_na=False)
+    if auditoria_cadastro is not None:
+        auditoria_cadastro = auditoria_cadastro[COLUNAS_AUDITORIA_CADASTRO]
+    ausencias = _ler_csv(tratamento / caminhos.ARQUIVOS_TRATAMENTO["geracao_ausencias"])
+    if ausencias is not None:
+        for coluna in ("inicio", "fim"):
+            ausencias[coluna] = pd.to_datetime(ausencias[coluna])
+    return {
+        "base": carregar_base_horaria(tratamento),
+        "conferencias": conferencias,
+        "datas_obtencao": datas_da_coleta(coleta),
+        "indicadores": carregar_indicadores_tratados(tratamento),
+        "programacao": carregar_programacao_tratada(tratamento, auditoria_prog),
+        "ausencias_geracao": ausencias,
+        "linhas_usina_sem_valor": int(resumo_coleta.get("linhas_usina_sem_valor") or 0),
+        "trechos": _ler_csv_texto(coleta / caminhos.ARQUIVOS_COLETA["trechos"]),
+        "composicao": _ler_csv_texto(coleta / caminhos.ARQUIVOS_COLETA["composicao"]),
+        "cadastro": ficha_do_cadastro(coleta, conferencias.get("cadastro")),
+        "dicionarios": _ler_csv(coleta / caminhos.ARQUIVOS_COLETA["dicionarios"], keep_default_na=False),
+        "auditoria_cadastro": auditoria_cadastro,
+        "nao_aplicaveis": _ler_csv_texto(conferencia / caminhos.ARQUIVOS_CONFERENCIA["nao_aplicaveis"]),
+    }
+
+
 def carregar_entradas(slug: str) -> Dict[str, Any]:
     """Dados tratados, conferências e registros da Coleta da usina, prontos para ``analisar``."""
     coleta = caminhos.pasta_etapa(slug, "coleta")
@@ -211,16 +344,43 @@ def carregar_entradas(slug: str) -> Dict[str, Any]:
     }
 
 
+def _executar_sem_evt(perfil: Any, pasta: Path) -> ResultadoEtapa:
+    entradas = carregar_entradas_sem_evt(perfil.usina.slug)
+    res = analisar_sem_evt(perfil=perfil, **entradas)
+    with registrar_gravacoes() as gravacoes:
+        salvar_resultados(res, pasta / caminhos.ARQUIVOS_ANALISES["resultados"])
+    cobertura = res.cobertura
+    resumo = {
+        "tipo": res.tipo,
+        "periodo": {"inicio": str(cobertura.get("inicio")), "fim": str(cobertura.get("fim"))},
+        "horas_analisadas": int(cobertura.get("horas_observadas", 0)),
+        "niveis": cobertura.get("niveis", {}),
+        "constatacoes": len(res.achados),
+        "conclusao": dict(sorted(Counter(item["lista"] for item in res.conclusao).items())),
+        "regras_da_conclusao": sorted({item["regra"] for item in res.conclusao}, key=lambda r: int(r[1:])),
+        "omitidos": [item["item"] for item in res.omitidos],
+        "bases_complementares": {
+            "indicadores": bool(res.ons), "programacao": bool(res.comum.get("programacao")),
+            "disponibilidade": bool(res.comum.get("disponibilidade")), "cadastro": bool(res.cadastro),
+        },
+    }
+    return ResultadoEtapa(codigo=CODIGO_SUCESSO, arquivos=[p for p, _ in gravacoes], resumo=resumo)
+
+
 def executar_analises(perfil: Any) -> ResultadoEtapa:
     """Calcula os resultados da usina e grava ``resultados.pkl`` (código 0)."""
     slug = perfil.usina.slug
     pasta = caminhos.pasta_etapa(slug, "analises")
+    if escolher(perfil).conjunto != "evt":
+        return _executar_sem_evt(perfil, pasta)
     entradas = carregar_entradas(slug)
     for nome in ("indicadores", "programacao", "disponibilidade", "hidrologia", "geracao", "cadastro"):
         if entradas[nome] is None:
             logger.warning("Base '%s' sem dados tratados para a usina: o relatório sai sem a seção correspondente.",
                            nome)
     res = analisar(**entradas)
+    res.tipo = registro.tipo_da_usina(perfil)
+    res.modalidade = str(getattr(perfil.usina, "modalidade", "") or "")
     with registrar_gravacoes() as gravacoes:
         salvar_resultados(res, pasta / caminhos.ARQUIVOS_ANALISES["resultados"])
     cobertura = res.cobertura

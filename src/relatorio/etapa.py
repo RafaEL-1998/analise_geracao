@@ -18,13 +18,15 @@ from typing import Any, List, Optional, Tuple
 import pandas as pd
 from openpyxl import load_workbook
 
-from src.analises.resultados import ResultadosAnalise, carregar_resultados
+from src.analises.resultados import ResultadosAnalise, carregar_resultados, sem_evt
 from src.comum import caminhos
 from src.comum.logger import setup_logger
 from src.comum.regras import DEFAULT_PLOT_DPI
 from src.pipeline import CODIGO_SUCESSO, ResultadoEtapa
+from src.relatorio import comum
 from src.relatorio.estrutura import secoes_presentes
 from src.relatorio.figuras import NOMES_FIGURAS_OPCIONAIS, gerar_graficos
+from src.relatorio.figuras_comum import NOMES_FIGURAS_COMUM_OPCIONAIS
 from src.relatorio.fontes import origem_dos_dados
 from src.relatorio.markdown import gerar_relatorio_md
 from src.relatorio.parametros import (
@@ -46,6 +48,10 @@ PASTA_TEMPORARIA = ".gravando"
 
 def completar_resultados(res: ResultadosAnalise) -> ResultadosAnalise:
     """Tabela de parâmetros e origem dos dados, montadas no relatório (spec das Análises, FR-042)."""
+    if sem_evt(res):  # usinas sem EVT (spec 006): parâmetros do tipo, sem os hidráulicos
+        res.parametros = comum.tabela_parametros(res)
+        res.fontes = origem_dos_dados(res)
+        return res
     parametros = tabela_parametros(com_indicadores=bool(res.ons), com_programacao=bool(res.programacao))
     if res.disponibilidade:
         parametros = pd.concat([parametros, parametros_disponibilidade(res)], ignore_index=True)
@@ -129,9 +135,16 @@ def executar_relatorio(perfil: Any, data_geracao: Optional[datetime] = None) -> 
                                      invariante=data_geracao is not None)
         pdf = gerador.build_pdf()
         paginas = paginas_do_pdf(pdf)
-        resumo_pdf, resumo_md, info_resumo = gerar_resumo(res, temporaria / arq["resumo_pdf"], temporaria / arq["resumo_md"],
-                                                          gerado_em, data_geracao is not None, paginas)
-        novos: List[Path] = [pdf, md, xlsx, csv, resumo_pdf, resumo_md, *sorted(figuras.values())]
+        if sem_evt(res):  # o resumo executivo das usinas sem EVT é a US3 da spec 007 (tarefas T027 a T030)
+            logger.warning("Resumo executivo não gerado: ainda não disponível para as usinas sem EVT.")
+            resumos: List[Path] = []
+            info_resumo = None
+        else:
+            resumo_pdf, resumo_md, info_resumo = gerar_resumo(res, temporaria / arq["resumo_pdf"],
+                                                              temporaria / arq["resumo_md"], gerado_em,
+                                                              data_geracao is not None, paginas)
+            resumos = [resumo_pdf, resumo_md]
+        novos: List[Path] = [pdf, md, xlsx, csv, *resumos, *sorted(figuras.values())]
         _conferir_saidas(novos)
         planilha = load_workbook(xlsx, read_only=True)
         abas = len(planilha.sheetnames)
@@ -147,7 +160,7 @@ def executar_relatorio(perfil: Any, data_geracao: Optional[datetime] = None) -> 
         arquivos = _trocar_saidas(temporaria, pasta, novos)
     finally:
         shutil.rmtree(temporaria, ignore_errors=True)
-    for nome in NOMES_FIGURAS_OPCIONAIS.values():  # figura opcional de uma execução anterior, não gerada agora
+    for nome in [*NOMES_FIGURAS_OPCIONAIS.values(), *NOMES_FIGURAS_COMUM_OPCIONAIS.values()]:  # opcional anterior
         antiga = pasta / arq["figuras"] / nome
         if antiga not in arquivos and antiga.exists():
             antiga.unlink()
