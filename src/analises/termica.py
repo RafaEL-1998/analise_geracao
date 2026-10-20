@@ -30,7 +30,7 @@ from src.comum.regras import (
     LIMIAR_INDISPONIBILIDADE_TOTAL_MW,
     NUMERO_EVENTOS_RELATORIO,
 )
-from src.tratamento.termica import SINAL_CVU_AUSENTE, SINAL_CVU_NEGATIVO, SINAL_CVU_ZERO
+from src.tratamento.termica import SINAL_CVU_AUSENTE, SINAL_CVU_NEGATIVO, SINAL_CVU_ZERO, semanal_em_horas
 
 # Motivos do despacho (rótulo, coluna programada, coluna verificada): os que compõem a geração total publicada e, à
 # parte, os que detalham ou se sobrepõem a outros (a inflexibilidade pura e a embutida no mérito, a ordem de demérito e o
@@ -210,7 +210,8 @@ def cvu_cmo(cvu: Optional[pd.DataFrame], cmo: Optional[pd.DataFrame], unidades: 
             horas: pd.DataFrame) -> Dict[str, Any]:
     """Por semana operativa e unidade: o CVU, o CMO médio semanal do subsistema e a relação entre eles, com a geração
     verificada da unidade na semana; e as horas disponíveis sem despacho nas semanas com algum CVU abaixo do CMO (base
-    da C13). Sem julgamento do despacho (US2-3)."""
+    da C13). A relação semanal é levada à hora pelo intervalo da semana operativa (``semanal_em_horas``, FR-040) para os
+    cruzamentos com o despacho e a disponibilidade. Sem julgamento do despacho (US2-3)."""
     if cvu is None or cvu.empty or cmo is None or cmo.empty:
         return {}
     c = cvu[["codigo", "semana_inicio", "semana_fim", "val_cvu", "sinal_cvu"]].copy()
@@ -222,23 +223,26 @@ def cvu_cmo(cvu: Optional[pd.DataFrame], cmo: Optional[pd.DataFrame], unidades: 
     s.loc[valido & (s["cvu"] < s["cmo"]), "relacao"] = "abaixo"
     s.loc[valido & (s["cvu"] > s["cmo"]), "relacao"] = "acima"
     s.loc[valido & (s["cvu"] == s["cmo"]), "relacao"] = "igual"
+    por_hora = semanal_em_horas(s, ["relacao"], ["codigo", "semana_inicio"])  # uma linha por hora e unidade
     u = unidades.dropna(subset=[VERIFICADO]) if len(unidades) else pd.DataFrame(columns=["din_instante", "codigo",
                                                                                         VERIFICADO])
     if len(u):
-        semana = u["din_instante"].dt.normalize() - pd.to_timedelta((u["din_instante"].dt.weekday - 5) % 7, unit="D")
-        geracao = u.assign(semana_inicio=semana).groupby(["codigo", "semana_inicio"])[VERIFICADO].sum()
-        s["geracao_mwh"] = [float(geracao.get((int(cod), sem), 0.0)) for cod, sem in zip(s["codigo"], s["semana_inicio"])]
+        com_geracao = por_hora.merge(u[["din_instante", "codigo", VERIFICADO]], on=["din_instante", "codigo"])
+        geracao = com_geracao.groupby(["codigo", "semana_inicio"])[VERIFICADO].sum()
+        s["geracao_mwh"] = [float(geracao.get((cod, sem), 0.0)) for cod, sem in zip(s["codigo"], s["semana_inicio"])]
     else:
         s["geracao_mwh"] = math.nan
+    horas_da_semana = por_hora[["din_instante", "semana_inicio"]].drop_duplicates()
     if len(horas):
-        semana_h = horas["din_instante"].dt.normalize() - pd.to_timedelta((horas["din_instante"].dt.weekday - 5) % 7,
-                                                                           unit="D")
-        sem_despacho = horas.assign(semana_inicio=semana_h).groupby("semana_inicio")["disponivel_sem_despacho"].sum()
+        h = horas_da_semana.merge(horas[["din_instante", "disponivel_sem_despacho"]], on="din_instante")
+        sem_despacho = h.groupby("semana_inicio")["disponivel_sem_despacho"].sum()
+        abaixo = set(por_hora.loc[por_hora["relacao"] == "abaixo", "din_instante"])  # horas com algum CVU abaixo
+        horas_c13 = int((horas["din_instante"].isin(abaixo) & horas["disponivel_sem_despacho"]).sum())
     else:
         sem_despacho = pd.Series(dtype=int)
+        horas_c13 = 0
     s["horas_disponivel_sem_despacho"] = s["semana_inicio"].map(sem_despacho).fillna(0).astype(int)
     semanas_abaixo = sorted(set(s.loc[s["relacao"] == "abaixo", "semana_inicio"]))
-    horas_c13 = int(sem_despacho.reindex(semanas_abaixo).fillna(0).sum()) if semanas_abaixo else 0
     resumo = []
     for codigo, g in s.groupby("codigo", sort=True):
         linha = {"codigo": int(codigo), "semanas": len(g)}

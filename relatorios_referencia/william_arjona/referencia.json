@@ -1,0 +1,204 @@
+{
+ "usina": "william_arjona",
+ "data_geracao": "20/10/2026 09:00",
+ "aprovado_em": "20/10/2026",
+ "periodo": {
+  "inicio": "2021-07-10 00:00:00",
+  "fim": "2026-10-18 23:00:00"
+ },
+ "arquivos": [
+  {
+   "nome": "relatorio_analise_estatistica.pdf",
+   "bytes": 1173839,
+   "sha256": "513fb284b576996910342881d764178cedfe59a82a83ac49a685b3a696307408"
+  },
+  {
+   "nome": "relatorio_analise_estatistica.md",
+   "bytes": 46572,
+   "sha256": "f68d5326484ef3590bc9f2ba3980c50f20359f27a569cfc64d28423c101cd4b8"
+  },
+  {
+   "nome": "perfil_estatistico_anual.xlsx",
+   "bytes": 126109,
+   "sha256": "fd03cb5c8c13c700b3b6f73bd5f9a3e7d5ff0ebb3de7b0793fc5bad8b6ffac77"
+  },
+  {
+   "nome": "perfil_estatistico_anual.csv",
+   "bytes": 909,
+   "sha256": "55cf910fe1e24b5bf1e48543c1011a0b873d2ee72868c01847dca9d8e7bc28fd"
+  },
+  {
+   "nome": "resumo_executivo.pdf",
+   "bytes": 81864,
+   "sha256": "bc5809e306ce3f061602c3d73fe60f4b8378bcde8f2affe96a17dc3534be26b4"
+  },
+  {
+   "nome": "resumo_executivo.md",
+   "bytes": 4769,
+   "sha256": "efc0b1cc106c1845fb65b7453620bbd567ba79e6e56025b61f1f1df4f5d763f9"
+  },
+  {
+   "nome": "figures/01_serie_temporal_geracao_disponibilidade.png",
+   "bytes": 162316,
+   "sha256": "1ede64ce0b12ebcb546c3f6e4dedc494da10f80c3bb15a2086a9e13a471a040f"
+  },
+  {
+   "nome": "figures/02_geracao_mensal.png",
+   "bytes": 69301,
+   "sha256": "f1b820377549b040b618001c52d1500a462c8ce265f837b1682fc3b2a6d5dd2c"
+  },
+  {
+   "nome": "figures/03_geracao_por_mes_do_ano.png",
+   "bytes": 82041,
+   "sha256": "000ac1e8e1300f60010729f0ccc980ec6759e2d7afe4c95bac7b5ef8f38a24fe"
+  },
+  {
+   "nome": "figures/04_perfil_horario_geracao.png",
+   "bytes": 85302,
+   "sha256": "5d4ceb8d237bed4ac2fa3b6d5088a41160be08fd389db808c1eced462f674492"
+  },
+  {
+   "nome": "figures/05_disponibilidade_operacional_sincronizada_mensal.png",
+   "bytes": 147139,
+   "sha256": "a93bd3583ff8f9a67a96df331efbbdeb30d3e3a92e53bb7d8e50ba751466d49d"
+  },
+  {
+   "nome": "figures/06_despacho_por_motivo_mensal.png",
+   "bytes": 93434,
+   "sha256": "e40680b6dbaaa49022c656773c0f4eb7040557c08a31717a3f579f854694476d"
+  },
+  {
+   "nome": "figures/07_inflexibilidade_mensal.png",
+   "bytes": 72372,
+   "sha256": "739be4e973125e4354330d3cf2ab94cadc06c31107cafd441cc40bfd06f6b754"
+  },
+  {
+   "nome": "figures/08_desvios_despacho_mensal.png",
+   "bytes": 86586,
+   "sha256": "0669590fdd25a3a05a49d850c086bdacee18f6e8dfb79856777db09270479944"
+  },
+  {
+   "nome": "figures/09_cvu_cmo_semanal.png",
+   "bytes": 142578,
+   "sha256": "7579965d99657973302abc408e0460743b4e1208d4bdf0bbf23d14812709c315"
+  }
+ ],
+ "perfil": "ebf1548c8fe033161f0ee4bdf0497ec42de91846bd2b2989252e808080409afa",
+ "coleta": [
+  {
+   "nome": "geracao_extraido.parquet",
+   "bytes": 448915,
+   "sha256": "95c9e1c684c09664d72271f1eeae0859e3224e3e0145348e1732e4cadf5e8353"
+  },
+  {
+   "nome": "auditoria_geracao.csv",
+   "bytes": 9298,
+   "sha256": "ce8a2ed6e39cc42ede1b3a53f096b6e96c3cbcfa98908ffcd59e3e21bd625f25"
+  },
+  {
+   "nome": "geracao_complemento.parquet",
+   "bytes": 425551,
+   "sha256": "0ca5a335ec81d8469df639c90fdf83a08c8332d06810664596983938ec5dfa66"
+  },
+  {
+   "nome": "indicadores_extraido.parquet",
+   "bytes": 34331,
+   "sha256": "be57f41523ad2388270aad130944426950458f675b4e554f1d0952632e47c1d8"
+  },
+  {
+   "nome": "auditoria_indicadores.csv",
+   "bytes": 2111,
+   "sha256": "ed20b195099635f16b03c974f98f19025d2806ccc14eb16bdea96b871bb4e7e1"
+  },
+  {
+   "nome": "programacao_extraido.parquet",
+   "bytes": 8023,
+   "sha256": "eccc04ef977eaea81b744a8c0a622f9afd0c1d4dd677538e91df9e8e7cb3e398"
+  },
+  {
+   "nome": "auditoria_programacao.csv",
+   "bytes": 101139,
+   "sha256": "db75e6aca8cb8c595a381b6ff5070946a26d00029aa8008d740802319f2f5e75"
+  },
+  {
+   "nome": "disponibilidade_extraido.parquet",
+   "bytes": 444752,
+   "sha256": "a2dddd0a99497fd3da73a140cb75182b51c8224b64773063f1e612d80415c933"
+  },
+  {
+   "nome": "auditoria_disponibilidade.csv",
+   "bytes": 7743,
+   "sha256": "dd22bf4b0c4d9fe8c09abcd0d27583af816f15541d93e47bd192001925af9025"
+  },
+  {
+   "nome": "cadastro_ficha.csv",
+   "bytes": 357,
+   "sha256": "3f6aca35f2ef2035d316e83f3fe1f3abacc6f85e3dbb8a5d46d05751ad683474"
+  },
+  {
+   "nome": "auditoria_cadastro.csv",
+   "bytes": 236,
+   "sha256": "7bc08b0122afdf8bcc83c812f70799a5db5fc68fffd4822e39e901b3c95b5686"
+  },
+  {
+   "nome": "capacidade_ficha.csv",
+   "bytes": 1353,
+   "sha256": "ea49d7b300c92070d8ac1ec9d8098de3b64a47e85a0dd7faa5692a5e76104f38"
+  },
+  {
+   "nome": "auditoria_capacidade.csv",
+   "bytes": 315,
+   "sha256": "e98a590966ffe2d8ad58b4467ce7924078c16c1906b5083c4c5a4439f0f9dd08"
+  },
+  {
+   "nome": "despacho_extraido.parquet",
+   "bytes": 674801,
+   "sha256": "c2ca68c5898fed32d095c2c9dae9c1d8e47e6044ead58b22c53d983391f3f46d"
+  },
+  {
+   "nome": "auditoria_despacho.csv",
+   "bytes": 7812,
+   "sha256": "29427a968ac50acd910535a4651476a419710a8e7d0a6de8586cb79704896b34"
+  },
+  {
+   "nome": "cvu_extraido.parquet",
+   "bytes": 12832,
+   "sha256": "15ba64d57fc43255c03d53a3358a2c43419c2bb1468a2a55e5e294aab034256d"
+  },
+  {
+   "nome": "auditoria_cvu.csv",
+   "bytes": 872,
+   "sha256": "b0b57b649e53c458530f29f3f62b7c1393e87ae73b7e0f6ffcd6d477f2033ddd"
+  },
+  {
+   "nome": "cmo_extraido.parquet",
+   "bytes": 14226,
+   "sha256": "5ba33dd88a87ed0fc88599aedd7a0cda48abd9c5a8d2805a4d1b59d14ded2522"
+  },
+  {
+   "nome": "auditoria_cmo.csv",
+   "bytes": 808,
+   "sha256": "0bdd3ee5aa18043c19fd94e2e197a025124772573f6a79446f740fe0355740f3"
+  },
+  {
+   "nome": "trechos.csv",
+   "bytes": 326,
+   "sha256": "de3b928c5316d9adbd1a632a5d5597431f1eb7c52967cb8d160673af66f7c2cf"
+  },
+  {
+   "nome": "dicionarios.csv",
+   "bytes": 8974,
+   "sha256": "ec43983dc3c750b0574b606c8e3921211d49637d16fbb6f814ecad832843010e"
+  },
+  {
+   "nome": "datas_obtencao.csv",
+   "bytes": 948,
+   "sha256": "c63b7305deeae8cfcab2e81504ebd2a9b292b28a8ed1009e63f5812cc1a2f4be"
+  },
+  {
+   "nome": "etapa.json",
+   "bytes": 8793,
+   "sha256": "072d103a96a579388749338d28df8d4edabeb1ba7220d5bd2cccf1b2be6b34f6"
+  }
+ ]
+}

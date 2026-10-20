@@ -59,3 +59,20 @@ Redação final. Os requisitos novos seguem a numeração da spec do Tratamento 
 | Tratamento | UTE, UTN | Demais tipos |
 |---|---|---|
 | Despacho por hora e por unidade, CVU, CMO e sinal do CVU | com a cobertura | não se aplica |
+
+## Fase C — eólicas e solares (rascunho para aprovação, tarefa T098)
+
+### Requisitos novos
+
+- **FR-041** (semi-horárias): o Tratamento DEVE gravar `restricao_semi_horaria.csv` na resolução publicada (30 minutos), uma linha por semi-hora, e levar a geração verificada, a estimada e o recurso à hora cheia pela média das duas meias-horas, só para os cruzamentos com as séries horárias (FR-016). Hora com uma só meia-hora fica ausente e é contada.
+- **FR-042** (energia cortada, decisão R12): a energia cortada da usina é a soma de máx(estimada − verificada, 0) × 0,5 h nas semi-horas com a marca de restrição (`flg_geracaorestrita = 1`), em `energia_cortada_mwh`. A diferença fora das semi-horas restritas é erro da estimativa e não entra. As semi-horas sem a coluna da marca (fotovoltaica de 05 a 12/2024) ficam com `sem_marca_restricao`, contadas e fora do total.
+- **FR-043** (razão da restrição): cada semi-hora restrita recebe a razão (REL, CNF, ENE) e os minutos de cada razão da restrição com a razão, na mesma semi-hora e com o nível dela (usina ou conjunto). Quando a razão é do conjunto, a energia cortada continua sendo a da usina.
+- **FR-044** (fator de capacidade): `fator_capacidade_horario.csv`, com o nível, e as sinalizações `sinal_fc_fora_0_1` (fator fora de 0 a 1) e `sinal_acima_capacidade` (geração acima da capacidade instalada, com a folga de hoje de 1 MW).
+- **Sinalizações sem descarte** (FR-017): vento ou irradiância marcados como inválidos pelo ONS (`flg_dadoventoinvalido` ou `flg_dadoirradianciainvalido` = 1) viram `sinal_recurso_invalido`; a semi-hora fica na base.
+- Ausências e duplicatas seguem as regras de hoje (FR-016), com `<chave>_ausencias.csv` e `auditoria_<chave>.csv`; a base horária comum (FR-035) não muda de colunas. Na série de referência da restrição com detalhe (FR-059 da Coleta), a base horária usa a média das duas meias-horas.
+
+### Aplicabilidade por tipo (fase C, acréscimo)
+
+| Tratamento | EOL, UFV | Demais tipos |
+|---|---|---|
+| Semi-horárias, energia cortada, razão, fator de capacidade e sinalizações | com a cobertura | não se aplica |

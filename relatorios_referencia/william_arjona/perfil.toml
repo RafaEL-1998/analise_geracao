@@ -1,0 +1,54 @@
+# Perfil gerado por "python -m src perfil" a partir do catálogo de usinas (data/catalogo/, montado em 2026-10-19 14:41:30 UTC)
+# e completado em 19/10/2026 só com dados do ONS (pedido do usuário para seguir): sem garantia física, IP e TEIF de
+# referência, que não têm fonte nos dados abertos do ONS (a regra C5 da conclusão não é avaliada sem eles).
+# Identificação só pelos códigos (CEG, id ONS e código de programação), nunca pelo nome.
+
+[usina]
+slug = "william_arjona"
+nome = "UTE William Arjona"           # Modalidade das usinas: "UTE WILLIAM ARJONA (UTWI)", publicado em 18/10/2026
+nome_curto = "William Arjona"
+estado = "MS"                         # Modalidade das usinas
+tipo = "UTE"                          # prefixo do CEG
+modalidade = "TIPO I"                 # Modalidade das usinas
+subsistema = "SE"                     # Capacidade de geração
+inicio_operacao_comercial = 2021      # Capacidade de geração: primeira unidade ativa em 10/07/2021
+situacao = "conferido"
+
+[identificacao]
+ceg = "UTE.GN.MS.027075-0.01"         # Modalidade das usinas
+id_ons = "MSUTWI"                     # Modalidade das usinas
+codigos_programacao = ["MSUTWI"]      # Programação diária, publicado em 18/10/2026
+
+# Códigos de planejamento: Geração térmica por motivo de despacho, todos os arquivos (catálogo de 20/10/2026);
+# acrescentados na fase B com a aprovação do usuário (20/10/2026)
+[[identificacao.planejamento]]        # publicado como "Willian Arjona"
+codigo = 34
+inicio = "2013-01"
+fim = "2018-08"
+
+[[identificacao.planejamento]]        # publicado como "William Arjona" e "William Arjona Gás"
+codigo = 334
+inicio = "2021-07"
+fim = ""                              # vigente
+
+[[identificacao.planejamento]]        # publicado como "William Arjona Óleo"
+codigo = 434
+inicio = "2021-08"
+fim = "2026-01"
+
+[cobertura]                           # catálogo de usinas
+indicadores = "proprio"
+programacao = "proprio"
+disponibilidade = "proprio"
+geracao = "proprio"
+despacho = "proprio"                  # catálogo de 20/10/2026 (fase B)
+cvu = "proprio"                       # catálogo de 20/10/2026 (fase B)
+
+[parametros]
+potencia_instalada_mw = 177.116       # Capacidade de geração: 5 unidades ativas
+unidades_geradoras = 5
+potencias_unidades_mw = [39.16, 39.16, 33.0, 33.1, 32.696]
+combustivel = "GÁS"                   # Capacidade de geração
+
+[parametros.fontes]
+geral = "ONS, dados abertos: Capacidade de geração e Modalidade das usinas, publicados em 18/10/2026"

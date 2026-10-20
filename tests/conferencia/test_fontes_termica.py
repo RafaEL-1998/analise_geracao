@@ -81,3 +81,24 @@ def test_taxas_nao_aplicaveis_quando_a_usina_falta_nas_taxas() -> None:
     r = conferencia_teifa_teip(ind)
     assert not r.aplicavel and r.motivo == "a usina não consta das taxas TEIFa e TEIP publicadas pelo ONS no período"
     assert "sem dados no período" in conferencia_teifa_teip(None).motivo
+
+
+def test_dispf_e_horas_por_estado_numa_termica() -> None:
+    """DISPF × horas pelo CEG numa térmica, como nas hidrelétricas (T080, T154; FR-018). Nas térmicas, o HP soma também
+    as horas equivalentes (HEDP e HEDF), o que não muda a comparação de HDP e HDF com INDISPPF e INDISPFF."""
+    from src.conferencia.indicadores import conferencia_dispf_horas
+
+    meses = [pd.Timestamp("2024-01-01"), pd.Timestamp("2024-02-01")]
+    horas = pd.DataFrame([
+        {"mes": m, "ug": ug, "HP": hp, "HS": hp - 60.0 - hdf, "HRD": 0.0, "HDP": 40.0, "HDF": hdf, "HDCE": 0.0,
+         "HEDP": 0.0, "HEDF": 20.0}
+        for m, hp in zip(meses, (744.0, 696.0)) for ug, hdf in (("UG1", 50.0), ("UG2", 0.0))])
+    ug_mensal = pd.DataFrame([
+        {"mes": r.mes, "ug": r.ug, "indisppf": r.HDP / r.HP * 100.0,
+         "indispff": (r.HDF + (24.0 if (r.ug == "UG1" and r.mes == meses[1]) else 0.0)) / r.HP * 100.0}
+        for r in horas.itertuples()])
+    ind = IndicadoresONS(ug_mensal=ug_mensal, ug_anual=pd.DataFrame(), horas_estado=horas, taxas=pd.DataFrame())
+    r = conferencia_dispf_horas(ind)
+    assert r.aplicavel and (r.comparados, r.coincidentes, r.divergentes) == (4, 3, 1)
+    divergente = r.tabelas["divergencias"].iloc[0]
+    assert (divergente["ug"], divergente["mes"], round(divergente["diferenca_forcada_h"], 6)) == ("UG1", meses[1], 24.0)

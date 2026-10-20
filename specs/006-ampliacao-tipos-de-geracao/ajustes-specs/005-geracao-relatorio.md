@@ -91,3 +91,26 @@ Redação final. Os requisitos novos seguem a numeração da spec da Geração d
 |---|---|---|
 | Seções de térmica (FR-044) | com o despacho | não se aplica |
 | Indicadores da capa de térmica | com o despacho e a disponibilidade | não se aplica |
+
+## Fase C — eólicas e solares (rascunho para aprovação, tarefa T098)
+
+### Requisitos novos
+
+- **FR-045** (seções de renováveis, item 8 da FR-041): nas EOL e UFV, em ordem fixa:
+  1. fator de capacidade (publicado, com o nível, e o calculado, quando há série própria);
+  2. energia cortada por restrição de operação (constrained-off), por mês e por razão;
+  3. recurso × geração.
+  - A aderência à programação fica na seção comum de programação, com os maiores desvios.
+  - Figuras em seaborn: fator de capacidade mensal; energia cortada mensal por razão (empilhada); geração média por faixa de recurso; desvio da programação.
+  - Seção sem base é omitida, com o motivo nas notas; na série curta, a sazonalidade sai com o motivo (decisão R17).
+- **Capa das renováveis** (data-model 6.5): fator de capacidade, geração média e energia cortada (% da estimada); os números do conjunto identificados como tais.
+- **Legendas**: a restrição com detalhe cita o id ONS e o CEG da usina; o Fator de capacidade e a razão da restrição do conjunto citam "conjunto de usinas, id ONS CJU_…".
+- **Notas**: a energia cortada só nas semi-horas com a marca de restrição; as semi-horas sem a marca (fotovoltaica de 05 a 12/2024) fora do total; o recurso inválido fora das faixas; os limiares de C16 a C19 na nota da conclusão gerada do catálogo.
+- **Resumo executivo** (spec 007, decisão R6): nas eólicas e solares, a evolução anual ganha o principal indicador de perda do tipo (energia cortada, em MWh e em % da estimada); os termos novos do resumo (por exemplo, constrained-off e as razões REL, CNF e ENE) entram no glossário com o texto aprovado pelo usuário.
+
+### Aplicabilidade por tipo (fase C, acréscimo)
+
+| Elemento | EOL, UFV | Demais tipos |
+|---|---|---|
+| Seções de renováveis (FR-045) | com as bases | não se aplica |
+| Indicadores da capa de renováveis | com as bases | não se aplica |

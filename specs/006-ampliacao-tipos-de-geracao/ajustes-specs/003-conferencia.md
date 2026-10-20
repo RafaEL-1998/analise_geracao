@@ -53,3 +53,20 @@ Redação final. Os requisitos novos seguem a numeração da spec da Conferênci
 |---|---|---|---|
 | G3 (programação × despacho) | sim | não aplicável: sem o despacho | não aplicável: tipo |
 | G4 (verificada do despacho × Geração por usina) | sim | não aplicável: sem o despacho | não aplicável: tipo |
+
+## Fase C — eólicas e solares (rascunho para aprovação, tarefa T098)
+
+### Requisitos novos
+
+- **FR-023** (G1, `geracao_fontes.csv`): em EOL e UFV, a geração da usina DEVE ser comparada entre as fontes que a trazem, sempre duas a duas e no mesmo nível: Geração por usina, Fator de capacidade (`val_geracaoverificada`), restrição com detalhe (média horária) e restrição com a razão (`val_geracao`, média horária). Par de níveis diferentes não é comparado.
+- **FR-024** (G2, `soma_conjunto.csv`): em EOL e UFV em conjunto, com os `[[identificacao.membros]]` no perfil, a soma das usinas do conjunto (restrição com detalhe, média horária) DEVE ser comparada com a geração do conjunto (Geração por usina do conjunto), só nos trechos com todas as usinas da composição. Sem os membros no perfil, a G2 fica não aplicável, com o motivo.
+- **FR-025** (G5, `programacao_renovaveis.csv`): a Programação diária (média horária dos patamares) DEVE ser comparada com a geração programada do Fator de capacidade, no mesmo nível.
+- As três usam a tolerância de hoje (0,01 MW) e só registram, sem meta (decisão R13); uma meta só depois das pilotos, com a aprovação do usuário.
+
+### Aplicabilidade por tipo (fase C, acréscimo)
+
+| Conferência | EOL, UFV com as bases | EOL, UFV sem uma base | Demais tipos |
+|---|---|---|---|
+| G1 (geração entre fontes) | só os pares do mesmo nível | não aplicável: sem duas fontes no mesmo nível | não aplicável: tipo |
+| G2 (soma das usinas × conjunto) | em conjunto, com os membros | não aplicável: fora de conjunto ou sem os membros | não aplicável: tipo |
+| G5 (programação × fator de capacidade) | no mesmo nível | não aplicável: sem uma das bases ou níveis diferentes | não aplicável: tipo |

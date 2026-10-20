@@ -539,10 +539,10 @@ python -m pytest tests -q -p no:cacheprovider
   - tempo de até 15 minutos pelo `etapa.json`.
   - Registrar.
 - [X] T093 [US2] Conferir o relatório piloto pelo quickstart 8: nenhum termo de parecer e nenhum identificador das outras pilotos em `reports/william_arjona/relatorio_analise_estatistica.md` (SC-004, SC-007). Registrar.
-- [ ] T094 [US2] Calibrar com a piloto os limiares de C12 a C15 e levar ao usuário o relatório da William Arjona e os limiares.
+- [X] T094 [US2] Calibrar com a piloto os limiares de C12 a C15 e levar ao usuário o relatório da William Arjona e os limiares.
   - Depois da aprovação: `python -m src referencia --usina william_arjona --data-geracao "<data>" --aprovado-em "<data>"`.
   - Pedir o commit ao usuário. Registrar.
-- [ ] T095 [US2] Portão do fim da fase B: suíte; `pyflakes`; `/speckit-converge`; `comparar --todas --coleta` com código 0, com duas referências. Registrar.
+- [X] T095 [US2] Portão do fim da fase B: suíte; `pyflakes`; `/speckit-converge`; `comparar --todas --coleta` com código 0, com duas referências. Registrar.
 
 **Checkpoint**: térmicas e nucleares com relatório completo; duas referências protegidas.
 
@@ -556,8 +556,8 @@ python -m pytest tests -q -p no:cacheprovider
 
 ### Preparação da fase C
 
-- [ ] T096 [US3] Criar a cópia `python -m src copia-seguranca --motivo antes_fase_C` e conferir as referências na cópia nova. Registrar.
-- [ ] T097 [P] [US3] Acrescentar a fase C aos rascunhos:
+- [X] T096 [US3] Criar a cópia `python -m src copia-seguranca --motivo antes_fase_C` e conferir as referências na cópia nova. Registrar.
+- [X] T097 [P] [US3] Acrescentar a fase C aos rascunhos:
   - `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/001-coleta-dados.md`: fator de capacidade, restrição com detalhe e com razão (variantes eólica e fotovoltaica); o motor semi-horário; a linha da fase C da decisão R6; `[[identificacao.membros]]`;
   - `002-tratamento-dados.md`: semi-horárias e hora cheia, energia cortada e sinalizações (decisões R11, R12);
   - `003-conferencia.md`: G1, G2 e G5;
@@ -1211,3 +1211,33 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 - **Glossário do resumo**: textos de CVU e CMO aprovados pelo usuário como estão.
 - Relatório refeito (`completo --usina william_arjona --sem-portal --data-geracao "20/10/2026 09:00"`): código 0; 15 seções, 27 páginas; resumo executivo com 2 páginas e 564 palavras. Suíte com 725 aprovados; pyflakes sem aviso.
 - Falta: a aprovação do relatório pelo usuário, o registro da referência (`python -m src referencia --usina william_arjona ...`) e o commit.
+- **T094 concluída** (20/10/2026): o usuário aprovou o relatório e o resumo executivo da William Arjona ("aprovo o relatório e o sumário executivo"), depois de conferir três horas da série com uma fonte própria (os valores batem com a base horária na hora de início do intervalo; a fonte dele usa a data no formato mês/dia). `python -m src referencia --usina william_arjona --data-geracao "20/10/2026 09:00" --aprovado-em "20/10/2026"`: código 0; referência em `relatorios_referencia/william_arjona/` (15 arquivos do relatório, o perfil e 23 arquivos da Coleta congelada; período de 10/07/2021 a 18/10/2026). Commit pedido ao usuário.
+
+## Phase 10: Convergence
+
+- [X] T154 Acrescentar a `tests/conferencia/test_fontes_termica.py` (ou à integração da UTN fictícia) a asserção do resultado da DISPF × horas pelo CEG numa térmica (meses-unidade comparados, coincidentes e divergentes), não só a aplicabilidade, per T080 e FR-018 (partial)
+- [X] T155 Usar `semanal_em_horas` (`src/tratamento/termica.py`) no cruzamento horário do CVU e do CMO com o despacho e a disponibilidade em `src/analises/termica.py`, ou retirá-la e registrar no rascunho 002 que as horas são levadas à semana operativa que as contém, per FR-040 do rascunho 002 (partial)
+- [ ] T156 Registrar na incorporação (fase F), junto com a T153, os desvios aprovados na fase B: o CVU zero sinalizado (decisão do usuário de 20/10/2026) no FR-017 e as figuras e a capa de térmica em `src/relatorio/figuras_comum.py` e `src/relatorio/comum.py`, per FR-017 e T090 (contradicts)
+
+### 20/10/2026 — T095 (portão do fim da fase B), T154 e T155
+
+- `/speckit-converge` (fase B): 3 achados LOW, acrescentados na Phase 10 (T154 a T156); nenhuma violação da constituição.
+- **T154**: teste novo em `tests/conferencia/test_fontes_termica.py` com o resultado da DISPF × horas numa térmica (4 meses-unidade, 1 divergente), com o HP somando as horas equivalentes, como nas térmicas do ONS.
+- **T155**: `src/analises/termica.py` passa a levar a relação semanal do CVU × CMO à hora com `semanal_em_horas` (FR-040 do rascunho 002) para os cruzamentos com o despacho e a disponibilidade; mesmos números nos testes e na referência da William Arjona.
+- **T095**: suíte com 726 aprovados; pyflakes sem aviso; `comparar --todas --coleta` com duas referências: william_arjona sem nenhuma diferença; sao_domingos só com as quatro diferenças da Coleta pela republicação do ONS (cadastro e indicadores, agora publicados em 19/10/2026), aceitas pelo usuário até o próximo congelamento da São Domingos, sem diferença no relatório. Código 6 por essas diferenças aceitas. A T156 fica para o fechamento (fase F).
+- **Fase B concluída**; commit pedido ao usuário (código da fase B e referência da William Arjona).
+
+### 20/10/2026 — T096 (cópia de segurança da fase C)
+
+- `python -m src copia-seguranca --motivo antes_fase_C`: código 0; `_backup_2026-10-20_antes_fase_C` criada e conferida (361 arquivos), com `relatorios_referencia/sao_domingos/` e `relatorios_referencia/william_arjona/` (cada `referencia.json` com o mesmo SHA-256 do projeto). Excluída a mais antiga, `_backup_2026-10-19_antes_fase_A_catalogo`; ficam `_backup_2026-10-19_antes_fase_B` e `_backup_2026-10-20_antes_fase_C`.
+
+### 20/10/2026 — T097 (rascunhos da fase C)
+
+- Contratos conferidos nos dados abertos antes dos rascunhos: Fator de capacidade horário (`fator_capacidade_2_di`, arquivos mensais); restrição com detalhe e com a razão semi-horárias (dois instantes por hora, arquivos mensais); na Seriemas 1, o Fator de capacidade e a razão só do conjunto `CJU_MS4FINO` (CEG "-") e a restrição com detalhe das oito usinas do conjunto, cada uma com o seu CEG.
+- Seção "Fase C — eólicas e solares" acrescentada aos cinco rascunhos de `ajustes-specs/`:
+  - Coleta: FR-051 e FR-053 ajustadas (cobertura e rascunho das bases de renováveis); FR-057 (Fator de capacidade, restrição com detalhe e com a razão, com as variantes e as linhas dos membros para a G2), FR-058 (motor semi-horário, colunas ausentes contadas sem falha) e FR-059 (linha da fase C da decisão R6);
+  - Tratamento: FR-041 a FR-044 (semi-horárias e hora cheia, energia cortada só nas semi-horas restritas, razão por semi-hora com o nível, fator de capacidade com as sinalizações) e o recurso inválido sinalizado;
+  - Conferência: FR-023 (G1), FR-024 (G2) e FR-025 (G5), sem meta;
+  - Análises: FR-058 (seções de renováveis, decisão R19) e FR-059 (C16 a C19, limiares calibrados nas pilotos);
+  - Geração do relatório: FR-045 (três seções e quatro figuras), capa, legendas, notas e o resumo executivo das renováveis (energia cortada como indicador de perda; termos novos com o texto a aprovar).
+- **T098**: rascunhos levados ao usuário; nenhum código da fase C antes da aprovação.

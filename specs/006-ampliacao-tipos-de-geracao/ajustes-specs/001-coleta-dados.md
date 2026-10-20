@@ -151,3 +151,31 @@ A Coleta passa a atender qualquer usina que os dados abertos do ONS cobrem: UHE,
 | Geração térmica por motivo de despacho | — | — | — | S | S | — | — |
 | CVU das usinas térmicas | — | — | — | S | S | — | — |
 | CMO semanal | — | — | — | sempre | sempre | — | — |
+
+## Fase C — eólicas e solares (rascunho para aprovação, tarefa T098)
+
+Contratos conferidos nos dados abertos em 20/10/2026: o Fator de capacidade é horário, em arquivos mensais; as duas bases de restrição são semi-horárias (dois instantes por hora), também em arquivos mensais. Na UFV Seriemas 1, o Fator de capacidade e a razão da restrição vêm só do conjunto (`CJU_MS4FINO`, CEG "-"); a restrição com detalhe traz a usina (`MSSRI1`) e as outras sete do conjunto, cada uma com o seu CEG.
+
+### Requisitos alterados
+
+- **FR-051** (catálogo): o catálogo passa a verificar também a cobertura do Fator de capacidade, da restrição com detalhe e da restrição com a razão (arquivo mais recente de cada um, na variante do tipo: eólica ou fotovoltaica), pelo id ONS da usina e pelo id do conjunto.
+- **FR-053** (rascunho do perfil): nas eólicas e solares, a `[cobertura]` do rascunho traz `fator_capacidade`, `restricao_detalhe` e `restricao_razao` com o nível achado no catálogo; os `[[identificacao.membros]]` continuam vindo da Composição dos conjuntos, como na fase A.
+
+### Requisitos novos
+
+- **FR-057** (conjuntos das renováveis): em EOL e UFV, conforme a `[cobertura]`, a Coleta DEVE obter (decisão R9):
+  - **Fator de capacidade** (`fator-capacidade-2`, horário): da usina, pelo id ONS, conferido pelo CEG; do conjunto, pelo id do conjunto, conferido pelo estado (o CEG das linhas de conjunto é "-");
+  - **Restrição com detalhe** (`restricao_coff_eolica_detail` ou `restricao_coff_fotovoltaica_detail`, pela variante do tipo; semi-horária): pelo id ONS da usina, conferido pelo CEG. O id do conjunto (`id_ons_conjuntousina`) é guardado como texto, sem servir de conferência, porque falta de 05 a 12/2024 na fotovoltaica (achado A7);
+  - **Restrição com a razão** (`restricao_coff_eolica_usi` ou `restricao_coff_fotovoltaica`, semi-horária): da usina, pelo id ONS, conferido pelo CEG; do conjunto, pelo id do conjunto, conferido pelo estado;
+  - na G2 (conferência), também as linhas dos `[[identificacao.membros]]` na restrição com detalhe, pelo id ONS e pelo CEG de cada membro, guardadas à parte como contexto identificado (princípio III);
+  - grava `fator_capacidade_extraido.parquet`, `restricao_detalhe_extraido.parquet` e `restricao_razao_extraido.parquet`, com as auditorias de hoje (data-model 6.1). Nomes nunca identificam nem conferem (achado A9: "230kV" e "230 kV").
+- **FR-058** (motor semi-horário): o motor comum DEVE ler as séries semi-horárias como publicadas, sem levar à hora (isso é do Tratamento). Coluna de valor ausente num arquivo (as cinco colunas da fotovoltaica de 05 a 12/2024) fica vazia e é contada na auditoria, sem falha do arquivo; a ausência da coluna do identificador ou da conferência continua falha, como hoje (correção P4). A extração dos conjuntos horários de hoje não muda (portão `comparar --todas --coleta`).
+- **FR-059** (série de referência, linha da fase C da decisão R6): EOL ou UFV em conjunto, com série própria na restrição com detalhe, têm como série de referência a geração verificada da usina nessa base, varrida em todos os arquivos publicados; o período vai da primeira à última semi-hora com valor.
+
+### Aplicabilidade por tipo (fase C, acréscimo)
+
+| Conjunto | UHE | PCH | CGH | UTE | UTN | EOL | UFV |
+|---|---|---|---|---|---|---|---|
+| Fator de capacidade | — | — | — | — | — | S | S |
+| Restrição com detalhe | — | — | — | — | — | S (eólica) | S (fotovoltaica) |
+| Restrição com a razão | — | — | — | — | — | S (eólica) | S (fotovoltaica) |
