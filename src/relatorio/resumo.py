@@ -60,13 +60,13 @@ CAMINHO_EVT = "evt"  # hidrelétrica com série própria na Energia Vertida Turb
 CAMINHO_SEM_EVT = "sem_evt"  # demais usinas, sobre a base horária comum (spec 006, decisão R30)
 # Colunas da tabela anual do relatório que entram no resumo, por caminho (no máximo seis). No caminho sem EVT, as que a
 # tabela da usina tem, nesta ordem (decisão R6 da spec 007): o nível do número, a geração, a energia, o fator de
-# capacidade (eólicas e solares) e a disponibilidade (quando o ONS a publica). A geração ÷ garantia física e o
-# indicador de perda do tipo entram com as seções do tipo (fases B e C da 006).
+# capacidade (eólicas e solares), a disponibilidade (quando o ONS a publica) e o indicador de perda do tipo (nas
+# térmicas, as horas disponíveis sem despacho; fase B da 006).
 COLUNAS_RESUMO_ANUAL: Dict[str, List[str]] = {
     CAMINHO_EVT: ["Ano", "Disp. média (% Pinst)", "Fator de capacidade", "Geração / GF", "EVT (MWh)",
                   "Horas parada c/ EVT"],
     CAMINHO_SEM_EVT: ["Ano", "Nível", "Geração média (MWmed)", "Energia (MWh)", "Fator de capacidade",
-                      "Disp. (% Pinst)"],
+                      "Disp. (% Pinst)", "Disp. sem despacho (h)"],
 }
 TITULOS_BLOCOS: Tuple[Tuple[str, str], ...] = (  # ordem fixa do documento; a conclusão fecha o resumo
     ("indicadores", "Indicadores-chave"),
@@ -167,15 +167,16 @@ def _caminho(res: ResultadosAnalise) -> str:
 
 
 def _identificacao(res: ResultadosAnalise) -> List[str]:
-    """Tipo, estado, modalidade e potência; agentes com o período de cada um, como na capa do relatório (só no
-    caminho da EVT, que os traz da base de EVT)."""
+    """Tipo, estado, modalidade e potência; agentes com o período de cada um, como na capa do relatório (caminho da
+    EVT, que os traz da base de EVT); nas usinas sem EVT, o agente atual da Capacidade de geração."""
     perfil = perfil_ativo()
     usina = perfil.usina
     potencia = f"{fmt_num(perfil.parametros.potencia_instalada_mw, 1)} MW"
     tipo = getattr(res, "tipo", "") or usina.tipo
     linhas = [" · ".join(p for p in (tipo, usina.estado, usina.modalidade, potencia) if p)]
-    if sem_evt(res):
-        return linhas
+    if sem_evt(res):  # o agente atual da Capacidade de geração, sem o histórico (decisão do usuário de 19/10/2026)
+        agentes = comum.texto_agentes(res)
+        return linhas + ([f"Agente atual (Capacidade de geração do ONS): {agentes}"] if agentes else [])
     agentes = dict(pares_identificacao(res)).get("Agente")
     if agentes:
         quantidade = len(res.cobertura.get("agentes", []))

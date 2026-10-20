@@ -31,6 +31,7 @@ from src.tratamento.hidrologia import tratar_hidrologia
 from src.tratamento.indicadores import TOLERANCIA_IDENTIDADE_HORAS, exportar_indicadores, montar_indicadores
 from src.tratamento.programacao import exportar_programacao, montar_programacao
 from src.tratamento.series import SerieConjunto
+from src.tratamento.termica import exportar_termica, montar_cmo, montar_cvu, montar_despacho
 
 logger = setup_logger("tratamento")
 
@@ -124,6 +125,35 @@ def _tratar_sem_evt(perfil: Any, coleta: Path, pasta: Path, resumo: Dict[str, An
                                prog.horaria if prog is not None else None, escolher(perfil).niveis[0])
     exportar_base_horaria(base, pasta)
     resumo["base_horaria"] = resumo_base_horaria(base, series["geracao"].ausencias)
+    _tratar_termica(perfil, chaves, coleta, pasta, inicio, fim, resumo)
+
+
+def _tratar_termica(perfil: Any, chaves: set, coleta: Path, pasta: Path, inicio: pd.Timestamp, fim: pd.Timestamp,
+                    resumo: Dict[str, Any]) -> None:
+    """Despacho, CVU e CMO das térmicas, quando coletados (spec 006, fase B; decisão R11)."""
+    arq = caminhos.ARQUIVOS_COLETA
+    planejamento = getattr(perfil.identificacao, "planejamento", ()) or ()
+
+    def entrada(nome: str):
+        return pd.read_parquet(coleta / arq[nome]), ler_auditoria_coleta(coleta / arq[f"auditoria_{nome}"])
+
+    despacho = cvu = cmo = None
+    if "despacho" in chaves:
+        despacho = montar_despacho(*entrada("despacho"), planejamento, inicio, fim)
+        resumo["despacho"] = {
+            "horas": len(despacho.horario), "horas_unidade": len(despacho.unidades),
+            "codigos": sorted(int(c) for c in despacho.unidades["codigo"].unique()),
+            "horas_ausentes": int(pd.to_numeric(despacho.ausencias["horas"]).sum()) if len(despacho.ausencias) else 0,
+            "duplicatas_conflitantes": int(despacho.auditoria["duplicatas_conflitantes"].sum())
+            if len(despacho.auditoria) else 0,
+        }
+    if "cvu" in chaves:
+        cvu = montar_cvu(*entrada("cvu"), planejamento, inicio, fim)
+        resumo["cvu"] = cvu.resumo
+    if "cmo" in chaves:
+        cmo = montar_cmo(*entrada("cmo"), str(perfil.usina.subsistema), inicio, fim)
+        resumo["cmo"] = cmo.resumo
+    exportar_termica(pasta, despacho, cvu, cmo)
 
 
 def executar_tratamento(perfil: Any) -> ResultadoEtapa:

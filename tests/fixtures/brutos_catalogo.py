@@ -146,6 +146,36 @@ def gravar_series(raw: Path) -> None:
 
     for mes in MESES_GERACAO:
         _parquet(geracao_do_mes(mes), raw / "geracao_usina_2" / f"GERACAO_USINA-2_{mes.year}_{mes.month:02d}.parquet")
+    gravar_termicas(raw)
+
+
+# Fase B (spec 006): códigos de planejamento da UTE no despacho; o 71 sai em 09/2026, o 70 é vigente
+PLANEJAMENTO_UTE = {7: ("2018-01", "2018-08"), 70: ("2026-09", "2026-10"), 71: ("2026-09", "2026-09")}
+
+
+def _despacho(ceg: str, codigo: float, horas: pd.DatetimeIndex, nome: str) -> pd.DataFrame:
+    return pd.DataFrame({"din_instante": horas, "nom_tipopatamar": "LEVE", "id_subsistema": "SE",
+                         "nom_subsistema": "SUDESTE", "nom_usina": nome, "cod_usinaplanejamento": codigo, "ceg": ceg,
+                         "val_proggeracao": "10.0", "val_verifgeracao": "9.5"})
+
+
+def gravar_termicas(raw: Path) -> None:
+    """Despacho (um arquivo anual antigo e dois mensais) e CVU: os códigos de planejamento do catálogo."""
+    pasta = raw / "geracao_termica_despacho_2"
+    _parquet(pd.concat([_despacho(UTE["ceg"], 7.0, pd.DatetimeIndex(["2018-01-01 00:00", "2018-08-10 23:00"]),
+                                  "UTE BETA"),
+                        _despacho(UTE_ANTIGA["ceg"], 8.0, pd.DatetimeIndex(["2018-03-01 00:00"]), "UTE ALFA")]),
+             pasta / "GERACAO_TERMICA_DESPACHO_2018.parquet")
+    _parquet(pd.concat([_despacho(UTE["ceg"], 70.0, _horas(pd.Period("2026-09", "M"))[:2], "UT BETA"),
+                        _despacho(UTE["ceg"], 71.0, _horas(pd.Period("2026-09", "M"))[:2], "UT BETA")]),
+             pasta / "GERACAO_TERMICA_DESPACHO-2_2026_09.parquet")
+    _parquet(_despacho(UTE["ceg"], 70.0, _horas(pd.Period("2026-10", "M"))[:2], "UTE BETA"),
+             pasta / "GERACAO_TERMICA_DESPACHO-2_2026_10.parquet")
+    semanas = pd.date_range("2026-09-26", periods=2, freq="7D")
+    _parquet(pd.DataFrame([{"dat_iniciosemana": s, "dat_fimsemana": s + pd.Timedelta(days=6), "num_revisao": 0,
+                            "cod_usinaplanejamento": c, "id_subsistema": "SE", "nom_usina": "W", "val_cvu": v}
+                           for s in semanas for c, v in ((70, 300.0), (71, 0.0), (999, 50.0))]),
+             raw / "cvu_usitermica" / "CVU_USINA_TERMICA_2026.parquet")
 
 
 def geracao_do_mes(mes: pd.Period) -> pd.DataFrame:

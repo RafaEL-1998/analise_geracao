@@ -1,5 +1,6 @@
 # Usina fictícia do tipo UTE (spec 006, decisão R23), só para testes: geração, disponibilidade e programação próprias,
-# sem os indicadores do ONS. Valores inventados; identificadores que não existem no ONS.
+# sem os indicadores do ONS; na fase B, o despacho, o CVU e o CMO, com o código 901 em 2023 trocado pelas unidades 902
+# (gás) e 903 (óleo) em 2024. Valores inventados; identificadores que não existem no ONS.
 
 [usina]
 slug = "ute_ficticia"
@@ -9,17 +10,35 @@ estado = "GO"
 inicio_operacao_comercial = 2019
 tipo = "UTE"
 modalidade = "TIPO I"
+subsistema = "SE"
 
 [identificacao]
 ceg = "UTE.GN.GO.000104-0.01"
 id_ons = "GOUTFI"
 codigos_programacao = ["GOUTFI"]
 
+[[identificacao.planejamento]]
+codigo = 901
+inicio = "2023-01"
+fim = "2023-12"
+
+[[identificacao.planejamento]]
+codigo = 902
+inicio = "2024-01"
+fim = ""
+
+[[identificacao.planejamento]]
+codigo = 903
+inicio = "2024-01"
+fim = ""
+
 [cobertura]
 indicadores = "ausente"
 programacao = "proprio"
 disponibilidade = "proprio"
 geracao = "proprio"
+despacho = "proprio"
+cvu = "proprio"
 
 [parametros]
 potencia_instalada_mw = 120.0

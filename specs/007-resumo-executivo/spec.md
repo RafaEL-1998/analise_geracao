@@ -139,7 +139,7 @@ Como fiscal, quero que o resumo saia para qualquer tipo de usina que o fluxo ate
   Um bloco sem base para a usina é omitido (constituição II).
 - **FR-008**: O **cabeçalho** DEVE trazer:
   - nome, tipo, estado, modalidade de operação e potência da usina;
-  - os agentes, cada um com o seu período;
+  - os agentes, cada um com o seu período; nas usinas sem EVT, cujos dados não trazem o histórico dos agentes, o agente atual de cada unidade como a Capacidade de geração do ONS o traz, identificado como tal (decisão do usuário de 19/10/2026);
   - o período analisado e a data de geração;
   - a referência ao relatório completo: título, data e número de páginas.
 - **FR-009**: A **conclusão** DEVE ser a da seção de conclusão do relatório completo da mesma execução, copiada igual: a frase de abertura, as listas, os itens, a ordem e o texto, caractere por caractere. O resumo NÃO DEVE resumir, reescrever, reordenar, acrescentar ou retirar itens da conclusão. Uma lista sem itens no relatório completo também não aparece no resumo.
@@ -210,6 +210,8 @@ Como fiscal, quero que o resumo saia para qualquer tipo de usina que o fluxo ate
 - **2026-10-13, Q1 — hipóteses do resumo**: as hipóteses do resumo executivo são a conclusão do relatório completo, copiada igual. Não há catálogo de hipóteses próprio do resumo.
 - **2026-10-13, ajustes do plano**: aprovados o A1 (FR-002 e cenário 4 da US1: sem comando só do resumo; a Geração do relatório gera os dois) e o A2 (FR-013: "Sobre os dados" com no máximo 250 palavras, porque a constituição 3.1.0 exige nele as mesmas informações de fonte e de conferência das legendas).
 - **2026-10-13, revisão 1 — ordem dos blocos**: depois de ver o resumo da São Domingos ("ficou EXCELENTE!"), o usuário pediu a conclusão por último. A ordem passa a ser cabeçalho, indicadores-chave, evolução anual, "Sobre os dados" e conclusão (FR-007 e cenário 2 da US1).
+- **2026-10-19, agentes nas usinas sem EVT (T043)**: o cabeçalho mostra o agente atual (proprietário e operador) das unidades ativas, da Capacidade de geração, identificado como "Agente atual (Capacidade de geração do ONS)", também na capa do relatório completo (FR-008).
+- **2026-10-19, encerramento**: a incorporação à spec 005 e a exclusão desta pasta (T037 e T038) ficam para o fechamento da spec 006 (fase F), junto com os ajustes da 006 na spec 005, para que a spec 005 seja editada uma vez só.
 - **2026-10-13, início da implementação**: o usuário pediu a implementação antes do portão da fase A da 006 (ajuste da decisão R13 do plano). A conferência de que o relatório completo não muda passa a ser feita contra o relatório gerado pelo código de antes da mudança.
 
 ## Assumptions

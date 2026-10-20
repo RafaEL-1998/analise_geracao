@@ -1,5 +1,6 @@
 # Usina fictícia do tipo UTN (spec 006, decisões R23 e R28), só para testes: geração, disponibilidade e indicadores do
-# ONS próprios, com IP e TEIF de referência. Valores inventados; identificadores que não existem no ONS.
+# ONS próprios, com IP e TEIF de referência; na fase B, o despacho (toda a geração por inflexibilidade), o CVU e o
+# CMO. Valores inventados; identificadores que não existem no ONS.
 
 [usina]
 slug = "utn_ficticia"
@@ -9,17 +10,25 @@ estado = "GO"
 inicio_operacao_comercial = 2010
 tipo = "UTN"
 modalidade = "TIPO I"
+subsistema = "SE"
 
 [identificacao]
 ceg = "UTN.NU.GO.000105-0.01"
 id_ons = "GOUNFI"
 codigos_programacao = ["GOUNFI"]
 
+[[identificacao.planejamento]]
+codigo = 950
+inicio = "2010-01"
+fim = ""
+
 [cobertura]
 indicadores = "proprio"
 programacao = "ausente"
 disponibilidade = "proprio"
 geracao = "proprio"
+despacho = "proprio"
+cvu = "proprio"
 
 [parametros]
 potencia_instalada_mw = 640.0

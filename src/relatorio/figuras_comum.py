@@ -1,4 +1,5 @@
-"""Figuras das usinas sem EVT, em seaborn, desenhadas só a partir das seções comuns (spec 006, decisões R14 e R15).
+"""Figuras das usinas sem EVT, em seaborn, desenhadas a partir das seções comuns e das seções do tipo (spec 006,
+decisões R14, R15 e R18; nas térmicas, as quatro figuras da fase B).
 
 Mesmo tema, paleta e tamanho das figuras de hoje (``src/relatorio/figuras.py``). Cada série leva o nível no rótulo
 quando não é da usina ("do conjunto ..."); níveis diferentes nunca são somados na mesma barra ou linha.
@@ -20,10 +21,15 @@ from src.comum.logger import setup_logger
 from src.comum.perfil import perfil_ativo
 from src.comum.regras import TAMANHO_FIGURA_PADRONIZADA
 from src.relatorio.figuras import (
+    COR_CONTEXTO,
     COR_DISPONIBILIDADE,
+    COR_EVT,
     COR_GERACAO,
     COR_SINCRONIZADA,
+    COR_TINTA,
+    COR_TINTA_SECUNDARIA,
     COR_TINTA_SUAVE,
+    RAMPA_LARANJA,
     _rotulo_referencia,
     _tema_graficos,
 )
@@ -39,8 +45,22 @@ NOMES_FIGURAS_COMUM: Dict[str, str] = {
 NOMES_FIGURAS_COMUM_OPCIONAIS: Dict[str, str] = {
     "sazonalidade": "03_geracao_por_mes_do_ano.png",
     "disponibilidade_comum": "05_disponibilidade_operacional_sincronizada_mensal.png",
+    # Térmicas (fase B): só com o despacho; o CVU × CMO, só com o CVU e o CMO
+    "despacho_motivo_mensal": "06_despacho_por_motivo_mensal.png",
+    "inflexibilidade_mensal": "07_inflexibilidade_mensal.png",
+    "desvios_despacho": "08_desvios_despacho_mensal.png",
+    "cvu_cmo": "09_cvu_cmo_semanal.png",
 }
 COR_CONJUNTO = "#184f95"  # azul escuro da rampa: a série do conjunto, ao lado da azul da usina
+# Motivos do despacho: cada motivo com a sua posição fixa na ordem categórica (validada com o script da skill de
+# visualização sobre fundo branco; contraste abaixo de 3:1 em três cores, compensado pela tabela e pela legenda); os
+# demais motivos juntos, em cinza
+CORES_MOTIVOS: Dict[str, str] = {
+    "Ordem de mérito": "#2a78d6", "Inflexibilidade": "#eb6834", "Razão elétrica": "#1baf7a",
+    "Garantia energética": "#eda100", "Unit commitment": "#e87ba4", "Geração fora da ordem de mérito (GFOM)": "#008300",
+    "Demais motivos": COR_CONTEXTO,
+}
+CORES_UNIDADES = ["#2a78d6", "#1baf7a", "#eda100", "#e87ba4"]  # CVU de cada unidade, na ordem dos códigos
 
 
 def rotulo_nivel(res: ResultadosAnalise, nivel: str) -> str:
@@ -229,16 +249,147 @@ def _grafico_disponibilidade(res: ResultadosAnalise, caminho: Path, dpi: int) ->
     plt.close(fig)
 
 
+def _limites_dos_meses(meses: List[pd.Timestamp]) -> List[float]:
+    limites = list(meses) + [pd.Timestamp(meses[-1]) + pd.offsets.MonthBegin(1)]
+    return [float(b) for b in mdates.date2num(limites)]
+
+
+def _eixo_mensal(ax: plt.Axes, meses: List[pd.Timestamp], rotulo_y: str, titulo: str) -> None:
+    ax.set_xlim(pd.Timestamp(meses[0]) - pd.Timedelta(days=5), pd.Timestamp(meses[-1]) + pd.Timedelta(days=36))
+    ax.set_xlabel("")
+    ax.set_ylabel(rotulo_y)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: fmt_num(v, 1)))
+    _eixo_tempo(ax, meses[0], meses[-1], diario=False)
+    ax.grid(axis="x", visible=False)
+    ax.set_title(titulo)
+
+
+def _legenda_retangulos(ax: plt.Axes, cores: Dict[str, str], extra: tuple = (), colunas: int = 4) -> None:
+    alcas = [plt.Rectangle((0, 0), 1, 1, color=cor, label=nome) for nome, cor in cores.items()] + list(extra)
+    ax.legend(handles=alcas, loc="upper center", bbox_to_anchor=(0.5, -0.09), ncol=min(colunas, len(alcas)))
+
+
+def _grafico_despacho_motivo(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    todos = res.termica["motivos_mensal"]
+    m = todos[todos["grupo"] == "motivo"].copy()
+    m["mes"] = pd.PeriodIndex(m["periodo"], freq="M").to_timestamp()
+    m["serie"] = m["motivo"].where(m["motivo"].isin(CORES_MOTIVOS), "Demais motivos")
+    m["gwh"] = m["verificado_mwh"].fillna(0.0).clip(lower=0.0) / 1000.0
+    longo = m.groupby(["mes", "serie"], as_index=False)["gwh"].sum()
+    presentes = [s for s in CORES_MOTIVOS if s in set(longo.loc[longo["gwh"] > 0, "serie"])]
+    cores = {s: CORES_MOTIVOS[s] for s in presentes}
+    longo = longo[longo["serie"].isin(presentes)]
+    total = todos[todos["grupo"] == "total"]
+    meses = list(pd.PeriodIndex(total["periodo"], freq="M").to_timestamp())
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    if len(longo):
+        # o seaborn empilha o último nível da ordem embaixo: a ordem invertida deixa a ordem de mérito na base
+        sns.histplot(data=longo, x="mes", weights="gwh", hue="serie", hue_order=presentes[::-1], palette=cores,
+                     multiple="stack", bins=_limites_dos_meses(meses), shrink=0.85, alpha=1, edgecolor="white",
+                     linewidth=0.3, legend=False, ax=ax)
+    centros = [pd.Timestamp(x) + pd.Timedelta(days=15) for x in meses]
+    sns.scatterplot(x=centros, y=(total["verificado_mwh"].fillna(0.0) / 1000.0).to_numpy(), color=COR_TINTA, s=10,
+                    zorder=3, legend=False, ax=ax)
+    _eixo_mensal(ax, meses, "Energia mensal (GWh)", "Geração verificada por motivo de despacho")
+    _legenda_retangulos(ax, cores, (plt.Line2D([], [], color=COR_TINTA, marker="o", lw=0, markersize=4,
+                                               label="Geração verificada total"),))
+    fig.subplots_adjust(left=0.07, right=0.97, top=0.9, bottom=0.24)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
+def _grafico_inflexibilidade(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    i = res.termica["inflexibilidade"]
+    cores = {"Inflexibilidade programada": RAMPA_LARANJA[2], "Inflexibilidade verificada": COR_EVT}
+    longo = pd.concat([pd.DataFrame({"mes": i["mes"], "serie": nome, "gwh": i[coluna].fillna(0.0) / 1000.0})
+                       for nome, coluna in zip(cores, ("programada_mwh", "verificada_mwh"))], ignore_index=True)
+    meses = sorted(i["mes"])
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    sns.histplot(data=longo, x="mes", weights="gwh", hue="serie", hue_order=list(cores), palette=cores,
+                 multiple="dodge", bins=_limites_dos_meses(meses), shrink=0.85, alpha=1, edgecolor="white",
+                 linewidth=0.3, legend=False, ax=ax)
+    _eixo_mensal(ax, meses, "Energia mensal (GWh)", "Inflexibilidade programada e verificada")
+    _legenda_retangulos(ax, cores)
+    fig.subplots_adjust(left=0.07, right=0.97, top=0.9, bottom=0.2)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
+def _grafico_desvios(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    m = res.termica["atendimento"]["mensal"]
+    series = (("Verificada acima da programada", "energia_acima_mwh", 1.0, COR_GERACAO),
+              ("Verificada abaixo da programada", "energia_abaixo_mwh", -1.0, COR_EVT))
+    meses = sorted(m["mes"])
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    for nome, coluna, sinal, cor in series:  # abaixo para baixo, acima para cima, sem somar os dois lados
+        sns.histplot(x=m["mes"], weights=sinal * m[coluna] / 1000.0, color=cor, alpha=1,
+                     bins=_limites_dos_meses(meses), shrink=0.85, edgecolor="white", linewidth=0.3, ax=ax)
+    ax.axhline(0, color=COR_TINTA_SECUNDARIA, lw=0.8)
+    _eixo_mensal(ax, meses, "Energia mensal do desvio (GWh)", "Desvios da geração verificada em relação à programada")
+    _legenda_retangulos(ax, {nome: cor for nome, _, _, cor in series})
+    fig.subplots_adjust(left=0.07, right=0.97, top=0.9, bottom=0.2)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
+def _grafico_cvu_cmo(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    s = res.termica["cvu_cmo"]["semanal"]
+    codigos = sorted(s["codigo"].unique())
+    cores = {f"CVU da unidade {c}": CORES_UNIDADES[n % len(CORES_UNIDADES)] for n, c in enumerate(codigos)}
+    cores["CMO médio semanal"] = COR_TINTA_SECUNDARIA
+    cvu = pd.DataFrame({"semana_inicio": s["semana_inicio"], "serie": s["codigo"].map(lambda c: f"CVU da unidade {c}"),
+                        "valor": s["cvu"].where(s["sinal_cvu"].fillna("") == "")})
+    semanas = s.drop_duplicates("semana_inicio")
+    cmo = pd.DataFrame({"semana_inicio": semanas["semana_inicio"], "serie": "CMO médio semanal",
+                        "valor": semanas["cmo"]})
+    longo = pd.concat([cvu, cmo], ignore_index=True).sort_values(["serie", "semana_inicio"])
+    # a linha se interrompe na semana sem valor (CVU ausente ou negativo): um trecho por sequência de semanas com valor
+    longo["trecho"] = (longo["valor"].isna() | (longo["semana_inicio"].diff() != pd.Timedelta(days=7))
+                       | (longo["serie"] != longo["serie"].shift())).cumsum()
+    longo = longo.dropna(subset=["valor"])
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    sns.lineplot(data=longo, x="semana_inicio", y="valor", hue="serie", hue_order=list(cores), palette=cores,
+                 units="trecho", estimator=None, errorbar=None, linewidth=1.2, legend=False, ax=ax,
+                 marker="o" if s["semana_inicio"].nunique() <= 30 else None, markersize=3)
+    inicio, fim = s["semana_inicio"].min(), s["semana_inicio"].max()
+    ax.set_xlim(inicio, fim + pd.Timedelta(days=6))
+    ax.set_ylim(bottom=0)
+    ax.set_xlabel("")
+    ax.set_ylabel("R$/MWh")
+    ax.yaxis.set_major_formatter(_FORMATADOR_Y)
+    _eixo_tempo(ax, inicio, fim, diario=False)
+    ax.set_title("CVU das unidades e CMO do subsistema, por semana operativa")
+    ax.legend(handles=[plt.Line2D([], [], color=cor, lw=2, label=nome) for nome, cor in cores.items()],
+              loc="upper center", bbox_to_anchor=(0.5, -0.09), ncol=min(4, len(cores)))
+    fig.subplots_adjust(left=0.08, right=0.97, top=0.9, bottom=0.2)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
+def _com_inflexibilidade(res: ResultadosAnalise) -> bool:
+    r = (getattr(res, "termica", None) or {}).get("inflexibilidade_resumo") or {}
+    return (r.get("programada_mwh") or 0) > 0 or (r.get("verificada_mwh") or 0) > 0
+
+
 _GERADORES = {
     "serie_temporal_comum": _grafico_serie_temporal,
     "geracao_mensal": _grafico_geracao_mensal,
     "perfil_horario_comum": _grafico_perfil_horario,
     "sazonalidade": _grafico_sazonalidade,
     "disponibilidade_comum": _grafico_disponibilidade,
+    "despacho_motivo_mensal": _grafico_despacho_motivo,
+    "inflexibilidade_mensal": _grafico_inflexibilidade,
+    "desvios_despacho": _grafico_desvios,
+    "cvu_cmo": _grafico_cvu_cmo,
 }
 _CONDICOES = {
     "sazonalidade": lambda res: len(res.comum["sazonalidade"]) > 0,
     "disponibilidade_comum": lambda res: bool(res.comum.get("disponibilidade")),
+    "despacho_motivo_mensal": lambda res: bool(getattr(res, "termica", None)) and not res.termica["sem_geracao"],
+    "inflexibilidade_mensal": _com_inflexibilidade,
+    "desvios_despacho": lambda res: bool(getattr(res, "termica", None))
+    and len(res.termica["atendimento"]["maiores_desvios"]) > 0,
+    "cvu_cmo": lambda res: bool((getattr(res, "termica", None) or {}).get("cvu_cmo")),
 }
 
 

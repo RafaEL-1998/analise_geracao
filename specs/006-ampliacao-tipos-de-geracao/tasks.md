@@ -471,55 +471,55 @@ python -m pytest tests -q -p no:cacheprovider
   - `003-conferencia.md`: G3, G4 e DISPF, TEIFa e TEIP das térmicas (decisão R13);
   - `004-analises.md`: decisão R18; C12 a C15; C2, C5, C8 e C10 sobre a base horária comum;
   - `005-geracao-relatorio.md`: seções, figuras e indicadores da capa de térmica.
-- [ ] T077 [US2] Levar ao usuário os rascunhos da fase B em `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/` e registrar a aprovação. Nenhum código da fase B antes disso.
+- [X] T077 [US2] Levar ao usuário os rascunhos da fase B em `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/` e registrar a aprovação. Nenhum código da fase B antes disso.
 
 ### Tests for User Story 2
 
-- [ ] T078 [P] [US2] Escrever `tests/coleta/test_conjuntos_termicos.py`, com brutos sintéticos:
+- [X] T078 [P] [US2] Escrever `tests/coleta/test_conjuntos_termicos.py`, com brutos sintéticos:
   - **despacho**: pelo CEG, com o código de planejamento conferido como número e só no período de cada código; linha com código fora da lista conta como "só identificador";
   - **CVU**: pelos códigos do perfil e conferido pelo subsistema;
   - **CMO**: pelo subsistema, como agregado;
   - **catálogo**: `planejamento.csv`, com o primeiro e o último mês de cada código.
-- [ ] T079 [P] [US2] Escrever `tests/tratamento/test_termica.py`:
+- [X] T079 [P] [US2] Escrever `tests/tratamento/test_termica.py`:
   - `despacho_horario.csv`: a soma das unidades por hora, por motivo, programado e verificado;
   - `despacho_unidades_horario.csv`: o mesmo, por unidade;
   - `cvu_semanal.csv`: só a revisão mais recente, com `sinal_cvu` em CVU ausente ou negativo;
   - `cmo_semanal.csv`: sem duplicatas, contadas;
   - semanais levadas à hora pelo intervalo da semana operativa.
-- [ ] T080 [P] [US2] Escrever `tests/conferencia/test_fontes_termica.py`:
+- [X] T080 [P] [US2] Escrever `tests/conferencia/test_fontes_termica.py`:
   - G3 (programação diária × programado do despacho) e G4 (verificado do despacho × Geração por usina), com a tolerância de 0,01 MW;
   - DISPF × horas pelo CEG numa térmica;
   - TEIFa e TEIP como não aplicáveis, com o motivo, quando a usina falta nas taxas.
-- [ ] T081 [P] [US2] Escrever `tests/analises/test_termica.py`:
+- [X] T081 [P] [US2] Escrever `tests/analises/test_termica.py`:
   - geração por motivo, com as parcelas, e a inflexibilidade programada e verificada;
   - atendimento: horas e energia abaixo e acima, e os maiores desvios;
   - horas disponíveis sem despacho;
   - CVU × CMO por semana e por unidade, sem julgamento;
   - térmica sem geração no período: nenhuma divisão por zero, e a constatação de usina disponível e não despachada (US2-5).
-- [ ] T082 [P] [US2] Ampliar `tests/analises/test_conclusao.py` com C12 a C15 e com C2, C5, C8 e C10 numa térmica:
+- [X] T082 [P] [US2] Ampliar `tests/analises/test_conclusao.py` com C12 a C15 e com C2, C5, C8 e C10 numa térmica:
   - cada regra dispara e não dispara;
   - sem IP e TEIF de referência, as partes de C2 e C5 que dependem deles vão para `omitidos`;
   - nenhum termo de parecer nos textos.
-- [ ] T083 [P] [US2] Ampliar `tests/fixtures/brutos_ficticios.py` e as usinas fictícias `ute` e `utn` com despacho, CVU (com revisões), CMO e DISPF:
+- [X] T083 [P] [US2] Ampliar `tests/fixtures/brutos_ficticios.py` e as usinas fictícias `ute` e `utn` com despacho, CVU (com revisões), CMO e DISPF:
   - na `ute`, duas unidades de planejamento, com troca de código, e um ano sem geração;
   - em `tests/integracao/test_usinas_ficticias.py`, as seções de térmica nas duas.
 
 ### Implementation for User Story 2
 
-- [ ] T084 [US2] Acrescentar os conjuntos de térmica:
+- [X] T084 [US2] Acrescentar os conjuntos de térmica:
   - em `src/comum/regras.py`, os pacotes `geracao-termica-despacho-2`, `cvu-usitermica` e `cmo-semanal` e as pastas `geracao_termica_despacho_2`, `cvu_usitermica` e `cmo_semanal`;
   - em `src/coleta/registro.py`, as entradas `despacho`, `cvu` e `cmo` (data-model 4), com as colunas de valor do data-model 6.1.
-- [ ] T085 [US2] Na Coleta:
+- [X] T085 [US2] Na Coleta:
   - em `src/coleta/conjuntos.py`, a extração semanal (CVU e CMO) e a identificação por lista de códigos com período;
   - em `src/coleta/catalogo_usinas.py`, `planejamento.csv`, com todos os arquivos do despacho;
   - em `src/comum/perfil_campos.py`, `subsistema` e `planejamento` exigidos com `cvu` na cobertura.
-- [ ] T086 [US2] Criar `src/tratamento/termica.py`, com os arquivos da T079, e chamá-lo em `src/tratamento/etapa.py`.
-- [ ] T087 [P] [US2] Criar `src/conferencia/fontes.py` com G3 e G4, chamados em `src/conferencia/etapa.py`, e estender a DISPF × horas e as taxas refeitas às térmicas em `src/conferencia/indicadores.py`.
-- [ ] T088 [US2] Criar `src/analises/termica.py` (decisão R18), integrado em `src/analises/etapa.py` e em `ResultadosAnalise.termica`.
-- [ ] T089 [US2] Em `src/analises/conclusao.py`, C12 a C15 e a extensão de C2, C5, C8 e C10 às térmicas sobre a base horária comum:
+- [X] T086 [US2] Criar `src/tratamento/termica.py`, com os arquivos da T079, e chamá-lo em `src/tratamento/etapa.py`.
+- [X] T087 [P] [US2] Criar `src/conferencia/fontes.py` com G3 e G4, chamados em `src/conferencia/etapa.py`, e estender a DISPF × horas e as taxas refeitas às térmicas em `src/conferencia/indicadores.py`.
+- [X] T088 [US2] Criar `src/analises/termica.py` (decisão R18), integrado em `src/analises/etapa.py` e em `ResultadosAnalise.termica`.
+- [X] T089 [US2] Em `src/analises/conclusao.py`, C12 a C15 e a extensão de C2, C5, C8 e C10 às térmicas sobre a base horária comum:
   - a regra R7 e os eventos de indisponibilidade total calculados na base horária comum (decisão R30);
   - os limiares iniciais em constantes nomeadas em `src/comum/regras.py`, citados nas notas.
-- [ ] T090 [US2] Criar `src/relatorio/secoes_termica.py` e as figuras de térmica em `src/relatorio/figuras.py`, em seaborn com a paleta central:
+- [X] T090 [US2] Criar `src/relatorio/secoes_termica.py` e as figuras de térmica em `src/relatorio/figuras.py`, em seaborn com a paleta central:
   - geração por motivo empilhada (atenção à ordem de empilhamento);
   - inflexibilidade;
   - desvios do despacho;
@@ -528,17 +528,17 @@ python -m pytest tests -q -p no:cacheprovider
 
 ### Validação real da User Story 2
 
-- [ ] T091 [US2] Rodar `python -m src perfil --ceg UTE.GN.MS.027075-0.01 --slug william_arjona`:
+- [X] T091 [US2] Rodar `python -m src perfil --ceg UTE.GN.MS.027075-0.01 --slug william_arjona`:
   - código 6, com as chaves `despacho` e `cvu`, os códigos 34, 334 e 434 e o subsistema;
   - o usuário completa e confere o perfil.
   - Registrar.
-- [ ] T092 [US2] Rodar `python -m src completo --usina william_arjona --data-geracao "<data>"` e conferir os itens do quickstart 4:
+- [X] T092 [US2] Rodar `python -m src completo --usina william_arjona --data-geracao "<data>"` e conferir os itens do quickstart 4:
   - seções de térmica;
   - CVU por unidade de gás e de óleo;
   - G3, G4 e DISPF;
   - tempo de até 15 minutos pelo `etapa.json`.
   - Registrar.
-- [ ] T093 [US2] Conferir o relatório piloto pelo quickstart 8: nenhum termo de parecer e nenhum identificador das outras pilotos em `reports/william_arjona/relatorio_analise_estatistica.md` (SC-004, SC-007). Registrar.
+- [X] T093 [US2] Conferir o relatório piloto pelo quickstart 8: nenhum termo de parecer e nenhum identificador das outras pilotos em `reports/william_arjona/relatorio_analise_estatistica.md` (SC-004, SC-007). Registrar.
 - [ ] T094 [US2] Calibrar com a piloto os limiares de C12 a C15 e levar ao usuário o relatório da William Arjona e os limiares.
   - Depois da aprovação: `python -m src referencia --usina william_arjona --data-geracao "<data>" --aprovado-em "<data>"`.
   - Pedir o commit ao usuário. Registrar.
@@ -1164,3 +1164,50 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
   - Análises: FR-056 (seções de térmica, decisão R18) e FR-057 (C12 a C15, limiares calibrados na William Arjona);
   - Geração do relatório: FR-044 (três seções de térmica e as figuras), capa, legendas, notas e o resumo executivo das térmicas (indicador de perda e termos CVU e CMO).
 - **T077**: rascunhos levados ao usuário; nenhum código da fase B antes da aprovação.
+### 19/10/2026 — decisões do usuário (T077, agentes e encerramento da 007)
+
+- **T077**: rascunhos da fase B aprovados pelo usuário ("aprovado T077"). O código da fase B pode começar (T078 em diante).
+- **Agente atual** (T043 da spec 007, "Mostrar agente atual"): nas usinas sem EVT, a capa e o resumo mostram o agente atual das unidades ativas, da Capacidade de geração (a Coleta passou a gravar o agente proprietário e o operador em `capacidade_ficha.csv`); data-model 6.5 e rascunho 005 ajustados.
+- **Encerramento da 007** ("faça o item 3 como achar melhor"): a incorporação da 007 à spec 005 e a exclusão da pasta (T037 e T038 da 007) entram no fechamento desta spec (fase F), junto com os ajustes da 006 na spec 005.
+
+### 20/10/2026 — fase B, código e testes (T078 a T090)
+
+- **Contratos do ONS conferidos antes do código** (dados abertos, consulta de 19/10/2026):
+  - despacho: arquivos anuais (2013 a 2024) e mensais (desde 01/2022), com 2022 a 2024 nos dois; CEG em todas as linhas; `cod_usinaplanejamento` DOUBLE em todos os Parquet; William Arjona com 34 (2013-01 a 2018-08), 334 (desde 2021-07) e 434 (2021-08 a 2026-01);
+  - os motivos não formam uma partição exata: em cerca de 8 % das horas de 2026, a ordem de demérito acima da inflexibilidade toma o lugar da ordem de mérito na soma. As análises usam os totais publicados (`val_proggeracao`, `val_verifgeracao`) e mostram a parcela de cada motivo sobre eles, com a nota de que a soma das parcelas pode diferir de 100 %;
+  - CVU: uma linha por semana operativa e código em cada arquivo anual (a revisão é a da semana); valores 0,0 na William Arjona (434 desde 2023; 334 em 2023 e em semanas de 2024), não sinalizados pela regra aprovada (só ausente ou negativo): levar ao usuário na calibração (T094);
+  - CMO: `din_instante` é a sexta-feira que fecha a semana operativa (sábado a sexta), embora a descrição do contrato diga "início"; o Tratamento põe o CMO na semana operativa que contém a data, o que vale nos dois casos.
+- **T078** `tests/coleta/test_conjuntos_termicos.py` (6 testes) e ajustes em `test_catalogo_usinas.py`, `test_registro.py`, `test_dicionarios.py`, `test_coleta_sem_evt.py` e `test_perfil_rascunho.py`; fixture do catálogo com despacho (um anual antigo e dois mensais) e CVU.
+- **T079** `tests/tratamento/test_termica.py` (4 testes). **T080** `tests/conferencia/test_fontes_termica.py` (4 testes). **T081** `tests/analises/test_termica.py` (5 testes). **T082** `tests/analises/test_conclusao.py`: catálogo C1 a C15 e dois testes novos (C12 a C15 no limiar e abaixo dele; C10 numa térmica, C2 e C5 omitidas sem IP e TEIF).
+- **T083** `tests/fixtures/brutos_ficticios.py`: a UTE fictícia com 2023 inteiro sem geração e disponível (código 901), trocado em 01/2024 pelas unidades 902 (gás) e 903 (óleo), o anual de 2024 repetindo os mensais, CVU com duas revisões por semana e um valor negativo, CMO com uma semana republicada; a UTN com o código 950. Perfis fictícios com `subsistema`, `[[identificacao.planejamento]]` e `despacho`/`cvu` na cobertura. Três testes novos em `tests/integracao/test_usinas_ficticias.py`.
+- **T084** `src/comum/regras.py` (pacotes, pastas e os limiares iniciais de C12 a C15 e do desvio do despacho), `src/comum/caminhos.py` (arquivos de cada etapa) e `src/coleta/registro.py` (entradas `despacho`, `cvu` e `cmo`; o CMO só com o subsistema no perfil).
+- **T085** `src/coleta/conjuntos.py` (data publicada configurável para o CVU, código comparado como número com vírgula ou ponto, código no período dele, "só conferência" zerada sem conferência declarada); `src/coleta/catalogo_usinas.py` (todos os arquivos do despacho na sincronização, `planejamento.csv`, cobertura do despacho pelo CEG e do CVU pelos códigos vigentes); `src/coleta/perfil_rascunho.py` (planejamento no rascunho e nas diferenças, com o subsistema, só nas térmicas). `perfil_campos.py` já trazia as exigências desde a fase A.
+- **T086** `src/tratamento/termica.py`, chamado em `src/tratamento/etapa.py`.
+- **T087** `src/conferencia/fontes.py` (G3 e G4, com a coincidência deslocada de uma hora e o aviso no log); catálogo e etapa da Conferência; TEIFa e TEIP não aplicáveis com o motivo próprio quando a usina falta nas taxas. A DISPF × horas e as taxas já rodavam nas térmicas desde a fase A; a apuração da divergência da William Arjona fica para a T092, com os dados reais.
+- **T088** `src/analises/termica.py`, integrado em `src/analises/etapa.py` (com o resumo de G3 e G4 para as legendas) e nas constatações; omissões por tipo em `src/analises/comum_tipos.py`.
+- **T089** C12 a C15 em `src/analises/conclusao.py` (só no caminho sem EVT; `REGRAS_CONCLUSAO` continua com C1 a C11).
+- **T090** `src/relatorio/secoes_termica.py` e as quatro figuras em seaborn (paleta validada com o script da skill de visualização; empilhamento com a ordem invertida). Desvio do plano: as figuras ficaram em `src/relatorio/figuras_comum.py` e os indicadores da capa em `src/relatorio/comum.py`, os módulos do caminho sem EVT desde a fase A. Também a coluna "Disp. sem despacho (h)" na tabela anual (o indicador de perda do resumo executivo), a identificação com o subsistema e os códigos de planejamento, a nota, os parâmetros, as legendas de fonte (com G3 e G4), as abas TERM_* e CONF_G3/G4 da planilha. Termos CVU e CMO no glossário do resumo com texto provisório, a aprovar pelo usuário na T094.
+- **Portão**: suíte com 725 aprovados; pyflakes sem aviso; `comparar --todas --coleta` com código 6 só pelas quatro diferenças da Coleta aceitas pelo usuário (republicação do ONS de 18/10/2026), sem diferença no relatório da São Domingos.
+
+### 20/10/2026 — T091 (perfil da William Arjona com o despacho e o CVU)
+
+- `python -m src usinas --estado MS --tipo UTE` (com o portal): código 0; todos os arquivos do despacho baixados; `planejamento.csv` com 220 códigos; a William Arjona com despacho e CVU próprios (`P`). O ONS republicou a Modalidade das usinas em 19/10/2026 22:04.
+- `python -m src perfil --ceg UTE.GN.MS.027075-0.01 --slug william_arjona`: código 6, com `identificacao.planejamento` (34 de 2013-01 a 2018-08; 334 desde 2021-07; 434 de 2021-08 a 2026-01), `cobertura.despacho` e `cobertura.cvu`. O subsistema (SE) já estava no perfil desde a fase A.
+- Com a aprovação do usuário ("Aplicar como está"), o perfil ganhou os três códigos e as duas chaves, com a origem em comentário; o `perfil` de novo: código 0, sem diferença.
+
+### 20/10/2026 — T092 e T093 (relatório da William Arjona com as seções de térmica)
+
+- **T092** `python -m src completo --usina william_arjona --data-geracao "20/10/2026 09:00"` (com o portal): código 0 nas cinco etapas, em 4,2 minutos (limite de 15). Período de 10/07/2021 00h a 18/10/2026 23h (46.243 horas com valor). Relatório com 15 seções, 27 páginas, 9 figuras; as três seções de térmica entre o perfil horário e a programação diária.
+  - Quickstart 4: seções de térmica presentes; CVU por unidade de gás (334) e de óleo (434) na tabela e na figura; G3 com 5.760 de 5.760 horas coincidentes; G4 com 46.121 de 46.243 (99,7 %; as 122 divergentes na entrada em operação, em 07/2021), que cai para 92,9 % com uma hora de deslocamento, o que confirma a hora de início do intervalo; DISPF × horas com 52 divergências em 309 meses-unidade.
+  - Conclusão real: C8, C10, C12 (2.821 h abaixo da programada), C13 (10.520 h em 67 semanas) e C15 (114 h sem programação); C14 sem item (inflexibilidade programada nula); C5 omitida (sem IP e TEIF de referência).
+  - Achado: o CVU publicado é zero em 250 das 267 semanas da unidade 434 (todas desde 2022) e em 116 das 274 da 334 (2022 a 2024). Pela regra aprovada (sinal só para o CVU ausente ou negativo), o zero entra na comparação como "abaixo do CMO" e responde por toda a base da C13: sem ele, 0 h. Também 57 semanas da 334 e 66 da 434 com o CVU igual ao CMO (os dois em zero), que a tabela não mostra.
+  - FR-022 (TEIFa e TEIP da William Arjona, 0 de 4 meses reproduzidos): a diferença cai mês a mês (−2,07; −0,92; −0,53; −0,08 p.p. na TEIFa de 06 a 09/2026) à medida que os meses iniciais saem da janela; as taxas publicadas começam em 09/2021 com TEIFa de 4,0 % e TEIP de 1,8 % e sobem aos poucos, embora as horas reais dos primeiros meses tenham muita indisponibilidade forçada; a UG5 não tem parâmetros de 09/2025 a 01/2026; nas térmicas, o HP soma também as horas equivalentes (HP = HS + HRD + HDP + HDF + HDCE + HEDP + HEDF). O padrão é compatível com a janela completada por valores de referência nos meses sem histórico, mas não há fonte publicada em mãos nem os valores de referência da usina: pela FR-022, a divergência continua registrada como hoje, sem ajuste.
+- **T093** quickstart 8 no relatório e no resumo da William Arjona: nenhuma ocorrência de termos de parecer ("satisfat", "cumpre", "descumpr", "deficien", "culpa") nem de identificadores das outras pilotos (MSUHSD, PRUHSD, CEUFM, MSSRI1, CJU_MS4FINO, MSBDT, CJU_MSCAO); o CMO identificado como "subsistema SE, agregado" nas legendas.
+
+### 20/10/2026 — T094 (calibração e decisões do usuário; em aberto até a aprovação do relatório)
+
+- **Limiares de C12 a C15**: mantidos os iniciais, com a aprovação do usuário (desvio do despacho de 5 MW; C12 ≥ 24 h; C13 ≥ 168 h; C14 ≥ 5 % da inflexibilidade programada; C15 ≥ 24 h). Na William Arjona: C12 com 2.821 h, C15 com 114 h, C14 sem base (inflexibilidade programada nula no período).
+- **CVU zero** (decisão do usuário: "Zero fica fora"): `sinal_cvu = "zero"`, mantido na base e fora da comparação com o CMO, como o ausente e o negativo; FR-038 (rascunho 002) e FR-056 (rascunho 004) ajustadas. A tabela CVU × CMO ganhou a coluna das semanas com o CVU igual ao CMO, para as colunas fecharem o total de semanas. Na William Arjona, a C13 deixa de gerar item (sem o zero, nenhuma semana com CVU abaixo do CMO e horas disponíveis sem despacho).
+- **Glossário do resumo**: textos de CVU e CMO aprovados pelo usuário como estão.
+- Relatório refeito (`completo --usina william_arjona --sem-portal --data-geracao "20/10/2026 09:00"`): código 0; 15 seções, 27 páginas; resumo executivo com 2 páginas e 564 palavras. Suíte com 725 aprovados; pyflakes sem aviso.
+- Falta: a aprovação do relatório pelo usuário, o registro da referência (`python -m src referencia --usina william_arjona ...`) e o commit.

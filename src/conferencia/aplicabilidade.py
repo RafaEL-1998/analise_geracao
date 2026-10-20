@@ -3,7 +3,8 @@
 Cada conferência declara os tipos de usina, os conjuntos do registro que ela compara e as condições de nível.
 A que não se aplica à usina (tipo, conjunto não coletado, base ainda fora do pipeline, conjunto sem membros no
 perfil, ou resultado sem base) vai para ``nao_aplicaveis.csv``, com o motivo (FR-019, princípio VI). As seis de hoje
-são feitas como hoje; G1 a G5 dependem de conjuntos das próximas fases e, por ora, só aparecem no arquivo.
+são feitas como hoje; G3 e G4 nas térmicas com o despacho (fase B); G1, G2 e G5 dependem de conjuntos da fase C e, por
+ora, só aparecem no arquivo.
 """
 
 from __future__ import annotations
@@ -30,10 +31,12 @@ NOMES_CONJUNTOS: Dict[str, str] = {
     "hidrologia": "Dados hidrológicos",
     "geracao": "Geração por usina",
     "cadastro": "Modalidade das usinas",
+    "despacho": "Geração térmica por motivo de despacho",
+    "cvu": "CVU das usinas térmicas",
+    "cmo": "CMO semanal",
 }
 # Bases das conferências novas que o pipeline ainda não coleta (fases B e C da spec 006)
 BASES_FORA_DO_PIPELINE: Dict[str, str] = {
-    "despacho": "Despacho térmico",
     "fator_capacidade": "Fator de capacidade",
     "restricao": "Restrição de operação (constrained-off)",
 }
@@ -50,6 +53,7 @@ class ConferenciaCatalogo:
     bases_novas: Tuple[str, ...] = ()  # bases fora do pipeline (BASES_FORA_DO_PIPELINE)
     geracao_da_usina: bool = False  # só com a Geração por usina no nível da usina (pares do mesmo nível)
     exige_membros: bool = False  # só em conjunto, com os membros no perfil
+    programacao_da_usina: bool = False  # só com a Programação diária no nível da usina
 
 
 CATALOGO_CONFERENCIAS: Tuple[ConferenciaCatalogo, ...] = (
@@ -68,9 +72,9 @@ CATALOGO_CONFERENCIAS: Tuple[ConferenciaCatalogo, ...] = (
     ConferenciaCatalogo("soma_conjunto", "G2. soma das usinas do conjunto × geração do conjunto", RENOVAVEIS,
                         ("geracao",), ("restricao",), exige_membros=True),
     ConferenciaCatalogo("programacao_despacho", "G3. Programação diária × geração programada do despacho", TERMICAS,
-                        ("programacao",), ("despacho",)),
+                        ("programacao", "despacho"), programacao_da_usina=True),
     ConferenciaCatalogo("verificada_despacho", "G4. geração verificada do despacho × Geração por usina", TERMICAS,
-                        ("geracao",), ("despacho",)),
+                        ("geracao", "despacho"), geracao_da_usina=True),
     ConferenciaCatalogo("programacao_renovaveis", "G5. Programação diária × geração programada do Fator de capacidade",
                         RENOVAVEIS, ("programacao",), ("fator_capacidade",)),
 )
@@ -104,6 +108,8 @@ def _motivo_estatico(c: ConferenciaCatalogo, perfil: Any) -> Optional[str]:
                     f"(cobertura: {declarada or 'não declarada'})")
     if c.geracao_da_usina and registro.descricoes(perfil)["geracao"].nivel != "usina":
         return "Geração por usina só no nível do conjunto: não se compara com uma série da usina"
+    if c.programacao_da_usina and registro.nivel_coletado(perfil, "programacao") != "usina":
+        return "Programação diária só no nível do conjunto: não se compara com o despacho da usina"
     return None
 
 

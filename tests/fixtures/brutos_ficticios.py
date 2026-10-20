@@ -10,6 +10,10 @@ identificador confere. Não há Programação diária: a seção correspondente 
 02/2024; CGH, UTE e UTN com geração própria (as térmicas com disponibilidade; a UTN com os indicadores do ONS); EOL;
 UFV com série curta; a Programação diária de três dias (o conjunto por dois códigos e a UTE); a Composição dos
 conjuntos e a Capacidade de geração. Nenhum valor de usina real.
+
+Térmicas (spec 006, fase B; tarefa T083): o despacho, o CVU (com revisões) e o CMO da UTE e da UTN. A UTE tem 2023
+inteiro sem geração, disponível, com o código de planejamento 901, trocado em 01/2024 pelas unidades 902 (gás) e 903
+(óleo); o arquivo anual de 2024 repete os mensais, como o ONS publica.
 """
 
 from __future__ import annotations
@@ -221,6 +225,12 @@ INICIO_UFV = pd.Timestamp("2024-02-10")  # série curta (decisão R17)
 DISP_REDUZIDA_UTE = (pd.Timestamp("2024-01-15 00:00"), pd.Timestamp("2024-01-24 23:00"))  # 80 MW: regra R7
 PARADA_UTE = (pd.Timestamp("2024-02-05 00:00"), pd.Timestamp("2024-02-07 23:00"))  # indisponibilidade total
 PARADA_UTN = (pd.Timestamp("2024-02-10 00:00"), pd.Timestamp("2024-02-12 23:00"))
+SEM_PROGRAMACAO_UTE = (pd.Timestamp("2024-01-02"), pd.Timestamp("2024-01-14"))  # 22h e 23h: 50 MW sem programação
+INFLEX_PARCIAL_UTE = pd.Timestamp("2024-02-20")  # inflexibilidade verificada de 20 MW contra 30 programados
+CODIGOS_UTE = {"antigo": 901, "gas": 902, "oleo": 903}
+CODIGO_UTN = 950
+CVU_UTE = {901: (150.0, 160.0), 902: (200.0, 210.0), 903: (900.0, 900.0)}  # (revisão 0, revisão 1)
+CMO_SE = {2023: 300.0, 2024: 100.0}
 
 
 def _horas_periodo() -> pd.DatetimeIndex:
@@ -247,7 +257,7 @@ def geracao_ficticias() -> pd.DataFrame:
     partes = [
         _linhas_geracao("pch", h, np.full(len(h), np.nan)),  # linhas próprias sem valor (achado A3)
         _linhas_geracao("cgh", h, np.where((hora >= 6) & (hora <= 18), 3.0, 2.0)),
-        _linhas_geracao("ute", h, np.where((hora >= 8) & (hora <= 21) & ~_entre(h, PARADA_UTE), 100.0, 0.0)),
+        _linhas_geracao("ute", h, geracao_ute(h)),
         _linhas_geracao("utn", h, np.where(_entre(h, PARADA_UTN), 0.0, 600.0)),
         _linhas_geracao("eol", h, 10.0 + (hora % 6) * 4.0),
         _linhas_geracao("ufv", h[ufv], solar[ufv]),
@@ -257,6 +267,14 @@ def geracao_ficticias() -> pd.DataFrame:
                       "cod_modalidadeoperacao": "Conjunto de Usinas", "nom_tipousina": "HIDROELÉTRICA"}),
     ]
     return pd.concat(partes, ignore_index=True)
+
+
+def geracao_ute(h: pd.DatetimeIndex) -> np.ndarray:
+    """Geração da UTE em 2024: 100 MW das 8h às 21h, salvo a parada; 50 MW às 22h e 23h sem programação (C15)."""
+    hora, dia = np.asarray(h.hour), np.asarray(h.normalize())
+    base = np.where((hora >= 8) & (hora <= 21) & ~_entre(h, PARADA_UTE), 100.0, 0.0)
+    sem_programa = (hora >= 22) & (dia >= SEM_PROGRAMACAO_UTE[0]) & (dia <= SEM_PROGRAMACAO_UTE[1])
+    return np.where(sem_programa, 50.0, base)
 
 
 def _disponibilidade_ficticias(geracao: pd.DataFrame) -> pd.DataFrame:
@@ -370,6 +388,127 @@ def _cadastrais_ficticias(raw: Path) -> None:
     _parquet(pd.DataFrame(linhas_ug), raw / "capacidade_geracao" / "CAPACIDADE_GERACAO.parquet")
 
 
+# ---------------------------------------------------------------------------
+# Térmicas: 2023 da UTE, despacho, CVU e CMO (spec 006, fase B)
+# ---------------------------------------------------------------------------
+
+
+def _ute_2023(raw: Path) -> None:
+    """2023 inteiro da UTE: geração nula e disponibilidade de 120 MW (a térmica disponível e não despachada)."""
+    h = pd.date_range("2023-01-01 00:00", "2023-12-31 23:00", freq="h")
+    u = FICTICIAS["ute"]
+    geracao = _linhas_geracao("ute", h, np.zeros(len(h)))
+    for sufixo, g in _por_mes(geracao).items():
+        _acrescentar(g, raw / "geracao_usina_2" / f"GERACAO_USINA-2_{sufixo}.parquet")
+    disp = pd.DataFrame({"id_subsistema": "SE", "id_estado": "GO", "nom_usina": u["nome"], "id_ons": u["id_ons"],
+                         "ceg": u["ceg"], "din_instante": h, "val_potenciainstalada": 120.0,
+                         "val_dispoperacional": 120.0, "val_dispsincronizada": 0.0})
+    for sufixo, g in _por_mes(disp).items():
+        _acrescentar(g, raw / "disponibilidade_usina" / f"DISPONIBILIDADE_USINA_{sufixo}.csv")
+
+
+def _linhas_despacho(chave: str, codigo: float, h: pd.DatetimeIndex, merito, inflex, verificado,
+                     inflex_verificada) -> pd.DataFrame:
+    from src.coleta.registro import COLUNAS_DESPACHO_PROGRAMADO, COLUNAS_DESPACHO_VERIFICADO
+
+    u = FICTICIAS[chave]
+    t = pd.DataFrame({"din_instante": h, "nom_tipopatamar": "MÉDIA", "id_subsistema": "SE", "nom_subsistema": "SUDESTE",
+                      "nom_usina": u["nome"], "cod_usinaplanejamento": float(codigo), "ceg": u["ceg"]})
+    for coluna in COLUNAS_DESPACHO_PROGRAMADO + COLUNAS_DESPACHO_VERIFICADO:
+        t[coluna] = "0.0"
+    merito, inflex = np.broadcast_to(merito, len(h)), np.broadcast_to(inflex, len(h))
+    verificado, inflex_verificada = np.broadcast_to(verificado, len(h)), np.broadcast_to(inflex_verificada, len(h))
+    t["val_proggeracao"] = [f"{v:.1f}" for v in merito + inflex]  # publicados como texto, como no ONS
+    t["val_progordemmerito"] = [f"{v:.1f}" for v in merito]
+    t["val_proginflexibilidade"] = [f"{v:.1f}" for v in inflex]
+    t["val_proginflexpura"] = t["val_proginflexibilidade"]
+    t["val_verifgeracao"] = [f"{v:.1f}" for v in verificado]
+    t["val_verifinflexibilidade"] = [f"{v:.1f}" for v in inflex_verificada]
+    t["val_verifinflexpura"] = t["val_verifinflexibilidade"]
+    t["val_verifordemmerito"] = [f"{v:.1f}" for v in verificado - inflex_verificada]
+    t["tip_restricaoeletrica"] = 0.0
+    return t
+
+
+def despacho_ficticio() -> Dict[str, pd.DataFrame]:
+    """Despacho por arquivo: o anual de 2023 (código 901, sem geração), os mensais de 2024 (902 e 903 na UTE, 950 na
+    UTN, com uma linha de outra usina) e o anual de 2024, que repete os mensais."""
+    h23 = pd.date_range("2023-01-01 00:00", "2023-12-31 23:00", freq="h")
+    h = _horas_periodo()
+    hora = np.asarray(h.hour)
+    programada = (hora >= 8) & (hora <= 21)
+    gerada = geracao_ute(h)
+    inflex_verificada = np.where(gerada >= 100.0, 30.0, 0.0)
+    inflex_verificada[np.asarray(h.normalize() == INFLEX_PARCIAL_UTE) & programada] = 20.0
+    utn = np.where(_entre(h, PARADA_UTN), 0.0, 600.0)
+    outra = pd.DataFrame({"din_instante": h[:2], "nom_usina": "UTE OUTRA", "cod_usinaplanejamento": 999.0,
+                          "ceg": "UTE.GN.GO.000999-0.01", "val_proggeracao": "5.0", "val_verifgeracao": "5.0"})
+    anos_2024 = pd.concat([
+        _linhas_despacho("ute", CODIGOS_UTE["gas"], h, np.where(programada, 70.0, 0.0), np.where(programada, 30.0, 0.0),
+                         gerada, inflex_verificada),
+        _linhas_despacho("ute", CODIGOS_UTE["oleo"], h, 0.0, 0.0, 0.0, 0.0),
+        _linhas_despacho("utn", CODIGO_UTN, h, 0.0, utn, utn, utn),
+        outra,
+    ], ignore_index=True)
+    arquivos = {"GERACAO_TERMICA_DESPACHO_2023.parquet":
+                _linhas_despacho("ute", CODIGOS_UTE["antigo"], h23, 0.0, 0.0, 0.0, 0.0),
+                "GERACAO_TERMICA_DESPACHO_2024.parquet": anos_2024}
+    for sufixo, g in _por_mes(anos_2024).items():
+        arquivos[f"GERACAO_TERMICA_DESPACHO-2_{sufixo}.parquet"] = g
+    return arquivos
+
+
+def _semanas(inicio: str, fim: str) -> pd.DatetimeIndex:
+    return pd.date_range(inicio, fim, freq="7D")  # sábados, início da semana operativa
+
+
+def cvu_ficticio() -> Dict[str, pd.DataFrame]:
+    """CVU por ano: duas revisões por semana (vale a mais recente), um CVU negativo da 903 e linhas de outras usinas."""
+    def linhas(semanas, codigos, subsistema="SE"):
+        saida = []
+        for s in semanas:
+            for codigo in codigos:
+                for revisao, valor in enumerate(CVU_UTE.get(codigo, (20.0, 20.0))):
+                    saida.append({"dat_iniciosemana": s, "dat_fimsemana": s + pd.Timedelta(days=6),
+                                  "ano_referencia": s.year, "mes_referencia": s.month, "num_revisao": revisao,
+                                  "nom_semanaoperativa": f"S {s:%d/%m/%Y}", "cod_usinaplanejamento": codigo,
+                                  "id_subsistema": subsistema, "nom_subsistema": "SUDESTE", "nom_usina": f"U{codigo}",
+                                  "val_cvu": valor})
+        return saida
+    s23 = _semanas("2022-12-31", "2023-12-23")
+    s24 = _semanas("2023-12-30", "2024-02-24")
+    l24 = linhas(s24, [CODIGOS_UTE["gas"], CODIGOS_UTE["oleo"], CODIGO_UTN]) + linhas(s24[:1], [999])
+    l24 += [{**l24[0], "id_subsistema": "NE", "val_cvu": 1.0}]  # o código da UTE no subsistema errado
+    negativo = next(i for i, x in enumerate(l24) if x["cod_usinaplanejamento"] == CODIGOS_UTE["oleo"]
+                    and x["num_revisao"] == 1 and x["dat_iniciosemana"] == s24[2])
+    l24[negativo]["val_cvu"] = -1.0
+    return {"CVU_USINA_TERMICA_2023.parquet": pd.DataFrame(linhas(s23, [CODIGOS_UTE["antigo"]])),
+            "CVU_USINA_TERMICA_2024.parquet": pd.DataFrame(l24)}
+
+
+def cmo_ficticio() -> Dict[str, pd.DataFrame]:
+    """CMO semanal (sexta-feira de cada semana), com o NE e uma semana republicada com outro valor em 2024."""
+    def linhas(semanas, ano):
+        return [{"id_subsistema": sub, "nom_subsistema": nome, "din_instante": s + pd.Timedelta(days=6),
+                 **{c: f"{(CMO_SE[ano] if sub == 'SE' else 10.0):.2f}"
+                    for c in ("val_cmomediasemanal", "val_cmoleve", "val_cmomedia", "val_cmopesada")}}
+                for s in semanas for sub, nome in (("SE", "SUDESTE"), ("NE", "NORDESTE"))]
+    l24 = linhas(_semanas("2023-12-30", "2024-02-24"), 2024)
+    l24.append({**l24[2], "val_cmomediasemanal": "105.00"})  # republicada: vale a publicada por último
+    return {"CMO_SEMANAL_2023.parquet": pd.DataFrame(linhas(_semanas("2022-12-31", "2023-12-23"), 2023)),
+            "CMO_SEMANAL_2024.parquet": pd.DataFrame(l24)}
+
+
+def _termicas(raw: Path) -> None:
+    _ute_2023(raw)
+    for nome, t in despacho_ficticio().items():
+        _parquet(t, raw / "geracao_termica_despacho_2" / nome)
+    for nome, t in cvu_ficticio().items():
+        _parquet(t, raw / "cvu_usitermica" / nome)
+    for nome, t in cmo_ficticio().items():
+        _parquet(t, raw / "cmo_semanal" / nome)
+
+
 def gerar_brutos_tipos(raw: Path) -> None:
     """Os brutos da UHE fictícia mais os das usinas fictícias dos outros tipos, nos mesmos arquivos do ONS."""
     raw = Path(raw)
@@ -382,3 +521,4 @@ def gerar_brutos_tipos(raw: Path) -> None:
     _indicadores_utn(raw / "indicadores_ons")
     _programacao_ficticias(raw)
     _cadastrais_ficticias(raw)
+    _termicas(raw)

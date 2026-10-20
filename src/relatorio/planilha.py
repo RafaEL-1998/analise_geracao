@@ -53,6 +53,19 @@ def _abas_sem_evt(res: ResultadosAnalise) -> Dict[str, pd.DataFrame]:
                  "DISP_EVENTOS_INDISP_TOTAL": d.get("eventos_indisponibilidade_total")})
     p = c.get("programacao") or {}
     abas.update({"PROG_RESUMO_MENSAL": p.get("mensal"), "PROG_EVENTOS_DESVIO": p.get("eventos")})
+    t = getattr(res, "termica", None) or {}
+    if t:  # seções de térmica (fase B): as tabelas completas
+        a = t.get("atendimento") or {}
+        d = t.get("disponivel_sem_despacho") or {}
+        cv = t.get("cvu_cmo") or {}
+        abas.update({"TERM_MOTIVOS_ANUAL": t.get("motivos_anual"), "TERM_MOTIVOS_MENSAL": t.get("motivos_mensal"),
+                     "TERM_INFLEXIBILIDADE": t.get("inflexibilidade"), "TERM_ATENDIMENTO_ANUAL": a.get("anual"),
+                     "TERM_ATENDIMENTO_MENSAL": a.get("mensal"), "TERM_MAIORES_DESVIOS": a.get("maiores_desvios"),
+                     "TERM_DISP_SEM_DESPACHO": d.get("anual"), "TERM_CVU_CMO_SEMANAL": cv.get("semanal"),
+                     "TERM_CVU_CMO_RESUMO": cv.get("resumo")})
+        for sigla, cid in (("G3", "programacao_despacho"), ("G4", "verificada_despacho")):
+            conf = (t.get("conferencias") or {}).get(cid) or {}
+            abas.update({f"CONF_{sigla}_MENSAL": conf.get("mensal"), f"CONF_{sigla}_DIVERGENCIAS": conf.get("divergencias")})
     return {nome: t for nome, t in abas.items()
             if t is not None and (len(t) or nome in ("CONSTATACOES", "CONCLUSAO", "BASE_ANUAL", "OMITIDOS"))}
 

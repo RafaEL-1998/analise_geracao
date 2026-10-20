@@ -353,7 +353,7 @@ Task: "T019 gerar_resumo_pdf em src/relatorio/resumo_pdf.py"
 ## Phase 7: Convergence
 
 - [X] T042 Pôr a parcela total de horas sinalizadas na constatação de qualidade das usinas sem EVT (`src/analises/constatacoes.py`), para que o número citado em "Sobre os dados" esteja no relatório completo também quando uma hora tem mais de um código, e estender a verificação "todo número do resumo está no relatório" aos resumos das sete usinas fictícias (`tests/integracao/test_usinas_ficticias.py`) per FR-014 e SC-003 (partial)
-- [ ] T043 Decidir com o usuário os agentes do cabeçalho nas usinas sem EVT, que hoje saem sem agente: o agente atual de cada unidade da Capacidade de geração, identificado como tal na capa e no resumo, ou a limitação registrada na FR-008 per FR-008 (partial)
+- [X] T043 Decidir com o usuário os agentes do cabeçalho nas usinas sem EVT, que hoje saem sem agente: o agente atual de cada unidade da Capacidade de geração, identificado como tal na capa e no resumo, ou a limitação registrada na FR-008 per FR-008 (partial)
 
 ### Registro da convergência (19/10/2026)
 
@@ -362,3 +362,5 @@ Task: "T019 gerar_resumo_pdf em src/relatorio/resumo_pdf.py"
 | T036 | 19/10/2026 | suíte, `pyflakes` (Python do sistema, fora do `venv`) e `/speckit-converge` | 687 aprovados; pyflakes sem aviso; converge com 2 achados, anexados como Phase 7: Convergence (T042 e T043). |
 | T042 | 19/10/2026 | `src/analises/constatacoes.py` e `tests/integracao/test_usinas_ficticias.py` | A constatação de qualidade das usinas sem EVT traz a parcela total das horas sinalizadas (citada em "Sobre os dados"); a verificação "todo número do resumo está no relatório" vale para os sete resumos fictícios. |
 | T043 | 19/10/2026 | — | Em aberto: decisão do usuário sobre os agentes do cabeçalho nas usinas sem EVT. |
+| T043 | 19/10/2026 | decisão do usuário ("Mostrar agente atual"); `src/coleta/etapa.py`, `src/analises/comum_tipos.py`, `src/analises/etapa.py`, `src/relatorio/comum.py`, `src/relatorio/fontes.py` e `src/relatorio/resumo.py` | A Coleta grava o agente proprietário e o operador de cada unidade em `capacidade_ficha.csv`; as Análises tiram os das unidades ativas no fim do período (`comum["agentes"]`); a capa ("Agente atual") e o resumo ("Agente atual (Capacidade de geração do ONS)") os mostram, com a Capacidade de geração na legenda de fonte da identificação. Teste em `tests/integracao/test_usinas_ficticias.py`; FR-008 e decisões da spec registradas. |
+| T037 e T038 | 19/10/2026 | decisão do usuário ("faça o item 3 como achar melhor") | Ficam para o fechamento da spec 006 (fase F), junto com os ajustes da 006 na spec 005, para editar a spec 005 uma vez só. |

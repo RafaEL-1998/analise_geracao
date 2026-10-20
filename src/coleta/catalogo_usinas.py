@@ -5,13 +5,14 @@ Comando da Coleta, o único além de ``coleta`` e ``completo`` que acessa o port
 - os quatro cadastrais: Modalidade das usinas, Composição dos conjuntos, Capacidade de geração e Reservatórios;
 - o arquivo mais recente de cada conjunto de série já implementado (nos indicadores, o DISPF mensal);
 - a Geração por usina dos últimos 12 meses completos, para o panorama dos agregados;
+- todos os arquivos da Geração térmica por motivo de despacho, para os códigos de planejamento (``planejamento.csv``);
 - os dicionários de dados desses conjuntos (princípio IV).
 
 Depois monta e grava ``data/catalogo/`` por inteiro, sem ``.bak``, numa pasta temporária conferida antes da troca, e
 lista na tela as usinas do filtro, sempre a partir dos arquivos gravados. O tipo vem do prefixo do CEG (R1); a linha do
 cadastro sem CEG é de conjunto de usinas. A cobertura de cada conjunto de série é verificada no arquivo mais recente
-(R3), sempre pelos códigos, nunca pelo nome: o id ONS, o CEG, o id do conjunto e, na EVT e nos dados hidrológicos, o
-``cod_usina`` dos Reservatórios (R31).
+(R3), sempre pelos códigos, nunca pelo nome: o id ONS, o CEG, o id do conjunto, na EVT e nos dados hidrológicos o
+``cod_usina`` dos Reservatórios (R31) e, no CVU, os códigos de planejamento vigentes do despacho (fase B).
 
 Códigos: 0 catálogo montado e listado; 1 catálogo do ONS inacessível, falha de gravação ou erro inesperado; 2 cadastral
 não obtido (download sem sucesso ou, com ``--sem-portal``, arquivo local ausente).
@@ -93,6 +94,7 @@ COLUNAS_CONJUNTOS = ["id_conjunto", "nom_conjunto", "ceg", "id_ons_usina", "nom_
 COLUNAS_COBERTURA = ["ceg", "conjunto_ons", "nivel", "identificador", "linhas", "linhas_sem_valor", "arquivo",
                      "publicacao"]
 COLUNAS_PLANEJAMENTO = ["ceg", "codigo", "primeiro_mes", "ultimo_mes", "nomes_publicados", "arquivos"]
+COLUNAS_LEITURA_PLANEJAMENTO = ["ceg", "cod_usinaplanejamento", "din_instante", "nom_usina"]
 COLUNAS_PROGRAMACAO = ["codigo_exibicao", "id_usina_ou_conjunto", "modalidade", "estado", "arquivo"]
 COLUNAS_AGREGADOS = ["id_estado", "mes", "modalidade", "tipo_ons", "grupo", "energia_mwh", "horas", "horas_ausentes",
                      "previsao", "arquivo"]
@@ -148,9 +150,11 @@ SERIES: Tuple[Serie, ...] = (
     Serie("disponibilidade", ("PARQUET", "CSV")),
     Serie("hidrologia", ("PARQUET", "CSV")),
     Serie("geracao", ("PARQUET", "CSV")),
+    Serie("despacho", ("PARQUET", "CSV")),
+    Serie("cvu", ("PARQUET", "CSV")),
 )
 SIGLAS_SERIES = {"evt": "EVT", "indicadores": "IND", "programacao": "PRG", "disponibilidade": "DSP",
-                 "hidrologia": "HID", "geracao": "GER"}
+                 "hidrologia": "HID", "geracao": "GER", "despacho": "DES", "cvu": "CVU"}
 
 
 # ---------------------------------------------------------------------------
@@ -341,6 +345,8 @@ def sincronizar_catalogo(raiz_raw: Path, hoje: date, force: bool = False) -> Non
         escolhidos = {max(por_periodo): por_periodo[max(por_periodo)]}
         if serie.chave == "geracao":  # panorama dos agregados: os últimos meses completos (R21)
             escolhidos.update({c: r for c, r in por_periodo.items() if (c[0], c[1]) in meses})
+        if serie.chave == "despacho":  # todos os arquivos: os códigos de planejamento de cada CEG (planejamento.csv)
+            escolhidos = dict(por_periodo)
         _baixar([escolhidos[c] for c in sorted(escolhidos)], raiz_raw / serie.pasta, force)
     pacotes = [c.pacote for c in CADASTRAIS.values()] + [s.pacote for s in SERIES]
     try:
@@ -364,6 +370,7 @@ class Leituras:
     reservatorio: pd.DataFrame
     arquivos_cadastrais: Dict[str, Tuple[Path, str]]  # chave -> (arquivo, publicação)
     series: Dict[str, Tuple[Path, str, pd.DataFrame]]  # chave -> (arquivo, publicação, tabela)
+    planejamento: pd.DataFrame = None  # type: ignore[assignment]  # planejamento.csv, de todos os arquivos do despacho
 
 
 COLUNAS_SERIES = {
@@ -373,6 +380,8 @@ COLUNAS_SERIES = {
     "disponibilidade": ["id_ons", "val_dispoperacional"],
     "hidrologia": ["cod_usina", "val_vazaoturbinada", "val_vazaovertida", "val_nivelmontante"],
     "geracao": ["id_ons", "val_geracao"],
+    "despacho": ["ceg", "val_proggeracao", "val_verifgeracao"],
+    "cvu": ["cod_usinaplanejamento", "val_cvu"],
 }
 
 
@@ -391,8 +400,64 @@ def ler_arquivos(raiz_raw: Path) -> Leituras:
             logger.warning("Catálogo de usinas: nenhum arquivo local de %s; cobertura ausente.", serie.pacote)
             continue
         series[serie.chave] = (arquivo, _publicacao(pasta, arquivo.name), _ler_tabela(arquivo, COLUNAS_SERIES[serie.chave]))
+    pasta_despacho = raiz_raw / registro.entrada("despacho").pacotes[0][1]
     return Leituras(tabelas["cadastro"], tabelas["composicao"], tabelas["capacidade"], tabelas["reservatorio"],
-                    arquivos, series)
+                    arquivos, series, montar_planejamento(pasta_despacho))
+
+
+def _um_por_periodo(arquivos: Iterable[Path], formatos: Sequence[str]) -> List[Path]:
+    """Um arquivo por período do nome (o formato preferido), em ordem de período."""
+    ordem = {f".{f.lower()}": i for i, f in enumerate(formatos)}
+    escolhidos: Dict[Tuple[int, int, int], Path] = {}
+    for p in sorted(arquivos, key=lambda p: ordem.get(p.suffix.lower(), 99), reverse=True):
+        escolhidos[_chave_arquivo(p.name)] = p
+    return [escolhidos[c] for c in sorted(escolhidos)]
+
+
+def montar_planejamento(pasta: Path) -> pd.DataFrame:
+    """``planejamento.csv`` (data-model 2.5): os códigos de planejamento de cada CEG em todos os arquivos locais do
+    despacho, com o primeiro e o último mês em que aparecem. O código é comparado como número (achado A4); o nome
+    publicado só é exibido."""
+    partes = []
+    for arquivo in _um_por_periodo(_arquivos_locais(pasta, ("PARQUET", "CSV")), ("PARQUET", "CSV")):
+        try:
+            t = _ler_tabela(arquivo, COLUNAS_LEITURA_PLANEJAMENTO)
+        except Exception as exc:  # arquivo ilegível: avisado e fora do planejamento
+            logger.warning("Catálogo de usinas: despacho %s não lido (%s).", arquivo.name, exc)
+            continue
+        if t.empty or not {"ceg", "cod_usinaplanejamento", "din_instante"} <= set(t.columns):
+            continue
+        codigo = pd.to_numeric(t["cod_usinaplanejamento"], errors="coerce")
+        mes = pd.to_datetime(t["din_instante"], errors="coerce").dt.to_period("M")
+        nomes = _textos(t["nom_usina"]) if "nom_usina" in t.columns else pd.Series("", index=t.index)
+        validas = codigo.notna() & mes.notna() & _textos(t["ceg"]).ne("")
+        g = pd.DataFrame({"ceg": _normalizados(t["ceg"]), "codigo": codigo, "mes": mes, "nome": nomes})[validas]
+        resumo = g.groupby(["ceg", "codigo"]).agg(primeiro=("mes", "min"), ultimo=("mes", "max"),
+                                                    nomes=("nome", lambda s: sorted(set(s) - {""}))).reset_index()
+        resumo["arquivo"] = arquivo.name
+        partes.append(resumo)
+    if not partes:
+        return pd.DataFrame(columns=COLUNAS_PLANEJAMENTO)
+    todos = pd.concat(partes, ignore_index=True)
+    linhas = []
+    for (ceg, codigo), g in todos.groupby(["ceg", "codigo"], sort=True):
+        nomes = sorted({n for lista in g["nomes"] for n in lista})
+        linhas.append({"ceg": ceg, "codigo": int(codigo) if float(codigo).is_integer() else float(codigo),
+                       "primeiro_mes": str(g["primeiro"].min()), "ultimo_mes": str(g["ultimo"].max()),
+                       "nomes_publicados": "; ".join(nomes), "arquivos": int(g["arquivo"].nunique())})
+    return pd.DataFrame(linhas, columns=COLUNAS_PLANEJAMENTO)
+
+
+def codigos_vigentes(planejamento: pd.DataFrame) -> Dict[str, List[str]]:
+    """{CEG normalizado: códigos (texto do número inteiro) presentes no último mês publicado do despacho}."""
+    if planejamento is None or planejamento.empty:
+        return {}
+    ultimo = planejamento["ultimo_mes"].max()
+    vigentes = planejamento[planejamento["ultimo_mes"] == ultimo]
+    saida: Dict[str, List[str]] = {}
+    for r in vigentes.itertuples():
+        saida.setdefault(normalizar_texto(r.ceg), []).append(str(int(float(r.codigo))))
+    return saida
 
 
 def _contagens(tabela: pd.DataFrame, coluna: str, valores: Sequence[str]) -> Dict[str, Tuple[int, int]]:
@@ -469,7 +534,7 @@ def _codigos_de(programacao: pd.DataFrame, valor: str) -> List[str]:
 
 
 def _nivel_cobertura(chave: str, u: Dict[str, Any], leituras: Leituras, lookups: Dict[str, Dict[str, Tuple[int, int]]],
-                     programacao: pd.DataFrame) -> Dict[str, Any]:
+                     programacao: pd.DataFrame, vigentes: Optional[Dict[str, List[str]]] = None) -> Dict[str, Any]:
     """Nível, identificador e contagens de um conjunto de série para uma usina (R3, R31)."""
     linha = {"ceg": u["ceg"], "conjunto_ons": chave, "nivel": "ausente", "identificador": "", "linhas": 0,
              "linhas_sem_valor": 0, "arquivo": "", "publicacao": ""}
@@ -492,8 +557,15 @@ def _nivel_cobertura(chave: str, u: Dict[str, Any], leituras: Leituras, lookups:
 
     if chave in ("evt", "hidrologia"):
         avaliar("cod_usina", u["cod_usina"], "proprio")
-    elif chave == "indicadores":
+    elif chave in ("indicadores", "despacho"):
         avaliar("ceg", u["ceg"], "proprio")
+    elif chave == "cvu":  # o CVU não tem CEG: pelos códigos de planejamento vigentes no despacho (decisão R9)
+        codigos = (vigentes or {}).get(normalizar_texto(u["ceg"]), [])
+        linhas = sum(contagens.get(c, (0, 0))[0] for c in codigos)
+        com_valor = sum(contagens.get(c, (0, 0))[1] for c in codigos)
+        if codigos:
+            linha.update(identificador=f"cod_usinaplanejamento={';'.join(codigos)}", linhas=linhas,
+                         linhas_sem_valor=linhas - com_valor, nivel="proprio" if com_valor else "ausente")
     elif chave == "disponibilidade":
         avaliar("id_ons", u["id_ons"], "proprio")
     elif chave == "geracao":
@@ -525,13 +597,15 @@ def montar_usinas(leituras: Leituras, hoje: date) -> Tuple[pd.DataFrame, pd.Data
     reservatorios = {normalizar_texto(r["ceg"]): r for _, r in leituras.reservatorio.iterrows()
                      if str(r.get("ceg", "")).strip()}
     programacao = _programacao(leituras, cadastro, list(leituras.composicao.get("id_ons_conjunto", [])))
+    vigentes = codigos_vigentes(leituras.planejamento)
     lookups: Dict[str, Dict[str, Tuple[int, int]]] = {}
     for serie in SERIES:
         if serie.chave not in leituras.series:
             continue
         _, _, tabela = leituras.series[serie.chave]
         coluna = {"evt": "cod_usina", "hidrologia": "cod_usina", "indicadores": "ceg", "programacao": "cod_exibicaousina",
-                  "disponibilidade": "id_ons", "geracao": "id_ons"}[serie.chave]
+                  "disponibilidade": "id_ons", "geracao": "id_ons", "despacho": "ceg",
+                  "cvu": "cod_usinaplanejamento"}[serie.chave]
         valores = [c for c in COLUNAS_SERIES[serie.chave] if c.startswith("val_")] or [coluna]
         if serie.chave == "indicadores":
             lookups[serie.chave] = {k: (n, n) for k, (n, _) in _contagens(tabela, coluna, [coluna]).items()}
@@ -584,7 +658,7 @@ def montar_usinas(leituras: Leituras, hoje: date) -> Tuple[pd.DataFrame, pd.Data
                      id_reservatorio=str(reservatorio.get("res_id", "")).strip())
         u["divergencias"] = "; ".join(divergencias)
         if tipo in TIPOS_USINA:
-            linhas_cobertura = [_nivel_cobertura(s.chave, u, leituras, lookups, programacao) for s in SERIES
+            linhas_cobertura = [_nivel_cobertura(s.chave, u, leituras, lookups, programacao, vigentes) for s in SERIES
                                 if tipo in registro.entrada(s.chave).tipos]
             coberturas += linhas_cobertura
             niveis = {c["nivel"] for c in linhas_cobertura}
@@ -671,8 +745,9 @@ def montar_catalogo(raiz_raw: Path, hoje: date, sem_portal: bool) -> Catalogo:
         "contagens": {"por_tipo": {str(k): int(v) for k, v in usinas["tipo"].value_counts().sort_index().items()},
                       "por_estado": {str(k): int(v) for k, v in usinas["id_estado"].value_counts().sort_index().items()}},
     }
-    return Catalogo(usinas, montar_conjuntos(leituras.composicao), cobertura,
-                    pd.DataFrame(columns=COLUNAS_PLANEJAMENTO), programacao, agregados, info)
+    planejamento = leituras.planejamento if leituras.planejamento is not None else pd.DataFrame(
+        columns=COLUNAS_PLANEJAMENTO)
+    return Catalogo(usinas, montar_conjuntos(leituras.composicao), cobertura, planejamento, programacao, agregados, info)
 
 
 # ---------------------------------------------------------------------------

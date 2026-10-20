@@ -362,7 +362,7 @@ A lista e a ordem das seções de cada caminho estão na R14.
 |---|---|---|
 | Título | o de hoje: "<nome> — Análise do desempenho operacional" (capa do relatório aprovado em 19/10/2026; o Markdown mantém o título anterior) | o mesmo da capa: "<nome> — Análise do desempenho operacional" |
 | Subtítulo | o de hoje: dados abertos do ONS, período, registros horários e data de geração | o mesmo, com o período e os registros da série de referência e o nível dela |
-| Bloco "Identificação nos dados do ONS" | o de hoje | os identificadores do perfil, com a linha de tipo e modalidade e o conjunto, quando há |
+| Bloco "Identificação nos dados do ONS" | o de hoje | os identificadores do perfil, com a linha de tipo e modalidade, o conjunto, quando há, e o agente atual das unidades (Capacidade de geração; decisão do usuário de 19/10/2026) |
 | Bloco "Cadastro no ONS" | o de hoje (ficha do cadastro, com a modalidade) | o mesmo |
 | Bloco "Parâmetros técnicos" | o de hoje | os parâmetros do tipo (seção 3.2), com as fontes |
 | Indicadores da capa | os de hoje | térmicas: geração média, horas com despacho, disponibilidade média e TEIFa, quando há; eólicas e solares: fator de capacidade, geração média e energia cortada (%); usina em conjunto: os do conjunto, identificados como tal |

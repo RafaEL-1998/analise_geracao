@@ -124,7 +124,7 @@ def test_formato_nao_publicado_e_conjunto_nao_obtido(portal, tmp_path: Path) -> 
     sincronizar_dicionarios([CONJUNTO_PROGRAMACAO_DIARIA], raw)
     registro = montar_registro(raw)
     assert list(registro.columns) == COLUNAS_REGISTRO
-    assert len(registro) == 2 * len(CONJUNTOS_PIPELINE) == 26  # os dez de hoje e os três cadastrais da fase A
+    assert len(registro) == 2 * len(CONJUNTOS_PIPELINE) == 32  # os dez de hoje, três cadastrais e três de térmica
     assert _resultados(registro, CONJUNTO_PROGRAMACAO_DIARIA) == {"PDF": "NOVO", "JSON": "NAO_PUBLICADO"}
     assert _resultados(registro, CONJUNTO_HIDROLOGIA) == {"PDF": "NAO_OBTIDO", "JSON": "NAO_OBTIDO"}
 

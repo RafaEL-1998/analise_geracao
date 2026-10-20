@@ -1,4 +1,5 @@
-"""Conjuntos horários do ONS na Coleta de dados: disponibilidade, hidrologia e geração por usina.
+"""Conjuntos do ONS lidos pelo motor comum da Coleta de dados: disponibilidade, hidrologia e geração por usina e, nas
+térmicas, o despacho (horário), o CVU e o CMO (semanais; spec 006, fase B).
 
 Fluxo (spec da Coleta de dados, FR-016 a FR-019, FR-034 a FR-040, FR-044 e FR-046): catálogo CKAN → arquivos que se
 sobrepõem ao período da base de EVT → um formato por período → download com cache por versão → leitura só das linhas
@@ -192,9 +193,26 @@ def numero_publicado(serie: pd.Series) -> pd.Series:
     return pd.to_numeric(texto, errors="coerce").astype("float64")
 
 
-def _corresponde(tabela: pd.DataFrame, regra: Regra) -> pd.Series:
+def _no_periodo(instantes: pd.Series, inicio: str, fim: str) -> pd.Series:
+    """Instantes no período ``inicio``–``fim`` (AAAA-MM; ``fim`` vazio: vigente), com os meses inteiros."""
+    ok = instantes >= pd.Timestamp(f"{inicio}-01")
+    if fim:
+        ok &= instantes < pd.Timestamp(f"{fim}-01") + pd.offsets.MonthBegin(1)
+    return ok.fillna(False)
+
+
+def _corresponde(tabela: pd.DataFrame, regra: Regra, instantes: Optional[pd.Series] = None) -> pd.Series:
     if regra.coluna not in tabela.columns:
         return pd.Series(False, index=tabela.index)
+    if regra.modo == "em":  # um dos números da regra (o código vem ora inteiro, ora decimal: achado A4)
+        return numero_publicado(tabela[regra.coluna]).isin([float(v) for v in regra.valor])
+    if regra.modo == "codigo_no_periodo":
+        numeros = numero_publicado(tabela[regra.coluna])
+        quando = instantes if instantes is not None else pd.Series(pd.NaT, index=tabela.index)
+        ok = pd.Series(False, index=tabela.index)
+        for codigo, inicio, fim in regra.valor:
+            ok |= (numeros == float(codigo)) & _no_periodo(quando, inicio, fim)
+        return ok
     if isinstance(regra.valor, (int, float)) and not isinstance(regra.valor, bool):
         return pd.to_numeric(tabela[regra.coluna], errors="coerce") == float(regra.valor)
     alvo = _normalizar(pd.Series([str(regra.valor)])).iloc[0]
@@ -282,7 +300,7 @@ def extrair_arquivo(desc: DescricaoConjunto, caminho: Path) -> Tuple[pd.DataFram
             auditoria["linhas_formato_irregular"] = len(irregulares)
             avisar_linhas_irregulares(desc.pacote, caminho.name, irregulares)
             _exigir_conferencias(desc, bruto.columns)
-        faltantes = [c for c in (desc.identificador.coluna, COLUNA_INSTANTE) if c not in bruto.columns]
+        faltantes = [c for c in (desc.identificador.coluna, desc.coluna_instante) if c not in bruto.columns]
         if faltantes:
             raise ValueError(f"colunas ausentes no arquivo: {faltantes}")
     except Exception as exc:
@@ -290,12 +308,16 @@ def extrair_arquivo(desc: DescricaoConjunto, caminho: Path) -> Tuple[pd.DataFram
         auditoria.update(status="FALHA", mensagem=str(exc))
         return pd.DataFrame(), auditoria
 
-    ident = _corresponde(bruto, desc.identificador)
+    # O período de cada código de planejamento é conferido no instante da linha (só no despacho)
+    por_periodo = any(r.modo == "codigo_no_periodo" for r in (desc.identificador, *desc.conferencias))
+    instantes_brutos = pd.to_datetime(bruto[desc.coluna_instante], errors="coerce") if por_periodo else None
+    ident = _corresponde(bruto, desc.identificador, instantes_brutos)
     conf = pd.Series(True, index=bruto.index)
     for regra in desc.conferencias:
-        conf &= _corresponde(bruto, regra)
+        conf &= _corresponde(bruto, regra, instantes_brutos)
     auditoria["linhas_so_identificador"] = int((ident & ~conf).sum())
-    auditoria["linhas_so_conferencia"] = int((~ident & conf).sum())
+    # sem conferência declarada (o CMO, contexto do subsistema), não há linha "só conferência"
+    auditoria["linhas_so_conferencia"] = int((~ident & conf).sum()) if desc.conferencias else 0
     usina = bruto[ident & conf].copy()
     auditoria["linhas_usina"] = len(usina)
     if auditoria["linhas_so_identificador"] or auditoria["linhas_so_conferencia"]:
@@ -304,7 +326,7 @@ def extrair_arquivo(desc: DescricaoConjunto, caminho: Path) -> Tuple[pd.DataFram
                        auditoria["linhas_so_identificador"], auditoria["linhas_so_conferencia"])
 
     dados = pd.DataFrame(index=usina.index)
-    instantes = pd.to_datetime(usina[COLUNA_INSTANTE], errors="coerce")
+    instantes = pd.to_datetime(usina[desc.coluna_instante], errors="coerce")
     invalidos = pd.Series(0, index=usina.index)
     nao_numerico = instantes.isna()
     invalidos += instantes.isna().astype(int)

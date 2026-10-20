@@ -287,19 +287,23 @@ def test_analisar_preenche_a_conclusao(df_base: pd.DataFrame) -> None:
 # ---------------------------------------------------------------------------
 
 REGRAS_COMUNS = {"C2", "C5", "C8", "C10"}
+REGRAS_TERMICAS = {"C12", "C13", "C14", "C15"}  # fase B (spec 006, decisão R16)
 
 
 def test_catalogo_declara_os_campos_de_cada_regra() -> None:
-    from src.analises.conclusao import CATALOGO_CONCLUSAO
+    from src.analises.conclusao import CATALOGO_CONCLUSAO, REGRAS_CONCLUSAO
+    from src.coleta.registro import TERMICAS
     from src.comum import regras
 
-    assert [r.codigo for r in CATALOGO_CONCLUSAO] == [f"C{i}" for i in range(1, 12)]
+    assert [r.codigo for r in CATALOGO_CONCLUSAO] == [f"C{i}" for i in range(1, 16)]
     for r in CATALOGO_CONCLUSAO:
         assert r.tipos and set(r.listas) <= set(LISTAS) and r.nivel_exigido == "usina", r.codigo
-        assert callable(r.funcao) and r.secoes, r.codigo
+        assert (callable(r.funcao) or r.codigo in REGRAS_TERMICAS) and r.secoes, r.codigo
         assert all(hasattr(regras, nome) for nome in r.limiares), r.codigo
         assert r.periodo_minimo_meses is None, r.codigo  # C1 a C11 sem período mínimo novo (decisões R17 e R29)
-    assert {r.codigo for r in CATALOGO_CONCLUSAO if r.funcao_comum is not None} == REGRAS_COMUNS
+    assert {r.codigo for r in CATALOGO_CONCLUSAO if r.funcao_comum is not None} == REGRAS_COMUNS | REGRAS_TERMICAS
+    assert all(r.tipos == TERMICAS and r.funcao is None for r in CATALOGO_CONCLUSAO if r.codigo in REGRAS_TERMICAS)
+    assert len(REGRAS_CONCLUSAO) == 11  # o caminho da EVT continua com C1 a C11 (decisão R29)
 
 
 def test_itens_so_nas_listas_declaradas_e_na_ordem_de_hoje(df_base: pd.DataFrame) -> None:
@@ -396,4 +400,83 @@ def test_c10_das_usinas_sem_evt_agrupa_unidades_e_anos() -> None:
                                                              "da UG1 em 2025")
     assert _unidades_agrupadas(pd.DataFrame([{"ano": 2022, "ug": 2}, {"ano": 2022, "ug": 3}]), 5) == \
         "das UG2 e UG3 em 2022"
+
+
+# ---------------------------------------------------------------------------
+# Regras das térmicas: C12 a C15 e as comuns numa térmica (spec 006, fase B; tarefa T082)
+# ---------------------------------------------------------------------------
+
+
+def _res_termica(termica, disponibilidade=None):
+    from src.analises.resultados import ResultadosAnalise
+
+    vazio = pd.DataFrame()
+    res = ResultadosAnalise(
+        cobertura={}, globais={}, indicadores_anuais=vazio, evt_mensal=vazio, distribuicao_mes_do_ano=vazio,
+        evt_por_faixa_geracao=vazio, perfil_horario_geracao=vazio, perfil_horario_evt=vazio,
+        eventos_parada_com_evt=vazio, eventos_indisponibilidade_total=vazio, mudanca_classificacao={}, anomalias=vazio,
+        resumo_anomalias=vazio, extremos=vazio, perfil_estatistico=vazio)
+    res.tipo = "UTE"
+    res.comum = {"cobertura": {"inicio": pd.Timestamp("2024-01-01")}, "qualidade": {},
+                 "disponibilidade": disponibilidade or {}}
+    res.termica = termica
+    return res
+
+
+def _termica(abaixo=0, sem_programacao=0, nao_verificada_pct=float("nan"), horas_cvu=0):
+    return {
+        "atendimento": {"resumo": {"horas_abaixo": abaixo, "energia_abaixo_mwh": abaixo * 60.0,
+                                   "horas_sem_programacao": sem_programacao,
+                                   "energia_sem_programacao_mwh": sem_programacao * 50.0}},
+        "inflexibilidade_resumo": {"programada_mwh": 1000.0, "nao_verificada_mwh": 10.0 * nao_verificada_pct,
+                                   "nao_verificada_pct": nao_verificada_pct},
+        "cvu_cmo": {"horas_disponivel_cvu_abaixo": horas_cvu, "semanas_disponivel_cvu_abaixo": 2},
+        "disponivel_sem_despacho": {"resumo": {"horas": horas_cvu}},
+    }
+
+
+def test_c12_a_c15_disparam_e_nao_disparam() -> None:
+    from src.comum.regras import (
+        LIMIAR_CONCLUSAO_DESPACHO_ABAIXO_HORAS as H12,
+        LIMIAR_CONCLUSAO_DISPONIVEL_CVU_HORAS as H13,
+        LIMIAR_CONCLUSAO_INFLEXIBILIDADE_PCT as P14,
+        LIMIAR_CONCLUSAO_SEM_PROGRAMACAO_HORAS as H15,
+    )
+
+    no_limiar = montar_conclusao(_res_termica(_termica(H12, H15, P14, H13)))
+    regras = {(i["regra"], i["lista"]) for i in no_limiar}
+    assert {("C12", "possiveis_problemas"), ("C12", "confirmar_agente"), ("C13", "confirmar_agente"),
+            ("C14", "pontos_atencao"), ("C15", "confirmar_agente")} <= regras
+    abaixo = montar_conclusao(_res_termica(_termica(H12 - 1, H15 - 1, P14 - 0.1, H13 - 1)))
+    assert not {i["regra"] for i in abaixo} & REGRAS_TERMICAS
+    textos = {i["regra"]: i["texto"] for i in no_limiar if i["lista"] != "confirmar_agente"}
+    assert f"{H12} h" in textos["C12"] and "abaixo da programada" in textos["C12"]
+    secoes = {i["regra"]: i["secoes"] for i in no_limiar}
+    assert secoes["C12"] == ["atendimento_despacho"] and secoes["C13"] == ["disponivel_sem_despacho"]
+    assert secoes["C14"] == ["despacho_motivo"]
+    for item in no_limiar:  # nenhum termo de parecer
+        assert not any(p in item["texto"].lower() for p in PROIBIDOS), item
+
+
+def test_termica_sem_referencias_e_sem_despacho(tmp_path) -> None:
+    import shutil
+    from pathlib import Path
+
+    from src.analises.conclusao import regras_omitidas
+    from src.comum.perfil import carregar_perfil
+
+    origem = Path(__file__).resolve().parents[1] / "fixtures" / "usinas_ficticias" / "ute" / "perfil.toml"
+    (tmp_path / "usinas" / "ute_ficticia").mkdir(parents=True)
+    shutil.copy(origem, tmp_path / "usinas" / "ute_ficticia" / "perfil.toml")
+    _ativar(carregar_perfil("ute_ficticia", tmp_path))  # sem IP e TEIF de referência
+    eventos = pd.DataFrame({"inicio": [pd.Timestamp("2024-01-01")], "fim": [pd.Timestamp("2024-02-15 23:00")],
+                            "duracao_h": [46 * 24], "geracao_media_mw": [0.0]})
+    disponibilidade = {"resumo": {"disponibilidade_relativa_pct": 50.0}, "eventos_indisponibilidade_total": eventos}
+    res = _res_termica({}, disponibilidade)
+    itens = montar_conclusao(res)
+    assert {i["regra"] for i in itens} == {"C10"}  # C10 sobre a base horária comum, numa térmica
+    omitidas = {o["item"]: o["motivo"] for o in regras_omitidas(res)}
+    assert "IP e TEIF de referência" in omitidas["C5"] and "Indicadores" in omitidas["C2"]
+    assert all("Geração térmica por motivo de despacho" in omitidas[c] for c in ("C12", "C14", "C15"))
+    assert "CVU e o CMO" in omitidas["C13"]
 

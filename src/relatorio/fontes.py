@@ -30,7 +30,11 @@ from src.comum.perfil import perfil_ativo
 from src.analises.resultados import sem_evt
 from src.comum.regras import (
     CONJUNTO_CADASTRO,
+    CONJUNTO_CAPACIDADE,
+    CONJUNTO_CMO,
     CONJUNTO_COMPOSICAO,
+    CONJUNTO_CVU,
+    CONJUNTO_DESPACHO,
     CONJUNTO_DISPONIBILIDADE,
     CONJUNTO_EVT,
     CONJUNTO_GERACAO,
@@ -57,6 +61,8 @@ AFLUENCIA_NIVEL = "afluência e nível do reservatório"
 AFLUENCIA_NIVEIS_VOLUME = "afluência, níveis e volume útil"
 PROGRAMACAO = "programação diária"
 GERACAO = "geração"
+MOTIVOS_DESPACHO = "motivos de despacho"
+CVU_CMO = "CVU e CMO"
 
 
 # ---------------------------------------------------------------------------
@@ -92,16 +98,26 @@ CONJUNTOS: Dict[str, Conjunto] = {
     "cadastro": Conjunto("Modalidade das usinas", "CEG {ceg}", CONJUNTO_CADASTRO),
     "composicao": Conjunto("Composição dos conjuntos de usinas", "conjunto de usinas, id ONS {id_conjunto}",
                            CONJUNTO_COMPOSICAO),
+    "capacidade": Conjunto("Capacidade de geração", "CEG {ceg}", CONJUNTO_CAPACIDADE),
+    # Térmicas (fase B)
+    "despacho": Conjunto("Geração térmica por motivo de despacho", "CEG {ceg}; códigos de planejamento {planejamento}",
+                         CONJUNTO_DESPACHO),
+    "cvu": Conjunto("CVU das usinas térmicas", "códigos de planejamento {planejamento}", CONJUNTO_CVU),
+    "cmo": Conjunto("CMO semanal", "subsistema {subsistema}, agregado", CONJUNTO_CMO),
     "projeto": Conjunto("parâmetros do projeto", ""),
 }
 
 
 def identificador_da_usina(cid: str) -> str:
     """Identificador da usina no conjunto ``cid``, com os valores do perfil ativo."""
-    i = perfil_ativo().identificacao
+    p = perfil_ativo()
+    i = p.identificacao
+    planejamento = ", ".join(str(c.codigo) for c in getattr(i, "planejamento", ()) or ())
     return CONJUNTOS[cid].identificador.format(cod_usina=i.cod_usina, ceg=i.ceg, id_ons=i.id_ons,
                                                cod_programacao=i.cod_programacao, id_reservatorio=i.id_reservatorio,
-                                               id_conjunto=getattr(i, "id_conjunto", "") or "")
+                                               id_conjunto=getattr(i, "id_conjunto", "") or "",
+                                               planejamento=planejamento,
+                                               subsistema=getattr(p.usina, "subsistema", "") or "")
 
 
 def identificador_com_nivel(res: Any, cid: str) -> Optional[str]:
@@ -267,6 +283,39 @@ def _curto_dispf_horas(res: Any) -> str:
                                                     else "sem divergência")
 
 
+def _conferencia_termica(res: Any, cid: str) -> Optional[Dict[str, Any]]:
+    c = ((getattr(res, "termica", None) or {}).get("conferencias") or {}).get(cid)
+    return c if c and c.get("aplicavel") else None
+
+
+def _conf_programacao_despacho(res: Any) -> str:
+    c = _conferencia_termica(res, "programacao_despacho")
+    if c is None:
+        return "programação diária: conferência com o despacho não feita nesta execução"
+    return ("programação diária conferida com o programado da Geração térmica por motivo de despacho (G3): "
+            + _texto_horas(c, "CONF_G3_DIVERGENCIAS", "so_a"))
+
+
+def _conf_verificada_despacho(res: Any) -> str:
+    c = _conferencia_termica(res, "verificada_despacho")
+    if c is None:
+        return "geração verificada do despacho: conferência com Geração por usina não feita nesta execução"
+    return ("geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): "
+            + _texto_horas(c, "CONF_G4_DIVERGENCIAS", "so_a"))
+
+
+def _curto_programacao_despacho(res: Any) -> str:
+    c = _conferencia_termica(res, "programacao_despacho")
+    return ("programação diária: conferência com o despacho não feita nesta execução" if c is None
+            else "programação diária " + _curto_horas(c, "o programado do despacho"))
+
+
+def _curto_verificada_despacho(res: Any) -> str:
+    c = _conferencia_termica(res, "verificada_despacho")
+    return ("geração do despacho: conferência não feita nesta execução" if c is None
+            else "geração verificada do despacho " + _curto_horas(c, "Geração por usina"))
+
+
 def _curto_cadastro(res: Any) -> str:
     divergencias = str(res.cadastro.get("divergencias") or "").strip()
     return "cadastro " + (f"com divergências ({divergencias})" if divergencias else "sem divergência")
@@ -280,6 +329,10 @@ CONFERENCIAS: Dict[str, Conferencia] = {
     "teifa_teip": Conferencia("TEIFa e TEIP", "teif_teip", _conf_teifa_teip, _curto_teifa_teip),
     "dispf_horas": Conferencia("DISPF", "teif_teip_parametro", _conf_dispf_horas, _curto_dispf_horas),
     "cadastro": Conferencia("potência autorizada e estado", "cadastro", _conf_cadastro, _curto_cadastro),
+    "programacao_despacho": Conferencia("programação diária", "despacho", _conf_programacao_despacho,
+                                        _curto_programacao_despacho),
+    "verificada_despacho": Conferencia("geração verificada do despacho", "despacho", _conf_verificada_despacho,
+                                       _curto_verificada_despacho),
 }
 
 
@@ -287,7 +340,8 @@ CONFERENCIAS: Dict[str, Conferencia] = {
 # Mapa das figuras, tabelas e blocos (PDF e Markdown)
 # ---------------------------------------------------------------------------
 
-CONFERENCIAS_SEM_EVT: Tuple[str, ...] = ("teifa_teip", "dispf_horas", "cadastro")
+CONFERENCIAS_SEM_EVT: Tuple[str, ...] = ("teifa_teip", "dispf_horas", "cadastro", "programacao_despacho",
+                                         "verificada_despacho")  # G3 e G4 só com o despacho (fase B)
 _CONF_EVT = ("geracao", "disponibilidade")
 _CONF_EVT_VAZOES = ("geracao", "disponibilidade", "vazoes")
 
@@ -343,7 +397,7 @@ MAPA_FONTES: Dict[str, Entrada] = {
     "faixas_afluencia": _e(["hidrologia", "evt"], ["vazoes"], [AFLUENCIA, EVT], calculado=True),
     "perfil_hidrologico": _e(["hidrologia", "evt"], ["vazoes"], [AFLUENCIA_NIVEL], calculado=True),
     # Usinas sem EVT (spec 006, decisões R14 e R15): a série de referência (Geração por usina) no lugar da EVT
-    "bloco_identificacao_comum": _e(["cadastro", "geracao"]),
+    "bloco_identificacao_comum": _e(["cadastro", "geracao", "capacidade", "despacho"]),
     "tab_capa_indicadores_comum": _e(["geracao", "disponibilidade", "dispf_mensal", "teif_teip"],
                                      ["dispf_horas", "teifa_teip"], [GERACAO], calculado=True),
     "tab_fonte_cobertura": _e(["geracao"]),
@@ -366,6 +420,17 @@ MAPA_FONTES: Dict[str, Entrada] = {
     "sazonalidade": _e(["geracao"], (), [GERACAO], calculado=True),
     "perfil_horario_comum": _e(["geracao"], (), [GERACAO], calculado=True),
     "disponibilidade_comum": _e(["disponibilidade", "geracao"], (), [SINCRONIZADA], calculado=True),
+    # Térmicas (fase B)
+    "tab_motivos_termica": _e(["despacho"], ["verificada_despacho"], [MOTIVOS_DESPACHO], calculado=True),
+    "tab_despacho_anual": _e(["despacho"], ["programacao_despacho", "verificada_despacho"], calculado=True),
+    "tab_atendimento_anual": _e(["despacho"], ["programacao_despacho", "verificada_despacho"], calculado=True),
+    "tab_maiores_desvios": _e(["despacho"], ["verificada_despacho"]),
+    "tab_disponivel_anual": _e(["disponibilidade", "despacho"], ["verificada_despacho"], calculado=True),
+    "tab_cvu_cmo": _e(["cvu", "cmo", "despacho"], (), [CVU_CMO], calculado=True),
+    "despacho_motivo_mensal": _e(["despacho"], ["verificada_despacho"], [MOTIVOS_DESPACHO], calculado=True),
+    "inflexibilidade_mensal": _e(["despacho"], (), [MOTIVOS_DESPACHO], calculado=True),
+    "desvios_despacho": _e(["despacho"], ["programacao_despacho", "verificada_despacho"], calculado=True),
+    "cvu_cmo": _e(["cvu", "cmo"], (), [CVU_CMO], calculado=True),
 }
 
 
@@ -425,6 +490,20 @@ _ABAS_EXATAS: Dict[str, Entrada] = {
     "OMITIDOS": MAPA_FONTES["tab_omitidos"],
     "CONF_NAO_APLICAVEIS": MAPA_FONTES["tab_nao_aplicaveis"],
     "DISP_EVENTOS_INDISP_TOTAL": MAPA_FONTES["tab_eventos_indisponibilidade_comum"],
+    # Térmicas (fase B)
+    "TERM_MOTIVOS_ANUAL": MAPA_FONTES["tab_motivos_termica"],
+    "TERM_MOTIVOS_MENSAL": MAPA_FONTES["despacho_motivo_mensal"],
+    "TERM_INFLEXIBILIDADE": MAPA_FONTES["inflexibilidade_mensal"],
+    "TERM_ATENDIMENTO_ANUAL": MAPA_FONTES["tab_atendimento_anual"],
+    "TERM_ATENDIMENTO_MENSAL": MAPA_FONTES["desvios_despacho"],
+    "TERM_MAIORES_DESVIOS": MAPA_FONTES["tab_maiores_desvios"],
+    "TERM_DISP_SEM_DESPACHO": MAPA_FONTES["tab_disponivel_anual"],
+    "TERM_CVU_CMO_SEMANAL": MAPA_FONTES["cvu_cmo"],
+    "TERM_CVU_CMO_RESUMO": MAPA_FONTES["tab_cvu_cmo"],
+    "CONF_G3_MENSAL": _e(["programacao", "despacho"], ["programacao_despacho"]),
+    "CONF_G3_DIVERGENCIAS": _e(["programacao", "despacho"], ["programacao_despacho"]),
+    "CONF_G4_MENSAL": _e(["despacho", "geracao"], ["verificada_despacho"]),
+    "CONF_G4_DIVERGENCIAS": _e(["despacho", "geracao"], ["verificada_despacho"]),
 }
 # Abas das usinas sem EVT com o mesmo nome de uma aba de hoje, mas sem a EVT na origem
 _ABAS_SEM_EVT: Dict[str, Entrada] = {
@@ -460,6 +539,15 @@ def _carregados_sem_evt(res: Any) -> List[str]:
         carregados.append("cadastro")
     if getattr(perfil_ativo().identificacao, "id_conjunto", None):
         carregados.append("composicao")
+    if res.comum.get("agentes"):
+        carregados.append("capacidade")
+    t = getattr(res, "termica", None) or {}
+    if t:
+        carregados.append("despacho")
+        if t.get("cvu_coletado"):
+            carregados.append("cvu")
+        if t.get("cmo_coletado"):
+            carregados.append("cmo")
     return carregados
 
 

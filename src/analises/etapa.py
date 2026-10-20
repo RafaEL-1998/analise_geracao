@@ -19,7 +19,7 @@ import json
 import pandas as pd
 
 from src.analises.cadastro import analisar_cadastro
-from src.analises.comum_tipos import analisar_comum
+from src.analises.comum_tipos import agentes_atuais, analisar_comum
 from src.analises.cobertura import analisar_cobertura
 from src.analises.conclusao import montar_conclusao, regras_omitidas
 from src.analises.constatacoes import montar_achados, montar_achados_comum
@@ -47,6 +47,7 @@ from src.analises.hidrologia import analisar_hidrologia
 from src.analises.indicadores import analisar_indicadores_ons
 from src.analises.programacao import analisar_programacao
 from src.analises.resultados import ResultadosAnalise, salvar_resultados
+from src.analises.termica import analisar_termica
 from src.coleta import registro
 from src.coleta.serie_referencia import escolher
 from src.comum import caminhos
@@ -62,6 +63,7 @@ from src.tratamento.hidrologia import carregar_hidrologia_tratada
 from src.tratamento.indicadores import IndicadoresONS, carregar_indicadores_tratados
 from src.tratamento.programacao import ProgramacaoONS, carregar_programacao_tratada
 from src.tratamento.series import SerieConjunto
+from src.tratamento.termica import DespachoTratado, SemanalTratado, carregar_despacho_tratado, carregar_semanal_tratado
 from src.comum.perfil import perfil_ativo
 from src.tratamento.validacao import COLUNA_QUALIDADE, validar_regras_fisicas
 
@@ -195,6 +197,10 @@ def analisar_sem_evt(
     dicionarios: Optional[pd.DataFrame] = None,
     auditoria_cadastro: Optional[pd.DataFrame] = None,
     nao_aplicaveis: Optional[pd.DataFrame] = None,
+    capacidade: Optional[pd.DataFrame] = None,
+    despacho: Optional[DespachoTratado] = None,
+    cvu: Optional[SemanalTratado] = None,
+    cmo: Optional[SemanalTratado] = None,
 ) -> ResultadosAnalise:
     """Resultados das usinas sem EVT: as seções comuns sobre a base horária comum (decisões R14 e R30).
 
@@ -210,6 +216,7 @@ def analisar_sem_evt(
         indicadores=tem_indicadores, hidrologia=registro.nivel_coletado(perfil, "hidrologia") is not None)
     comum["conferencias_nao_aplicaveis"] = nao_aplicaveis if nao_aplicaveis is not None else pd.DataFrame(
         columns=["conferencia", "motivo"])
+    comum["agentes"] = agentes_atuais(capacidade, comum["cobertura"]["fim"])
     vazio = pd.DataFrame()
     res = ResultadosAnalise(
         cobertura=comum["cobertura"], globais={}, indicadores_anuais=vazio, evt_mensal=vazio,
@@ -222,6 +229,20 @@ def analisar_sem_evt(
     res.trechos = trechos if trechos is not None else pd.DataFrame()
     res.comum, res.omitidos = comum, omitidos
     res.datas_obtencao = datas_obtencao or {}
+    if tipo in registro.TERMICAS:  # seções de térmica (fase B, decisão R18)
+        res.termica = analisar_termica(despacho, base, cvu, cmo)
+        if res.termica:  # G3 e G4, para as legendas de fonte e o resumo executivo
+            res.termica["conferencias"] = {
+                i: {"aplicavel": r.aplicavel, "motivo": r.motivo, "comparados": r.comparados,
+                    "coincidentes": r.coincidentes, "divergentes": r.divergentes, **r.tabelas.get("resumo", {}),
+                    "mensal": r.tabelas.get("mensal"), "divergencias": r.tabelas.get("divergencias")}
+                for i, r in conferencias.items() if i in ("programacao_despacho", "verificada_despacho")}
+        if despacho is not None and not res.termica:
+            res.omitidos.append({"item": "Seções de térmica", "tipo": "secao",
+                                 "motivo": "o despacho não tem horas no período da série de referência"})
+        elif res.termica and cvu is not None and cmo is not None and not res.termica.get("cvu_cmo"):
+            res.omitidos.append({"item": "CVU × CMO", "tipo": "secao",
+                                 "motivo": "o CVU e o CMO não têm semanas comuns no período"})
     if tem_indicadores:
         anuais = comum["anuais"]
         da_usina = anuais[anuais["nivel"] == "usina"][["ano", "disponibilidade_relativa_pct"]]
@@ -312,6 +333,10 @@ def carregar_entradas_sem_evt(slug: str) -> Dict[str, Any]:
         "dicionarios": _ler_csv(coleta / caminhos.ARQUIVOS_COLETA["dicionarios"], keep_default_na=False),
         "auditoria_cadastro": auditoria_cadastro,
         "nao_aplicaveis": _ler_csv_texto(conferencia / caminhos.ARQUIVOS_CONFERENCIA["nao_aplicaveis"]),
+        "capacidade": _ler_csv_texto(coleta / caminhos.ARQUIVOS_COLETA["capacidade"]),
+        "despacho": carregar_despacho_tratado(tratamento),
+        "cvu": carregar_semanal_tratado(tratamento, "cvu"),
+        "cmo": carregar_semanal_tratado(tratamento, "cmo"),
     }
 
 
@@ -362,6 +387,8 @@ def _executar_sem_evt(perfil: Any, pasta: Path) -> ResultadoEtapa:
         "bases_complementares": {
             "indicadores": bool(res.ons), "programacao": bool(res.comum.get("programacao")),
             "disponibilidade": bool(res.comum.get("disponibilidade")), "cadastro": bool(res.cadastro),
+            **({"despacho": bool(res.termica), "cvu_cmo": bool(res.termica.get("cvu_cmo"))}
+               if res.tipo in registro.TERMICAS else {}),
         },
     }
     return ResultadoEtapa(codigo=CODIGO_SUCESSO, arquivos=[p for p, _ in gravacoes], resumo=resumo)

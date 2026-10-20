@@ -19,11 +19,30 @@ ceg = "UTE.GN.MS.027075-0.01"         # Modalidade das usinas
 id_ons = "MSUTWI"                     # Modalidade das usinas
 codigos_programacao = ["MSUTWI"]      # Programação diária, publicado em 18/10/2026
 
+# Códigos de planejamento: Geração térmica por motivo de despacho, todos os arquivos (catálogo de 20/10/2026);
+# acrescentados na fase B com a aprovação do usuário (20/10/2026)
+[[identificacao.planejamento]]        # publicado como "Willian Arjona"
+codigo = 34
+inicio = "2013-01"
+fim = "2018-08"
+
+[[identificacao.planejamento]]        # publicado como "William Arjona" e "William Arjona Gás"
+codigo = 334
+inicio = "2021-07"
+fim = ""                              # vigente
+
+[[identificacao.planejamento]]        # publicado como "William Arjona Óleo"
+codigo = 434
+inicio = "2021-08"
+fim = "2026-01"
+
 [cobertura]                           # catálogo de usinas
 indicadores = "proprio"
 programacao = "proprio"
 disponibilidade = "proprio"
 geracao = "proprio"
+despacho = "proprio"                  # catálogo de 20/10/2026 (fase B)
+cvu = "proprio"                       # catálogo de 20/10/2026 (fase B)
 
 [parametros]
 potencia_instalada_mw = 177.116       # Capacidade de geração: 5 unidades ativas

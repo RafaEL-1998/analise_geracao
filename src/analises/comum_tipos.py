@@ -16,8 +16,10 @@ import pandas as pd
 
 from src.analises.comum import _media, _pct
 from src.analises.evt import identificar_eventos
+from src.coleta import registro
 from src.coleta.registro import HIDRELETRICAS, TERMICAS
 from src.comum.regras import (
+    DATAS_SENTINELA,
     LIMIAR_DESVIO_PROGRAMACAO_MW,
     LIMIAR_GERACAO_PARADA_MW,
     LIMIAR_INDISPONIBILIDADE_TOTAL_MW,
@@ -272,6 +274,34 @@ def qualidade_comum(base: pd.DataFrame, ausencias: Optional[pd.DataFrame],
 
 
 # ---------------------------------------------------------------------------
+# Agente atual (decisão do usuário de 19/10/2026; spec do resumo executivo, FR-008)
+# ---------------------------------------------------------------------------
+
+
+def _ativa_em(desativacao: object, fim: pd.Timestamp) -> bool:
+    texto = str(desativacao if desativacao is not None else "").strip()[:10]
+    if not texto or texto in DATAS_SENTINELA or texto.lower() in ("nan", "none", "nat"):
+        return True
+    data = pd.to_datetime(texto, errors="coerce", dayfirst="/" in texto)
+    return pd.isna(data) or data > fim
+
+
+def agentes_atuais(capacidade: Optional[pd.DataFrame], fim: pd.Timestamp) -> Dict[str, List[str]]:
+    """Agentes proprietário e operador das unidades ativas no fim do período, como a Capacidade de geração os traz
+    hoje (sem período: não é o histórico dos agentes); vazio sem a ficha."""
+    if capacidade is None or not len(capacidade) or "nom_agenteproprietario" not in capacidade.columns:
+        return {}
+    ativas = capacidade[capacidade["dat_desativacao"].map(lambda d: _ativa_em(d, fim))] \
+        if "dat_desativacao" in capacidade.columns else capacidade
+    saida = {}
+    for papel, coluna in (("proprietario", "nom_agenteproprietario"), ("operador", "nom_agenteoperador")):
+        if coluna in ativas.columns:
+            nomes = [str(n).strip() for n in ativas[coluna] if str(n).strip() and str(n).lower() != "nan"]
+            saida[papel] = list(dict.fromkeys(nomes))
+    return saida if any(saida.values()) else {}
+
+
+# ---------------------------------------------------------------------------
 # Montagem
 # ---------------------------------------------------------------------------
 
@@ -302,9 +332,14 @@ def omissoes(perfil: Any, tipo: str, comum: Dict[str, Any], indicadores: bool, h
         saida.append(_omitido(TITULO_SAZONALIDADE,
                               f"a série do nível {NOME_NIVEL.get(nivel, nivel)} tem menos de "
                               f"{PERIODO_MINIMO_SAZONALIDADE_MESES} meses distintos ({meses})"))
-    if tipo in TERMICAS:
-        saida.append(_omitido("Seções de térmica", "Despacho térmico, CVU e CMO: conjuntos ainda não coletados "
-                                                   "pelo pipeline"))
+    if tipo in TERMICAS:  # fase B: as seções de térmica dependem do despacho; o CVU × CMO, também do CVU e do CMO
+        if registro.nivel_coletado(perfil, "despacho") is None:
+            saida.append(_omitido("Seções de térmica", "sem a Geração térmica por motivo de despacho "
+                                                       f"({_cobertura_texto(perfil, 'despacho')})"))
+        elif registro.nivel_coletado(perfil, "cvu") is None:
+            saida.append(_omitido("CVU × CMO", f"sem o CVU das usinas térmicas ({_cobertura_texto(perfil, 'cvu')})"))
+        elif registro.nivel_coletado(perfil, "cmo") is None:
+            saida.append(_omitido("CVU × CMO", "sem o CMO semanal: o perfil não traz o subsistema"))
     if tipo in TIPOS_COM_FATOR_CAPACIDADE:
         saida.append(_omitido("Seções de eólica e solar", "Fator de capacidade e Restrição de operação: conjuntos "
                                                           "ainda não coletados pelo pipeline"))
@@ -327,9 +362,14 @@ def omissoes(perfil: Any, tipo: str, comum: Dict[str, Any], indicadores: bool, h
         saida.append(_omitido("Afluência, vertimento e nível do reservatório",
                               "a seção cruza os Dados hidrológicos com a base de EVT, que a usina não tem" if hidrologia
                               else f"sem os Dados hidrológicos ({_cobertura_texto(perfil, 'hidrologia')})"))
-    saida.append(_omitido("Conferência da geração entre fontes",
-                          "nenhuma conferência entre fontes de geração se aplica à usina (ver as conferências não "
-                          "aplicáveis)"))
+    if tipo in TERMICAS and registro.nivel_coletado(perfil, "despacho") is not None:
+        saida.append(_omitido("Conferência da geração entre fontes",
+                              "seção ainda não gerada pelo pipeline; os resultados da G3 e da G4 estão nas legendas de "
+                              "fonte das seções de térmica e nas abas CONF_G3 e CONF_G4 da planilha"))
+    else:
+        saida.append(_omitido("Conferência da geração entre fontes",
+                              "nenhuma conferência entre fontes de geração se aplica à usina (ver as conferências não "
+                              "aplicáveis)"))
     return saida
 
 

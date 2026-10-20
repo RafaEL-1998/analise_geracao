@@ -64,7 +64,7 @@ Redação final. Os requisitos novos seguem a numeração da spec das Análises 
   - **inflexibilidade**: a programada e a verificada, por mês (tabela e figura), dentro da geração por motivo;
   - **atendimento ao despacho**: nas horas com geração programada, o desvio verificado − programado; horas e energia abaixo e acima, além do limiar de desvio de `regras.py`; os maiores desvios, até `NUMERO_EVENTOS_RELATORIO`;
   - **disponível sem despacho**: horas com a disponibilidade operacional acima do limiar, sem programação e sem geração, com a potência disponível média;
-  - **CVU × CMO**: por semana operativa, o CVU de cada unidade de planejamento e o CMO médio semanal do subsistema; semanas com o CVU abaixo e acima do CMO, com a geração em cada caso, sem julgar o despacho;
+  - **CVU × CMO**: por semana operativa, o CVU de cada unidade de planejamento e o CMO médio semanal do subsistema; semanas com o CVU abaixo, acima e igual ao CMO, com a geração em cada caso, sem julgar o despacho; o CVU sinalizado (ausente, zero ou negativo) fica sem comparação (decisão do usuário de 20/10/2026);
   - **usina sem geração no período**: nenhuma divisão por zero; a constatação diz que a usina ficou disponível e não foi despachada, com as horas e a potência disponível.
 - **FR-057** (regras C12 a C15, decisão R16): UTE e UTN, só com dados da usina:
   - C12: geração abaixo da programada em horas recorrentes (possíveis problemas; a confirmar com o agente);

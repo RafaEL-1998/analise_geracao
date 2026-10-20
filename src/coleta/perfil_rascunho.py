@@ -10,7 +10,8 @@ perfil (FR-007). Na ordem:
    catálogo e sai com 6, ou com 0 sem diferença;
 4. grava ``usinas/<slug>/perfil.toml`` com ``situacao = "rascunho"``: os identificadores, o subsistema, a
    ``[cobertura]`` dos conjuntos implementados, os códigos de programação ligados pelo id ONS ou pelo id do conjunto,
-   os membros do conjunto vigente, as unidades ativas e, nas hidrelétricas, os códigos dos Reservatórios. Cada valor
+   os membros do conjunto vigente, as unidades ativas, nas térmicas os códigos de planejamento do despacho e, nas
+   hidrelétricas, os códigos dos Reservatórios. Cada valor
    traz a origem em comentário; os demais campos ficam pendentes, como linhas comentadas.
 """
 
@@ -44,7 +45,8 @@ _PADRAO_SLUG = re.compile(r"^[a-z0-9_]+$")
 _PADRAO_CEG = re.compile(r"^(UHE|PCH|CGH|UTE|UTN|EOL|UFV)\.[A-Z]{2}\.[A-Z]{2}\.\d{6}-\d\.\d{2}$")
 COLUNA_COMENTARIO = 38  # coluna dos comentários de origem, para o rascunho ficar legível
 ORIGEM = {"cadastro": "Modalidade das usinas", "composicao": "Composição dos conjuntos",
-          "capacidade": "Capacidade de geração", "reservatorio": "Reservatórios", "programacao": "Programação diária"}
+          "capacidade": "Capacidade de geração", "reservatorio": "Reservatórios", "programacao": "Programação diária",
+          "despacho": "Geração térmica por motivo de despacho"}
 PACOTE_ORIGEM = {"cadastro": "modalidade-usina", "composicao": "usina_conjunto", "capacidade": "capacidade-geracao",
                  "reservatorio": "reservatorio"}
 
@@ -124,7 +126,32 @@ def _esperado(catalogo: Dict[str, Any], u: pd.Series, hoje: date) -> Dict[str, A
             if (not inicio or inicio <= hoje.isoformat()) and (not m["fim"] or m["fim"] > hoje.isoformat()):
                 membros.append({"id_ons": m["id_ons_usina"], "ceg": m["ceg"], "inicio": inicio, "fim": m["fim"]})
     return {"tipo": tipo, "cobertura": cobertura, "codigos": codigos, "codigos_estado": codigos_estado,
-            "membros": membros}
+            "membros": membros, "planejamento": planejamento_da_usina(catalogo, u["ceg"])}
+
+
+def planejamento_da_usina(catalogo: Dict[str, Any], ceg: str) -> List[Dict[str, Any]]:
+    """Códigos de planejamento do CEG no despacho (``planejamento.csv``), na ordem do início: ``codigo``, ``inicio`` e
+    ``fim`` (AAAA-MM; vazio quando o código está no último mês publicado, ou seja, vigente) e os nomes publicados."""
+    tabela = catalogo.get("planejamento")
+    if tabela is None or tabela.empty:
+        return []
+    ultimo = tabela["ultimo_mes"].max()
+    da_usina = tabela[tabela["ceg"].map(normalizar_texto) == normalizar_texto(ceg)]
+    saida = []
+    for r in da_usina.sort_values(["primeiro_mes", "codigo"]).itertuples():
+        numero = float(r.codigo)
+        saida.append({"codigo": int(numero) if numero.is_integer() else numero, "inicio": r.primeiro_mes,
+                      "fim": "" if r.ultimo_mes == ultimo else r.ultimo_mes, "nomes": r.nomes_publicados})
+    return saida
+
+
+def _texto_planejamento(entradas: Sequence[Any]) -> str:
+    """"34 de 2013-01 a 2018-08; 334 desde 2021-07" (dicionários do perfil ou do catálogo)."""
+    partes = []
+    for p in entradas:
+        codigo, inicio, fim = p.get("codigo"), p.get("inicio", ""), p.get("fim", "")
+        partes.append(f"{codigo} de {inicio} a {fim}" if fim else f"{codigo} desde {inicio}")
+    return "; ".join(partes)
 
 
 def _resolver_usina(catalogo: Dict[str, Any], ceg: str) -> Tuple[Optional[pd.Series], int, str]:
@@ -181,6 +208,12 @@ def diferencas(perfil: Dict[str, Any], u: pd.Series, esperado: Dict[str, Any]) -
     if codigos_perfil and esperado["codigos"]:
         comparar("identificacao.codigos_programacao", ";".join(sorted(codigos_perfil)),
                  ";".join(sorted(esperado["codigos"])))
+    if u["tipo"] in registro.TERMICAS:  # fase B: subsistema (CMO) e códigos de planejamento (despacho e CVU)
+        if usina.get("subsistema") or u["subsistema"]:
+            comparar("usina.subsistema", usina.get("subsistema"), u["subsistema"])
+        if ident.get("planejamento") or esperado["planejamento"]:
+            comparar("identificacao.planejamento", _texto_planejamento(ident.get("planejamento") or []),
+                     _texto_planejamento(esperado["planejamento"]))
     cobertura_perfil = perfil.get("cobertura")
     if cobertura_perfil is None and u["tipo"] == "UHE":
         cobertura_perfil = {chave: "proprio" for chave in registro.CHAVES_SEM_COBERTURA if chave in esperado["cobertura"]}
@@ -289,6 +322,18 @@ def montar_rascunho(catalogo: Dict[str, Any], u: pd.Series, esperado: Dict[str, 
             linhas += ["", "[[identificacao.membros]]".ljust(COLUNA_COMENTARIO - 1) + f" # {ORIGEM['composicao']}",
                        _linha("id_ons", m["id_ons"]), _linha("ceg", m["ceg"]), _linha("inicio", m["inicio"]),
                        _linha("fim", m["fim"], "vazio = vigente")]
+
+    if aplica("identificacao.planejamento"):
+        for p in esperado["planejamento"]:
+            comentario = f"{ORIGEM['despacho']}; publicado como {p['nomes']}" if p["nomes"] else ORIGEM["despacho"]
+            linhas += ["", "[[identificacao.planejamento]]".ljust(COLUNA_COMENTARIO - 1) + f" # {comentario}",
+                       _linha("codigo", p["codigo"]), _linha("inicio", p["inicio"]),
+                       _linha("fim", p["fim"], "vazio = vigente")]
+            preenchidos += 1
+        if not esperado["planejamento"] and exigido("identificacao.planejamento"):
+            linhas.append(_pendente("[[identificacao.planejamento]]", "código de planejamento do despacho, com o "
+                                                                      "período; nenhum código no despacho para o CEG"))
+            pendentes.append("identificacao.planejamento")
 
     # [cobertura]
     linhas += ["", "[cobertura]".ljust(COLUNA_COMENTARIO - 1) + " # catálogo de usinas; a conferir"]

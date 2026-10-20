@@ -17,6 +17,7 @@ from src.analises.resultados import sem_evt
 from src.coleta.registro import HIDRELETRICAS, TERMICAS
 from src.comum.logger import setup_logger
 from src.comum.regras import PERIODO_MINIMO_SAZONALIDADE_MESES, TIPOS_USINA
+from src.relatorio.secoes_termica import titulo_disponivel
 
 logger = setup_logger("relatorio")
 
@@ -35,13 +36,14 @@ COM_DISPONIBILIDADE: Tuple[str, ...] = HIDRELETRICAS + TERMICAS
 class Secao:
     """Seção do relatório (data-model 6.5): chave estável, título, condição de presença, caminhos e tipos.
 
-    ``titulo`` é um texto ou um mapa tipo -> título (com a chave "" como padrão); ``periodo_minimo_meses`` é o
+    ``titulo`` é um texto, um mapa tipo -> título (com a chave "" como padrão) ou uma função dos resultados (o
+    título que depende de uma parte da seção ter base); ``periodo_minimo_meses`` é o
     período que a seção (ou parte dela) pede (decisão R17). Os tipos só filtram o caminho sem EVT. A legenda de fonte
     é de cada tabela e figura da seção (a chave vem com o bloco, em ``src/relatorio/comum.py``), não da seção.
     """
 
     chave: str
-    titulo: Union[str, Dict[str, str]]
+    titulo: Union[str, Dict[str, str], Callable[[Any], str]]
     presente: Callable[[Any], bool] = _sempre
     caminhos: Tuple[str, ...] = (COM_EVT,)
     tipos: Tuple[str, ...] = TIPOS_USINA
@@ -53,7 +55,7 @@ class Secao:
         return self.titulo
 
 
-def _comum(chave: str, titulo: str, presente: Callable[[Any], bool] = _sempre,
+def _comum(chave: str, titulo: Any, presente: Callable[[Any], bool] = _sempre,
            tipos: Tuple[str, ...] = TIPOS_USINA, **campos: Any) -> Secao:
     return Secao(chave, titulo, presente, (SEM_EVT,), tipos, **campos)
 
@@ -78,6 +80,14 @@ SECOES: Tuple[Secao, ...] = (
            periodo_minimo_meses=PERIODO_MINIMO_SAZONALIDADE_MESES),  # o período mínimo vale para a sazonalidade
     Secao("perfil_horario", "Perfil horário da geração e da EVT"),
     _comum("perfil_horario_comum", "Perfil horário da geração"),
+    # Seções de térmica (fase B; rascunho 005, FR-044), com o despacho: item 8 da FR-041
+    _comum("despacho_motivo", "Geração por motivo de despacho e inflexibilidade",
+           lambda res: bool(getattr(res, "termica", None)), TERMICAS),
+    _comum("atendimento_despacho", "Atendimento ao despacho", lambda res: bool(getattr(res, "termica", None)),
+           TERMICAS),
+    _comum("disponivel_sem_despacho", titulo_disponivel,
+           lambda res: bool((getattr(res, "termica", None) or {}).get("disponivel_sem_despacho")
+                            or (getattr(res, "termica", None) or {}).get("cvu_cmo")), TERMICAS),
     Secao("eventos", "EVT por nível de geração e eventos de usina parada"),
     Secao("programacao", "Operação verificada e programação diária do ONS", lambda res: bool(res.programacao)),
     _comum("programacao_comum", "Programação diária × geração verificada",
@@ -129,6 +139,10 @@ MAPA_CONSTATACOES_SEM_EVT: Dict[str, str] = {
     "Geração": "anuais_comum",
     "Disponibilidade": "disponibilidade_geracao_comum",
     "Programação diária do ONS": "programacao_comum",
+    "Despacho por motivo": "despacho_motivo",
+    "Atendimento ao despacho": "atendimento_despacho",
+    "Disponível sem despacho": "disponivel_sem_despacho",
+    "CVU e CMO": "disponivel_sem_despacho",
     "Qualidade dos dados": "qualidade_comum",
 }
 
@@ -176,7 +190,9 @@ def constatacoes_da_secao(res: Any, chave: str) -> List[Tuple[str, str]]:
 
 
 def titulo_da_secao(secao: Secao, res: Any) -> str:
-    """Título da seção para o tipo da usina."""
+    """Título da seção para o tipo da usina (ou para os resultados, quando o título depende deles)."""
+    if callable(secao.titulo):
+        return secao.titulo(res)
     return secao.titulo_para(getattr(res, "tipo", ""))
 
 

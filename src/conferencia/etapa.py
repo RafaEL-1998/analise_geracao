@@ -6,7 +6,7 @@ vazões não atingem a meta de alinhamento (spec da Conferência).
 
 Para todas as usinas, ``nao_aplicaveis.csv`` lista as conferências do catálogo que não se aplicam, com o motivo
 (spec 006, decisão R13). Nas hidrelétricas com EVT, as seis de hoje continuam todas em ``conferencias.pkl``; nas
-usinas sem EVT, só as aplicadas.
+usinas sem EVT, só as aplicadas, inclusive a G3 e a G4 das térmicas com o despacho (fase B).
 """
 
 from __future__ import annotations
@@ -23,15 +23,19 @@ from src.comum.persistencia import gravar_csv, registrar_gravacoes
 from src.conferencia.aplicabilidade import aplicaveis, tabela_nao_aplicaveis
 from src.conferencia.cadastro import conferencia_cadastro
 from src.conferencia.disponibilidade import conferencia_disponibilidade
+from src.conferencia.fontes import conferencia_programacao_despacho, conferencia_verificada_despacho
 from src.conferencia.geracao import conferencia_geracao
 from src.conferencia.indicadores import conferencia_dispf_horas, conferencia_teifa_teip
 from src.conferencia.resultado import ResultadoConferencia, salvar_conferencias
 from src.conferencia.vazoes import conferencia_vazoes
 from src.pipeline import CODIGO_META_HIDROLOGIA, CODIGO_SUCESSO, ResultadoEtapa
+from src.tratamento.base_horaria import carregar_base_horaria
 from src.tratamento.disponibilidade import carregar_disponibilidade_tratada
 from src.tratamento.geracao import carregar_geracao_tratada
 from src.tratamento.hidrologia import carregar_hidrologia_tratada
 from src.tratamento.indicadores import carregar_indicadores_tratados
+from src.tratamento.programacao import carregar_programacao_tratada
+from src.tratamento.termica import carregar_despacho_tratado
 
 logger = setup_logger("conferencia")
 
@@ -45,6 +49,8 @@ CSV_CONFERENCIA: Dict[str, List[tuple]] = {
     "dispf_horas": [("dispf_horas", "divergencias")],
     "teifa_teip": [("teifa_teip", "recalculo")],
     "cadastro": [("cadastro", "campos")],
+    "programacao_despacho": [("programacao_despacho", "mensal")],
+    "verificada_despacho": [("verificada_despacho", "mensal")],
 }
 
 
@@ -85,6 +91,10 @@ def conferir(perfil: Any) -> Dict[str, ResultadoConferencia]:
             "teifa_teip": lambda: conferencia_teifa_teip(indicadores),
             "cadastro": lambda: conferencia_cadastro(carregar_ficha_cadastro(caminhos.pasta_etapa(slug, "coleta")),
                                                      perfil),
+            "programacao_despacho": lambda: conferencia_programacao_despacho(
+                carregar_programacao_tratada(tratamento), carregar_despacho_tratado(tratamento)),
+            "verificada_despacho": lambda: conferencia_verificada_despacho(
+                carregar_base_horaria(tratamento), carregar_despacho_tratado(tratamento)),
         }
         resultados = [executores[i]() for i in ids if i in executores]
     for r in resultados:

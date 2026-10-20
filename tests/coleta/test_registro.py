@@ -31,9 +31,11 @@ PACOTES_DE_HOJE = {
 }
 CHAVES_DE_HOJE = ["evt", "indicadores", "programacao", "disponibilidade", "hidrologia", "geracao", "cadastro"]
 # Fase A (tarefa T054; decisão R31): os cadastrais do catálogo e da Coleta das usinas com [cobertura]
-CHAVES_DO_REGISTRO = [*CHAVES_DE_HOJE, "composicao", "capacidade", "reservatorio"]
+# Fase B (tarefa T084): despacho, CVU e CMO das térmicas
+CHAVES_DO_REGISTRO = [*CHAVES_DE_HOJE, "composicao", "capacidade", "despacho", "cvu", "cmo", "reservatorio"]
 PACOTES_NOVOS = {"usina_conjunto": "usina_conjunto", "capacidade-geracao": "capacidade_geracao",
-                 "reservatorio": "reservatorio"}
+                 "geracao-termica-despacho-2": "geracao_termica_despacho_2", "cvu-usitermica": "cvu_usitermica",
+                 "cmo-semanal": "cmo_semanal", "reservatorio": "reservatorio"}
 
 
 def _perfil(ceg: str, tipo=None, cobertura=None) -> SimpleNamespace:

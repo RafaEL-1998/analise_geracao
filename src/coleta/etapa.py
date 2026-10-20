@@ -50,7 +50,8 @@ ARQ = caminhos.ARQUIVOS_COLETA
 COLUNAS_DATAS_OBTENCAO = ["conjunto", "arquivos_registrados", "publicacao_mais_recente", "obtencao_mais_recente"]
 # Unidades geradoras da usina (Capacidade de geração; data-model 6.1), todas as do CEG, com as datas
 COLUNAS_CAPACIDADE_FICHA = ["cod_equipamento", "num_unidadegeradora", "nom_unidadegeradora", "val_potenciaefetiva",
-                            "nom_combustivel", "dat_entradateste", "dat_entradaoperacao", "dat_desativacao"]
+                            "nom_combustivel", "dat_entradateste", "dat_entradaoperacao", "dat_desativacao",
+                            "nom_agenteproprietario", "nom_agenteoperador"]
 
 
 def datas_do_escopo(pasta: Path, arquivos: Iterable[str]) -> Dict[str, Any]:

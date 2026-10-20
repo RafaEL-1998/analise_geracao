@@ -1,10 +1,11 @@
-"""Conclusão do relatório: regras C1 a C11, que apontam indícios sem afirmar causa (spec das Análises, FR-045).
+"""Conclusão do relatório: regras C1 a C15, que apontam indícios sem afirmar causa (spec das Análises, FR-045).
 
 As regras formam um catálogo declarado (spec 006, decisão R16): cada uma diz os tipos de usina, as listas em que pode
 gerar itens, o nível exigido (só dado da usina), os limiares, o período mínimo e as seções de origem. Nas hidrelétricas
 com EVT, C1 a C11 continuam como antes, com a mesma ordem, texto, limiares e listas (decisão R29). Nas usinas sem EVT,
-as regras comuns (C2, C5, C8 e C10) são avaliadas sobre a base horária comum, só com dados da usina; o que não é
-avaliado vai para ``omitidos``, com o motivo.
+as regras comuns (C2, C5, C8 e C10) são avaliadas sobre a base horária comum, só com dados da usina; nas térmicas, também
+C12 a C15, sobre o despacho, o CVU e o CMO (fase B, decisão R16). O que não é avaliado vai para ``omitidos``, com o
+motivo.
 """
 
 from __future__ import annotations
@@ -24,15 +25,20 @@ from src.comum.perfil import perfil_ativo
 from src.comum.regras import (
     HORAS_DIURNAS,
     LIMIAR_CONCLUSAO_AFLUENCIA_ENGOLIMENTO_PCT,
+    LIMIAR_CONCLUSAO_DESPACHO_ABAIXO_HORAS,
     LIMIAR_CONCLUSAO_DIFERENCA_RESERVA_GWH,
+    LIMIAR_CONCLUSAO_DISPONIVEL_CVU_HORAS,
     LIMIAR_CONCLUSAO_EVT_PARADA_PCT,
     LIMIAR_CONCLUSAO_INDISPONIBILIDADE_DIAS,
+    LIMIAR_CONCLUSAO_INFLEXIBILIDADE_PCT,
     LIMIAR_CONCLUSAO_MESES_LIMITACAO_PCT,
     LIMIAR_CONCLUSAO_PARTICIPACAO_TEIFA,
     LIMIAR_CONCLUSAO_PROGRAMACAO_ZERO_PCT,
     LIMIAR_CONCLUSAO_PROGRAMADA_UG_PCT,
     LIMIAR_CONCLUSAO_R7_HORAS,
     LIMIAR_CONCLUSAO_R9_HORAS,
+    LIMIAR_CONCLUSAO_SEM_PROGRAMACAO_HORAS,
+    LIMIAR_DESVIO_DESPACHO_MW,
     LIMIAR_DESVIO_PROGRAMACAO_MW,
     LIMIAR_GERACAO_PARADA_MW,
     RAZAO_DIURNA_RELEVANTE,
@@ -474,6 +480,59 @@ def _regra_c10_comum(res: ResultadosAnalise) -> List[Dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
+# Regras das térmicas (spec 006, fase B; decisão R16): só com o despacho, o CVU e o CMO da usina
+# ---------------------------------------------------------------------------
+
+
+def _regra_c12(res: ResultadosAnalise) -> List[Dict[str, Any]]:
+    """C12: geração verificada abaixo da programada pelo ONS em horas recorrentes."""
+    a = (res.termica.get("atendimento") or {}).get("resumo") or {}
+    horas = int(a.get("horas_abaixo", 0))
+    if horas < LIMIAR_CONCLUSAO_DESPACHO_ABAIXO_HORAS:
+        return []
+    fato = (f"geração verificada mais de {fmt_num(LIMIAR_DESVIO_DESPACHO_MW, 0)} MW abaixo da programada pelo ONS em "
+            f"{fmt_int(horas)} h ({fmt_num(a['energia_abaixo_mwh'], 0)} MWh)")
+    return [_item("possiveis_problemas", "C12", _maiuscula(fato), ["atendimento_despacho"]),
+            _item("confirmar_agente", "C12", f"Motivo da {fato}", ["atendimento_despacho"])]
+
+
+def _regra_c13(res: ResultadosAnalise) -> List[Dict[str, Any]]:
+    """C13: horas disponíveis sem despacho nas semanas com o CVU de alguma unidade abaixo do CMO do subsistema."""
+    c = res.termica.get("cvu_cmo") or {}
+    horas = int(c.get("horas_disponivel_cvu_abaixo", 0))
+    if horas < LIMIAR_CONCLUSAO_DISPONIVEL_CVU_HORAS:
+        return []
+    semanas = int(c.get("semanas_disponivel_cvu_abaixo", 0))
+    return [_item("confirmar_agente", "C13", (
+        f"Condição de despacho da usina nas {fmt_int(semanas)} {plural(semanas, 'semana', 'semanas')} com o CVU abaixo "
+        f"do CMO do subsistema, em que ficou disponível, sem programação e sem geração, por {fmt_int(horas)} h"),
+        ["disponivel_sem_despacho"])]
+
+
+def _regra_c14(res: ResultadosAnalise) -> List[Dict[str, Any]]:
+    """C14: inflexibilidade verificada abaixo da programada."""
+    r = res.termica.get("inflexibilidade_resumo") or {}
+    pct = r.get("nao_verificada_pct", float("nan"))
+    if not (pct >= LIMIAR_CONCLUSAO_INFLEXIBILIDADE_PCT):
+        return []
+    return [_item("pontos_atencao", "C14", (
+        f"Inflexibilidade programada não verificada de {fmt_num(r['nao_verificada_mwh'], 0)} MWh, "
+        f"{fmt_pct(pct)} dos {fmt_num(r['programada_mwh'], 0)} MWh de inflexibilidade programada"),
+        ["despacho_motivo"])]
+
+
+def _regra_c15(res: ResultadosAnalise) -> List[Dict[str, Any]]:
+    """C15: geração acima da programada, sem programação correspondente, em horas recorrentes."""
+    a = (res.termica.get("atendimento") or {}).get("resumo") or {}
+    horas = int(a.get("horas_sem_programacao", 0))
+    if horas < LIMIAR_CONCLUSAO_SEM_PROGRAMACAO_HORAS:
+        return []
+    return [_item("confirmar_agente", "C15", (
+        f"Programação do ONS correspondente à geração verificada em {fmt_int(horas)} h sem programação, com "
+        f"{fmt_num(a['energia_sem_programacao_mwh'], 0)} MWh acima da programada"), ["atendimento_despacho"])]
+
+
+# ---------------------------------------------------------------------------
 # Catálogo
 # ---------------------------------------------------------------------------
 
@@ -482,8 +541,8 @@ def _regra_c10_comum(res: ResultadosAnalise) -> List[Dict[str, Any]]:
 class RegraConclusao:
     """Regra do catálogo da conclusão (data-model 6.5; decisão R16).
 
-    ``funcao`` é a regra de hoje, sobre a base de EVT; ``funcao_comum``, quando há, a mesma regra sobre a base horária
-    comum das usinas sem EVT, avaliada só com alguma das ``bases_comuns`` no nível da usina (e com o IP e a TEIF de
+    ``funcao`` é a regra de hoje, sobre a base de EVT (None nas regras só das usinas sem EVT, C12 em diante);
+    ``funcao_comum``, quando há, a regra sobre a base horária comum e as bases do tipo das usinas sem EVT, avaliada só com alguma das ``bases_comuns`` no nível da usina (e com o IP e a TEIF de
     referência no perfil, quando ``exige_referencias``). ``descricao`` é o texto da nota da conclusão das usinas sem
     EVT, com os limiares.
     """
@@ -491,7 +550,7 @@ class RegraConclusao:
     codigo: str
     tipos: Tuple[str, ...]
     listas: Tuple[str, ...]
-    funcao: Callable[[ResultadosAnalise], List[Dict[str, Any]]]
+    funcao: Optional[Callable[[ResultadosAnalise], List[Dict[str, Any]]]]
     secoes: Tuple[str, ...]
     limiares: Tuple[str, ...] = ()
     nivel_exigido: str = "usina"
@@ -540,16 +599,41 @@ CATALOGO_CONCLUSAO: Tuple[RegraConclusao, ...] = (
                                       "unidade num ano completo")),
     RegraConclusao("C11", HIDRELETRICAS, ("verificar_campo",), _regra_c11, ("hidrologia", "qualidade"),
                    ("LIMIAR_CONCLUSAO_R9_HORAS",)),
+    # Fase B (spec 006): térmicas; limiares iniciais em regras.py, calibrados na UTE William Arjona
+    RegraConclusao("C12", TERMICAS, ("possiveis_problemas", "confirmar_agente"), None, ("atendimento_despacho",),
+                   ("LIMIAR_DESVIO_DESPACHO_MW", "LIMIAR_CONCLUSAO_DESPACHO_ABAIXO_HORAS"), funcao_comum=_regra_c12,
+                   bases_comuns=("despacho",),
+                   descricao=lambda: (f"C12 geração verificada mais de {fmt_num(LIMIAR_DESVIO_DESPACHO_MW, 0)} MW abaixo "
+                                      f"da programada em ≥ {fmt_int(LIMIAR_CONCLUSAO_DESPACHO_ABAIXO_HORAS)} h")),
+    RegraConclusao("C13", TERMICAS, ("confirmar_agente",), None, ("disponivel_sem_despacho",),
+                   ("LIMIAR_CONCLUSAO_DISPONIVEL_CVU_HORAS",), funcao_comum=_regra_c13, bases_comuns=("cvu_cmo",),
+                   descricao=lambda: (f"C13 disponível sem despacho em ≥ {fmt_int(LIMIAR_CONCLUSAO_DISPONIVEL_CVU_HORAS)} h "
+                                      "nas semanas com o CVU de alguma unidade abaixo do CMO")),
+    RegraConclusao("C14", TERMICAS, ("pontos_atencao",), None, ("despacho_motivo",),
+                   ("LIMIAR_CONCLUSAO_INFLEXIBILIDADE_PCT",), funcao_comum=_regra_c14, bases_comuns=("despacho",),
+                   descricao=lambda: (f"C14 inflexibilidade programada não verificada ≥ "
+                                      f"{fmt_pct(LIMIAR_CONCLUSAO_INFLEXIBILIDADE_PCT, 0)} da programada")),
+    RegraConclusao("C15", TERMICAS, ("confirmar_agente",), None, ("atendimento_despacho",),
+                   ("LIMIAR_DESVIO_DESPACHO_MW", "LIMIAR_CONCLUSAO_SEM_PROGRAMACAO_HORAS"), funcao_comum=_regra_c15,
+                   bases_comuns=("despacho",),
+                   descricao=lambda: (f"C15 geração mais de {fmt_num(LIMIAR_DESVIO_DESPACHO_MW, 0)} MW acima da "
+                                      f"programada, sem programação, em ≥ "
+                                      f"{fmt_int(LIMIAR_CONCLUSAO_SEM_PROGRAMACAO_HORAS)} h")),
 )
-# As funções de hoje, na ordem do catálogo (C1 a C11)
-REGRAS_CONCLUSAO = tuple(r.funcao for r in CATALOGO_CONCLUSAO)
+# As funções de hoje, na ordem do catálogo (C1 a C11), as únicas do caminho da EVT
+REGRAS_CONCLUSAO = tuple(r.funcao for r in CATALOGO_CONCLUSAO if r.funcao is not None)
 
-NOMES_BASES = {"disponibilidade": "a Disponibilidade por usina", "indicadores": "os Indicadores de desempenho do ONS"}
+NOMES_BASES = {"disponibilidade": "a Disponibilidade por usina", "indicadores": "os Indicadores de desempenho do ONS",
+               "despacho": "a Geração térmica por motivo de despacho",
+               "cvu_cmo": "o CVU e o CMO cruzados com a disponibilidade e o despacho"}
 
 
 def _bases_da_usina(res: ResultadosAnalise) -> Dict[str, bool]:
-    """Bases das regras comuns presentes no nível da usina (a disponibilidade e os indicadores são sempre da usina)."""
-    return {"disponibilidade": bool(res.comum.get("disponibilidade")), "indicadores": bool(res.ons)}
+    """Bases das regras presentes no nível da usina (a disponibilidade, os indicadores e o despacho são sempre da
+    usina; o CMO é contexto do subsistema)."""
+    t = getattr(res, "termica", None) or {}
+    return {"disponibilidade": bool(res.comum.get("disponibilidade")), "indicadores": bool(res.ons),
+            "despacho": bool(t), "cvu_cmo": bool(t.get("cvu_cmo")) and bool(t.get("disponivel_sem_despacho"))}
 
 
 def _motivo(regra: RegraConclusao, res: ResultadosAnalise) -> Optional[str]:

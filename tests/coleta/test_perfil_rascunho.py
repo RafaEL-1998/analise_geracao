@@ -71,7 +71,13 @@ def test_rascunho_da_termica_com_dado_proprio(ambiente, caplog) -> None:
                                                                                    "rascunho")
     assert u["inicio_operacao_comercial"] == 2021  # primeira unidade ativa
     assert (i["ceg"], i["id_ons"], i["codigos_programacao"]) == (bc.UTE["ceg"], bc.UTE["id_ons"], [bc.UTE["id_ons"]])
-    assert c == {"indicadores": "proprio", "programacao": "proprio", "disponibilidade": "proprio", "geracao": "proprio"}
+    assert c == {"indicadores": "proprio", "programacao": "proprio", "disponibilidade": "proprio", "geracao": "proprio",
+                 "despacho": "proprio", "cvu": "proprio"}
+    # fase B: o subsistema (CMO) e os códigos de planejamento do despacho, com o período; o vigente sem fim
+    assert u["subsistema"] == "SE"
+    assert i["planejamento"] == [{"codigo": 7, "inicio": "2018-01", "fim": "2018-08"},
+                                 {"codigo": 70, "inicio": "2026-09", "fim": ""},
+                                 {"codigo": 71, "inicio": "2026-09", "fim": "2026-09"}]
     assert (p["potencia_instalada_mw"], p["unidades_geradoras"], p["potencia_unitaria_mw"]) == (150.0, 2, 75.0)
     assert p["combustivel"] == "GÁS"
     assert "parametros.fontes.geral" in u["pendentes"]

@@ -801,11 +801,14 @@ def _achado_qualidade_comum(res: ResultadosAnalise) -> Tuple[str, str]:
 
 
 def montar_achados_comum(res: ResultadosAnalise) -> List[Tuple[str, str]]:
-    """Constatações das usinas sem EVT, só a partir das seções comuns (decisão R30)."""
+    """Constatações das usinas sem EVT, a partir das seções comuns (decisão R30) e das seções do tipo."""
+    from src.analises.termica import achados_termica  # seções de térmica (fase B)
+
     return [
         _achado_cobertura_comum(res),
         *[a for a in (_achado_cadastro(res),) if a is not None],
         _achado_geracao_comum(res),
         *[a for a in (_achado_disponibilidade_comum(res), _achado_programacao_comum(res)) if a is not None],
+        *achados_termica(getattr(res, "termica", None) or {}),
         _achado_qualidade_comum(res),
     ]

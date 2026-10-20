@@ -11,7 +11,7 @@ Redação final. Os requisitos novos seguem a numeração da spec da Geração d
   - **usina sem EVT**: as seções da tabela da FR-041, com numeração contínua; seção sem base é omitida, com o motivo nas notas.
 - **Capa e título**:
   - **hidrelétrica com EVT**: como hoje; a modalidade já vem da ficha do cadastro;
-  - **usina sem EVT**: o mesmo título da capa da hidrelétrica com EVT aprovada em 19/10/2026 ("<nome> — Análise do desempenho operacional", que não cita a EVT), a linha de tipo e modalidade no bloco de identificação, os parâmetros do tipo e os indicadores da capa do tipo.
+  - **usina sem EVT**: o mesmo título da capa da hidrelétrica com EVT aprovada em 19/10/2026 ("<nome> — Análise do desempenho operacional", que não cita a EVT), a linha de tipo e modalidade e o agente atual das unidades (Capacidade de geração, sem o histórico; decisão do usuário de 19/10/2026) no bloco de identificação, os parâmetros do tipo e os indicadores da capa do tipo.
 - **Conclusão**: a mesma seção nos dois caminhos; sem itens, a frase de hoje nas hidrelétricas com EVT e, nas usinas sem EVT, a frase que diz por que não há itens.
 - **Título por tipo**: nas eólicas e solares, que não têm a disponibilidade no ONS, a seção 5 da FR-041 se chama "Série temporal da geração".
 - **Resumo executivo**: nas usinas sem EVT, só a partir da US3 da spec 007; até lá, a etapa avisa e não o gera.

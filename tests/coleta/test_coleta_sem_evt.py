@@ -34,7 +34,7 @@ def test_termica_com_geracao_propria(coletas) -> None:
         "fim": "2026-09-30 23:00:00", "arquivos_varridos": 13,
         "motivo": "geração própria: Geração por usina, pelo id ONS da usina"}
     assert resumo["periodo"] == {"inicio": "2025-09-01 00:00:00", "fim": "2026-09-30 23:00:00"}
-    assert resumo["conjuntos_nao_aplicaveis"] == ["indicadores"]
+    assert resumo["conjuntos_nao_aplicaveis"] == ["indicadores", "despacho", "cvu"]  # fora da cobertura do perfil
     assert resumo["trechos"] == 1 and resumo["linhas_usina_sem_valor"] == 0
     geracao = pd.read_parquet(c["pasta"] / "geracao_extraido.parquet")
     assert list(geracao.columns) == ["din_instante", "val_geracao", "_nao_numerico", "arquivo_origem"]

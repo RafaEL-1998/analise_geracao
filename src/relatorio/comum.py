@@ -38,7 +38,11 @@ from src.comum.regras import (
     LIMIAR_SINCRONIZADA_MW,
     NUMERO_EVENTOS_RELATORIO,
     ONS_PORTAL_DATASET_URL,
+    CONJUNTO_CMO,
+    CONJUNTO_CVU,
+    CONJUNTO_DESPACHO,
     CONJUNTO_GERACAO,
+    LIMIAR_DESVIO_DESPACHO_MW,
     PERIODO_MINIMO_SAZONALIDADE_MESES,
     TIPOS_COM_FATOR_CAPACIDADE,
     TOLERANCIA_GERACAO_ACIMA_DISPONIBILIDADE_MW,
@@ -151,7 +155,33 @@ def pares_identificacao(res: ResultadosAnalise) -> List[Tuple[str, str]]:
     if codigos:
         pares.append(("Programação diária", "; ".join(codigos)))
     pares.append(("Estado", str(p.usina.estado)))
+    if getattr(p.usina, "subsistema", None) and getattr(res, "termica", None):
+        pares.append(("Subsistema", str(p.usina.subsistema)))
+    if getattr(ident, "planejamento", None) and getattr(res, "termica", None):
+        from src.relatorio.secoes_termica import codigos_texto
+
+        pares.append(("Códigos de planejamento", codigos_texto(res)))
+    agentes = texto_agentes(res)
+    if agentes:
+        pares.append(("Agente atual", agentes))
     return pares
+
+
+def texto_agentes(res: ResultadosAnalise) -> str:
+    """Agente atual das unidades, como a Capacidade de geração do ONS o traz hoje (sem o histórico dos agentes):
+    "A (proprietário e operador)" ou "A (proprietário); B (operador)"; vazio sem a ficha."""
+    a = res.comum.get("agentes") or {}
+    proprietarios, operadores = a.get("proprietario", []), a.get("operador", [])
+    if not proprietarios and not operadores:
+        return ""
+    if proprietarios == operadores:
+        return f"{fmt_lista(proprietarios)} (proprietário e operador)"
+    partes = []
+    if proprietarios:
+        partes.append(f"{fmt_lista(proprietarios)} (proprietário)")
+    if operadores:
+        partes.append(f"{fmt_lista(operadores)} (operador)")
+    return "; ".join(partes)
 
 
 def pares_parametros() -> List[Tuple[str, str]]:
@@ -193,6 +223,12 @@ def indicadores_capa(res: ResultadosAnalise) -> Tuple[List[Tuple[str, str, str]]
         if res.tipo in TIPOS_COM_FATOR_CAPACIDADE and nivel == "usina":
             pinst = perfil_ativo().parametros.potencia_instalada_mw
             tiles.append(("Fator de capacidade", fmt_pct(media / pinst * 100.0), "geração média ÷ potência instalada"))
+        elif getattr(res, "termica", None) and nivel == "usina":  # térmicas com o despacho (data-model 6.5)
+            t = res.termica
+            tiles.append(("Horas com despacho", fmt_pct(t["horas_com_despacho"] / t["periodo"]["horas"] * 100.0
+                                                        if t["periodo"]["horas"] else math.nan),
+                          f"{fmt_int(t['horas_com_despacho'])} de {fmt_int(t['periodo']['horas'])} horas do despacho com "
+                          f"geração programada acima de {fmt_num(LIMIAR_GERACAO_PARADA_MW, 0)} MW"))
         else:
             paradas = int(g["horas_paradas"].sum())
             tiles.append((f"Horas com geração até {fmt_num(LIMIAR_GERACAO_PARADA_MW, 0)} MW{_do(res, nivel)}",
@@ -302,6 +338,9 @@ def linhas_tabela_anuais(res: ResultadosAnalise) -> Tuple[List[str], List[List[s
         cabecalho.append("Fator de capacidade")
     if com_disp:
         cabecalho += ["Disp. média (MW)", "Disp. (% Pinst)"]
+    sem_despacho = _sem_despacho_por_ano(res)
+    if sem_despacho is not None:  # o indicador de perda das térmicas (decisão R6 da spec 007)
+        cabecalho.append("Disp. sem despacho (h)")
     linhas = []
     for r in a.itertuples():
         linha = [_rotulo_ano(r.ano, r.ano_parcial), _nivel_texto(r.nivel), fmt_int(r.horas), fmt_int(r.horas_com_valor),
@@ -311,8 +350,19 @@ def linhas_tabela_anuais(res: ResultadosAnalise) -> Tuple[List[str], List[List[s
             linha.append(fmt_pct(r.fator_capacidade_pct))
         if com_disp:
             linha += [fmt_num(r.disponibilidade_media_mw, 1), fmt_pct(r.disponibilidade_relativa_pct)]
+        if sem_despacho is not None:
+            horas = sem_despacho.get(int(r.ano)) if r.nivel == "usina" else None
+            linha.append("—" if horas is None else fmt_int(horas))
         linhas.append(linha)
     return cabecalho, linhas
+
+
+def _sem_despacho_por_ano(res: ResultadosAnalise) -> Optional[Dict[int, int]]:
+    """Horas disponíveis sem despacho por ano (térmicas com o despacho e a disponibilidade); None nas demais."""
+    d = (getattr(res, "termica", None) or {}).get("disponivel_sem_despacho")
+    if not d:
+        return None
+    return {int(r.ano): int(r.horas_disponivel_sem_despacho) for r in d["anual"].itertuples()}
 
 
 def linhas_tabela_disponibilidade_anual(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
@@ -409,7 +459,9 @@ def textos_tabelas(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
             "MW = horas com geração até esse limiar, sobre as horas com valor"
             + ("; fator de capacidade = geração média ÷ potência instalada" if _fc(res) else "")
             + ("; disp. = disponibilidade operacional média da usina (Disponibilidade por usina)"
-               if res.comum.get("disponibilidade") else "") + "." + granularidade)),
+               if res.comum.get("disponibilidade") else "")
+            + ("; disp. sem despacho = horas disponíveis, sem programação e sem geração no despacho"
+               if _sem_despacho_por_ano(res) is not None else "") + "." + granularidade)),
         "tab_disponibilidade_anual_comum": ("Disponibilidade e geração da usina por ano", (
             f"* Ano parcial. Só as horas com a disponibilidade e a geração da usina. Indisponibilidade total = "
             f"disponibilidade operacional até {fmt_num(LIMIAR_INDISPONIBILIDADE_TOTAL_MW, 3)} MW; parada disponível = "
@@ -445,7 +497,16 @@ def textos_tabelas(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
         "tab_omitidos": ("Seções e regras sem base para a usina", ""),
         "tab_nao_aplicaveis": ("Conferências que não se aplicam à usina", ""),
         "tab_parametros_comum": ("Parâmetros utilizados", ""),
+        **_textos_termica(res),
     }
+
+
+def _textos_termica(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
+    if not getattr(res, "termica", None):
+        return {}
+    from src.relatorio import secoes_termica
+
+    return secoes_termica.textos_tabelas(res)
 
 
 # ---------------------------------------------------------------------------
@@ -477,6 +538,10 @@ def legenda_figura(res: ResultadosAnalise, chave: str) -> str:
     if chave == "disponibilidade_comum":
         return ("Médias mensais da disponibilidade operacional e sincronizada publicadas pelo ONS e da geração da usina, "
                 f"nas horas com os dois dados. Linha tracejada: potência instalada ({pinst} MW).")
+    if getattr(res, "termica", None):
+        from src.relatorio import secoes_termica
+
+        return secoes_termica.legenda_figura(res, chave)
     return ""
 
 
@@ -503,6 +568,10 @@ def notas(res: ResultadosAnalise) -> List[str]:
             f"Granularidade: o ONS publica a geração do conjunto {nome_conjunto(res)} ({_g(res).get('identificador_conjunto', '')}), "
             "e não a da usina isolada. Os números do conjunto são identificados como tais e não são divididos entre as "
             "usinas; a conclusão da usina não usa números do conjunto.")
+    if getattr(res, "termica", None):
+        from src.relatorio import secoes_termica
+
+        saida.append(secoes_termica.nota(res))
     saida.append(nota_conclusao_catalogo(res))
     if res.omitidos or len(res.comum.get("conferencias_nao_aplicaveis", ())):
         saida.append("As seções e as regras sem base para a usina e as conferências que não se aplicam a ela estão "
@@ -540,6 +609,8 @@ def tabela_parametros(res: ResultadosAnalise) -> pd.DataFrame:
         ("Análise", "Desvio da programação", f"geração ≤ {fmt_num(LIMIAR_GERACAO_PARADA_MW, 1)} e programação > "
                                              f"{fmt_num(LIMIAR_DESVIO_PROGRAMACAO_MW, 1)}", "MW", analise),
         ("Análise", "Sazonalidade", f"≥ {PERIODO_MINIMO_SAZONALIDADE_MESES} meses distintos", "", analise),
+        *([("Análise", "Desvio do despacho", f"|verificada − programada| > {fmt_num(LIMIAR_DESVIO_DESPACHO_MW, 1)}",
+            "MW", analise)] if getattr(res, "termica", None) else []),
         ("Validação", "Tolerância de geração acima da disponibilidade (R7)",
          fmt_num(TOLERANCIA_GERACAO_ACIMA_DISPONIBILIDADE_MW, 1), "MW", analise),
         ("Fonte", "Série de referência", serie_referencia_texto(res), "", f"{ONS_PORTAL_DATASET_URL}{CONJUNTO_GERACAO}"),
@@ -553,6 +624,19 @@ def tabela_parametros(res: ResultadosAnalise) -> pd.DataFrame:
     if res.cadastro:
         linhas.append(("Fonte", "Modalidade das usinas", f"CEG {p.identificacao.ceg}", "",
                        f"{ONS_PORTAL_DATASET_URL}modalidade-usina"))
+    t = getattr(res, "termica", None) or {}
+    if t:
+        from src.relatorio.secoes_termica import codigos_texto
+
+        linhas.append(("Fonte", "Geração térmica por motivo de despacho",
+                       f"CEG {p.identificacao.ceg}; códigos {codigos_texto(res)}", "",
+                       f"{ONS_PORTAL_DATASET_URL}{CONJUNTO_DESPACHO}"))
+        if t.get("cvu_coletado"):
+            linhas.append(("Fonte", "CVU das usinas térmicas", f"códigos {codigos_texto(res)}", "",
+                           f"{ONS_PORTAL_DATASET_URL}{CONJUNTO_CVU}"))
+        if t.get("cmo_coletado"):
+            linhas.append(("Fonte", "CMO semanal", f"subsistema {p.usina.subsistema} (agregado)", "",
+                           f"{ONS_PORTAL_DATASET_URL}{CONJUNTO_CMO}"))
     return pd.DataFrame(linhas, columns=["grupo", "parametro", "valor", "unidade", "origem"])
 
 
@@ -638,6 +722,10 @@ def blocos_secao(res: ResultadosAnalise, chave: str) -> List[Bloco]:
         cab, linhas = linhas_tabela_ausencias(res)
         b.append(_tabela("tab_ausencias", (cab, linhas), [1.0, 1.2, 1.2, 0.6], range(3, 4)) if linhas
                  else Bloco("sem_linhas", "tab_ausencias", textos=["Nenhuma hora ausente."]))
+    elif chave in ("despacho_motivo", "atendimento_despacho", "disponivel_sem_despacho"):
+        from src.relatorio import secoes_termica
+
+        b.extend(secoes_termica.blocos(res, chave))
     elif chave == "notas_comum":
         b.append(Bloco("notas", textos=notas(res)))
         cab, linhas = linhas_tabela_omitidos(res)

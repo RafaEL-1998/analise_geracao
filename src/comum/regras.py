@@ -73,6 +73,10 @@ CONJUNTO_CADASTRO: str = "modalidade-usina"
 CONJUNTO_COMPOSICAO: str = "usina_conjunto"
 CONJUNTO_CAPACIDADE: str = "capacidade-geracao"
 CONJUNTO_RESERVATORIO: str = "reservatorio"
+# Térmicas (spec 006, fase B; decisão R9)
+CONJUNTO_DESPACHO: str = "geracao-termica-despacho-2"
+CONJUNTO_CVU: str = "cvu-usitermica"
+CONJUNTO_CMO: str = "cmo-semanal"
 CONJUNTOS_INDICADORES_ONS: Dict[str, str] = {
     "ind_disponibilidade_fgeracao_uge_mensal": "Indicadores de disponibilidade da função geração por unidade geradora (base mensal)",
     "ind_disponibilidade_fgeracao_uge_anual": "Indicadores de disponibilidade da função geração por unidade geradora (base anual)",
@@ -90,6 +94,9 @@ PASTA_CADASTRO_RAW: str = "modalidade_usina"
 PASTA_COMPOSICAO_RAW: str = "usina_conjunto"
 PASTA_CAPACIDADE_RAW: str = "capacidade_geracao"
 PASTA_RESERVATORIO_RAW: str = "reservatorio"
+PASTA_DESPACHO_RAW: str = "geracao_termica_despacho_2"
+PASTA_CVU_RAW: str = "cvu_usitermica"
+PASTA_CMO_RAW: str = "cmo_semanal"
 # Pacote -> pasta de todos os conjuntos: CONJUNTOS_PIPELINE, derivado do registro (src/coleta/registro.py)
 DIRETORIO_DICIONARIOS: str = "_dicionarios"  # subpasta com os dicionários de dados de cada conjunto
 
@@ -160,6 +167,14 @@ LIMIAR_CONCLUSAO_PROGRAMADA_UG_PCT: float = 20.0  # C10: indisponibilidade progr
 LIMIAR_CONCLUSAO_R9_HORAS: int = 24  # C11: geração com vazão turbinada nula
 MAXIMO_ITENS_CONCLUSAO: int = 5  # itens por lista no PDF e no Markdown (a planilha traz todos)
 
+# Térmicas (spec 006, fase B; decisões R16 e R18): limiares calibrados na UTE William Arjona e aprovados pelo usuário
+# em 20/10/2026 (tarefa T094)
+LIMIAR_DESVIO_DESPACHO_MW: float = 5.0  # atendimento ao despacho: |verificada − programada| acima disso
+LIMIAR_CONCLUSAO_DESPACHO_ABAIXO_HORAS: int = 24  # C12: horas com a geração abaixo da programada
+LIMIAR_CONCLUSAO_DISPONIVEL_CVU_HORAS: int = 168  # C13: horas disponíveis sem despacho com o CVU abaixo do CMO
+LIMIAR_CONCLUSAO_INFLEXIBILIDADE_PCT: float = 5.0  # C14: inflexibilidade não verificada, em % da programada
+LIMIAR_CONCLUSAO_SEM_PROGRAMACAO_HORAS: int = 24  # C15: horas com geração acima da programada, sem programação
+
 # ---------------------------------------------------------------------------
 # Resumo executivo: limites e glossário (iguais para todas as usinas)
 # ---------------------------------------------------------------------------
@@ -181,4 +196,7 @@ GLOSSARIO_RESUMO: Dict[str, str] = {
     "GF": "garantia física",
     "Pinst": "potência instalada",
     "MWmed": "megawatt médio, a energia dividida pelas horas do período",
+    # Térmicas (fase B; rascunho 005): texto aprovado pelo usuário em 20/10/2026 (tarefa T094)
+    "CVU": "custo variável unitário da usina térmica, publicado pelo ONS por semana operativa",
+    "CMO": "custo marginal de operação do subsistema, calculado pelo ONS por semana operativa",
 }

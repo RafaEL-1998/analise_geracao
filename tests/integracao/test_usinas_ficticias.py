@@ -184,6 +184,16 @@ def test_resumo_executivo_de_cada_tipo(execucoes, tipo: str) -> None:
                 assert numero in e["md"], (tipo, numero, linha)
 
 
+def test_agente_atual_da_capacidade_de_geracao(execucoes) -> None:
+    """Decisão do usuário de 19/10/2026 (T043 da 007): nas usinas sem EVT, o agente atual das unidades, da Capacidade
+    de geração, na capa e no resumo, identificado como tal."""
+    capa = execucoes["ute"]["md"].split("\n## 1. ")[0]
+    assert "| Agente atual | AGENTE FICTICIO (proprietário e operador) |" in capa
+    assert "Capacidade de geração (CEG UTE.GN.GO.000104-0.01)" in capa
+    assert "Agente atual (Capacidade de geração do ONS): AGENTE FICTICIO (proprietário e operador)" in \
+        _resumo(execucoes, "ute")
+
+
 def test_resumo_da_pch_com_os_numeros_do_conjunto(execucoes) -> None:
     md = _resumo(execucoes, "pch")
     assert "Geração média do conjunto CONJ. HIDRAULICO FICTICIO" in md
@@ -199,3 +209,57 @@ def test_resumo_da_termica_com_a_conclusao_do_relatorio(execucoes) -> None:
     assert itens and all(item in md for item in itens)
     assert "| Disp. (% Pinst) |" in _cabecalho_tabela(_bloco(md, "Evolução anual"))
 
+
+
+# ---------------------------------------------------------------------------
+# Térmicas: despacho, CVU e CMO (spec 006, fase B; tarefa T083)
+# ---------------------------------------------------------------------------
+
+SECOES_TERMICA = ("Geração por motivo de despacho e inflexibilidade", "Atendimento ao despacho",
+                  "Disponível sem despacho e CVU × CMO")
+
+
+@pytest.mark.parametrize("tipo", ["ute", "utn"])
+def test_secoes_de_termica_na_ute_e_na_utn(execucoes, tipo: str) -> None:
+    e = execucoes[tipo]
+    secoes = _secoes(e["md"])
+    posicoes = [secoes.index(s) for s in ("Perfil horário da geração", *SECOES_TERMICA)]
+    assert posicoes == sorted(posicoes), secoes  # entre o perfil horário e a programação (FR-041, item 8)
+    if "Programação diária × geração verificada" in secoes:
+        assert posicoes[-1] < secoes.index("Programação diária × geração verificada")
+    for nome in ("despacho_horario.csv", "despacho_unidades_horario.csv", "cvu_semanal.csv", "cmo_semanal.csv"):
+        assert (e["dados"] / "tratamento" / nome).exists(), (tipo, nome)
+    for nome in ("06_despacho_por_motivo_mensal.png", "07_inflexibilidade_mensal.png", "09_cvu_cmo_semanal.png"):
+        assert (e["relatorio"] / "figures" / nome).stat().st_size > 1000, (tipo, nome)
+    assert "nan" not in e["md"].lower().replace("nanosegundo", "")
+    conferencias = json.loads((e["dados"] / "conferencia" / "etapa.json").read_text(encoding="utf-8"))["resumo"]
+    assert conferencias["verificada_despacho"]["divergentes"] == 0  # G4
+
+
+def test_ute_com_troca_de_codigo_ano_sem_geracao_e_regras_da_termica(execucoes) -> None:
+    e = execucoes["ute"]
+    md = e["md"]
+    assert "| Códigos de planejamento | 901 (01/2023 a 12/2023); 902 (desde 01/2024); 903 (desde 01/2024) |" in md
+    assert "| 2023 | 0 | 0 | 0 | 0 | 0 |" in md  # o ano sem geração, sem divisão por zero
+    unidades = pd.read_csv(e["dados"] / "tratamento" / "despacho_unidades_horario.csv", sep=";")
+    assert sorted(unidades["codigo"].unique()) == [901, 902, 903]
+    assert set(unidades.loc[unidades["din_instante"] < "2024", "codigo"]) == {901}  # a troca de código
+    tratamento = json.loads((e["dados"] / "tratamento" / "etapa.json").read_text(encoding="utf-8"))["resumo"]
+    assert tratamento["despacho"]["duplicatas_conflitantes"] == 0  # o anual de 2024 repete os mensais
+    assert tratamento["cvu"]["sinalizados"] == {"negativo": 1} and tratamento["cvu"]["revisoes_descartadas"] > 0
+    assert (tratamento["cmo"]["duplicatas"], tratamento["cmo"]["duplicatas_conflitantes"]) == (1, 1)
+    analises = json.loads((e["dados"] / "analises" / "etapa.json").read_text(encoding="utf-8"))["resumo"]
+    assert {"C12", "C13", "C14", "C15"} <= set(analises["regras_da_conclusao"])
+    conferencias = json.loads((e["dados"] / "conferencia" / "etapa.json").read_text(encoding="utf-8"))["resumo"]
+    assert conferencias["programacao_despacho"]["comparados"] == 72  # G3: os três dias da programação
+    resumo = _resumo(execucoes, "ute")
+    assert "| Disp. sem despacho (h) |" in _cabecalho_tabela(_bloco(resumo, "Evolução anual"))
+    assert "CVU: custo variável unitário" in resumo and "CMO: custo marginal de operação" in resumo
+
+
+def test_utn_com_a_g3_nao_aplicavel_sem_a_programacao(execucoes) -> None:
+    e = execucoes["utn"]
+    nao_aplicaveis = pd.read_csv(e["dados"] / "conferencia" / "nao_aplicaveis.csv", sep=";", dtype=str,
+                                 keep_default_na=False).set_index("conferencia")
+    assert "Programação diária não coletado" in nao_aplicaveis.loc["programacao_despacho", "motivo"]
+    assert "08_desvios_despacho_mensal.png" not in {p.name for p in (e["relatorio"] / "figures").iterdir()}

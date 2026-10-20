@@ -165,7 +165,11 @@ def test_cobertura_agregada_ausente_e_so_do_arquivo_mais_recente(montado) -> Non
     assert {v["nivel"] for v in sem.values()} == {"ausente"}  # a EVT de 08/2026 não conta: só o arquivo mais recente
     assert _usina(montado, bc.SEM_DADOS["ceg"])["cobertura_resumo"] == "ausente"
     ute = _cobertura(montado, bc.UTE["ceg"])
-    assert set(ute) == {"indicadores", "programacao", "disponibilidade", "geracao"}
+    assert set(ute) == {"indicadores", "programacao", "disponibilidade", "geracao", "despacho", "cvu"}
+    assert (ute["despacho"]["nivel"], ute["despacho"]["identificador"]) == ("proprio", f"ceg={bc.UTE['ceg']}")
+    # o CVU não tem CEG: pelos códigos vigentes no despacho (fase B, decisão R9); o 71 saiu em 09/2026
+    assert (ute["cvu"]["nivel"], ute["cvu"]["identificador"], ute["cvu"]["linhas"]) == (
+        "proprio", "cod_usinaplanejamento=70", "2")
     c = montado["cobertura"]
     assert set(c["ceg"]) == {bc.UHE["ceg"], bc.PCH["ceg"], bc.UTE["ceg"], bc.UFV["ceg"], bc.CGH["ceg"],
                              bc.EOL["ceg"], bc.SEM_DADOS["ceg"]}  # sem a linha de conjunto e o tipo "outro"
@@ -189,10 +193,15 @@ def test_codigos_de_programacao_ligados_pelo_id_ons_ou_pelo_conjunto(montado) ->
     assert dict(zip(p["codigo_exibicao"], p["estado"]))[bc.EOL["id_ons"]] == "MT"
 
 
-def test_planejamento_so_com_o_cabecalho_na_fase_a(montado) -> None:
-    assert list(montado["planejamento"].columns) == ["ceg", "codigo", "primeiro_mes", "ultimo_mes", "nomes_publicados",
-                                                     "arquivos"]
-    assert montado["planejamento"].empty
+def test_planejamento_com_o_primeiro_e_o_ultimo_mes_de_cada_codigo(montado) -> None:
+    """Fase B (T078): todos os arquivos do despacho, o anual antigo e os mensais; código como número."""
+    p = montado["planejamento"]
+    assert list(p.columns) == ["ceg", "codigo", "primeiro_mes", "ultimo_mes", "nomes_publicados", "arquivos"]
+    ute = p[p["ceg"] == bc.UTE["ceg"]]
+    assert {int(r.codigo): (r.primeiro_mes, r.ultimo_mes) for r in ute.itertuples()} == bc.PLANEJAMENTO_UTE
+    setenta = ute[ute["codigo"] == "70"].iloc[0]
+    assert (setenta["arquivos"], setenta["nomes_publicados"]) == ("2", "UT BETA; UTE BETA")  # nomes só exibidos
+    assert set(p["ceg"]) == {bc.UTE["ceg"], bc.UTE_ANTIGA["ceg"]}
 
 
 def test_agregados_pelo_estado_e_pela_modalidade(montado) -> None:
@@ -214,7 +223,7 @@ def test_catalogo_json(montado) -> None:
     assert set(j["cadastro"]) == {"modalidade-usina", "usina_conjunto", "capacidade-geracao", "reservatorio"}
     assert j["cadastro"]["modalidade-usina"]["arquivo"] == "MODALIDADE_USINA.csv"
     assert {c["conjunto"] for c in j["cobertura"]} == {"evt", "indicadores", "programacao", "disponibilidade",
-                                                       "hidrologia", "geracao"}
+                                                       "hidrologia", "geracao", "despacho", "cvu"}
     assert len(j["agregados"]["meses"]) == 12
     assert j["contagens"]["por_tipo"]["UHE"] == 2 and j["contagens"]["por_estado"]["MT"] == 2
 
@@ -229,7 +238,7 @@ def test_listagem_com_cobertura_por_conjunto_e_slug_do_perfil(mundo, caplog) -> 
     assert codigo == 0
     linhas = texto.splitlines()
     cabecalho = next(linha for linha in linhas if "CEG" in linha)
-    for coluna in ("EVT", "IND", "PRG", "DSP", "HID", "GER", "PERFIL"):
+    for coluna in ("EVT", "IND", "PRG", "DSP", "HID", "GER", "DES", "CVU", "PERFIL"):
         assert coluna in cabecalho
     linha_uhe = next(linha for linha in linhas if bc.UHE["ceg"] in linha)
     assert "uhe_ficticia" in linha_uhe and linha_uhe.count(" P ") >= 5

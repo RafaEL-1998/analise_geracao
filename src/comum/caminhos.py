@@ -73,6 +73,13 @@ ARQUIVOS_COLETA = {
     "capacidade": "capacidade_ficha.csv",
     "auditoria_composicao": "auditoria_composicao.csv",
     "auditoria_capacidade": "auditoria_capacidade.csv",
+    # Térmicas (spec 006, fase B; data-model 6.1)
+    "despacho": "despacho_extraido.parquet",
+    "cvu": "cvu_extraido.parquet",
+    "cmo": "cmo_extraido.parquet",
+    "auditoria_despacho": "auditoria_despacho.csv",
+    "auditoria_cvu": "auditoria_cvu.csv",
+    "auditoria_cmo": "auditoria_cmo.csv",
 }
 ARQUIVOS_TRATAMENTO = {
     "evt_parquet": "evt_tratado.parquet",
@@ -97,6 +104,17 @@ ARQUIVOS_TRATAMENTO = {
     "geracao_ausencias": "geracao_ausencias.csv",
     "auditoria_geracao": "auditoria_geracao.csv",
     "base_horaria": "base_horaria.csv",  # só nas usinas sem EVT (spec 006, decisão R30)
+    # Térmicas (spec 006, fase B; data-model 6.2)
+    "despacho_horario": "despacho_horario.csv",
+    "despacho_unidades_horario": "despacho_unidades_horario.csv",
+    "despacho_ausencias": "despacho_ausencias.csv",
+    "auditoria_despacho": "auditoria_despacho.csv",
+    "cvu_semanal": "cvu_semanal.csv",
+    "cvu_ausencias": "cvu_ausencias.csv",
+    "auditoria_cvu": "auditoria_cvu.csv",
+    "cmo_semanal": "cmo_semanal.csv",
+    "cmo_ausencias": "cmo_ausencias.csv",
+    "auditoria_cmo": "auditoria_cmo.csv",
 }
 ARQUIVOS_CONFERENCIA = {
     "resultados": "conferencias.pkl",
@@ -109,6 +127,8 @@ ARQUIVOS_CONFERENCIA = {
     "teifa_teip": "teifa_teip.csv",
     "cadastro": "cadastro.csv",
     "nao_aplicaveis": "nao_aplicaveis.csv",  # conferências do catálogo que não se aplicam (spec 006, decisão R13)
+    "programacao_despacho": "programacao_despacho.csv",  # G3 (spec 006, fase B)
+    "verificada_despacho": "verificada_despacho.csv",  # G4 (spec 006, fase B)
 }
 ARQUIVOS_ANALISES = {"resultados": "resultados.pkl"}
 # Catálogo de usinas (spec 006, data-model, seção 2), em data/catalogo/, sem .bak
