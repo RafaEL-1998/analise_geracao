@@ -402,9 +402,11 @@ def _grafico_fc_mensal(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
     # o calculado tracejado: as duas linhas continuam visíveis quando coincidem (codificação além da cor)
     tracos = {s: ("" if s == publicado else (4, 2)) for s in cores}
     fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
-    sns.lineplot(data=longo, x="mes", y="pct", hue="serie", hue_order=list(cores), palette=cores, style="serie",
-                 style_order=list(cores), dashes=tracos, linewidth=1.6, marker="o", markersize=4, legend=False, ax=ax)
     meses = sorted(longo["mes"].unique())
+    poucos = len(meses) <= 36  # série longa: só as linhas, sem um ponto por mês
+    sns.lineplot(data=longo, x="mes", y="pct", hue="serie", hue_order=list(cores), palette=cores, style="serie",
+                 style_order=list(cores), dashes=tracos, linewidth=1.6 if poucos else 1.2,
+                 marker="o" if poucos else None, markersize=4, legend=False, ax=ax)
     ax.set_xlim(pd.Timestamp(meses[0]) - pd.Timedelta(days=20), pd.Timestamp(meses[-1]) + pd.Timedelta(days=20))
     ax.set_ylim(bottom=0)
     ax.set_xlabel("")
@@ -413,7 +415,8 @@ def _grafico_fc_mensal(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
     _eixo_tempo(ax, meses[0], meses[-1], diario=False)
     ax.grid(axis="x", visible=False)
     ax.set_title("Fator de capacidade mensal")
-    ax.legend(handles=[plt.Line2D([], [], color=cor, lw=2, marker="o", ls="-" if nome == publicado else (0, (4, 2)),
+    ax.legend(handles=[plt.Line2D([], [], color=cor, lw=2, marker="o" if poucos else None,
+                                  ls="-" if nome == publicado else (0, (4, 2)),
                                   label=nome) for nome, cor in cores.items()],
               loc="upper center", bbox_to_anchor=(0.5, -0.09), ncol=len(cores))
     fig.subplots_adjust(left=0.07, right=0.97, top=0.9, bottom=0.2)

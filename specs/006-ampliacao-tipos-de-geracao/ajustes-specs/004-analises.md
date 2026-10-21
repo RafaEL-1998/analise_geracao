@@ -87,8 +87,8 @@ Redação final. Os requisitos novos seguem a numeração da spec das Análises 
 
 - **FR-058** (seções de renováveis, decisão R19), no campo `renovavel` dos resultados:
   - **fator de capacidade**: o publicado, da usina ou do conjunto (com o nível), por mês e por ano; com série própria, também o calculado da geração da usina e da capacidade do perfil, identificado como "calculado neste relatório";
-  - **energia cortada**: a geração verificada e a estimada sem restrição, a energia cortada por mês e por razão (REL, CNF, ENE) e as horas restritas; com a razão do conjunto, a tabela diz que a razão é do conjunto e a energia é da usina; as semi-horas sem a marca de restrição contadas à parte;
-  - **recurso × geração**: geração verificada média por faixa de vento (m/s) ou de irradiância (W/m²), sem as semi-horas com o recurso inválido, contadas (US3-3);
+  - **energia cortada**: a geração verificada e a estimada sem restrição, nas mesmas semi-horas (as com estimativa), a energia cortada por mês e por razão (REL, CNF, ENE) e as horas restritas; com a razão do conjunto, a tabela diz que a razão é do conjunto e a energia é da usina; as semi-horas sem a marca de restrição e as semi-horas sem estimativa (FR-042 do rascunho 002), em especial as restritas, em que o corte não pôde ser calculado, contadas à parte;
+  - **recurso × geração**: geração verificada média por faixa de vento (m/s) ou de irradiância (W/m²), sem as semi-horas com o recurso inválido ou fisicamente implausível (vento acima de 40 m/s, irradiância acima de 1.500 W/m²; decisão do usuário de 21/10/2026, com as 111 semi-horas de vento até 246 m/s da Praia Formosa sem a marca do ONS), contadas (US3-3); a estimada média sem as estimativas ausentes;
   - **aderência à programação**: na seção comum de programação, com o desvio médio e os maiores desvios (US3-4);
   - **série curta** (decisão R17): seção ou parte com período mínimo declarado (a sazonalidade, 12 meses distintos) é omitida, com o motivo.
 - **FR-059** (regras C16 a C19, decisão R16): EOL e UFV, só com dados da usina:
@@ -97,6 +97,7 @@ Redação final. Os requisitos novos seguem a numeração da spec das Análises 
   - C18: fator de capacidade próprio abaixo da razão entre a garantia física e a capacidade instalada, só com a garantia física no perfil (pontos de atenção);
   - C19: desvio médio entre a geração programada e a verificada da usina acima de um limiar, só com a programação no nível da usina (a confirmar com o agente).
   - Os limiares ficam em `regras.py`, calibrados na Seriemas 1 e na Praia Formosa e aprovados pelo usuário no fim da fase; uma regra com limiar anual só é avaliada nos anos com o período mínimo dela.
+  - Calibração aprovada pelo usuário em 21/10/2026 (tarefa T115): C16 em 5 % da energia estimada, C17 em 10 % das semi-horas e C18 como proposta; C19 em 15 % da potência instalada (os 10 % iniciais apontavam desvios usuais da previsão de vento: 10,4 % na Praia Formosa).
 - As regras comuns da fase A (C2, C5, C8 e C10) não valem para eólicas e solares, que não têm a Disponibilidade por usina nem os indicadores por unidade no ONS (achado A11); o catálogo das eólicas e solares fica com C16 a C19.
 
 ### Aplicabilidade por tipo (fase C, acréscimo)

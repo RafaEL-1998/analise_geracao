@@ -136,3 +136,30 @@ def test_serie_curta_sem_sazonalidade() -> None:
     base = pd.DataFrame({"din_instante": horas, "nivel": "usina", "geracao_mw": 1.0})
     _, sem = sazonalidade(base)
     assert sem == ["usina"]
+
+
+def test_estimativa_ausente_fora_dos_totais_e_das_medias() -> None:
+    """Verificada e estimada nas mesmas semi-horas; a restrita sem estimativa contada (decisão de 21/10/2026)."""
+    semi = _semi().assign(sinal_estimada_ausente=[False, True, False, False, False, False])
+    semi.loc[1, "val_geracaoestimada"], semi.loc[1, "energia_cortada_mwh"] = 0.0, float("nan")
+    fev = energia_cortada(semi, "M").set_index("periodo").loc[pd.Timestamp("2024-02-01")]
+    assert (fev["semi_horas_sem_estimativa"], fev["semi_horas_restritas_sem_estimativa"]) == (1, 1)
+    assert fev["energia_verificada_mwh"] == 15.0 and fev["energia_estimada_mwh"] == 37.0  # sem a semi-hora das 10h30
+    assert fev["energia_cortada_mwh"] == 12.0
+    faixas = recurso_por_faixa(semi, 2.0).set_index("faixa_inicio")
+    assert faixas.loc[8.0, "estimada_media_mw"] == 30.0  # a estimada 0 fica fora da média da faixa
+    r = analisar_renovavel({"restricao_semi_horaria": semi}, pd.DataFrame(
+        columns=["din_instante", "nivel", "geracao_mw", "geracao_programada_mw"]), "EOL", 30.0)
+    assert "Sem a estimativa do ONS" in dict(achados_renovavel(r))["Energia cortada"]
+
+
+def test_recurso_acima_do_limite_fisico_fora_das_faixas() -> None:
+    """Decisão do usuário de 21/10/2026: vento acima de 40 m/s sem a marca do ONS fica fora das faixas, contado."""
+    semi = _semi()
+    semi.loc[5, "val_recurso"] = 120.0  # falha de medição não marcada
+    faixas = recurso_por_faixa(semi, 2.0, 40.0)
+    assert faixas["faixa_inicio"].max() < 40.0 and faixas["semi_horas"].sum() == 4
+    r = analisar_renovavel({"restricao_semi_horaria": semi}, pd.DataFrame(
+        columns=["din_instante", "nivel", "geracao_mw", "geracao_programada_mw"]), "EOL", 30.0)
+    assert r["recurso"]["resumo"]["semi_horas_implausiveis"] == 1 and r["recurso"]["limite"] == 40.0
+    assert "acima do limite físico" in dict(achados_renovavel(r))["Recurso × geração"]

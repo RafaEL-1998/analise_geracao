@@ -117,10 +117,11 @@ def linhas_tabela_fc_anual(res: ResultadosAnalise) -> Tuple[List[str], List[List
 def linhas_tabela_corte_anual(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
     anual = _r(res)["restricao"]["anual"]
     cabecalho = ["Ano", "Verificada (MWh)", "Estimada (MWh)", "Cortada (MWh)", "% da estimada", "Horas restritas",
-                 "Semi-horas sem a marca", "Diferença bruta (MWh)"]
+                 "Restritas sem estimativa", "Semi-horas sem a marca", "Diferença bruta (MWh)"]
     linhas = [[_rotulo_ano(r.periodo, _ano_parcial_semi(r.periodo, r.semi_horas)), fmt_num(r.energia_verificada_mwh, 0),
                fmt_num(r.energia_estimada_mwh, 0), fmt_num(r.energia_cortada_mwh, 0), _traco(r.pct_estimada, pct=True),
-               fmt_num(r.horas_restritas, 1), fmt_int(r.semi_horas_sem_marca), fmt_num(r.diferenca_bruta_mwh, 0)]
+               fmt_num(r.horas_restritas, 1), fmt_int(r.semi_horas_restritas_sem_estimativa),
+               fmt_int(r.semi_horas_sem_marca), fmt_num(r.diferenca_bruta_mwh, 0)]
               for r in anual.itertuples()]
     return cabecalho, linhas
 
@@ -174,17 +175,20 @@ def textos_tabelas(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
               f"{fmt_num(TOLERANCIA_GERACAO_ACIMA_DISPONIBILIDADE_MW, 0)} MW) são sinalizadas e ficam nos totais."))
     if r.get("restricao"):
         textos["tab_corte_anual"] = ("Energia cortada por restrição de operação por ano", (
-            "* Ano parcial. Cortada = Σ máx(estimada − verificada, 0) × 0,5 h nas semi-horas com a marca de "
-            "restrição; % sobre a estimada das semi-horas com a marca; diferença bruta = o mesmo cálculo em todas as "
-            "semi-horas, para comparação."))
+            "* Ano parcial. Verificada e estimada nas semi-horas com a estimativa do ONS (estimada 0 com a usina "
+            "gerando = estimativa ausente). Cortada = Σ máx(estimada − verificada, 0) × 0,5 h nas semi-horas com a "
+            "marca de restrição; % sobre a estimada das semi-horas com a marca; restritas sem estimativa = semi-horas "
+            "com a marca em que o corte não pôde ser calculado; diferença bruta = o mesmo cálculo em todas as "
+            "semi-horas com estimativa, para comparação."))
         textos["tab_corte_razao"] = ("Energia cortada por razão da restrição", (
             "Razão de cada semi-hora restrita na Restrição com a razão; sem razão publicada = semi-hora restrita sem o "
             "código." + _razao_do_conjunto(res)))
     if r.get("recurso"):
         rec = r["recurso"]
         textos["tab_recurso_faixas"] = (f"Geração por faixa de {rec['grandeza']}", (
-            f"Só as semi-horas com {_genero(rec['grandeza'])[0]} {rec['grandeza']} {_genero(rec['grandeza'])[1]} e a "
-            "geração verificada; o valor negativo (ruído de medição) entra na primeira faixa."))
+            f"Só as semi-horas com {_genero(rec['grandeza'])[0]} {rec['grandeza']} {_genero(rec['grandeza'])[1]}, até o "
+            f"limite físico de {fmt_num(rec['limite'], 0)} {rec['unidade']}, e a geração verificada; o valor negativo "
+            "(ruído de medição) entra na primeira faixa."))
     if r.get("programacao"):
         textos["tab_desvios_programacao_renovavel"] = (
             "Maiores desvios entre a geração verificada e a programada",
@@ -209,7 +213,8 @@ def legenda_figura(res: ResultadosAnalise, chave: str) -> str:
         rec = r["recurso"]
         artigo, _, invalido = _genero(rec["grandeza"])
         return (f"Geração verificada e estimada médias por faixa de {rec['grandeza']} ({rec['unidade']}), sem as "
-                f"semi-horas com {artigo} {rec['grandeza']} {invalido}.")
+                f"semi-horas com {artigo} {rec['grandeza']} {invalido} ou acima de {fmt_num(rec['limite'], 0)} "
+                f"{rec['unidade']}.")
     if chave == "desvio_programacao":
         return ("Desvio médio e desvio médio absoluto mensais entre a geração verificada e a programada (MW), nas horas "
                 "comuns às duas, no nível da programação.")
@@ -224,10 +229,16 @@ def nota(res: ResultadosAnalise) -> str:
         partes.append("Energia cortada: só nas semi-horas com a marca de restrição da Restrição com detalhe, pela "
                       "geração estimada menos a verificada, sem valores negativos; a semi-hora sem a marca (arquivo "
                       "publicado sem a coluna) fica fora do total e é contada.")
+        if r["restricao"]["resumo"]["semi_horas_sem_estimativa"]:
+            partes.append("A geração estimada 0 com a usina gerando é estimativa que o ONS não calculou: fica fora dos "
+                          "totais e das médias da estimada e, nas semi-horas com a marca de restrição, o corte não é "
+                          "calculado.")
         partes.append("As semi-horas são levadas à hora cheia pela média das duas meias-horas só nos cruzamentos com "
                       "séries horárias; a hora com uma só meia-hora fica ausente.")
     if r.get("recurso"):
-        partes.append("O recurso marcado como inválido pelo ONS fica fora das faixas do recurso × geração.")
+        rec = r["recurso"]
+        partes.append(f"O recurso marcado como inválido pelo ONS ou acima do limite físico ({fmt_num(rec['limite'], 0)} "
+                      f"{rec['unidade']}) fica fora das faixas do recurso × geração.")
     return " ".join(partes)
 
 

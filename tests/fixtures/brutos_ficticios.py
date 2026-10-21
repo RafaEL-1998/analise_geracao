@@ -226,7 +226,7 @@ FICTICIAS: Dict[str, Dict[str, str]] = {
 }
 CONJUNTO = {"id_ons": "CJU_GOCJFI", "nome": "CONJ. HIDRAULICO FICTICIO"}
 MEMBRO = {"ceg": "CGH.PH.GO.000102-0.01", "id_ons": "GOCGMB", "nome": "CGH MEMBRO", "entrada": "2024-02-01"}
-CODIGOS_PROGRAMACAO = {"GOCJFI-1": 6.0, "GOCJFI-2": 6.0, "GOUTFI": 100.0, "GOEOFI": 20.0, "GOCJUF-1": 12.0}
+CODIGOS_PROGRAMACAO = {"GOCJFI-1": 6.0, "GOCJFI-2": 6.0, "GOUTFI": 100.0, "GOEOFI": 16.0, "GOCJUF-1": 12.0}
 DIAS_PROGRAMACAO = pd.date_range("2024-02-01", "2024-02-03", freq="D")
 INICIO_UFV = pd.Timestamp("2024-01-25")  # série curta (decisão R17): a restrição com detalhe da UFV começa aqui
 DISP_REDUZIDA_UTE = (pd.Timestamp("2024-01-15 00:00"), pd.Timestamp("2024-01-24 23:00"))  # 80 MW: regra R7
@@ -243,12 +243,16 @@ CONJUNTO_UFV = {"id_ons": "CJU_GOCJUF", "nome": "CONJ. SOLAR FICTICIO"}
 MEMBRO_UFV = {"ceg": "UFV.RS.GO.000108-0.01", "id_ons": "GOUFMB", "nome": "UFV MEMBRO", "entrada": "2023-01-01"}
 INICIO_RESTRICAO_EOL = pd.Timestamp("2024-01-15")
 VENTO_INVALIDO_EOL = (pd.Timestamp("2024-01-20 00:00"), pd.Timestamp("2024-01-25 23:30"))  # C17
+VENTO_IMPLAUSIVEL_EOL = (pd.Timestamp("2024-02-20 00:00"), pd.Timestamp("2024-02-20 01:30"))  # 120 m/s sem a marca
 RESTRICAO_EOL = (pd.Timestamp("2024-02-01"), pd.Timestamp("2024-02-10"), 10, 17)  # dias e horas restritas (C16)
 CORTE_EOL_MW = 25.0
 RAZOES_EOL = {"REL": ("2024-02-01", "2024-02-03"), "CNF": ("2024-02-04", "2024-02-06"),
               "ENE": ("2024-02-07", "2024-02-10")}
 RESTRICAO_UFV = (pd.Timestamp("2024-02-12"), pd.Timestamp("2024-02-14"), 10, 14)
 CORTE_UFV_MW = 5.0
+# Estimada 0 com a UFV gerando (estimativa ausente): duas semi-horas restritas e quatro fora da restrição
+ESTIMADA_AUSENTE_UFV = pd.DatetimeIndex(["2024-02-14 14:00", "2024-02-14 14:30", "2024-02-20 10:00", "2024-02-20 10:30",
+                                         "2024-02-20 11:00", "2024-02-20 11:30"])
 CAPACIDADE_CONJUNTO_UFV = 35.0
 
 
@@ -583,7 +587,7 @@ def fator_capacidade_ficticio() -> pd.DataFrame:
     h = _horas_periodo()
     eol, conjunto = geracao_eol(h), geracao_conjunto_ufv(h)
     return pd.concat([
-        pd.DataFrame({**_cabecalho("eol", h, "TIPO I"), "val_geracaoprogramada": 20.0, "val_geracaoverificada": eol,
+        pd.DataFrame({**_cabecalho("eol", h, "TIPO I"), "val_geracaoprogramada": 16.0, "val_geracaoverificada": eol,
                       "val_capacidadeinstalada": 40.0, "val_fatorcapacidade": eol / 40.0}),
         pd.DataFrame({**_cabecalho(CONJUNTO_UFV, h, "Conjunto de Usinas"), "val_geracaoprogramada": 12.0,
                       "val_geracaoverificada": conjunto, "val_capacidadeinstalada": CAPACIDADE_CONJUNTO_UFV,
@@ -599,8 +603,10 @@ def restricao_eol() -> Dict[str, pd.DataFrame]:
     restrita = _restrita(semi, RESTRICAO_EOL)
     estimada = verificada + np.where(restrita, CORTE_EOL_MW, 0.0) + np.where(np.asarray(semi.hour) == 3, 1.0, 0.0)
     invalido = ((semi >= VENTO_INVALIDO_EOL[0]) & (semi <= VENTO_INVALIDO_EOL[1])).astype(int)
+    implausivel = (semi >= VENTO_IMPLAUSIVEL_EOL[0]) & (semi <= VENTO_IMPLAUSIVEL_EOL[1])
+    vento = np.where(invalido == 1, 0.0, np.where(implausivel, 120.0, 8.0))
     detalhe = pd.DataFrame({**_cabecalho("eol", semi, "TIPO I"), "nom_conjuntousina": "",
-                            "val_ventoverificado": np.where(invalido == 1, 0.0, 8.0), "flg_dadoventoinvalido": invalido,
+                            "val_ventoverificado": vento, "flg_dadoventoinvalido": invalido,
                             "val_geracaoestimada": estimada, "val_geracaoverificada": verificada,
                             "id_ons_conjuntousina": "", "flg_geracaorestrita": restrita.astype(int),
                             "val_geracaoreferenciafinal": np.nan})
@@ -624,11 +630,14 @@ def restricao_ufv() -> Dict[str, pd.DataFrame]:
         semi = _semi_horas(inicio)
         verificada = solar(semi, pico)
         restrita = _restrita(semi, RESTRICAO_UFV) if chave == "ufv" else np.zeros(len(semi), dtype=bool)
+        estimada = verificada + np.where(restrita, CORTE_UFV_MW, 0.0)
+        if chave == "ufv":
+            estimada = np.where(semi.isin(ESTIMADA_AUSENTE_UFV), 0.0, estimada)
         cabecalho = _cabecalho(chave, semi, "TIPO II-C")
         partes.append(pd.DataFrame({**cabecalho, "nom_conjuntousina": CONJUNTO_UFV["nome"],
                                     "val_irradianciaverificado": solar(semi, 800.0),
                                     "flg_dadoirradianciainvalido": 0,
-                                    "val_geracaoestimada": verificada + np.where(restrita, CORTE_UFV_MW, 0.0),
+                                    "val_geracaoestimada": estimada,
                                     "val_geracaoverificada": verificada, "id_ons_conjuntousina": CONJUNTO_UFV["id_ons"],
                                     "flg_geracaorestrita": restrita.astype(int), "val_geracaoreferenciafinal": np.nan,
                                     "nom_origemirradiancia": "Supervisão", "flg_dadoirradianciasupervisaoinvalido": 0}))

@@ -5,6 +5,9 @@
   semi-horas restritas (``flg_geracaorestrita = 1``). A diferença fora delas é erro da estimativa e não entra; a
   semi-hora sem a marca fica com ``sem_marca_restricao``, contada e fora do total. A razão (REL, CNF, ENE) vem da
   restrição com a razão, na mesma semi-hora, com o nível dela (usina ou conjunto).
+- **Estimativa ausente** (decisão do usuário de 21/10/2026): estimada 0 com geração verificada acima de 1 MW é
+  estimativa que o ONS não calculou; vira ``sinal_estimada_ausente``, fica fora das médias e, na semi-hora restrita, o
+  corte não é calculado (vazio).
 - **Hora cheia**: a média das duas meias-horas, só para os cruzamentos com as séries horárias; a hora com uma só
   meia-hora fica ausente e é contada (FR-016).
 - **Fator de capacidade** (horário): com o nível e as sinalizações ``sinal_fc_fora_0_1`` e ``sinal_acima_capacidade``.
@@ -24,7 +27,11 @@ from src.coleta.registro import COLUNAS_RECURSO, COLUNAS_RESTRICAO_RAZAO
 from src.comum.caminhos import ARQUIVOS_TRATAMENTO
 from src.comum.logger import setup_logger
 from src.comum.persistencia import gravar_csv
-from src.comum.regras import DURACAO_SEMI_HORA_H, TOLERANCIA_GERACAO_ACIMA_DISPONIBILIDADE_MW
+from src.comum.regras import (
+    DURACAO_SEMI_HORA_H,
+    LIMIAR_GERACAO_PARADA_MW,
+    TOLERANCIA_GERACAO_ACIMA_DISPONIBILIDADE_MW,
+)
 from src.tratamento.series import COLUNAS_AUDITORIA, COLUNAS_AUSENCIAS, SerieConjunto, exportar_serie, \
     listar_ausencias, montar_serie
 from src.tratamento.termica import _auditoria, _meses_com_arquivo, _ordem_dos_arquivos, _sem_repeticoes
@@ -32,11 +39,13 @@ from src.tratamento.termica import _auditoria, _meses_com_arquivo, _ordem_dos_ar
 logger = setup_logger("tratamento")
 
 COLUNAS_SEMI_HORARIA = [COLUNA_INSTANTE, "val_geracaoverificada", "val_geracaoestimada", "val_recurso",
-                        "flg_recurso_invalido", "flg_geracaorestrita", "sinal_recurso_invalido", "restrita",
-                        "sem_marca_restricao", "energia_cortada_mwh", "cod_razaorestricao", "nivel_razao",
-                        "num_minutos_rel", "num_minutos_cnf", "num_minutos_ene", "arquivo_origem"]
+                        "flg_recurso_invalido", "flg_geracaorestrita", "sinal_recurso_invalido",
+                        "sinal_estimada_ausente", "restrita", "sem_marca_restricao", "energia_cortada_mwh",
+                        "cod_razaorestricao", "nivel_razao", "num_minutos_rel", "num_minutos_cnf", "num_minutos_ene",
+                        "arquivo_origem"]
 COLUNAS_HORARIA = [COLUNA_INSTANTE, "val_geracaoverificada", "val_geracaoestimada", "val_recurso",
-                   "semi_horas_recurso_invalido", "semi_horas_restritas", "energia_cortada_mwh"]
+                   "semi_horas_recurso_invalido", "semi_horas_estimada_ausente", "semi_horas_restritas",
+                   "energia_cortada_mwh"]
 COLUNAS_RAZAO = [COLUNA_INSTANTE, "nivel", *COLUNAS_RESTRICAO_RAZAO, "cod_razaorestricao", "arquivo_origem"]
 COLUNAS_MEMBROS = [COLUNA_INSTANTE, "id_ons", "val_geracaoverificada"]
 
@@ -113,10 +122,14 @@ def montar_restricao(extraido: pd.DataFrame, auditoria_coleta: pd.DataFrame, tip
     for coluna in valores:
         t[coluna] = pd.to_numeric(t[coluna], errors="coerce")
     t["sinal_recurso_invalido"] = t["flg_recurso_invalido"] == 1
+    # estimada 0 com a usina gerando: estimativa que o ONS não calculou (decisão do usuário de 21/10/2026)
+    t["sinal_estimada_ausente"] = (t["val_geracaoestimada"] == 0) & (t["val_geracaoverificada"]
+                                                                    > LIMIAR_GERACAO_PARADA_MW)
     t["restrita"] = t["flg_geracaorestrita"] == 1
     t["sem_marca_restricao"] = t["flg_geracaorestrita"].isna()
     corte = (t["val_geracaoestimada"] - t["val_geracaoverificada"]).clip(lower=0) * DURACAO_SEMI_HORA_H
-    t["energia_cortada_mwh"] = corte.where(t["restrita"], 0.0).where(~t["sem_marca_restricao"])
+    t["energia_cortada_mwh"] = (corte.where(t["restrita"], 0.0).where(~t["sem_marca_restricao"])
+                                .where(~(t["restrita"] & t["sinal_estimada_ausente"])))  # corte não calculável
     if razao is not None and len(razao):
         r = razao.drop_duplicates(COLUNA_INSTANTE).set_index(COLUNA_INSTANTE)
         t["cod_razaorestricao"] = t[COLUNA_INSTANTE].map(r["cod_razaorestricao"]).fillna("")
@@ -126,11 +139,14 @@ def montar_restricao(extraido: pd.DataFrame, auditoria_coleta: pd.DataFrame, tip
     else:
         t["cod_razaorestricao"], t["nivel_razao"] = "", ""
     semi = t.reindex(columns=COLUNAS_SEMI_HORARIA).sort_values(COLUNA_INSTANTE).reset_index(drop=True)
-    semi["semi_horas_recurso_invalido"] = semi["sinal_recurso_invalido"].astype(int)
-    semi["semi_horas_restritas"] = semi["restrita"].astype(int)
-    horaria = em_hora_cheia(semi, ["val_geracaoverificada", "val_geracaoestimada", "val_recurso"],
-                            ["semi_horas_recurso_invalido", "semi_horas_restritas", "energia_cortada_mwh"])
-    semi = semi.drop(columns=["semi_horas_recurso_invalido", "semi_horas_restritas"])
+    contagens = {"semi_horas_recurso_invalido": semi["sinal_recurso_invalido"].astype(int),
+                 "semi_horas_estimada_ausente": semi["sinal_estimada_ausente"].astype(int),
+                 "semi_horas_restritas": semi["restrita"].astype(int)}
+    # na hora cheia, a estimada ausente fica fora da média
+    por_hora = semi.assign(val_geracaoestimada=semi["val_geracaoestimada"].where(~semi["sinal_estimada_ausente"]),
+                           **contagens)
+    horaria = em_hora_cheia(por_hora, ["val_geracaoverificada", "val_geracaoestimada", "val_recurso"],
+                            [*contagens, "energia_cortada_mwh"])
     ausencias = listar_ausencias(horaria[COLUNA_INSTANTE], pd.Timestamp(inicio).floor("h"),
                                  pd.Timestamp(fim).floor("h"), _meses_com_arquivo(auditoria_coleta))
     resumo = {
@@ -139,6 +155,8 @@ def montar_restricao(extraido: pd.DataFrame, auditoria_coleta: pd.DataFrame, tip
         "semi_horas_restritas": int(semi["restrita"].sum()),
         "semi_horas_sem_marca": int(semi["sem_marca_restricao"].sum()),
         "semi_horas_recurso_invalido": int(semi["sinal_recurso_invalido"].sum()),
+        "semi_horas_estimada_ausente": int(semi["sinal_estimada_ausente"].sum()),
+        "semi_horas_restritas_sem_estimativa": int((semi["restrita"] & semi["sinal_estimada_ausente"]).sum()),
         "energia_cortada_mwh": float(semi["energia_cortada_mwh"].sum()),
         "duplicatas_conflitantes": int(conflitos.sum()) if len(conflitos) else 0,
     }
@@ -240,7 +258,7 @@ def carregar_renovavel(pasta: Path) -> Dict[str, Optional[pd.DataFrame]]:
     for chave in ("restricao_semi_horaria",):
         t = saida[chave]
         if t is not None and len(t):
-            for coluna in ("sinal_recurso_invalido", "restrita", "sem_marca_restricao"):
+            for coluna in ("sinal_recurso_invalido", "sinal_estimada_ausente", "restrita", "sem_marca_restricao"):
                 t[coluna] = t[coluna].astype(str).str.lower().isin(["true", "1"])
             for coluna in ("cod_razaorestricao", "nivel_razao"):
                 t[coluna] = t[coluna].fillna("").astype(str)

@@ -1,0 +1,87 @@
+{
+ "etapa": "relatorio",
+ "usina": "seriemas_1",
+ "versao_formato": 1,
+ "iniciada_em": "2026-10-21T13:52:43Z",
+ "concluida_em": "2026-10-21T13:52:48Z",
+ "status": "concluida",
+ "codigo_saida": 0,
+ "etapa_anterior": {
+  "etapa": "analises",
+  "concluida_em": "2026-10-21T13:52:43Z"
+ },
+ "arquivos": [
+  {
+   "nome": "relatorio_analise_estatistica.pdf",
+   "bytes": 798953,
+   "sha256": "a77f27d83b7a5f71b373fa6b0f68cdd76154064a2c2a4d18d03db8b1f27b963c"
+  },
+  {
+   "nome": "relatorio_analise_estatistica.md",
+   "bytes": 26142,
+   "sha256": "cb1c330bb67e5ce39f697986ae10e9a6e8d72ba270b4a8716dc9905271d2ee6f"
+  },
+  {
+   "nome": "perfil_estatistico_anual.xlsx",
+   "bytes": 32939,
+   "sha256": "b7e8cbcae5c38ac4186682eb8617d8670f44fc08b25a5dc3206b4b87664460b3"
+  },
+  {
+   "nome": "perfil_estatistico_anual.csv",
+   "bytes": 314,
+   "sha256": "6398217718733545c8703ebc9d6bee7852545c4e1dc4c743a5780281fba4203a"
+  },
+  {
+   "nome": "resumo_executivo.pdf",
+   "bytes": 79845,
+   "sha256": "97ce54ac0ecd39d4a8826465ed157e0ca3721c41d32fd30673ae2a658560f4b8"
+  },
+  {
+   "nome": "resumo_executivo.md",
+   "bytes": 3221,
+   "sha256": "69cf1cffb03786c853fe66f17394639657c0531631055f14d8fbe42d09e2ff4c"
+  },
+  {
+   "nome": "figures/01_serie_temporal_geracao_disponibilidade.png",
+   "bytes": 163274,
+   "sha256": "316b1d8607e89f5358d890ce865278cfbfb21f991c7f27c53d06e9ac7d87b845"
+  },
+  {
+   "nome": "figures/02_geracao_mensal.png",
+   "bytes": 71211,
+   "sha256": "09d49471f9be627056d67b04d7b1f4844764fc1bc996bc74fe72c289022df46d"
+  },
+  {
+   "nome": "figures/04_perfil_horario_geracao.png",
+   "bytes": 106149,
+   "sha256": "bc1da932a1eb35c60f833e26940abc200152275aa604afe61821c162a43dcde4"
+  },
+  {
+   "nome": "figures/10_fator_capacidade_mensal.png",
+   "bytes": 94624,
+   "sha256": "f3253d6db71f530981a14be7e57f479aa066b0705d93cfbd2391a4e35e218543"
+  },
+  {
+   "nome": "figures/11_energia_cortada_por_razao_mensal.png",
+   "bytes": 76326,
+   "sha256": "7a2c51d851c876c38180f5adbdd2d31b10dc201a97c0335d965cad860947294d"
+  },
+  {
+   "nome": "figures/12_geracao_por_faixa_de_recurso.png",
+   "bytes": 136638,
+   "sha256": "3bb9d0c86341fd2d1f3709eb03b1c88567772f3ecf44e5e2cb2b4f2e79f64f9c"
+  }
+ ],
+ "resumo": {
+  "data_geracao": "21/10/2026 10:00",
+  "secoes": 11,
+  "paginas_pdf": 15,
+  "figuras": 6,
+  "abas_planilha": 24,
+  "resumo_executivo": {
+   "paginas": 1,
+   "evolucao_anual": true,
+   "palavras": 373
+  }
+ }
+}

@@ -689,7 +689,9 @@ def tabela_parametros(res: ResultadosAnalise) -> pd.DataFrame:
         ("Análise", "Sazonalidade", f"≥ {PERIODO_MINIMO_SAZONALIDADE_MESES} meses distintos", "", analise),
         *([("Análise", "Desvio do despacho", f"|verificada − programada| > {fmt_num(LIMIAR_DESVIO_DESPACHO_MW, 1)}",
             "MW", analise)] if getattr(res, "termica", None) else []),
-        *([("Análise", f"Faixa de {recurso['grandeza']}", fmt_num(recurso["largura"], 0), recurso["unidade"], analise)]
+        *([("Análise", f"Faixa de {recurso['grandeza']}", fmt_num(recurso["largura"], 0), recurso["unidade"], analise),
+           ("Análise", f"Limite físico de {recurso['grandeza']}", f"≤ {fmt_num(recurso['limite'], 0)}",
+            recurso["unidade"], analise)]
           if (recurso := (getattr(res, "renovavel", None) or {}).get("recurso")) else []),
         ("Validação", "Tolerância de geração acima da disponibilidade (R7)",
          fmt_num(TOLERANCIA_GERACAO_ACIMA_DISPONIBILIDADE_MW, 1), "MW", analise),

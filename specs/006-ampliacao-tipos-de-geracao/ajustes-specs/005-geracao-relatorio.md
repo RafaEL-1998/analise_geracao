@@ -105,8 +105,8 @@ Redação final. Os requisitos novos seguem a numeração da spec da Geração d
   - Seção sem base é omitida, com o motivo nas notas; na série curta, a sazonalidade sai com o motivo (decisão R17).
 - **Capa das renováveis** (data-model 6.5): fator de capacidade, geração média e energia cortada (% da estimada); os números do conjunto identificados como tais.
 - **Legendas**: a restrição com detalhe cita o id ONS e o CEG da usina; o Fator de capacidade e a razão da restrição do conjunto citam "conjunto de usinas, id ONS CJU_…".
-- **Notas**: a energia cortada só nas semi-horas com a marca de restrição; as semi-horas sem a marca (fotovoltaica de 05 a 12/2024) fora do total; o recurso inválido fora das faixas; os limiares de C16 a C19 na nota da conclusão gerada do catálogo.
-- **Resumo executivo** (spec 007, decisão R6): nas eólicas e solares, a evolução anual ganha o principal indicador de perda do tipo (energia cortada, em MWh e em % da estimada); os termos novos do resumo (por exemplo, constrained-off e as razões REL, CNF e ENE) entram no glossário com o texto aprovado pelo usuário.
+- **Notas**: a energia cortada só nas semi-horas com a marca de restrição; as semi-horas sem a marca (fotovoltaica de 05 a 12/2024) fora do total; a estimativa ausente (estimada 0 com geração verificada) fora dos totais, com o corte não calculado nas semi-horas restritas sem estimativa; o recurso inválido fora das faixas; os limiares de C16 a C19 na nota da conclusão gerada do catálogo.
+- **Resumo executivo** (spec 007, decisão R6): nas eólicas e solares, a evolução anual ganha o principal indicador de perda do tipo (energia cortada, em MWh e em % da estimada); os termos novos do resumo (por exemplo, constrained-off e as razões REL, CNF e ENE) entram no glossário com o texto aprovado pelo usuário. Aprovado em 21/10/2026: "constrained-off: redução da geração da usina por comando do ONS, por razão externa a ela (indisponibilidade externa, confiabilidade elétrica ou razão energética)"; REL, CNF e ENE não aparecem no resumo das pilotos.
 
 ### Aplicabilidade por tipo (fase C, acréscimo)
 

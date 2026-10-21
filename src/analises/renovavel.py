@@ -7,7 +7,9 @@ cada semi-hora) e da base horária comum, monta o campo ``renovavel`` de ``Resul
   por ano, com o nível (usina ou conjunto); o calculado da série própria fica nos indicadores anuais comuns;
 - **energia cortada**: só nas semi-horas com a marca de restrição (decisão R12), por mês e por razão (REL, CNF, ENE);
   as semi-horas sem a marca ficam contadas e fora do total; a diferença bruta (estimada − verificada em todas as
-  semi-horas) é mostrada à parte, para comparação;
+  semi-horas) é mostrada à parte, para comparação; a verificada e a estimada somam as mesmas semi-horas, as com
+  estimativa (a estimada 0 com a usina gerando é estimativa ausente, contada à parte, com o corte não calculado nas
+  restritas; decisão do usuário de 21/10/2026);
 - **recurso × geração**: geração verificada média por faixa de vento ou de irradiância, sem as semi-horas com o
   recurso marcado como inválido pelo ONS, contadas;
 - **aderência à programação**: os maiores desvios entre a geração verificada e a programada, no nível da programação.
@@ -25,7 +27,14 @@ import pandas as pd
 from src.analises.comum_tipos import NOME_NIVEL, _ano_parcial, _cobertura_texto
 from src.coleta import registro
 from src.comum.formatacao import fmt_data, fmt_int, fmt_num, fmt_pct, plural
-from src.comum.regras import DURACAO_SEMI_HORA_H, FAIXA_IRRADIANCIA_WM2, FAIXA_VENTO_MS, NUMERO_EVENTOS_RELATORIO
+from src.comum.regras import (
+    DURACAO_SEMI_HORA_H,
+    FAIXA_IRRADIANCIA_WM2,
+    FAIXA_VENTO_MS,
+    LIMITE_IRRADIANCIA_PLAUSIVEL_WM2,
+    LIMITE_VENTO_PLAUSIVEL_MS,
+    NUMERO_EVENTOS_RELATORIO,
+)
 
 TITULO_FATOR_CAPACIDADE = "Fator de capacidade"
 TITULO_CORTE = "Energia cortada por restrição de operação (constrained-off)"
@@ -36,14 +45,16 @@ RAZOES: Dict[str, str] = {"REL": "indisponibilidade externa (REL)", "CNF": "conf
 SEM_RAZAO = "sem razão publicada"
 COLUNA_RAZAO: Dict[str, str] = {"REL": "cortada_rel_mwh", "CNF": "cortada_cnf_mwh", "ENE": "cortada_ene_mwh",
                                 SEM_RAZAO: "cortada_sem_razao_mwh"}
-# Grandeza, unidade e largura das faixas do recurso por tipo
-RECURSO: Dict[str, Tuple[str, str, float]] = {"EOL": ("vento", "m/s", FAIXA_VENTO_MS),
-                                               "UFV": ("irradiância", "W/m²", FAIXA_IRRADIANCIA_WM2)}
+# Grandeza, unidade, largura das faixas e limite físico do recurso por tipo
+RECURSO: Dict[str, Tuple[str, str, float, float]] = {
+    "EOL": ("vento", "m/s", FAIXA_VENTO_MS, LIMITE_VENTO_PLAUSIVEL_MS),
+    "UFV": ("irradiância", "W/m²", FAIXA_IRRADIANCIA_WM2, LIMITE_IRRADIANCIA_PLAUSIVEL_WM2)}
 COLUNAS_FC = ["periodo", "nivel", "horas", "geracao_verificada_mwh", "capacidade_media_mw", "fator_capacidade_pct",
               "horas_fc_fora_0_1", "horas_acima_capacidade"]
 COLUNAS_CORTE = ["periodo", "semi_horas", "semi_horas_restritas", "horas_restritas", "semi_horas_sem_marca",
-                 "energia_verificada_mwh", "energia_estimada_mwh", "energia_estimada_com_marca_mwh",
-                 "energia_cortada_mwh", "pct_estimada", "diferenca_bruta_mwh"]
+                 "semi_horas_sem_estimativa", "semi_horas_restritas_sem_estimativa", "energia_verificada_mwh",
+                 "energia_estimada_mwh", "energia_estimada_com_marca_mwh", "energia_cortada_mwh", "pct_estimada",
+                 "diferenca_bruta_mwh"]
 COLUNAS_FAIXAS = ["faixa_inicio", "faixa_fim", "semi_horas", "geracao_media_mw", "estimada_media_mw"]
 COLUNAS_DESVIOS = ["din_instante", "geracao_programada_mw", "geracao_mw", "desvio_mw"]
 
@@ -106,16 +117,25 @@ def _secao_fator_capacidade(fc: Optional[pd.DataFrame]) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+def _estimada_ausente(semi: pd.DataFrame) -> pd.Series:
+    if "sinal_estimada_ausente" not in semi.columns:
+        return pd.Series(False, index=semi.index)
+    return semi["sinal_estimada_ausente"].astype(bool)
+
+
 def _com_energias(semi: pd.DataFrame) -> pd.DataFrame:
     marcada = ~semi["sem_marca_restricao"].astype(bool)
     restrita = semi["restrita"].astype(bool)
+    com_estimativa = ~_estimada_ausente(semi) & semi["val_geracaoestimada"].notna()
     razao = semi["cod_razaorestricao"].fillna("").astype(str).str.upper()
     return semi.assign(
-        _verificada=semi["val_geracaoverificada"] * DURACAO_SEMI_HORA_H,
-        _estimada=semi["val_geracaoestimada"] * DURACAO_SEMI_HORA_H,
-        _estimada_marca=(semi["val_geracaoestimada"] * DURACAO_SEMI_HORA_H).where(marcada),
-        _bruta=(semi["val_geracaoestimada"] - semi["val_geracaoverificada"]).clip(lower=0) * DURACAO_SEMI_HORA_H,
+        _verificada=(semi["val_geracaoverificada"] * DURACAO_SEMI_HORA_H).where(com_estimativa),
+        _estimada=(semi["val_geracaoestimada"] * DURACAO_SEMI_HORA_H).where(com_estimativa),
+        _estimada_marca=(semi["val_geracaoestimada"] * DURACAO_SEMI_HORA_H).where(marcada & com_estimativa),
+        _bruta=((semi["val_geracaoestimada"] - semi["val_geracaoverificada"]).clip(lower=0)
+                * DURACAO_SEMI_HORA_H).where(com_estimativa),
         _restrita=restrita.astype(int), _sem_marca=(~marcada).astype(int),
+        _sem_estimativa=(~com_estimativa).astype(int), _restrita_sem_estimativa=(restrita & ~com_estimativa).astype(int),
         _razao=razao.where(razao.isin(list(RAZOES)), SEM_RAZAO).where(restrita, ""),
     )
 
@@ -126,6 +146,8 @@ def _resumo_corte(g: pd.DataFrame) -> Dict[str, Any]:
     return {"semi_horas": len(g), "semi_horas_restritas": int(g["_restrita"].sum()),
             "horas_restritas": float(g["_restrita"].sum()) * DURACAO_SEMI_HORA_H,
             "semi_horas_sem_marca": int(g["_sem_marca"].sum()),
+            "semi_horas_sem_estimativa": int(g["_sem_estimativa"].sum()),
+            "semi_horas_restritas_sem_estimativa": int(g["_restrita_sem_estimativa"].sum()),
             "energia_verificada_mwh": float(g["_verificada"].sum()), "energia_estimada_mwh": float(g["_estimada"].sum()),
             "energia_estimada_com_marca_mwh": estimada_marca, "energia_cortada_mwh": cortada,
             "pct_estimada": _pct(cortada, estimada_marca), "diferenca_bruta_mwh": float(g["_bruta"].sum())}
@@ -172,13 +194,15 @@ def _secao_restricao(semi: Optional[pd.DataFrame]) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def recurso_por_faixa(semi: pd.DataFrame, largura: float) -> pd.DataFrame:
-    """Geração verificada e estimada médias por faixa do recurso, só nas semi-horas com o recurso válido; o recurso
-    negativo (ruído de medição) entra na primeira faixa."""
+def recurso_por_faixa(semi: pd.DataFrame, largura: float, limite: float = math.inf) -> pd.DataFrame:
+    """Geração verificada e estimada médias por faixa do recurso, só nas semi-horas com o recurso válido e até o limite
+    físico; o recurso negativo (ruído de medição) entra na primeira faixa."""
     validas = semi[~semi["sinal_recurso_invalido"].astype(bool) & semi["val_recurso"].notna()
-                   & semi["val_geracaoverificada"].notna()]
+                   & (semi["val_recurso"] <= limite) & semi["val_geracaoverificada"].notna()]
     if validas.empty:
         return pd.DataFrame(columns=COLUNAS_FAIXAS)
+    # a estimada ausente (estimada 0 com a usina gerando) fica fora da média da estimada
+    validas = validas.assign(val_geracaoestimada=validas["val_geracaoestimada"].where(~_estimada_ausente(validas)))
     inicio = (validas["val_recurso"].clip(lower=0) // largura) * largura
     g = validas.groupby(inicio)
     tabela = pd.DataFrame({"semi_horas": g.size(), "geracao_media_mw": g["val_geracaoverificada"].mean(),
@@ -191,16 +215,18 @@ def recurso_por_faixa(semi: pd.DataFrame, largura: float) -> pd.DataFrame:
 def _secao_recurso(semi: Optional[pd.DataFrame], tipo: str) -> Dict[str, Any]:
     if semi is None or semi.empty or tipo not in RECURSO:
         return {}
-    grandeza, unidade, largura = RECURSO[tipo]
-    faixas = recurso_por_faixa(semi, largura)
-    invalidas = int(semi["sinal_recurso_invalido"].astype(bool).sum())
-    sem_recurso = int((~semi["sinal_recurso_invalido"].astype(bool) & semi["val_recurso"].isna()).sum())
+    grandeza, unidade, largura, limite = RECURSO[tipo]
+    faixas = recurso_por_faixa(semi, largura, limite)
+    invalido = semi["sinal_recurso_invalido"].astype(bool)
+    invalidas = int(invalido.sum())
+    implausiveis = int((~invalido & (semi["val_recurso"] > limite)).sum())  # falha de medição não marcada pelo ONS
+    sem_recurso = int((~invalido & semi["val_recurso"].isna()).sum())
     if faixas.empty and not invalidas:
         return {}
-    return {"grandeza": grandeza, "unidade": unidade, "largura": largura, "faixas": faixas,
+    return {"grandeza": grandeza, "unidade": unidade, "largura": largura, "limite": limite, "faixas": faixas,
             "resumo": {"semi_horas": len(semi), "semi_horas_validas": int(faixas["semi_horas"].sum()),
                        "semi_horas_invalidas": invalidas, "pct_invalidas": _pct(invalidas, len(semi)),
-                       "semi_horas_sem_recurso": sem_recurso}}
+                       "semi_horas_implausiveis": implausiveis, "semi_horas_sem_recurso": sem_recurso}}
 
 
 # ---------------------------------------------------------------------------
@@ -276,14 +302,25 @@ def achados_renovavel(renovavel: Dict[str, Any]) -> List[Tuple[str, str]]:
         if r["semi_horas_sem_marca"]:
             texto += (f" {fmt_int(r['semi_horas_sem_marca'])} "
                       f"{plural(r['semi_horas_sem_marca'], 'semi-hora', 'semi-horas')} sem a marca, fora do total.")
+        if r["semi_horas_sem_estimativa"]:
+            texto += (f" Sem a estimativa do ONS (estimada 0 com a usina gerando) em "
+                      f"{fmt_int(r['semi_horas_sem_estimativa'])} "
+                      f"{plural(r['semi_horas_sem_estimativa'], 'semi-hora', 'semi-horas')}, "
+                      f"{fmt_int(r['semi_horas_restritas_sem_estimativa'])} delas com a marca de restrição, em que o "
+                      "corte não pôde ser calculado.")
         achados.append(("Energia cortada", texto))
     rec = renovavel.get("recurso") or {}
-    if rec and rec["resumo"]["semi_horas_invalidas"]:
+    if rec and (rec["resumo"]["semi_horas_invalidas"] or rec["resumo"]["semi_horas_implausiveis"]):
         r = rec["resumo"]
-        achados.append(("Recurso × geração", (
-            f"Medição de {rec['grandeza']} marcada como inválida pelo ONS em "
-            f"{fmt_int(r['semi_horas_invalidas'])} das {fmt_int(r['semi_horas'])} semi-horas "
-            f"({fmt_pct(r['pct_invalidas'])}), fora das faixas.")))
+        texto = (f"Medição de {rec['grandeza']} marcada como inválida pelo ONS em "
+                 f"{fmt_int(r['semi_horas_invalidas'])} das {fmt_int(r['semi_horas'])} semi-horas "
+                 f"({fmt_pct(r['pct_invalidas'])}), fora das faixas.")
+        if r["semi_horas_implausiveis"]:
+            texto += (f" Também fora das faixas, sem a marca do ONS: "
+                      f"{fmt_int(r['semi_horas_implausiveis'])} "
+                      f"{plural(r['semi_horas_implausiveis'], 'semi-hora', 'semi-horas')} com {rec['grandeza']} acima de "
+                      f"{fmt_num(rec['limite'], 0)} {rec['unidade']}, acima do limite físico.")
+        achados.append(("Recurso × geração", texto))
     return achados
 
 

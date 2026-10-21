@@ -1,18 +1,18 @@
-# Rascunho gerado por "python -m src perfil" a partir do catálogo de usinas (data/catalogo/, montado em 2026-10-21 12:50:16 UTC).
-# Confira cada valor com a fonte, complete os pendentes e troque situacao para "conferido".
+# Perfil gerado por "python -m src perfil" a partir do catálogo de usinas (data/catalogo/, montado em 2026-10-21 12:50:16 UTC)
+# e completado em 21/10/2026 com o usuário: potência da UFV (50 MW, não a agregação do cadastro) e garantia física da
+# própria UFV, pelo CEG, na base de garantias físicas vigentes da EPE.
 # Identificação só pelos códigos (CEG, id ONS, id do conjunto e códigos de programação), nunca pelo nome.
 
 [usina]
 slug = "seriemas_1"
-nome = "UFV SERIEMAS 1 (SAE)"         # Modalidade das usinas, publicado em 20/10/2026; ajuste para o nome do relatório
-nome_curto = "UFV SERIEMAS 1 (SAE)"   # a conferir
+nome = "UFV Seriemas 1"               # Modalidade das usinas: "UFV SERIEMAS 1 (SAE)", publicado em 20/10/2026
+nome_curto = "Seriemas 1"
 estado = "MS"                         # Modalidade das usinas
 tipo = "UFV"                          # prefixo do CEG
 modalidade = "TIPO II-C"              # Modalidade das usinas
 subsistema = "SE"                     # Capacidade de geração ou Composição dos conjuntos
-inicio_operacao_comercial = 2026      # Capacidade de geração: primeira unidade ativa em 22/08/2026; a conferir
-situacao = "rascunho"
-pendentes = ["parametros.fontes.geral", "parametros.garantia_fisica_mwmed (opcional)"]
+inicio_operacao_comercial = 2026      # Capacidade de geração: primeira unidade ativa em 22/08/2026
+situacao = "conferido"
 
 [identificacao]
 ceg = "UFV.RS.MS.052257-0.01"         # Modalidade das usinas
@@ -68,7 +68,7 @@ ceg = "UFV.RS.MS.052264-3.01"
 inicio = "2026-04-13"
 fim = ""                              # vazio = vigente
 
-[cobertura]                           # catálogo de usinas; a conferir
+[cobertura]                           # catálogo de usinas
 programacao = "conjunto"
 geracao = "conjunto"
 fator_capacidade = "conjunto"
@@ -79,8 +79,10 @@ restricao_razao = "conjunto"
 potencia_instalada_mw = 50.0          # Capacidade de geração: 2 unidades ativas
 unidades_geradoras = 2
 potencias_unidades_mw = [21.43, 28.57]
-# Divergência: potência autorizada no cadastro do ONS = 2,507 MW. Confira com a fonte.
-# garantia_fisica_mwmed =             # pendente: opcional; valor e fonte
+# A potência autorizada no cadastro do ONS (2,507 MW) é uma agregação do complexo Seriemas, segundo o usuário em
+# 21/10/2026; os relatórios são por UFV, com os 50 MW da Capacidade de geração.
+garantia_fisica_mwmed = 16.1          # a da UFV, pelo CEG (cada Seriemas 1 a 8 tem a sua)
 
 [parametros.fontes]
-# geral =                             # pendente: documento e data dos parâmetros
+geral = "ONS, dados abertos: Capacidade de geração e Modalidade das usinas, publicados em 20/10/2026; potência da UFV confirmada pelo usuário em 21/10/2026"
+garantia_fisica = "Portaria nº 3.141, de 16 de junho de 2026 (EPE, Garantias físicas vigentes e futuras, planilha de 07/2026, referência 30/06/2026)"

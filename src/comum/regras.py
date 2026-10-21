@@ -190,10 +190,16 @@ LIMIAR_CONCLUSAO_SEM_PROGRAMACAO_HORAS: int = 24  # C15: horas com geração aci
 # Formosa e aprovados pelo usuário no fim da fase (tarefa T115)
 LIMIAR_CONCLUSAO_ENERGIA_CORTADA_PCT: float = 5.0  # C16: energia cortada, em % da energia estimada
 LIMIAR_CONCLUSAO_RECURSO_INVALIDO_PCT: float = 10.0  # C17: semi-horas com o recurso inválido, em % das semi-horas
-LIMIAR_CONCLUSAO_DESVIO_PROGRAMACAO_PCT: float = 10.0  # C19: desvio médio absoluto, em % da potência instalada
+# C19: desvio médio absoluto, em % da potência instalada; 15 % aprovado pelo usuário em 21/10/2026 (tarefa T115), pois
+# os 10 % iniciais apontavam desvios usuais da previsão de vento (10,4 % na EOL Praia Formosa)
+LIMIAR_CONCLUSAO_DESVIO_PROGRAMACAO_PCT: float = 15.0
 DURACAO_SEMI_HORA_H: float = 0.5  # energia de uma semi-hora: potência média × 0,5 h (decisão R12)
 FAIXA_VENTO_MS: float = 2.0  # largura das faixas de vento (m/s) do recurso × geração (decisão R19)
 FAIXA_IRRADIANCIA_WM2: float = 100.0  # largura das faixas de irradiância (W/m²)
+# Limite físico do recurso (decisão do usuário de 21/10/2026): acima dele, falha de medição não marcada pelo ONS (a EOL
+# Praia Formosa tem semi-horas com vento de até 246 m/s), fora das faixas do recurso × geração e contada
+LIMITE_VENTO_PLAUSIVEL_MS: float = 40.0
+LIMITE_IRRADIANCIA_PLAUSIVEL_WM2: float = 1500.0
 
 # ---------------------------------------------------------------------------
 # Resumo executivo: limites e glossário (iguais para todas as usinas)
@@ -219,4 +225,7 @@ GLOSSARIO_RESUMO: Dict[str, str] = {
     # Térmicas (fase B; rascunho 005): texto aprovado pelo usuário em 20/10/2026 (tarefa T094)
     "CVU": "custo variável unitário da usina térmica, publicado pelo ONS por semana operativa",
     "CMO": "custo marginal de operação do subsistema, calculado pelo ONS por semana operativa",
+    # Eólicas e solares (fase C; rascunho 005): texto aprovado pelo usuário em 21/10/2026 (tarefa T115)
+    "constrained-off": "redução da geração da usina por comando do ONS, por razão externa a ela (indisponibilidade "
+                       "externa, confiabilidade elétrica ou razão energética)",
 }

@@ -1,0 +1,97 @@
+{
+ "etapa": "relatorio",
+ "usina": "praia_formosa",
+ "versao_formato": 1,
+ "iniciada_em": "2026-10-21T13:54:10Z",
+ "concluida_em": "2026-10-21T13:54:18Z",
+ "status": "concluida",
+ "codigo_saida": 0,
+ "etapa_anterior": {
+  "etapa": "analises",
+  "concluida_em": "2026-10-21T13:54:10Z"
+ },
+ "arquivos": [
+  {
+   "nome": "relatorio_analise_estatistica.pdf",
+   "bytes": 1659793,
+   "sha256": "1d46e608cae18b4f5f57fe89087540b148dc44c4511f70aaee06f2d2e187538b"
+  },
+  {
+   "nome": "relatorio_analise_estatistica.md",
+   "bytes": 32953,
+   "sha256": "cbdb70040fa3c8f027379530fd6156c9014089bad421d6344623244730309cf1"
+  },
+  {
+   "nome": "perfil_estatistico_anual.xlsx",
+   "bytes": 166223,
+   "sha256": "16ab449e842d2113813620e825f18e914c6266b8e17848d2946de31f04a43013"
+  },
+  {
+   "nome": "perfil_estatistico_anual.csv",
+   "bytes": 2192,
+   "sha256": "7e4806808611c0c975e70a6002193d95cbdf8710c5ab6af28559c704e056270f"
+  },
+  {
+   "nome": "resumo_executivo.pdf",
+   "bytes": 81999,
+   "sha256": "31d9fa57a37e04f027345377c144355324fc64e6dce045daca612e6414bc4186"
+  },
+  {
+   "nome": "resumo_executivo.md",
+   "bytes": 3906,
+   "sha256": "7447376c524a6a7a6f9a513d68c67f2f50c084599a3b8e5a8f5ec5f7d993a056"
+  },
+  {
+   "nome": "figures/01_serie_temporal_geracao_disponibilidade.png",
+   "bytes": 275164,
+   "sha256": "8bb15f8f084450cea0b28b89c090895ecdb9c20fd916a9bdd75332cddbb347df"
+  },
+  {
+   "nome": "figures/02_geracao_mensal.png",
+   "bytes": 100306,
+   "sha256": "b5f95d7f763d66ea85339b434bde1574db482a9ed2c33c609a4e90d5c0f09579"
+  },
+  {
+   "nome": "figures/03_geracao_por_mes_do_ano.png",
+   "bytes": 80410,
+   "sha256": "5ade107c03822d40f64fd5339d4d918373cdc9f3341c7550270328a031af45b7"
+  },
+  {
+   "nome": "figures/04_perfil_horario_geracao.png",
+   "bytes": 110400,
+   "sha256": "02d8ea5dc2dae565375ef1272853c4d03b180499cfe3bc54af8763cbc4920bea"
+  },
+  {
+   "nome": "figures/10_fator_capacidade_mensal.png",
+   "bytes": 378047,
+   "sha256": "d6637637674f745dfb8198422b8fbdfb08b700d4c314705a67e2870745013584"
+  },
+  {
+   "nome": "figures/11_energia_cortada_por_razao_mensal.png",
+   "bytes": 84642,
+   "sha256": "898432ee5a55b02cb6188761ea632a09698e82333a29bbc70288aed91cdd8872"
+  },
+  {
+   "nome": "figures/12_geracao_por_faixa_de_recurso.png",
+   "bytes": 137198,
+   "sha256": "5b487124e14eb5461133365906722f4153bb83199f63799115bf4f04ca98f682"
+  },
+  {
+   "nome": "figures/13_desvio_programacao_mensal.png",
+   "bytes": 103185,
+   "sha256": "67fe952f474841635c46a1111cd96cf1aa3eabf57cc9d2f6e4f081acf6e7503e"
+  }
+ ],
+ "resumo": {
+  "data_geracao": "21/10/2026 10:00",
+  "secoes": 12,
+  "paginas_pdf": 19,
+  "figuras": 8,
+  "abas_planilha": 29,
+  "resumo_executivo": {
+   "paginas": 2,
+   "evolucao_anual": true,
+   "palavras": 343
+  }
+ }
+}

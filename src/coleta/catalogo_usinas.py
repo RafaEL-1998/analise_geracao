@@ -539,7 +539,7 @@ def _programacao(leituras: Leituras, cadastro: pd.DataFrame, conjuntos_ids: Sequ
     if "programacao" not in leituras.series:
         return pd.DataFrame(columns=COLUNAS_PROGRAMACAO)
     arquivo, _, tabela = leituras.series["programacao"]
-    # o id sem os espaços das pontas, como na linha da usina (o ONS publica, por exemplo, "CEUFM ")
+    # o id sem os espaços das pontas, como na linha da usina (o cadastro do ONS traz ids com espaço no fim)
     ids_usina = {normalizar_texto(i): str(i).strip() for i in cadastro["id_ons"] if str(i).strip()}
     ids_conjunto = {normalizar_texto(c)[len(PREFIXO_CONJUNTO):]: str(c).strip() for c in conjuntos_ids
                     if normalizar_texto(c).startswith(PREFIXO_CONJUNTO)}

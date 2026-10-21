@@ -307,6 +307,7 @@ def test_eol_com_vento_invalido_corte_por_razao_e_regras(execucoes) -> None:
     analises = _manifesto(e, "analises")
     assert {"C16", "C17", "C19"} <= set(analises["regras_da_conclusao"]) and "C18" in analises["omitidos"]
     assert "### Maiores desvios entre a geração verificada e a programada" in md
+    assert "4 semi-horas com vento acima de 40 m/s, acima do limite físico" in md  # sem a marca do ONS
     assert (e["relatorio"] / "figures" / "13_desvio_programacao_mensal.png").exists()
     nao_aplicaveis = pd.read_csv(e["dados"] / "conferencia" / "nao_aplicaveis.csv", sep=";", dtype=str,
                                  keep_default_na=False).set_index("conferencia")
@@ -319,6 +320,11 @@ def test_ufv_em_conjunto_com_a_restricao_como_referencia(execucoes) -> None:
     assert "Série de referência: Restrição com detalhe (id ONS GOUFFI; CEG UFV.RS.GO.000107-0.01)" in md
     tratamento = _manifesto(e, "tratamento")
     assert tratamento["restricao_detalhe"]["semi_horas_sem_marca"] == 336  # janeiro, no esquema antigo
+    # estimada 0 com a usina gerando: estimativa ausente; nas duas restritas, o corte não é calculado
+    assert (tratamento["restricao_detalhe"]["semi_horas_estimada_ausente"],
+            tratamento["restricao_detalhe"]["semi_horas_restritas_sem_estimativa"]) == (6, 2)
+    assert tratamento["restricao_detalhe"]["energia_cortada_mwh"] == 70.0  # 28 semi-horas × 5 MW × 0,5 h
+    assert "Sem a estimativa do ONS (estimada 0 com a usina gerando) em 6 semi-horas, 2 delas" in md
     assert tratamento["membros_restricao"] == {bf.MEMBRO_UFV["id_ons"]: 864}
     auditoria = pd.read_csv(e["dados"] / "coleta" / "auditoria_restricao_detalhe.csv", sep=";", dtype=str,
                             keep_default_na=False)

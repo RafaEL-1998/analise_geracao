@@ -91,7 +91,8 @@ def test_energia_cortada_so_nas_semi_horas_restritas() -> None:
     assert s.loc["2024-02-01 00:00", "cod_razaorestricao"] == "REL" and s.loc["2024-02-01 00:00", "nivel_razao"] == "conjunto"
     assert s.loc["2024-02-01 01:00", "cod_razaorestricao"] == ""
     assert r.resumo == {"semi_horas": 5, "horas": 2, "horas_ausentes": 1, "semi_horas_restritas": 3,
-                        "semi_horas_sem_marca": 1, "semi_horas_recurso_invalido": 1, "energia_cortada_mwh": 10.0,
+                        "semi_horas_sem_marca": 1, "semi_horas_recurso_invalido": 1, "semi_horas_estimada_ausente": 0,
+                        "semi_horas_restritas_sem_estimativa": 0, "energia_cortada_mwh": 10.0,
                         "duplicatas_conflitantes": 1}
     assert r.auditoria.set_index("arquivo")[["horas_usina", "duplicatas_conflitantes"]].to_dict("index") == {
         A: {"horas_usina": 5, "duplicatas_conflitantes": 1}, B: {"horas_usina": 1, "duplicatas_conflitantes": 0}}
@@ -176,3 +177,23 @@ def test_gravacao_e_leitura(tmp_path) -> None:
     assert len(lido["restricao_horaria"]) == 2 and len(lido["restricao_razao_semi_horaria"]) == 3
     assert lido["restricao_ausencias"].loc[0, "inicio"] == pd.Timestamp("2024-02-01 02:00")
     assert lido["fator_capacidade_horario"] is None and lido["restricao_membros_horaria"] is None
+
+
+def test_estimada_zero_com_a_usina_gerando_e_estimativa_ausente() -> None:
+    """Decisão do usuário de 21/10/2026: estimada 0 com geração verificada acima de 1 MW é estimativa que o ONS não
+    calculou; na semi-hora restrita, o corte não é calculado; à noite (verificada até 1 MW), o zero vale."""
+    extraido = pd.DataFrame([
+        _semi("2024-02-01 10:00", 16.0, 0.0, 9.0, 0, 1),  # restrita sem estimativa: corte não calculável
+        _semi("2024-02-01 10:30", 16.0, 26.0, 9.0, 0, 1),  # restrita com estimativa: (26 − 16) × 0,5 = 5 MWh
+        _semi("2024-02-01 11:00", 12.0, 0.0, 9.0, 0, 0),  # sem estimativa, fora da restrição
+        _semi("2024-02-01 11:30", 0.5, 0.0, 2.0, 0, 0),  # usina parada: o zero da estimada vale
+    ])
+    r = montar_restricao(extraido, _auditoria(A), "EOL", INICIO, pd.Timestamp("2024-02-01 11:30"))
+    s = r.semi_horaria
+    assert s["sinal_estimada_ausente"].tolist() == [True, False, True, False]
+    assert pd.isna(s.loc[0, "energia_cortada_mwh"]) and s["energia_cortada_mwh"].tolist()[1:] == [5.0, 0.0, 0.0]
+    assert (r.resumo["semi_horas_estimada_ausente"], r.resumo["semi_horas_restritas_sem_estimativa"]) == (2, 1)
+    assert r.resumo["energia_cortada_mwh"] == 5.0
+    h = r.horaria.set_index("din_instante")
+    assert h.loc["2024-02-01 10:00", "val_geracaoestimada"] == 26.0  # a meia-hora sem estimativa fica fora da média
+    assert h.loc["2024-02-01 11:00", "val_geracaoestimada"] == 0.0 and h.loc["2024-02-01 11:00", "semi_horas_estimada_ausente"] == 1
