@@ -63,9 +63,10 @@ Calculado neste relatório a partir de: Restrição com detalhe (constrained-off
 6. [Fator de capacidade](#6-fator-de-capacidade)
 7. [Energia cortada por restrição de operação (constrained-off)](#7-energia-cortada-por-restrição-de-operação-constrained-off)
 8. [Recurso × geração](#8-recurso--geração)
-9. [Qualidade dos dados](#9-qualidade-dos-dados)
-10. [Conclusão](#10-conclusão)
-11. [Notas metodológicas e limitações](#11-notas-metodológicas-e-limitações)
+9. [Programação diária × geração verificada](#9-programação-diária--geração-verificada)
+10. [Qualidade dos dados](#10-qualidade-dos-dados)
+11. [Conclusão](#11-conclusão)
+12. [Notas metodológicas e limitações](#12-notas-metodológicas-e-limitações)
 
 ## 1. Fonte e cobertura dos dados
 
@@ -239,7 +240,68 @@ Geração verificada e estimada médias por faixa de irradiância (W/m²), sem a
 Calculado neste relatório a partir de: Restrição com detalhe (constrained-off) (id ONS MSSRI1; CEG UFV.RS.MS.052257-0.01), obtido em 21/10/2026. Conferência: geração conferida entre as fontes, duas a duas e no mesmo nível (G1): 4.248 de 4.248 horas coincidentes (100,0%) em 3 pares de fontes, detalhados na aba CONF_G1_PARES. Sem outra fonte para conferir: vento ou irradiância.
 
 
-## 9. Qualidade dos dados
+## 9. Programação diária × geração verificada
+
+**Programação diária do ONS.** Nas 1.296 horas com programação e geração verificada do conjunto Conj. Inocência 230 kV, geração verificada média de 69,6 MW e programada de 40,8 MW (desvio médio absoluto de 43,9 MW; correlação de 0,63); 4 horas com geração até 1 MW e programação acima de 5 MW.
+
+Programação diária do ONS (conjunto) × geração verificada, de 27/08/2026 a 19/10/2026: 1.296 horas comuns; correlação de 0,63; 0 dias sem arquivo de programação.
+
+### Geração programada × verificada por mês
+
+| Mês | Horas comuns | Verificada (MW) | Programada (MW) | Desvio médio (MW) | Desvio absoluto (MW) | Horas parada c/ programação |
+| --- | --- | --- | --- | --- | --- | --- |
+| ago/2026 | 120 | 82,2 | 0,0 | 82,2 | 82,2 | 0 |
+| set/2026 | 720 | 68,7 | 42,3 | 26,5 | 39,5 | 1 |
+| out/2026 | 456 | 67,7 | 49,1 | 18,5 | 40,8 | 3 |
+
+Horas comuns às duas fontes, no mesmo nível. Desvio = verificada − programada; horas parada c/ programação = geração até 1 MW com programação acima de 5 MW.
+
+Calculado neste relatório a partir de: Programação diária (conjunto de usinas, MS4FINO), obtido em 20/10/2026; Geração por usina (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026. Conferência: programação diária conferida com o programado do Fator de capacidade (G5): 1.104 de 1.104 horas coincidentes (100,0%), 192 horas só numa das fontes. Sem outra fonte para conferir: geração.
+
+### Horas consecutivas com geração até 1 MW e programação acima de 5 MW
+
+| Início | Fim | Duração (h) | Programação média (MW) |
+| --- | --- | --- | --- |
+| 09/10/2026 16h | 09/10/2026 17h | 2 | 183,2 |
+| 30/09/2026 06h | 30/09/2026 06h | 1 | 8,0 |
+| 13/10/2026 17h | 13/10/2026 17h | 1 | 67,5 |
+
+Até 15 eventos, os mais longos; a lista completa está na planilha.
+
+Calculado neste relatório a partir de: Programação diária (conjunto de usinas, MS4FINO), obtido em 20/10/2026; Geração por usina (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026. Conferência: programação diária conferida com o programado do Fator de capacidade (G5): 1.104 de 1.104 horas coincidentes (100,0%), 192 horas só numa das fontes. Sem outra fonte para conferir: geração.
+
+### Maiores desvios entre a geração verificada e a programada
+
+| Hora | Programada (MW) | Verificada (MW) | Desvio (MW) |
+| --- | --- | --- | --- |
+| 02/09/2026 14h | 0,0 | 391,3 | 391,3 |
+| 02/09/2026 15h | 0,0 | 388,6 | 388,6 |
+| 03/09/2026 15h | 0,0 | 386,3 | 386,3 |
+| 02/09/2026 08h | 0,0 | 377,8 | 377,8 |
+| 02/09/2026 10h | 0,0 | 376,3 | 376,3 |
+| 02/09/2026 11h | 0,0 | 375,0 | 375,0 |
+| 28/08/2026 14h | 0,0 | 365,0 | 365,0 |
+| 27/08/2026 11h | 0,0 | 352,7 | 352,7 |
+| 27/08/2026 10h | 0,0 | 350,0 | 350,0 |
+| 28/08/2026 15h | 0,0 | 350,0 | 350,0 |
+| 29/08/2026 09h | 0,0 | 348,1 | 348,1 |
+| 29/08/2026 10h | 0,0 | 347,9 | 347,9 |
+| 27/08/2026 12h | 0,0 | 346,8 | 346,8 |
+| 27/08/2026 09h | 0,0 | 344,1 | 344,1 |
+| 03/09/2026 16h | 0,0 | 338,4 | 338,4 |
+
+Até 15 horas, as de maior desvio absoluto, no nível da programação; a lista completa está na planilha.
+
+Fonte dos dados: Programação diária (conjunto de usinas, MS4FINO), obtido em 20/10/2026; Geração por usina (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026. Conferência: programação diária conferida com o programado do Fator de capacidade (G5): 1.104 de 1.104 horas coincidentes (100,0%), 192 horas só numa das fontes.
+
+![Programação diária × geração verificada](figures/13_desvio_programacao_mensal.png)
+
+Desvio médio e desvio médio absoluto mensais entre a geração verificada e a programada (MW), nas horas comuns às duas, no nível da programação.
+
+Calculado neste relatório a partir de: Programação diária (conjunto de usinas, MS4FINO), obtido em 20/10/2026; Geração por usina (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026. Conferência: programação diária conferida com o programado do Fator de capacidade (G5): 1.104 de 1.104 horas coincidentes (100,0%), 192 horas só numa das fontes.
+
+
+## 10. Qualidade dos dados
 
 **Qualidade dos dados.** Nenhuma hora sinalizada na base horária.
 
@@ -252,7 +314,7 @@ Nenhuma hora sinalizada.
 Nenhuma hora ausente.
 
 
-## 10. Conclusão
+## 11. Conclusão
 
 Indícios a confirmar, gerados pelas regras descritas nas notas metodológicas a partir dos resultados das seções indicadas; não afirmam causa nem avaliam o desempenho da usina.
 
@@ -265,7 +327,7 @@ Indícios a confirmar, gerados pelas regras descritas nas notas metodológicas a
 - Medição de irradiância marcada como inválida pelo ONS em 564 das 2.832 semi-horas da usina (19,9%) (seção 8).
 
 
-## 11. Notas metodológicas e limitações
+## 12. Notas metodológicas e limitações
 
 - Fonte: Portal de Dados Abertos do ONS. Série de referência: Restrição com detalhe (id ONS MSSRI1; CEG UFV.RS.MS.052257-0.01), varrida em todos os arquivos publicados; o período vai da primeira à última hora com valor. Os dados passam por consistência recorrente e podem ser revisados pelo ONS após a publicação.
 - Base horária comum: uma linha por hora da série de referência, com a disponibilidade e a programação do ONS na mesma hora, quando há. Os horários são os publicados pelo ONS (hora de início do intervalo).
@@ -281,7 +343,6 @@ Indícios a confirmar, gerados pelas regras descritas nas notas metodológicas a
 | --- | --- |
 | Sazonalidade (distribuição por mês do ano) | a série do nível usina tem menos de 12 meses distintos (3) |
 | Composição e geração do conjunto | seção ainda não gerada pelo pipeline; a composição por trecho está na Fonte e cobertura dos dados |
-| Programação diária × geração verificada | sem horas com a programação e a geração verificada no mesmo nível |
 | Conferência da geração entre fontes | seção ainda não gerada pelo pipeline; os resultados da G1, da G2 e da G5, quando aplicáveis, estão nas legendas de fonte das seções de eólica e solar e nas abas CONF_G1, CONF_G2 e CONF_G5 da planilha |
 | C18 | sem o Fator de capacidade no nível da usina |
 | C19 | sem a Programação diária no nível da usina |

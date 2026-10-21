@@ -317,7 +317,7 @@ Programação diária do ONS (usina) × geração verificada, de 01/10/2024 a 19
 
 Horas comuns às duas fontes, no mesmo nível. Desvio = verificada − programada; horas parada c/ programação = geração até 1 MW com programação acima de 5 MW.
 
-Calculado neste relatório a partir de: Programação diária (CEUFM), obtido em 20/10/2026; Geração por usina (id ONS CEUFM), obtido em 21/10/2026. Sem outra fonte para conferir: programação diária, geração.
+Calculado neste relatório a partir de: Programação diária (CEUFM), obtido em 20/10/2026; Geração por usina (id ONS CEUFM), obtido em 21/10/2026. Conferência: programação diária conferida com o programado do Fator de capacidade (G5): 16.527 de 17.496 horas coincidentes (94,5%), 969 divergências, listadas na aba CONF_G5_DIVERGENCIAS. Sem outra fonte para conferir: geração.
 
 ### Horas consecutivas com geração até 1 MW e programação acima de 5 MW
 
@@ -341,7 +341,7 @@ Calculado neste relatório a partir de: Programação diária (CEUFM), obtido em
 
 Até 15 eventos, os mais longos; a lista completa está na planilha.
 
-Calculado neste relatório a partir de: Programação diária (CEUFM), obtido em 20/10/2026; Geração por usina (id ONS CEUFM), obtido em 21/10/2026. Sem outra fonte para conferir: programação diária, geração.
+Calculado neste relatório a partir de: Programação diária (CEUFM), obtido em 20/10/2026; Geração por usina (id ONS CEUFM), obtido em 21/10/2026. Conferência: programação diária conferida com o programado do Fator de capacidade (G5): 16.527 de 17.496 horas coincidentes (94,5%), 969 divergências, listadas na aba CONF_G5_DIVERGENCIAS. Sem outra fonte para conferir: geração.
 
 ### Maiores desvios entre a geração verificada e a programada
 

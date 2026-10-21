@@ -125,7 +125,13 @@ def catalogo_do_conjunto(cid: str) -> str:
 
 
 def _resolver(cid: str) -> str:
-    """``referencia``: a série de referência da usina ativa (Geração por usina ou restrição com detalhe)."""
+    """``referencia``: a série de referência da usina ativa (Geração por usina ou restrição com detalhe);
+    ``geracao_programacao``: a geração comparada com a programação, a Geração por usina do conjunto quando a programação é
+    do conjunto e a referência é a restrição com detalhe da usina (T157)."""
+    if cid == "geracao_programacao":
+        if referencia_restricao() and registro.nivel_coletado(perfil_ativo(), "programacao") == "conjunto":
+            return "geracao"
+        cid = "referencia"
     if cid != "referencia":
         return cid
     return "restricao_detalhe" if referencia_restricao() else "geracao"
@@ -518,8 +524,10 @@ MAPA_FONTES: Dict[str, Entrada] = {
                                           calculado=True),
     "tab_eventos_indisponibilidade_comum": _e(["disponibilidade", "referencia"], calculado=True),
     "tab_ons_disp_anual_comum": _e(["disponibilidade", "dispf_mensal"], ["dispf_horas"], calculado=True),
-    "tab_programacao_mensal_comum": _e(["programacao", "referencia"], (), [PROGRAMACAO, GERACAO], calculado=True),
-    "tab_programacao_eventos_comum": _e(["programacao", "referencia"], (), [PROGRAMACAO, GERACAO], calculado=True),
+    "tab_programacao_mensal_comum": _e(["programacao", "geracao_programacao"], ["programacao_renovaveis"],
+                                       [PROGRAMACAO, GERACAO], calculado=True),
+    "tab_programacao_eventos_comum": _e(["programacao", "geracao_programacao"], ["programacao_renovaveis"],
+                                        [PROGRAMACAO, GERACAO], calculado=True),
     "tab_sinalizacoes": _e(["referencia", "disponibilidade"], calculado=True),
     "tab_ausencias": _e(["referencia"]),
     "tab_omitidos": _e(["projeto"], calculado=True),
@@ -547,13 +555,13 @@ MAPA_FONTES: Dict[str, Entrada] = {
     "tab_corte_anual": _e(["restricao_detalhe"], ["geracao_fontes", "soma_conjunto"], [ESTIMADA], calculado=True),
     "tab_corte_razao": _e(["restricao_detalhe", "restricao_razao"], ["geracao_fontes"], [ESTIMADA], calculado=True),
     "tab_recurso_faixas": _e(["restricao_detalhe"], ["geracao_fontes"], [RECURSO], calculado=True),
-    "tab_desvios_programacao_renovavel": _e(["programacao", "referencia"], ["programacao_renovaveis"]),
+    "tab_desvios_programacao_renovavel": _e(["programacao", "geracao_programacao"], ["programacao_renovaveis"]),
     "fc_mensal": _e(["fator_capacidade", "referencia", "projeto"], ["geracao_fontes", "programacao_renovaveis"],
                     calculado=True),
     "corte_razao_mensal": _e(["restricao_detalhe", "restricao_razao"], ["geracao_fontes"], [ESTIMADA],
                              calculado=True),
     "recurso_geracao": _e(["restricao_detalhe"], ["geracao_fontes"], [RECURSO], calculado=True),
-    "desvio_programacao": _e(["programacao", "referencia"], ["programacao_renovaveis"], calculado=True),
+    "desvio_programacao": _e(["programacao", "geracao_programacao"], ["programacao_renovaveis"], calculado=True),
 }
 
 
@@ -792,6 +800,14 @@ def _textos_entrada(res: Any, entrada: Entrada) -> Tuple[List[str], List[str]]:
     return [texto_conjunto(res, c) for c in conjuntos], [texto_conferencia(res, c) for c in conferencias]
 
 
+def _sem_outra_fonte(res: Any, entrada: Entrada) -> List[str]:
+    """Dados sem outra fonte conferida; a programação diária sai quando a G5 a conferiu nesta execução (eólicas e
+    solares)."""
+    conferidos = {PROGRAMACAO} if ("programacao_renovaveis" in entrada.conferencias
+                                   and conferencia_feita(res, "programacao_renovaveis")) else set()
+    return [d for d in entrada.sem_outra_fonte if d not in conferidos]
+
+
 def _entrada(chave: str) -> Optional[Entrada]:
     entrada = MAPA_FONTES.get(chave)
     if entrada is None:
@@ -809,8 +825,9 @@ def legenda_fonte(res: Any, chave: str) -> str:
     partes = [f"{prefixo} {'; '.join(conjuntos)}."]
     if conferencias:
         partes.append(f"Conferência: {'; '.join(conferencias)}.")
-    if entrada.sem_outra_fonte:
-        partes.append(f"Sem outra fonte para conferir: {', '.join(entrada.sem_outra_fonte)}.")
+    sem_outra = _sem_outra_fonte(res, entrada)
+    if sem_outra:
+        partes.append(f"Sem outra fonte para conferir: {', '.join(sem_outra)}.")
     return " ".join(partes)
 
 
@@ -852,7 +869,7 @@ def tabela_fontes_abas(res: Any, abas: Sequence[str]) -> pd.DataFrame:
             continue
         conjuntos, conferencias = _textos_entrada(res, entrada)
         linhas.append([aba, "; ".join(conjuntos), "; ".join(conferencias) or "—",
-                       ", ".join(entrada.sem_outra_fonte) or "—", "sim" if entrada.calculado else "não"])
+                       ", ".join(_sem_outra_fonte(res, entrada)) or "—", "sim" if entrada.calculado else "não"])
     return pd.DataFrame(linhas, columns=COLUNAS_FONTES)
 
 

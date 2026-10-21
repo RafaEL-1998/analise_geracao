@@ -627,10 +627,10 @@ python -m pytest tests -q -p no:cacheprovider
   - na Praia Formosa: energia cortada da ordem de 181 GWh contra cerca de 350 GWh de diferença bruta, vento inválido contado, G1 e G5.
   - Tempo de até 15 minutos cada. Registrar.
 - [X] T114 [US3] Conferir os dois relatórios piloto pelo quickstart 8 (SC-004, SC-007): `reports/seriemas_1/relatorio_analise_estatistica.md` e `reports/praia_formosa/relatorio_analise_estatistica.md`. Registrar.
-- [ ] T115 [US3] Calibrar com as pilotos os limiares de C16 a C19 e levar ao usuário os dois relatórios e os limiares.
+- [X] T115 [US3] Calibrar com as pilotos os limiares de C16 a C19 e levar ao usuário os dois relatórios e os limiares.
   - Depois da aprovação, `python -m src referencia` de cada uma; pedir o commit ao usuário.
   - Registrar.
-- [ ] T116 [US3] Portão do fim da fase C: suíte; `pyflakes`; `/speckit-converge`; `comparar --todas --coleta` com código 0, com quatro referências. Registrar.
+- [X] T116 [US3] Portão do fim da fase C: suíte; `pyflakes`; `/speckit-converge`; `comparar --todas --coleta` com código 0, com quatro referências. Registrar.
 
 **Checkpoint**: eólicas e solares com relatório completo e granularidade declarada; quatro referências protegidas.
 
@@ -1283,3 +1283,27 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 - **Decisões da T115 (21/10/2026)**: (1) limite físico do recurso: vento acima de 40 m/s e irradiância acima de 1.500 W/m² ficam fora das faixas e são contados (a Praia Formosa tem 111 semi-horas com vento de até 246 m/s, em mar e abr/2024, sem a marca do ONS); (2) limiares: C16 em 5 %, C17 em 10 % e C18 como propostos; C19 sobe para 15 % da potência (a Praia Formosa, com 10,4 %, deixa de ter o item); (3) glossário: "constrained-off: redução da geração da usina por comando do ONS, por razão externa a ela (indisponibilidade externa, confiabilidade elétrica ou razão energética)". Constantes em `regras.py`, rascunhos 004 e 005 ajustados, testes novos (estimativa ausente, limite físico) e as fictícias com os dois casos.
 - **T114**: nas duas pilotos, nenhum termo de parecer ("satisfat", "cumpre") e nenhum identificador das outras pilotos no relatório e no resumo; nenhum "nan"; todo número do conjunto identificado nas legendas ("conjunto de usinas, id ONS CJU_MS4FINO"). Seriemas 1: 11 seções, 15 páginas, resumo de 1 página; Praia Formosa: 12 seções, 20 páginas, resumo de 2 páginas.
 - Portão intermediário: suíte com 775 aprovados antes das decisões da T115 e os testes afetados verdes depois delas; `comparar --todas --coleta`: relatórios das duas referências sem diferença; na Coleta, a São Domingos com as quatro diferenças já aceitas e, agora, também a William Arjona com diferenças de dados publicados pelo ONS depois do congelamento (geração, disponibilidade e despacho republicados em 20/10/2026 e um dia a mais, 19/10/2026, baixados pelas pilotos), a levar ao usuário.
+
+### 21/10/2026 — T115 (calibração, aprovação e referências da fase C)
+
+- Limiares calibrados nas pilotos e aprovados pelo usuário (decisões registradas na T113/T114): C16 em 5 %, C17 em 10 %, C18 como proposta e C19 em 15 %; limite físico do recurso (40 m/s; 1.500 W/m²); glossário com "constrained-off".
+- Relatórios e resumos da Seriemas 1 e da Praia Formosa aprovados pelo usuário em 21/10/2026 ("estão excelentes"), gerados com `--data-geracao "21/10/2026 10:00"`.
+- Referências registradas com `python -m src referencia --usina <slug> --data-geracao "21/10/2026 10:00" --aprovado-em "21/10/2026"`: `relatorios_referencia/seriemas_1/` e `relatorios_referencia/praia_formosa/`, código 0 nas duas. Ainda sem commit: pedido ao usuário no fim do portão (T116).
+
+## Phase 11: Convergence
+
+- [X] T157 Comparar a Programação diária com a geração verificada no nível do conjunto quando as duas estão nele e a série de referência é a restrição com detalhe da usina (UFV ou EOL em conjunto, como a Seriemas 1): desvio médio e maiores desvios do conjunto, identificados como do conjunto, na seção de programação, sem entrar na base horária da usina e sem a C19 (só com a programação da usina), per US3/AC4 e FR-021 (partial)
+- [ ] T158 Registrar na incorporação (fase F), junto com a T153 e a T156, os desvios aprovados na fase C: as figuras e a capa das renováveis em `src/relatorio/figuras_comum.py` e `src/relatorio/comum.py`; a estimativa ausente (`sinal_estimada_ausente`) no data-model 6.2 e o limite físico do recurso no FR-017 (decisões do usuário de 21/10/2026); a restrição da EOL fictícia desde 15/01/2024 na T104, per plan.md, data-model 6.2 e FR-017 (contradicts)
+
+### 21/10/2026 — T116 em curso: convergência da fase C e T157
+
+- **Portão (primeira passada)**: suíte com 776 aprovados; pyflakes sem aviso; `comparar --todas --coleta` com quatro referências: seriemas_1 e praia_formosa sem nenhuma diferença; sao_domingos com as quatro diferenças da Coleta já aceitas; william_arjona com diferenças só da Coleta, de dados publicados pelo ONS depois do congelamento (republicação de 20/10/2026 e o dia 19/10/2026); relatórios das duas idênticos.
+- **`/speckit-converge` (fase C)**: 2 achados, acrescentados na Phase 11: T157 (HIGH, partial: US3/AC4, a aderência à programação no nível do conjunto) e T158 (LOW: desvios da fase C a registrar na incorporação, com a T153 e a T156). Nenhuma violação da constituição. O usuário pediu para executar as tarefas.
+- **T157**: com a série de referência na restrição com detalhe da usina e a programação e a Geração por usina no nível do conjunto, as Análises comparam a programação com a geração do conjunto numa base à parte (`base_programacao_conjunto` em `src/analises/comum_tipos.py`), fora da base horária da usina; a seção "Programação diária × geração verificada" e os maiores desvios aparecem identificados como do conjunto, e a C19 continua só com a programação da usina. Nas legendas, o apelido `geracao_programacao` cita a Geração por usina do conjunto nesse caso. Junto, a programação conferida pela G5 deixou de constar como "sem outra fonte" nas tabelas comuns de programação das eólicas e solares (`_sem_outra_fonte` em `src/relatorio/fontes.py`). Testes: unitário da base do conjunto e asserções na UFV fictícia.
+- Efeito nas pilotos (regeradas com `--sem-portal --data-geracao "21/10/2026 10:00"`): a Seriemas 1 ganha a seção 9 (1.296 horas de 27/08 a 19/10/2026; programação do conjunto de 0 MW de 27 a 31/08 com 82 MW gerados em média), a figura 13 e as abas PROG_* e REN_DESVIOS_PROGRAMACAO, e o resumo passa de 15 para 17 páginas do relatório citado; a Praia Formosa muda só as legendas das duas tabelas comuns de programação (e as linhas da aba FONTES). As referências das duas, registradas antes da T157 e ainda sem commit, precisam da aprovação do usuário para serem refeitas. São Domingos e William Arjona sem diferença no relatório.
+
+### 21/10/2026 — T116 (portão do fim da fase C)
+
+- O usuário aprovou as mudanças da T157 nos dois relatórios piloto. As duas referências, ainda sem commit, foram removidas e registradas de novo com `python -m src referencia --usina <slug> --data-geracao "21/10/2026 10:00" --aprovado-em "21/10/2026"`, iguais aos relatórios atuais.
+- Portão final: suíte com 777 aprovados; pyflakes sem aviso; `/speckit-converge` feito (Phase 11: T157 concluída, T158 para a fase F); `comparar --todas --coleta` com quatro referências: seriemas_1 e praia_formosa sem nenhuma diferença; relatórios da sao_domingos e da william_arjona idênticos; na Coleta, a sao_domingos com as quatro diferenças já aceitas (republicação do ONS de 19/10/2026) e a william_arjona com as diferenças de dados publicados depois do congelamento dela (republicação de 20/10/2026 e o dia 19/10/2026), propostas ao usuário para o mesmo tratamento. Código 6 só por essas diferenças da Coleta.
+- Fase C fechada no código; falta o commit do usuário (código, testes, rascunhos, perfis e as duas referências novas).

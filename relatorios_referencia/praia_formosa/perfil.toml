@@ -1,0 +1,35 @@
+# Perfil gerado por "python -m src perfil" a partir do catálogo de usinas (data/catalogo/, montado em 2026-10-21 12:55:39 UTC)
+# e completado em 21/10/2026 com o usuário. Sem garantia física: a usina não consta da base de garantias físicas
+# vigentes da EPE (referência 30/06/2026), que não traz as parcelas do PROINFA; sem ela, a regra C18 não é avaliada.
+# Identificação só pelos códigos (CEG, id ONS e códigos de programação), nunca pelo nome.
+
+[usina]
+slug = "praia_formosa"
+nome = "EOL Praia Formosa"            # Modalidade das usinas: "EOL PRAIA FORMOSA", publicado em 20/10/2026
+nome_curto = "Praia Formosa"
+estado = "CE"                         # Modalidade das usinas
+tipo = "EOL"                          # prefixo do CEG
+modalidade = "TIPO I"                 # Modalidade das usinas
+subsistema = "NE"                     # Capacidade de geração ou Composição dos conjuntos
+inicio_operacao_comercial = 2009      # Capacidade de geração: primeira unidade ativa em 26/08/2009
+situacao = "conferido"
+
+[identificacao]
+ceg = "EOL.CV.CE.028631-1.01"         # Modalidade das usinas
+id_ons = "CEUFM"                      # Modalidade das usinas
+codigos_programacao = ["CEUFM"]       # Programação diária, publicado em 20/10/2026
+
+[cobertura]                           # catálogo de usinas
+programacao = "proprio"
+geracao = "proprio"
+fator_capacidade = "proprio"
+restricao_detalhe = "proprio"
+restricao_razao = "proprio"
+
+[parametros]
+potencia_instalada_mw = 105.0         # Capacidade de geração: 6 unidades ativas
+unidades_geradoras = 6
+potencias_unidades_mw = [16.8, 16.8, 16.8, 21.0, 16.8, 16.8]
+
+[parametros.fontes]
+geral = "ONS, dados abertos: Capacidade de geração e Modalidade das usinas, publicados em 20/10/2026; conferidos pelo usuário em 21/10/2026"

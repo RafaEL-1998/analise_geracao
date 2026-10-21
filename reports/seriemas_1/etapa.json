@@ -2,29 +2,29 @@
  "etapa": "relatorio",
  "usina": "seriemas_1",
  "versao_formato": 1,
- "iniciada_em": "2026-10-21T13:52:43Z",
- "concluida_em": "2026-10-21T13:52:48Z",
+ "iniciada_em": "2026-10-21T15:58:32Z",
+ "concluida_em": "2026-10-21T15:58:37Z",
  "status": "concluida",
  "codigo_saida": 0,
  "etapa_anterior": {
   "etapa": "analises",
-  "concluida_em": "2026-10-21T13:52:43Z"
+  "concluida_em": "2026-10-21T15:58:32Z"
  },
  "arquivos": [
   {
    "nome": "relatorio_analise_estatistica.pdf",
-   "bytes": 798953,
-   "sha256": "a77f27d83b7a5f71b373fa6b0f68cdd76154064a2c2a4d18d03db8b1f27b963c"
+   "bytes": 895955,
+   "sha256": "d14574eaafa89aea4360db7e2e89a546ccd43919d5bcf54167afd8e161fe78d6"
   },
   {
    "nome": "relatorio_analise_estatistica.md",
-   "bytes": 26142,
-   "sha256": "cb1c330bb67e5ce39f697986ae10e9a6e8d72ba270b4a8716dc9905271d2ee6f"
+   "bytes": 30301,
+   "sha256": "de71781c7192a919bbe23551a1b7d0f30f4b7079908d5fcc68d216ffa8a4f8a5"
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
-   "bytes": 32939,
-   "sha256": "b7e8cbcae5c38ac4186682eb8617d8670f44fc08b25a5dc3206b4b87664460b3"
+   "bytes": 35758,
+   "sha256": "91bb2cf3e282743bbae454a42b2e6c2a1d571efc77f4529ba572cc7f301953fc"
   },
   {
    "nome": "perfil_estatistico_anual.csv",
@@ -34,12 +34,12 @@
   {
    "nome": "resumo_executivo.pdf",
    "bytes": 79845,
-   "sha256": "97ce54ac0ecd39d4a8826465ed157e0ca3721c41d32fd30673ae2a658560f4b8"
+   "sha256": "19949ba7938a4b346c9bbe1c83886f32a81cffd427f0c710186693e234865333"
   },
   {
    "nome": "resumo_executivo.md",
    "bytes": 3221,
-   "sha256": "69cf1cffb03786c853fe66f17394639657c0531631055f14d8fbe42d09e2ff4c"
+   "sha256": "9bc23d40ebdc7f230ebb57aef39ac006a263d6c082f882118e55e49df6c3f336"
   },
   {
    "nome": "figures/01_serie_temporal_geracao_disponibilidade.png",
@@ -70,14 +70,19 @@
    "nome": "figures/12_geracao_por_faixa_de_recurso.png",
    "bytes": 136638,
    "sha256": "3bb9d0c86341fd2d1f3709eb03b1c88567772f3ecf44e5e2cb2b4f2e79f64f9c"
+  },
+  {
+   "nome": "figures/13_desvio_programacao_mensal.png",
+   "bytes": 84233,
+   "sha256": "21add4274828ebc6d3543e09c4f0152264ac9a805431f0d27dc0cec430e811a9"
   }
  ],
  "resumo": {
   "data_geracao": "21/10/2026 10:00",
-  "secoes": 11,
-  "paginas_pdf": 15,
-  "figuras": 6,
-  "abas_planilha": 24,
+  "secoes": 12,
+  "paginas_pdf": 17,
+  "figuras": 7,
+  "abas_planilha": 27,
   "resumo_executivo": {
    "paginas": 1,
    "evolucao_anual": true,

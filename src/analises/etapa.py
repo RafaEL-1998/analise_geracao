@@ -19,7 +19,7 @@ import json
 import pandas as pd
 
 from src.analises.cadastro import analisar_cadastro
-from src.analises.comum_tipos import agentes_atuais, analisar_comum
+from src.analises.comum_tipos import agentes_atuais, analisar_comum, base_programacao_conjunto
 from src.analises.cobertura import analisar_cobertura
 from src.analises.conclusao import montar_conclusao, regras_omitidas
 from src.analises.constatacoes import montar_achados, montar_achados_comum
@@ -211,6 +211,7 @@ def analisar_sem_evt(
     cvu: Optional[SemanalTratado] = None,
     cmo: Optional[SemanalTratado] = None,
     renovavel: Optional[Dict[str, Optional[pd.DataFrame]]] = None,
+    geracao_conjunto: Optional[SerieConjunto] = None,
 ) -> ResultadosAnalise:
     """Resultados das usinas sem EVT: as seções comuns sobre a base horária comum (decisões R14 e R30).
 
@@ -218,12 +219,17 @@ def analisar_sem_evt(
     """
     tipo = registro.tipo_da_usina(perfil)
     tem_indicadores = indicadores is not None and len(indicadores.ug_mensal) > 0
+    nivel_programacao = registro.nivel_coletado(perfil, "programacao") if programacao is not None else None
+    base_programacao = None  # T157: base da usina (restrição com detalhe) e programação do conjunto
+    if (escolher(perfil).conjunto == "restricao_detalhe" and nivel_programacao == "conjunto" and programacao is not None
+            and geracao_conjunto is not None and len(geracao_conjunto.horaria)):
+        base_programacao = base_programacao_conjunto(geracao_conjunto.horaria, programacao.horaria)
     comum, omitidos = analisar_comum(
-        base, perfil, tipo, ausencias_geracao, linhas_usina_sem_valor,
-        registro.nivel_coletado(perfil, "programacao") if programacao is not None else None,
+        base, perfil, tipo, ausencias_geracao, linhas_usina_sem_valor, nivel_programacao,
         programacao.dias_ausentes if programacao is not None else None,
         len(programacao.horaria) if programacao is not None else 0,
-        indicadores=tem_indicadores, hidrologia=registro.nivel_coletado(perfil, "hidrologia") is not None)
+        indicadores=tem_indicadores, hidrologia=registro.nivel_coletado(perfil, "hidrologia") is not None,
+        base_programacao=base_programacao)
     comum["conferencias_nao_aplicaveis"] = nao_aplicaveis if nao_aplicaveis is not None else pd.DataFrame(
         columns=["conferencia", "motivo"])
     comum["agentes"] = agentes_atuais(capacidade, comum["cobertura"]["fim"])
@@ -254,8 +260,8 @@ def analisar_sem_evt(
             res.omitidos.append({"item": "CVU × CMO", "tipo": "secao",
                                  "motivo": "o CVU e o CMO não têm semanas comuns no período"})
     if tipo in registro.RENOVAVEIS:  # seções de eólica e solar (fase C, decisão R19)
-        res.renovavel = analisar_renovavel(renovavel or {}, base, tipo, float(perfil.parametros.potencia_instalada_mw),
-                                           comum.get("programacao"))
+        res.renovavel = analisar_renovavel(renovavel or {}, base if base_programacao is None else base_programacao, tipo,
+                                           float(perfil.parametros.potencia_instalada_mw), comum.get("programacao"))
         if res.renovavel:  # G1, G2 e G5, para as legendas de fonte e a planilha
             res.renovavel["conferencias"] = {
                 i: {"aplicavel": r.aplicavel, "motivo": r.motivo, "comparados": r.comparados,
@@ -362,6 +368,8 @@ def carregar_entradas_sem_evt(slug: str, referencia: str = "geracao") -> Dict[st
         "cvu": carregar_semanal_tratado(tratamento, "cvu"),
         "cmo": carregar_semanal_tratado(tratamento, "cmo"),
         "renovavel": carregar_renovavel(tratamento),
+        # a Geração por usina do conjunto, para a comparação com a programação do conjunto (T157)
+        "geracao_conjunto": carregar_geracao_tratada(tratamento) if referencia == "restricao_detalhe" else None,
     }
 
 

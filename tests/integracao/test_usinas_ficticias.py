@@ -336,3 +336,11 @@ def test_ufv_em_conjunto_com_a_restricao_como_referencia(execucoes) -> None:
     for nome in ("fator_capacidade_extraido.parquet", "restricao_razao_extraido.parquet"):
         assert set(pd.read_parquet(e["dados"] / "coleta" / nome)["nivel"]) == {"conjunto"}, nome
     assert "A série do conjunto" not in md  # a base horária é da usina
+    # T157: a programação do conjunto comparada com a geração do conjunto, identificada; a C19 não é avaliada
+    secao = md.split("Programação diária × geração verificada\n", 1)[1].split("\n## ", 1)[0]
+    assert "Programação diária do ONS (conjunto) × geração verificada" in secao
+    assert "Geração por usina (conjunto de usinas, id ONS CJU_GOCJUF)" in secao and "MSSRI" not in secao
+    assert "### Maiores desvios entre a geração verificada e a programada" in secao
+    assert "C19" in _manifesto(e, "analises")["omitidos"]
+    # a programação conferida pela G5 não fica como "sem outra fonte"
+    assert "programado do Fator de capacidade (G5)" in secao and "conferir: programação diária" not in secao

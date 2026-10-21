@@ -215,6 +215,19 @@ def disponibilidade_comum(base: pd.DataFrame, potencia_instalada_mw: float,
 # ---------------------------------------------------------------------------
 
 
+def base_programacao_conjunto(geracao: pd.DataFrame, programada: pd.DataFrame) -> pd.DataFrame:
+    """Geração verificada e programada do conjunto, hora a hora, para a comparação com a Programação diária quando a base
+    horária é da usina (EOL e UFV com a restrição com detalhe como série de referência; tarefa T157): os números do
+    conjunto ficam fora da base da usina e levam o nível."""
+    g = geracao[["din_instante", "val_geracao"]].assign(din_instante=pd.to_datetime(geracao["din_instante"]))
+    p = programada[["din_instante", "geracao_programada_mw"]].assign(
+        din_instante=pd.to_datetime(programada["din_instante"])).drop_duplicates("din_instante")
+    j = g.merge(p, on="din_instante", how="left")
+    return pd.DataFrame({"din_instante": j["din_instante"], "nivel": "conjunto",
+                         "geracao_mw": pd.to_numeric(j["val_geracao"], errors="coerce"),
+                         "geracao_programada_mw": pd.to_numeric(j["geracao_programada_mw"], errors="coerce")})
+
+
 def programacao_comum(base: pd.DataFrame, nivel_programacao: str, dias_ausentes: Optional[pd.DataFrame] = None
                       ) -> Dict[str, Any]:
     """Geração programada × verificada nas horas comuns do mesmo nível; vazio sem horas comuns."""
@@ -389,11 +402,13 @@ def analisar_comum(
     horas_programacao: int = 0,
     indicadores: bool = False,
     hidrologia: bool = False,
+    base_programacao: Optional[pd.DataFrame] = None,
 ) -> Tuple[Dict[str, Any], List[Dict[str, str]]]:
     """Campo ``comum`` de ``ResultadosAnalise`` e as omissões das seções (decisões R14 e R17).
 
     ``nivel_programacao``: nível da Programação diária coletada (None quando não foi coletada); ``horas_programacao``,
-    as horas da programação tratada no período.
+    as horas da programação tratada no período; ``base_programacao``, a base da comparação com a programação quando não é
+    a base horária (a do conjunto, na tarefa T157).
     """
     potencia = float(perfil.parametros.potencia_instalada_mw)
     cobertura = cobertura_comum(base, ausencias)
@@ -406,8 +421,8 @@ def analisar_comum(
         "sazonalidade": tabela_sazonal,
         "perfil_horario": perfil_horario_comum(base),
         "disponibilidade": disponibilidade_comum(base, potencia, cobertura["anos_parciais"]),
-        "programacao": (programacao_comum(base, nivel_programacao, dias_ausentes_programacao)
-                        if nivel_programacao else {}),
+        "programacao": (programacao_comum(base if base_programacao is None else base_programacao, nivel_programacao,
+                                          dias_ausentes_programacao) if nivel_programacao else {}),
         "programacao_coletada": nivel_programacao is not None,
         "programacao_horas": int(horas_programacao),
         "qualidade": qualidade_comum(base, ausencias, linhas_usina_sem_valor),

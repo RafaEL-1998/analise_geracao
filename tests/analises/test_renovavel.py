@@ -16,7 +16,7 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from src.analises.comum_tipos import sazonalidade
+from src.analises.comum_tipos import base_programacao_conjunto, programacao_comum, sazonalidade
 from src.analises.renovavel import (
     SEM_RAZAO,
     TITULO_CORTE,
@@ -163,3 +163,15 @@ def test_recurso_acima_do_limite_fisico_fora_das_faixas() -> None:
         columns=["din_instante", "nivel", "geracao_mw", "geracao_programada_mw"]), "EOL", 30.0)
     assert r["recurso"]["resumo"]["semi_horas_implausiveis"] == 1 and r["recurso"]["limite"] == 40.0
     assert "acima do limite físico" in dict(achados_renovavel(r))["Recurso × geração"]
+
+
+def test_programacao_comparada_no_nivel_do_conjunto() -> None:
+    """T157: com a base horária da usina, a programação do conjunto é comparada com a geração do conjunto."""
+    horas = pd.date_range("2024-02-01", periods=3, freq="h")
+    geracao = pd.DataFrame({"din_instante": horas, "val_geracao": [10.0, 20.0, 30.0]})
+    programada = pd.DataFrame({"din_instante": horas[1:], "geracao_programada_mw": [18.0, 30.0]})
+    base = base_programacao_conjunto(geracao, programada)
+    assert set(base["nivel"]) == {"conjunto"} and base["geracao_programada_mw"].isna().sum() == 1
+    p = programacao_comum(base, "conjunto")
+    assert p["nivel"] == "conjunto" and p["resumo"]["horas_comuns"] == 2
+    assert p["resumo"]["desvio_medio_absoluto_mw"] == 1.0

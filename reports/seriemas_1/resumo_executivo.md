@@ -6,7 +6,7 @@ UFV · MS · TIPO II-C · 50,0 MW
 
 Agente atual (Capacidade de geração do ONS): SERIEMAS (proprietário); CVER (operador)
 
-Resume o relatório completo "UFV Seriemas 1 — Análise do desempenho operacional", de 15 páginas, gerado na mesma data.
+Resume o relatório completo "UFV Seriemas 1 — Análise do desempenho operacional", de 17 páginas, gerado na mesma data.
 
 **Termos.** ONS: Operador Nacional do Sistema Elétrico; MWmed: megawatt médio, a energia dividida pelas horas do período; constrained-off: redução da geração da usina por comando do ONS, por razão externa a ela (indisponibilidade externa, confiabilidade elétrica ou razão energética).
 

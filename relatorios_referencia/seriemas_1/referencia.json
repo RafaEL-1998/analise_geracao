@@ -1,0 +1,194 @@
+{
+ "usina": "seriemas_1",
+ "data_geracao": "21/10/2026 10:00",
+ "aprovado_em": "21/10/2026",
+ "periodo": {
+  "inicio": "2026-08-22 00:00:00",
+  "fim": "2026-10-19 23:30:00"
+ },
+ "arquivos": [
+  {
+   "nome": "relatorio_analise_estatistica.pdf",
+   "bytes": 895955,
+   "sha256": "d14574eaafa89aea4360db7e2e89a546ccd43919d5bcf54167afd8e161fe78d6"
+  },
+  {
+   "nome": "relatorio_analise_estatistica.md",
+   "bytes": 30301,
+   "sha256": "de71781c7192a919bbe23551a1b7d0f30f4b7079908d5fcc68d216ffa8a4f8a5"
+  },
+  {
+   "nome": "perfil_estatistico_anual.xlsx",
+   "bytes": 35758,
+   "sha256": "91bb2cf3e282743bbae454a42b2e6c2a1d571efc77f4529ba572cc7f301953fc"
+  },
+  {
+   "nome": "perfil_estatistico_anual.csv",
+   "bytes": 314,
+   "sha256": "6398217718733545c8703ebc9d6bee7852545c4e1dc4c743a5780281fba4203a"
+  },
+  {
+   "nome": "resumo_executivo.pdf",
+   "bytes": 79845,
+   "sha256": "19949ba7938a4b346c9bbe1c83886f32a81cffd427f0c710186693e234865333"
+  },
+  {
+   "nome": "resumo_executivo.md",
+   "bytes": 3221,
+   "sha256": "9bc23d40ebdc7f230ebb57aef39ac006a263d6c082f882118e55e49df6c3f336"
+  },
+  {
+   "nome": "figures/01_serie_temporal_geracao_disponibilidade.png",
+   "bytes": 163274,
+   "sha256": "316b1d8607e89f5358d890ce865278cfbfb21f991c7f27c53d06e9ac7d87b845"
+  },
+  {
+   "nome": "figures/02_geracao_mensal.png",
+   "bytes": 71211,
+   "sha256": "09d49471f9be627056d67b04d7b1f4844764fc1bc996bc74fe72c289022df46d"
+  },
+  {
+   "nome": "figures/04_perfil_horario_geracao.png",
+   "bytes": 106149,
+   "sha256": "bc1da932a1eb35c60f833e26940abc200152275aa604afe61821c162a43dcde4"
+  },
+  {
+   "nome": "figures/10_fator_capacidade_mensal.png",
+   "bytes": 94624,
+   "sha256": "f3253d6db71f530981a14be7e57f479aa066b0705d93cfbd2391a4e35e218543"
+  },
+  {
+   "nome": "figures/11_energia_cortada_por_razao_mensal.png",
+   "bytes": 76326,
+   "sha256": "7a2c51d851c876c38180f5adbdd2d31b10dc201a97c0335d965cad860947294d"
+  },
+  {
+   "nome": "figures/12_geracao_por_faixa_de_recurso.png",
+   "bytes": 136638,
+   "sha256": "3bb9d0c86341fd2d1f3709eb03b1c88567772f3ecf44e5e2cb2b4f2e79f64f9c"
+  },
+  {
+   "nome": "figures/13_desvio_programacao_mensal.png",
+   "bytes": 84233,
+   "sha256": "21add4274828ebc6d3543e09c4f0152264ac9a805431f0d27dc0cec430e811a9"
+  }
+ ],
+ "perfil": "5277dd5f44efe2c0d14f7ad21a6ebe33ff39de42d0c9bd62cf4ca34c5d6dda02",
+ "coleta": [
+  {
+   "nome": "restricao_detalhe_extraido.parquet",
+   "bytes": 52173,
+   "sha256": "cbf2d17f1e7163cf2f5776eaba9b2b88a1b3b8ff3314272d6d685cc200483549"
+  },
+  {
+   "nome": "auditoria_restricao_detalhe.csv",
+   "bytes": 4360,
+   "sha256": "6d63d3118fdbd1ebed6d22523fa7d39c811289d4117931918be132bdb8ca8a96"
+  },
+  {
+   "nome": "geracao_complemento.parquet",
+   "bytes": 15531,
+   "sha256": "e6c898a603cbb90a086855aa53458d07864c2aeca81f483a266b7e53fc7e343d"
+  },
+  {
+   "nome": "programacao_extraido.parquet",
+   "bytes": 6886,
+   "sha256": "695421a5b5203bafa81e8b9815c850abc6337c7ed82d6084e119a02c7c387c51"
+  },
+  {
+   "nome": "auditoria_programacao.csv",
+   "bytes": 8334,
+   "sha256": "1a4fa47bbce78ff1f17b531fba1f5948006d899b52e49baa9747fa4ff4e6bd03"
+  },
+  {
+   "nome": "geracao_extraido.parquet",
+   "bytes": 28366,
+   "sha256": "10ed6b1bad20738091c0cd6c90c440149505416213e8ed14b6fbc5279fa21fbb"
+  },
+  {
+   "nome": "auditoria_geracao.csv",
+   "bytes": 550,
+   "sha256": "f6ec6c2d52cc71c575324e135b73cb5cbdc176408085541c0082d03e2bea3a6c"
+  },
+  {
+   "nome": "cadastro_ficha.csv",
+   "bytes": 373,
+   "sha256": "8e721ce5cbdd2aaac6a6cffc542500b4b9aec8ae49d14c6bfc177a07c48f6d7d"
+  },
+  {
+   "nome": "auditoria_cadastro.csv",
+   "bytes": 236,
+   "sha256": "1214db41d0ac8f2e7e1e1ee877cca43cb86de991af0b6ad23aa0df9210724979"
+  },
+  {
+   "nome": "composicao_conjunto.csv",
+   "bytes": 920,
+   "sha256": "34c83dba2c84efd5e2057e3e88b37f22fb57fecb44eacbd8c3e5b35eb08c7bc8"
+  },
+  {
+   "nome": "auditoria_composicao.csv",
+   "bytes": 325,
+   "sha256": "f07579f22a23414cff8f364356af166e743c6e1b207262801713c22263a565f3"
+  },
+  {
+   "nome": "capacidade_ficha.csv",
+   "bytes": 416,
+   "sha256": "dbdc10bc7db508ddf5444606c07b688e6373b5022ac271da1b27138e609316af"
+  },
+  {
+   "nome": "auditoria_capacidade.csv",
+   "bytes": 314,
+   "sha256": "8dd75a382007183c5f15be76a156b5c8819f4056e38485336d6443f0b705704e"
+  },
+  {
+   "nome": "fator_capacidade_extraido.parquet",
+   "bytes": 34192,
+   "sha256": "0e446d83e6cdbde436955625b51b7cff25445505b7c9ee51d9a89f635fd07ee0"
+  },
+  {
+   "nome": "auditoria_fator_capacidade.csv",
+   "bytes": 559,
+   "sha256": "4ac92dab093d9eae5a3fe0daf1fbd7e4594ac33b106d5147da1aceb6c9a8183f"
+  },
+  {
+   "nome": "restricao_razao_extraido.parquet",
+   "bytes": 52907,
+   "sha256": "0a9581e7e2a0b0e362280f78f7d2bbe5f7237a9356de1e8c570b8f9fe63b5d65"
+  },
+  {
+   "nome": "auditoria_restricao_razao.csv",
+   "bytes": 586,
+   "sha256": "55dd6b76112e43c7c53943192442d0c11704ab77ea82966cb874db13a5a3165d"
+  },
+  {
+   "nome": "restricao_membros_extraido.parquet",
+   "bytes": 158142,
+   "sha256": "152ee5ab15a03bdde1617c24400a728041a56f6fc02f10285d9ecf4e980f9f2a"
+  },
+  {
+   "nome": "auditoria_restricao_membros.csv",
+   "bytes": 3162,
+   "sha256": "2d059de2819715ae66faa01fe417773340dd1003fd92e17c6d400021633d1eb9"
+  },
+  {
+   "nome": "trechos.csv",
+   "bytes": 373,
+   "sha256": "b58e8d91490f49f343a091266453e891a3df51ba8148a126d07b0926f4343ace"
+  },
+  {
+   "nome": "dicionarios.csv",
+   "bytes": 5539,
+   "sha256": "6351cd1f4a00f2ef393240d46df301a61d024690f1bfeceb85f992aa9b524848"
+  },
+  {
+   "nome": "datas_obtencao.csv",
+   "bytes": 647,
+   "sha256": "481225621d544ca0988f8465ba6dd51a7ac79bf9cc45cd2b2970c5510d3f6330"
+  },
+  {
+   "nome": "etapa.json",
+   "bytes": 8552,
+   "sha256": "bdc8fced3ed6bb1869b8736f5bcb61790ff3bbd4b61ff4d6752f3da81e70c627"
+  }
+ ]
+}

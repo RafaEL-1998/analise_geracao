@@ -2,29 +2,29 @@
  "etapa": "relatorio",
  "usina": "praia_formosa",
  "versao_formato": 1,
- "iniciada_em": "2026-10-21T13:54:10Z",
- "concluida_em": "2026-10-21T13:54:18Z",
+ "iniciada_em": "2026-10-21T15:59:52Z",
+ "concluida_em": "2026-10-21T15:59:59Z",
  "status": "concluida",
  "codigo_saida": 0,
  "etapa_anterior": {
   "etapa": "analises",
-  "concluida_em": "2026-10-21T13:54:10Z"
+  "concluida_em": "2026-10-21T15:59:52Z"
  },
  "arquivos": [
   {
    "nome": "relatorio_analise_estatistica.pdf",
-   "bytes": 1659793,
-   "sha256": "1d46e608cae18b4f5f57fe89087540b148dc44c4511f70aaee06f2d2e187538b"
+   "bytes": 1660008,
+   "sha256": "4b04985d4087a3324a136c6aaee0ff3abfd404cd98acd0471f473141382288a7"
   },
   {
    "nome": "relatorio_analise_estatistica.md",
-   "bytes": 32953,
-   "sha256": "cbdb70040fa3c8f027379530fd6156c9014089bad421d6344623244730309cf1"
+   "bytes": 33295,
+   "sha256": "a3d2768d71e4320cfbb850e3b90ec866cfae2a3e36b0dfaf1aaa40fa89a32c79"
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
    "bytes": 166223,
-   "sha256": "16ab449e842d2113813620e825f18e914c6266b8e17848d2946de31f04a43013"
+   "sha256": "6e340cfdcc8ef207a64146d08698e72cf1ac96908ae4cacb9f2486efc2d682b4"
   },
   {
    "nome": "perfil_estatistico_anual.csv",
