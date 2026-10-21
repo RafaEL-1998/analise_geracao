@@ -700,8 +700,11 @@ def do_nivel(res: ResultadosAnalise, nivel: str) -> str:
 
 
 def _serie_referencia_texto(res: ResultadosAnalise) -> str:
-    """"Geração por usina (id ONS X)" ou "Geração por usina do conjunto <nome> (id ONS CJU_...)"."""
+    """"Geração por usina (id ONS X)" ou "Geração por usina do conjunto <nome> (id ONS CJU_...)"; na fase C,
+    "Restrição com detalhe (id ONS X; CEG Y)"."""
     g = res.niveis.get("geracao", {})
+    if g.get("fonte") == "restricao_detalhe":
+        return f"Restrição com detalhe (id ONS {g['identificador_usina']}; CEG {perfil_ativo().identificacao.ceg})"
     partes = []
     if g.get("identificador_usina"):
         partes.append(f"(id ONS {g['identificador_usina']})")
@@ -802,6 +805,7 @@ def _achado_qualidade_comum(res: ResultadosAnalise) -> Tuple[str, str]:
 
 def montar_achados_comum(res: ResultadosAnalise) -> List[Tuple[str, str]]:
     """Constatações das usinas sem EVT, a partir das seções comuns (decisão R30) e das seções do tipo."""
+    from src.analises.renovavel import achados_renovavel  # seções de eólica e solar (fase C)
     from src.analises.termica import achados_termica  # seções de térmica (fase B)
 
     return [
@@ -810,5 +814,6 @@ def montar_achados_comum(res: ResultadosAnalise) -> List[Tuple[str, str]]:
         _achado_geracao_comum(res),
         *[a for a in (_achado_disponibilidade_comum(res), _achado_programacao_comum(res)) if a is not None],
         *achados_termica(getattr(res, "termica", None) or {}),
+        *achados_renovavel(getattr(res, "renovavel", None) or {}),
         _achado_qualidade_comum(res),
     ]

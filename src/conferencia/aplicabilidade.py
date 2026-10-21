@@ -2,15 +2,15 @@
 
 Cada conferência declara os tipos de usina, os conjuntos do registro que ela compara e as condições de nível.
 A que não se aplica à usina (tipo, conjunto não coletado, base ainda fora do pipeline, conjunto sem membros no
-perfil, ou resultado sem base) vai para ``nao_aplicaveis.csv``, com o motivo (FR-019, princípio VI). As seis de hoje
-são feitas como hoje; G3 e G4 nas térmicas com o despacho (fase B); G1, G2 e G5 dependem de conjuntos da fase C e, por
-ora, só aparecem no arquivo.
+perfil, níveis diferentes, ou resultado sem base) vai para ``nao_aplicaveis.csv``, com o motivo (FR-019, princípio
+VI). As seis de hoje são feitas como hoje; G3 e G4 nas térmicas com o despacho (fase B); G1, G2 e G5 nas eólicas e
+solares com as bases da fase C, sempre no mesmo nível.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import pandas as pd
 
@@ -34,12 +34,11 @@ NOMES_CONJUNTOS: Dict[str, str] = {
     "despacho": "Geração térmica por motivo de despacho",
     "cvu": "CVU das usinas térmicas",
     "cmo": "CMO semanal",
-}
-# Bases das conferências novas que o pipeline ainda não coleta (fases B e C da spec 006)
-BASES_FORA_DO_PIPELINE: Dict[str, str] = {
     "fator_capacidade": "Fator de capacidade",
-    "restricao": "Restrição de operação (constrained-off)",
+    "restricao_detalhe": "Restrição com detalhe (constrained-off)",
+    "restricao_razao": "Restrição com a razão (constrained-off)",
 }
+FONTES_DA_GERACAO: Tuple[str, ...] = ("geracao", "fator_capacidade", "restricao_detalhe", "restricao_razao")  # G1
 
 
 @dataclass(frozen=True)
@@ -50,10 +49,12 @@ class ConferenciaCatalogo:
     descricao: str
     tipos: Tuple[str, ...]
     conjuntos: Tuple[str, ...]  # chaves do registro que precisam ter sido coletadas para a usina
-    bases_novas: Tuple[str, ...] = ()  # bases fora do pipeline (BASES_FORA_DO_PIPELINE)
     geracao_da_usina: bool = False  # só com a Geração por usina no nível da usina (pares do mesmo nível)
     exige_membros: bool = False  # só em conjunto, com os membros no perfil
     programacao_da_usina: bool = False  # só com a Programação diária no nível da usina
+    fontes_no_mesmo_nivel: bool = False  # G1: duas fontes da geração em um mesmo nível
+    geracao_do_conjunto: bool = False  # G2: a Geração por usina no nível do conjunto
+    programacao_no_nivel_do_fc: bool = False  # G5: a Programação diária no nível do Fator de capacidade
 
 
 CATALOGO_CONFERENCIAS: Tuple[ConferenciaCatalogo, ...] = (
@@ -67,21 +68,32 @@ CATALOGO_CONFERENCIAS: Tuple[ConferenciaCatalogo, ...] = (
     ConferenciaCatalogo("teifa_teip", "TEIFa e TEIP refeitas a partir das horas", HIDRELETRICAS + TERMICAS,
                         ("indicadores",)),
     ConferenciaCatalogo("cadastro", "ficha do cadastro × perfil da usina", TIPOS_USINA, ("cadastro",)),
-    ConferenciaCatalogo("geracao_fontes", "G1. geração da usina entre fontes", RENOVAVEIS, ("geracao",),
-                        ("fator_capacidade", "restricao"), geracao_da_usina=True),
+    ConferenciaCatalogo("geracao_fontes", "G1. geração da usina entre fontes", RENOVAVEIS, (),
+                        fontes_no_mesmo_nivel=True),
     ConferenciaCatalogo("soma_conjunto", "G2. soma das usinas do conjunto × geração do conjunto", RENOVAVEIS,
-                        ("geracao",), ("restricao",), exige_membros=True),
+                        ("geracao", "restricao_detalhe"), exige_membros=True, geracao_do_conjunto=True),
     ConferenciaCatalogo("programacao_despacho", "G3. Programação diária × geração programada do despacho", TERMICAS,
                         ("programacao", "despacho"), programacao_da_usina=True),
     ConferenciaCatalogo("verificada_despacho", "G4. geração verificada do despacho × Geração por usina", TERMICAS,
                         ("geracao", "despacho"), geracao_da_usina=True),
     ConferenciaCatalogo("programacao_renovaveis", "G5. Programação diária × geração programada do Fator de capacidade",
-                        RENOVAVEIS, ("programacao",), ("fator_capacidade",)),
+                        RENOVAVEIS, ("programacao", "fator_capacidade"), programacao_no_nivel_do_fc=True),
 )
 
 
 def _lista(itens: Tuple[str, ...]) -> str:
     return itens[0] if len(itens) == 1 else ", ".join(itens[:-1]) + " e " + itens[-1]
+
+
+def niveis_coletados(perfil: Any, chave: str) -> Set[str]:
+    """Níveis em que a Coleta obtém o conjunto ``chave`` para a usina (os dois, com a lista ``["proprio",
+    "conjunto"]``); vazio quando não o obtém."""
+    if chave not in {e.chave for e in registro.conjuntos_da_usina(perfil)}:
+        return set()
+    valor = registro.cobertura_da_usina(perfil).get(chave)
+    valores = valor if isinstance(valor, (list, tuple)) else [valor]
+    niveis = {registro.NIVEL_DA_COBERTURA[v] for v in valores if v in registro.NIVEL_DA_COBERTURA}
+    return niveis or {registro.entrada(chave).niveis[0]}
 
 
 def _motivo_estatico(c: ConferenciaCatalogo, perfil: Any) -> Optional[str]:
@@ -95,9 +107,6 @@ def _motivo_estatico(c: ConferenciaCatalogo, perfil: Any) -> Optional[str]:
             return "a usina não está em conjunto de usinas"
         if not getattr(ident, "membros", None):
             return "sem os membros do conjunto no perfil"
-    if c.bases_novas:
-        nomes = tuple(BASES_FORA_DO_PIPELINE[b] for b in c.bases_novas)
-        return f"{_lista(nomes)}: {'conjunto ainda não coletado' if len(nomes) == 1 else 'conjuntos ainda não coletados'} pelo pipeline"
     coletados = {e.chave for e in registro.conjuntos_da_usina(perfil)}
     cobertura = registro.cobertura_da_usina(perfil)
     for chave in c.conjuntos:
@@ -110,6 +119,17 @@ def _motivo_estatico(c: ConferenciaCatalogo, perfil: Any) -> Optional[str]:
         return "Geração por usina só no nível do conjunto: não se compara com uma série da usina"
     if c.programacao_da_usina and registro.nivel_coletado(perfil, "programacao") != "usina":
         return "Programação diária só no nível do conjunto: não se compara com o despacho da usina"
+    if c.fontes_no_mesmo_nivel:
+        niveis = [n for chave in FONTES_DA_GERACAO for n in niveis_coletados(perfil, chave)]
+        if not any(niveis.count(n) >= 2 for n in ("usina", "conjunto")):
+            return ("sem duas fontes da geração no mesmo nível (Geração por usina, Fator de capacidade e restrições): "
+                    "par de níveis diferentes não se compara")
+    if c.geracao_do_conjunto and "conjunto" not in niveis_coletados(perfil, "geracao"):
+        return "Geração por usina sem o nível do conjunto: a soma das usinas não tem com o que se comparar"
+    if c.programacao_no_nivel_do_fc:
+        prog, fc = registro.nivel_coletado(perfil, "programacao"), registro.nivel_coletado(perfil, "fator_capacidade")
+        if prog != fc:
+            return f"Programação diária ({prog}) e Fator de capacidade ({fc}) em níveis diferentes: não se comparam"
     return None
 
 

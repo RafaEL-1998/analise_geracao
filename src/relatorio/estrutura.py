@@ -14,9 +14,10 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from src.analises.resultados import sem_evt
-from src.coleta.registro import HIDRELETRICAS, TERMICAS
+from src.coleta.registro import HIDRELETRICAS, RENOVAVEIS, TERMICAS
 from src.comum.logger import setup_logger
 from src.comum.regras import PERIODO_MINIMO_SAZONALIDADE_MESES, TIPOS_USINA
+from src.relatorio.secoes_renovavel import TITULOS as TITULOS_RENOVAVEL
 from src.relatorio.secoes_termica import titulo_disponivel
 
 logger = setup_logger("relatorio")
@@ -88,6 +89,13 @@ SECOES: Tuple[Secao, ...] = (
     _comum("disponivel_sem_despacho", titulo_disponivel,
            lambda res: bool((getattr(res, "termica", None) or {}).get("disponivel_sem_despacho")
                             or (getattr(res, "termica", None) or {}).get("cvu_cmo")), TERMICAS),
+    # Seções de eólica e solar (fase C; rascunho 005, FR-045), com as bases: item 8 da FR-041
+    _comum("fator_capacidade", TITULOS_RENOVAVEL["fator_capacidade"],
+           lambda res: bool((getattr(res, "renovavel", None) or {}).get("fator_capacidade")), RENOVAVEIS),
+    _comum("energia_cortada", TITULOS_RENOVAVEL["energia_cortada"],
+           lambda res: bool((getattr(res, "renovavel", None) or {}).get("restricao")), RENOVAVEIS),
+    _comum("recurso_geracao", TITULOS_RENOVAVEL["recurso_geracao"],
+           lambda res: bool((getattr(res, "renovavel", None) or {}).get("recurso")), RENOVAVEIS),
     Secao("eventos", "EVT por nível de geração e eventos de usina parada"),
     Secao("programacao", "Operação verificada e programação diária do ONS", lambda res: bool(res.programacao)),
     _comum("programacao_comum", "Programação diária × geração verificada",
@@ -143,6 +151,9 @@ MAPA_CONSTATACOES_SEM_EVT: Dict[str, str] = {
     "Atendimento ao despacho": "atendimento_despacho",
     "Disponível sem despacho": "disponivel_sem_despacho",
     "CVU e CMO": "disponivel_sem_despacho",
+    "Fator de capacidade": "fator_capacidade",
+    "Energia cortada": "energia_cortada",
+    "Recurso × geração": "recurso_geracao",
     "Qualidade dos dados": "qualidade_comum",
 }
 

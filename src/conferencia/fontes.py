@@ -1,4 +1,5 @@
-"""Conferências entre fontes das térmicas: G3 e G4 (spec 006, fase B; decisão R13; rascunho 003, FR-020 e FR-021).
+"""Conferências entre fontes: G3 e G4 das térmicas (spec 006, fase B; decisão R13; rascunho 003, FR-020 e FR-021) e
+G1, G2 e G5 das eólicas e solares (fase C; rascunho 003, FR-023 a FR-025).
 
 - **G3** (``programacao_despacho``): a Programação diária (média horária dos patamares) × a geração programada do
   despacho (``val_proggeracao``), hora a hora, só com a programação no nível da usina.
@@ -6,12 +7,20 @@
   hora, no nível da usina. A G4 também mede a coincidência com uma hora de deslocamento: se ela melhorar, a convenção
   de hora declarada está errada e vira correção, nunca ajuste automático (FR-037 do rascunho 002).
 
-As duas usam a tolerância de hoje (0,01 MW) e só registram, sem meta (decisão R13).
+- **G1** (``geracao_fontes``): a geração da usina entre as fontes que a trazem (Geração por usina, Fator de capacidade e
+  as duas restrições, estas em hora cheia), sempre duas a duas e no mesmo nível; par de níveis diferentes não é
+  comparado.
+- **G2** (``soma_conjunto``): a soma das usinas do conjunto (restrição com detalhe, em hora cheia) × a Geração por
+  usina do conjunto, só nas horas com todas as usinas da composição vigente.
+- **G5** (``programacao_renovaveis``): a Programação diária × a geração programada do Fator de capacidade, no mesmo
+  nível (a aplicabilidade confere o nível).
+
+Todas usam a tolerância de hoje (0,01 MW) e só registram, sem meta (decisão R13).
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import pandas as pd
 
@@ -25,8 +34,15 @@ logger = setup_logger("conferencia")
 BASES_G3 = ("Programação diária (média horária dos patamares)",
             "Geração térmica por motivo de despacho (val_proggeracao)")
 BASES_G4 = ("Geração térmica por motivo de despacho (val_verifgeracao)", "Geração por usina (val_geracao)")
+BASES_G1 = ("Geração da usina em cada fonte (Geração por usina, Fator de capacidade e restrições)",
+            "a mesma geração em outra fonte, no mesmo nível")
+BASES_G2 = ("Soma das usinas do conjunto (restrição com detalhe, média horária)", "Geração por usina do conjunto")
+BASES_G5 = ("Programação diária (média horária dos patamares)", "Fator de capacidade (val_geracaoprogramada)")
+FONTES_G1: Dict[str, str] = {"geracao": "Geração por usina", "fator_capacidade": "Fator de capacidade",
+                             "restricao_detalhe": "Restrição com detalhe", "restricao_razao": "Restrição com a razão"}
 COLUNAS_MENSAL = ["mes", "energia_a_mwh", "energia_b_mwh", "diferenca_mwh", "horas_comuns", "horas_divergentes",
                   "horas_so_a", "horas_so_b"]
+COLUNAS_PAR = ["fonte_a", "fonte_b", "nivel"]
 
 
 def _coincidencia(a: pd.DataFrame, b: pd.DataFrame, tolerancia: float, horas: int = 0) -> Optional[float]:
@@ -82,12 +98,16 @@ def _resultado(id: str, bases: Tuple[str, str], a: pd.DataFrame, b: pd.DataFrame
     if not resumo["horas_comuns"]:
         return nao_aplicavel(id, bases, "horas", motivo_sem_base, tolerancia=TOLERANCIA_COINCIDENCIA_MW,
                              tabelas={"resumo": resumo})
-    comuns = a.dropna().merge(b.dropna(), on="din_instante")["din_instante"]
+    comuns = _periodo_comum(a, b)
     return ResultadoConferencia(
         id=id, bases=bases, unidade="horas", periodo=(comuns.min(), comuns.max()),
         comparados=resumo["horas_comuns"], coincidentes=resumo["coincidentes"], divergentes=resumo["divergentes"],
         tolerancia=TOLERANCIA_COINCIDENCIA_MW, tabelas={"resumo": resumo, "mensal": mensal, "divergencias": divergencias},
     )
+
+
+def _periodo_comum(a: pd.DataFrame, b: pd.DataFrame) -> pd.Series:
+    return a.dropna().merge(b.dropna(), on="din_instante")["din_instante"]
 
 
 def conferencia_programacao_despacho(programacao: Any, despacho: Any) -> ResultadoConferencia:
@@ -118,3 +138,109 @@ def conferencia_verificada_despacho(base: Optional[pd.DataFrame], despacho: Any)
                        "(%.1f%% contra %.1f%%); conferir a convenção de hora declarada e corrigi-la, sem ajuste "
                        "automático.", max(deslocadas), resumo["pct_coincidentes"])
     return r
+
+
+# ---------------------------------------------------------------------------
+# Eólicas e solares (fase C)
+# ---------------------------------------------------------------------------
+
+
+def conferencia_geracao_fontes(fontes: Dict[str, Optional[pd.DataFrame]]) -> ResultadoConferencia:
+    """G1: ``fontes`` traz, por chave de ``FONTES_G1``, a geração em hora cheia (``din_instante``, ``valor``,
+    ``nivel``). Cada par de fontes é comparado em cada nível que as duas têm."""
+    chaves = [k for k in FONTES_G1 if fontes.get(k) is not None and len(fontes[k])]
+    pares: List[Dict[str, Any]] = []
+    mensais, divergencias, comuns = [], [], []
+    for i, ka in enumerate(chaves):
+        for kb in chaves[i + 1:]:
+            for nivel in ("usina", "conjunto"):
+                a = fontes[ka][fontes[ka]["nivel"] == nivel].rename(columns={"valor": "valor_a"})
+                b = fontes[kb][fontes[kb]["nivel"] == nivel].rename(columns={"valor": "valor_b"})
+                if a.empty or b.empty:
+                    continue
+                par = {"fonte_a": FONTES_G1[ka], "fonte_b": FONTES_G1[kb], "nivel": nivel}
+                resumo, mensal, div = conferir_series(a, b)
+                pares.append({**par, **{k: v for k, v in resumo.items() if k != "tolerancia_mw"}})
+                mensais.append(mensal.assign(**par))
+                divergencias.append(div.assign(**par))
+                comuns.append(_periodo_comum(a[["din_instante", "valor_a"]], b[["din_instante", "valor_b"]]))
+    tabela = pd.DataFrame(pares)
+    comparados = int(tabela["horas_comuns"].sum()) if len(tabela) else 0
+    if not comparados:
+        return nao_aplicavel("geracao_fontes", BASES_G1, "horas",
+                             "nenhuma hora com duas fontes da geração no mesmo nível",
+                             tolerancia=TOLERANCIA_COINCIDENCIA_MW, tabelas={"pares": tabela})
+    instantes = pd.concat(comuns)
+    mensal = pd.concat(mensais, ignore_index=True)
+    return ResultadoConferencia(
+        id="geracao_fontes", bases=BASES_G1, unidade="horas", periodo=(instantes.min(), instantes.max()),
+        comparados=comparados, coincidentes=int(tabela["coincidentes"].sum()),
+        divergentes=int(tabela["divergentes"].sum()), tolerancia=TOLERANCIA_COINCIDENCIA_MW,
+        tabelas={"pares": tabela, "mensal": mensal[COLUNAS_PAR + COLUNAS_MENSAL],
+                 "divergencias": pd.concat(divergencias, ignore_index=True)},
+    )
+
+
+def _vigente(membro: Any, instantes: pd.Series) -> pd.Series:
+    dias = instantes.dt.normalize()
+    vigente = dias >= pd.Timestamp(membro.inicio)
+    if membro.fim:
+        vigente &= dias <= pd.Timestamp(membro.fim)
+    return vigente
+
+
+def soma_do_conjunto(propria: Optional[pd.DataFrame], id_proprio: str, membros_horaria: Optional[pd.DataFrame],
+                     membros: Iterable[Any]) -> Tuple[pd.DataFrame, int]:
+    """Soma horária das usinas do conjunto (a própria e os membros do perfil), só nas horas com todas as usinas da
+    composição vigente; devolve também as horas com alguma delas sem valor (contadas, fora da soma)."""
+    partes = []
+    if propria is not None and len(propria):
+        partes.append(propria[["din_instante", "val_geracaoverificada"]].assign(id_ons=id_proprio))
+    if membros_horaria is not None and len(membros_horaria):
+        partes.append(membros_horaria[["din_instante", "id_ons", "val_geracaoverificada"]])
+    if not partes:
+        return pd.DataFrame(columns=["din_instante", "valor_a", "usinas"]), 0
+    largas = pd.concat(partes, ignore_index=True).pivot_table(index="din_instante", columns="id_ons",
+                                                             values="val_geracaoverificada", aggfunc="first")
+    instantes = largas.index.to_series()
+    completa = pd.Series(True, index=largas.index)
+    usinas = pd.Series(0, index=largas.index)
+    composicao = {m.id_ons: m for m in membros}
+    for id_ons in dict.fromkeys([id_proprio, *composicao]):
+        vigente = _vigente(composicao[id_ons], instantes) if id_ons in composicao else \
+            pd.Series(True, index=largas.index)
+        com_valor = largas[id_ons].notna() if id_ons in largas.columns else pd.Series(False, index=largas.index)
+        completa &= ~vigente | com_valor
+        usinas += vigente.astype(int)
+    soma = largas.fillna(0.0).sum(axis=1)
+    tabela = pd.DataFrame({"din_instante": largas.index, "valor_a": soma.values, "usinas": usinas.values})
+    return tabela[completa.values].reset_index(drop=True), int((~completa).sum())
+
+
+def conferencia_soma_conjunto(soma: pd.DataFrame, horas_incompletas: int,
+                              conjunto: Optional[pd.DataFrame]) -> ResultadoConferencia:
+    """G2: a soma das usinas do conjunto × a Geração por usina do conjunto (``din_instante``, ``valor_b``)."""
+    if soma is None or soma.empty or conjunto is None or conjunto.empty:
+        return nao_aplicavel("soma_conjunto", BASES_G2, "horas",
+                             "nenhuma hora com todas as usinas do conjunto e a Geração por usina do conjunto",
+                             tolerancia=TOLERANCIA_COINCIDENCIA_MW,
+                             tabelas={"resumo": {"horas_incompletas": horas_incompletas}})
+    r = _resultado("soma_conjunto", BASES_G2, soma[["din_instante", "valor_a"]], conjunto[["din_instante", "valor_b"]],
+                   "nenhuma hora com a soma das usinas e a Geração por usina do conjunto")
+    r.tabelas.setdefault("resumo", {})["horas_incompletas"] = horas_incompletas
+    return r
+
+
+def conferencia_programacao_renovaveis(programacao: Any, fator_capacidade: Optional[pd.DataFrame]
+                                       ) -> ResultadoConferencia:
+    """G5: Programação diária × geração programada do Fator de capacidade (decisão R13)."""
+    if programacao is None or not len(programacao.horaria) or fator_capacidade is None or not len(fator_capacidade):
+        return nao_aplicavel("programacao_renovaveis", BASES_G5, "horas",
+                             "Programação diária ou Fator de capacidade sem horas no período",
+                             tolerancia=TOLERANCIA_COINCIDENCIA_MW)
+    a = programacao.horaria[["din_instante", "geracao_programada_mw"]].rename(
+        columns={"geracao_programada_mw": "valor_a"})
+    b = fator_capacidade[["din_instante", "val_geracaoprogramada"]].rename(
+        columns={"val_geracaoprogramada": "valor_b"})
+    return _resultado("programacao_renovaveis", BASES_G5, a, b,
+                      "nenhuma hora com a Programação diária e o programado do Fator de capacidade")

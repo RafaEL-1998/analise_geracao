@@ -155,8 +155,15 @@ def test_cobertura_do_conjunto_inclusive_com_linhas_proprias_sem_valor(montado) 
     assert (pch["programacao"]["linhas"], pch["programacao"]["linhas_sem_valor"]) == ("96", "24")
     assert {pch[k]["nivel"] for k in ("evt", "hidrologia", "disponibilidade", "indicadores")} == {"ausente"}
     ufv = _cobertura(montado, bc.UFV["ceg"])
-    assert set(ufv) == {"programacao", "geracao"}  # só os conjuntos de série que servem à UFV
+    assert set(ufv) == {"programacao", "geracao", "fator_capacidade", "restricao_detalhe", "restricao_razao"}
     assert (ufv["geracao"]["nivel"], ufv["programacao"]["nivel"]) == ("conjunto", "conjunto")
+    # fase C: o fator de capacidade e a razão pelo conjunto; a restrição com detalhe só pelo id ONS da usina, que a UFV
+    # não tem no cadastro (achado A1)
+    assert (ufv["fator_capacidade"]["nivel"], ufv["restricao_razao"]["nivel"]) == ("conjunto", "conjunto")
+    assert ufv["restricao_detalhe"]["nivel"] == "ausente"
+    eol = _cobertura(montado, bc.EOL["ceg"])
+    assert {eol[k]["nivel"] for k in ("fator_capacidade", "restricao_detalhe", "restricao_razao")} == {"proprio"}
+    assert eol["restricao_detalhe"]["arquivo"] == "RESTRICAO_COFF_EOLICA_DETAIL_2026_09.parquet"  # a variante do tipo
 
 
 def test_cobertura_agregada_ausente_e_so_do_arquivo_mais_recente(montado) -> None:
@@ -223,7 +230,9 @@ def test_catalogo_json(montado) -> None:
     assert set(j["cadastro"]) == {"modalidade-usina", "usina_conjunto", "capacidade-geracao", "reservatorio"}
     assert j["cadastro"]["modalidade-usina"]["arquivo"] == "MODALIDADE_USINA.csv"
     assert {c["conjunto"] for c in j["cobertura"]} == {"evt", "indicadores", "programacao", "disponibilidade",
-                                                       "hidrologia", "geracao", "despacho", "cvu"}
+                                                       "hidrologia", "geracao", "despacho", "cvu", "fator_capacidade",
+                                                       "restricao_detalhe", "restricao_razao"}
+    assert {c.get("variante") for c in j["cobertura"] if c["conjunto"] == "restricao_detalhe"} == {"EOL", "UFV"}
     assert len(j["agregados"]["meses"]) == 12
     assert j["contagens"]["por_tipo"]["UHE"] == 2 and j["contagens"]["por_estado"]["MT"] == 2
 
@@ -238,7 +247,7 @@ def test_listagem_com_cobertura_por_conjunto_e_slug_do_perfil(mundo, caplog) -> 
     assert codigo == 0
     linhas = texto.splitlines()
     cabecalho = next(linha for linha in linhas if "CEG" in linha)
-    for coluna in ("EVT", "IND", "PRG", "DSP", "HID", "GER", "DES", "CVU", "PERFIL"):
+    for coluna in ("EVT", "IND", "PRG", "DSP", "HID", "GER", "DES", "CVU", "FC", "RDT", "RRZ", "PERFIL"):
         assert coluna in cabecalho
     linha_uhe = next(linha for linha in linhas if bc.UHE["ceg"] in linha)
     assert "uhe_ficticia" in linha_uhe and linha_uhe.count(" P ") >= 5

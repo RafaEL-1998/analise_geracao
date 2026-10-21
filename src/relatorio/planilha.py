@@ -66,6 +66,18 @@ def _abas_sem_evt(res: ResultadosAnalise) -> Dict[str, pd.DataFrame]:
         for sigla, cid in (("G3", "programacao_despacho"), ("G4", "verificada_despacho")):
             conf = (t.get("conferencias") or {}).get(cid) or {}
             abas.update({f"CONF_{sigla}_MENSAL": conf.get("mensal"), f"CONF_{sigla}_DIVERGENCIAS": conf.get("divergencias")})
+    r = getattr(res, "renovavel", None) or {}
+    if r:  # seções de eólica e solar (fase C): as tabelas completas
+        fc, corte, rec, prog = (r.get(k) or {} for k in ("fator_capacidade", "restricao", "recurso", "programacao"))
+        abas.update({"REN_FC_ANUAL": fc.get("anual"), "REN_FC_MENSAL": fc.get("mensal"),
+                     "REN_CORTE_ANUAL": corte.get("anual"), "REN_CORTE_MENSAL": corte.get("mensal"),
+                     "REN_CORTE_RAZAO": corte.get("por_razao"), "REN_RECURSO_FAIXAS": rec.get("faixas"),
+                     "REN_DESVIOS_PROGRAMACAO": prog.get("maiores_desvios")})
+        conferencias = r.get("conferencias") or {}
+        abas["CONF_G1_PARES"] = (conferencias.get("geracao_fontes") or {}).get("pares")
+        for sigla, cid in (("G1", "geracao_fontes"), ("G2", "soma_conjunto"), ("G5", "programacao_renovaveis")):
+            conf = conferencias.get(cid) or {}
+            abas.update({f"CONF_{sigla}_MENSAL": conf.get("mensal"), f"CONF_{sigla}_DIVERGENCIAS": conf.get("divergencias")})
     return {nome: t for nome, t in abas.items()
             if t is not None and (len(t) or nome in ("CONSTATACOES", "CONCLUSAO", "BASE_ANUAL", "OMITIDOS"))}
 

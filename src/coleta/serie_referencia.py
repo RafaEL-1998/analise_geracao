@@ -4,7 +4,9 @@ A série de referência define o período da análise (princípio IV), pelo tipo
 - hidrelétrica com Energia Vertida Turbinável: a EVT, pelo caminho de hoje, sem trechos;
 - usina com geração própria (``[cobertura] geracao = "proprio"``): a Geração por usina, pelo id ONS;
 - usina em conjunto sem série própria (``geracao = "conjunto"``): a Geração por usina do conjunto, pelo id do conjunto;
-- com a lista ``["proprio", "conjunto"]``: as duas séries; o período é a união, e cada hora vale pelo nível dela.
+- com a lista ``["proprio", "conjunto"]``: as duas séries; o período é a união, e cada hora vale pelo nível dela;
+- eólica ou solar em conjunto, com série própria na restrição com detalhe (fase C): a geração verificada da usina nessa
+  base, semi-horária, pelo id ONS; o complemento e os trechos ficam por hora.
 
 A série é varrida em todos os arquivos publicados, com o filtro do identificador na leitura do Parquet. O período vai
 da primeira à última hora com valor preenchido.
@@ -35,7 +37,12 @@ MOTIVOS = {
     "usina": "geração própria: Geração por usina, pelo id ONS da usina",
     "conjunto": "usina em conjunto, sem série própria: Geração por usina, pelo id do conjunto",
     "usina_conjunto": "a usina mudou de nível no período: Geração por usina, da usina e do conjunto",
+    "restricao_detalhe": ("usina em conjunto, com série própria na restrição com detalhe: geração verificada da usina, "
+                          "pelo id ONS"),
 }
+# Coluna da geração na série de referência de cada conjunto
+COLUNA_VALOR: Dict[str, str] = {"geracao": "val_geracao", "restricao_detalhe": "val_geracaoverificada"}
+COLUNA_MODALIDADE_RESTRICAO = "nom_modalidadeoperacao"
 
 
 @dataclass(frozen=True)
@@ -55,6 +62,9 @@ def escolher(perfil: Any) -> Escolha:
     valor = registro.cobertura_da_usina(perfil).get("geracao")
     valores = valor if isinstance(valor, (list, tuple)) else [valor]
     niveis = tuple(registro.NIVEL_DA_COBERTURA[v] for v in ("proprio", "conjunto") if v in valores)
+    if ("usina" not in niveis and "restricao_detalhe" in chaves
+            and registro.nivel_coletado(perfil, "restricao_detalhe") == "usina"):  # linha da fase C da decisão R6
+        return Escolha("restricao_detalhe", ("usina",), MOTIVOS["restricao_detalhe"])
     if "geracao" not in chaves or not niveis:
         raise ValueError(f"a usina '{perfil.usina.slug}' não tem série de referência: nem a Energia Vertida Turbinável "
                          "nem a Geração por usina (da usina ou do conjunto) na [cobertura]")
@@ -62,7 +72,11 @@ def escolher(perfil: Any) -> Escolha:
 
 
 def descricoes_referencia(perfil: Any, escolha: Escolha) -> Dict[str, DescricaoConjunto]:
-    """Descrições da Geração por usina em cada nível da série, com a modalidade por hora (para os trechos)."""
+    """Descrições da série em cada nível, com a modalidade por hora (para os trechos): a Geração por usina ou, na linha
+    da fase C, a restrição com detalhe da usina."""
+    if escolha.conjunto == "restricao_detalhe":
+        return {"usina": replace(registro.descricao_restricao_detalhe(perfil), chave="restricao_detalhe",
+                                 nivel="usina", referencia=True, resolucao="semi_horaria")}
     if escolha.conjunto != "geracao":
         return {}
     return {nivel: replace(registro.descricao_geracao(perfil, nivel), chave="geracao", nivel=nivel, referencia=True,
@@ -97,15 +111,20 @@ def periodo(series: Dict[str, pd.DataFrame], coluna: str = "val_geracao") -> Tup
     return pd.Timestamp(todos.min()), pd.Timestamp(todos.max())
 
 
-def complemento(series: Dict[str, pd.DataFrame], coluna: str = "val_geracao") -> pd.DataFrame:
-    """Modalidade e nível de cada hora: o da usina quando ela tem valor; senão, o do conjunto (decisão R7)."""
+def complemento(series: Dict[str, pd.DataFrame], coluna: str = "val_geracao", semi_horaria: bool = False
+                ) -> pd.DataFrame:
+    """Modalidade e nível de cada hora: o da usina quando ela tem valor; senão, o do conjunto (decisão R7). Na série
+    semi-horária (restrição com detalhe), uma linha por hora cheia, a da primeira meia-hora com valor."""
     partes = []
     for ordem, nivel in enumerate(("usina", "conjunto")):
         t = series.get(nivel)
         if t is None or not len(t):
             continue
-        partes.append(pd.DataFrame({"din_instante": pd.to_datetime(t["din_instante"]),
-                                    COLUNA_MODALIDADE: t.get(COLUNA_MODALIDADE, pd.Series("", index=t.index)).fillna(""),
+        modalidade = t[COLUNA_MODALIDADE] if COLUNA_MODALIDADE in t.columns else \
+            t.get(COLUNA_MODALIDADE_RESTRICAO, pd.Series("", index=t.index))
+        instantes = pd.to_datetime(t["din_instante"])
+        partes.append(pd.DataFrame({"din_instante": instantes.dt.floor("h") if semi_horaria else instantes,
+                                    COLUNA_MODALIDADE: modalidade.fillna(""),
                                     "nivel": nivel, "_com_valor": t[coluna].notna(), "_ordem": ordem}))
     if not partes:
         return pd.DataFrame(columns=["din_instante", COLUNA_MODALIDADE, "nivel"])
@@ -134,12 +153,22 @@ def combinar(series: Dict[str, pd.DataFrame], inicio: Optional[pd.Timestamp], fi
     return todas.drop_duplicates("din_instante", keep="first")[colunas].reset_index(drop=True)
 
 
+def recortar(serie: pd.DataFrame, inicio: Optional[pd.Timestamp], fim: Optional[pd.Timestamp]) -> pd.DataFrame:
+    """A série no período, com todas as colunas extraídas (a restrição com detalhe como série de referência)."""
+    if serie is None or not len(serie) or inicio is None:
+        return serie.iloc[0:0] if serie is not None else pd.DataFrame()
+    instantes = pd.to_datetime(serie["din_instante"])
+    return serie[(instantes >= inicio) & (instantes <= fim)].reset_index(drop=True)
+
+
 def resumo(escolha: Escolha, perfil: Any, inicio: Optional[pd.Timestamp], fim: Optional[pd.Timestamp],
            auditoria: pd.DataFrame) -> Dict[str, Any]:
     """Resumo da série de referência para o ``etapa.json`` da Coleta (data-model 5.1)."""
     ident = perfil.identificacao
     if escolha.conjunto == "evt":
         identificador = f"cod_usina={ident.cod_usina}"
+    elif escolha.conjunto == "restricao_detalhe":
+        identificador = f"id_ons={ident.id_ons}"
     else:
         valores = [ident.id_ons if nivel == "usina" else ident.id_conjunto for nivel in escolha.niveis]
         identificador = "id_ons=" + ";".join(str(v) for v in valores)

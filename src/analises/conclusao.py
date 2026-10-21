@@ -1,11 +1,12 @@
-"""Conclusão do relatório: regras C1 a C15, que apontam indícios sem afirmar causa (spec das Análises, FR-045).
+"""Conclusão do relatório: regras C1 a C19, que apontam indícios sem afirmar causa (spec das Análises, FR-045).
 
 As regras formam um catálogo declarado (spec 006, decisão R16): cada uma diz os tipos de usina, as listas em que pode
 gerar itens, o nível exigido (só dado da usina), os limiares, o período mínimo e as seções de origem. Nas hidrelétricas
 com EVT, C1 a C11 continuam como antes, com a mesma ordem, texto, limiares e listas (decisão R29). Nas usinas sem EVT,
 as regras comuns (C2, C5, C8 e C10) são avaliadas sobre a base horária comum, só com dados da usina; nas térmicas, também
-C12 a C15, sobre o despacho, o CVU e o CMO (fase B, decisão R16). O que não é avaliado vai para ``omitidos``, com o
-motivo.
+C12 a C15, sobre o despacho, o CVU e o CMO (fase B, decisão R16); nas eólicas e solares, só C16 a C19, sobre a
+restrição de operação, o recurso, o fator de capacidade e a programação da usina (fase C). O que não é avaliado vai para
+``omitidos``, com o motivo.
 """
 
 from __future__ import annotations
@@ -19,7 +20,7 @@ from src.analises.comum import _pct, _rotulo_ano, _rotulo_janela
 from src.analises.hidrologia import ATE_UMA_UNIDADE, entre_unidades
 from src.analises.indicadores import DESCRICAO_PARCELA
 from src.analises.resultados import ResultadosAnalise, sem_evt
-from src.coleta.registro import HIDRELETRICAS, TERMICAS
+from src.coleta.registro import HIDRELETRICAS, RENOVAVEIS, TERMICAS
 from src.comum.formatacao import fmt_data, fmt_data_hora, fmt_int, fmt_lista, fmt_mes_ano, fmt_num, fmt_pct, plural
 from src.comum.perfil import perfil_ativo
 from src.comum.regras import (
@@ -27,7 +28,9 @@ from src.comum.regras import (
     LIMIAR_CONCLUSAO_AFLUENCIA_ENGOLIMENTO_PCT,
     LIMIAR_CONCLUSAO_DESPACHO_ABAIXO_HORAS,
     LIMIAR_CONCLUSAO_DIFERENCA_RESERVA_GWH,
+    LIMIAR_CONCLUSAO_DESVIO_PROGRAMACAO_PCT,
     LIMIAR_CONCLUSAO_DISPONIVEL_CVU_HORAS,
+    LIMIAR_CONCLUSAO_ENERGIA_CORTADA_PCT,
     LIMIAR_CONCLUSAO_EVT_PARADA_PCT,
     LIMIAR_CONCLUSAO_INDISPONIBILIDADE_DIAS,
     LIMIAR_CONCLUSAO_INFLEXIBILIDADE_PCT,
@@ -37,6 +40,7 @@ from src.comum.regras import (
     LIMIAR_CONCLUSAO_PROGRAMADA_UG_PCT,
     LIMIAR_CONCLUSAO_R7_HORAS,
     LIMIAR_CONCLUSAO_R9_HORAS,
+    LIMIAR_CONCLUSAO_RECURSO_INVALIDO_PCT,
     LIMIAR_CONCLUSAO_SEM_PROGRAMACAO_HORAS,
     LIMIAR_DESVIO_DESPACHO_MW,
     LIMIAR_DESVIO_PROGRAMACAO_MW,
@@ -533,6 +537,64 @@ def _regra_c15(res: ResultadosAnalise) -> List[Dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
+# Regras das eólicas e solares (spec 006, fase C; decisão R16): só com dados da usina
+# ---------------------------------------------------------------------------
+
+
+def _regra_c16(res: ResultadosAnalise) -> List[Dict[str, Any]]:
+    """C16: energia cortada por restrição de operação acima de um limiar da energia estimada."""
+    r = (res.renovavel.get("restricao") or {}).get("resumo") or {}
+    pct = r.get("pct_estimada", float("nan"))
+    if not (pct >= LIMIAR_CONCLUSAO_ENERGIA_CORTADA_PCT):
+        return []
+    return [_item("pontos_atencao", "C16", (
+        f"Energia cortada por restrição de operação de {fmt_num(r['energia_cortada_mwh'], 0)} MWh, {fmt_pct(pct)} da "
+        f"energia estimada nas semi-horas com a marca de restrição"), ["energia_cortada"])]
+
+
+def _regra_c17(res: ResultadosAnalise) -> List[Dict[str, Any]]:
+    """C17: recurso (vento ou irradiância) marcado como inválido em parte relevante das semi-horas da usina."""
+    rec = res.renovavel.get("recurso") or {}
+    r = rec.get("resumo") or {}
+    pct = r.get("pct_invalidas", float("nan"))
+    if not (pct >= LIMIAR_CONCLUSAO_RECURSO_INVALIDO_PCT):
+        return []
+    return [_item("verificar_campo", "C17", (
+        f"Medição de {rec['grandeza']} marcada como inválida pelo ONS em {fmt_int(r['semi_horas_invalidas'])} das "
+        f"{fmt_int(r['semi_horas'])} semi-horas da usina ({fmt_pct(pct)})"), ["recurso_geracao"])]
+
+
+def _regra_c18(res: ResultadosAnalise) -> List[Dict[str, Any]]:
+    """C18: fator de capacidade publicado da usina, num ano completo, abaixo da razão garantia física ÷ potência."""
+    p = perfil_ativo().parametros
+    fc = res.renovavel.get("fator_capacidade") or {}
+    anual = fc.get("anual")
+    if anual is None or not len(anual) or not p.garantia_fisica_mwmed:
+        return []
+    referencia = _pct(p.garantia_fisica_mwmed, p.potencia_instalada_mw)
+    abaixo = anual[(anual["nivel"] == "usina") & ~anual["ano_parcial"].astype(bool)
+                   & (anual["fator_capacidade_pct"] < referencia)]
+    if abaixo.empty:
+        return []
+    anos = [f"{fmt_pct(r.fator_capacidade_pct)} em {int(r.periodo)}" for r in abaixo.itertuples()]
+    return [_item("pontos_atencao", "C18", (
+        f"Fator de capacidade publicado pelo ONS de {fmt_lista(anos)}, abaixo da razão entre a garantia física e a "
+        f"potência instalada ({fmt_pct(referencia)})"), ["fator_capacidade"])]
+
+
+def _regra_c19(res: ResultadosAnalise) -> List[Dict[str, Any]]:
+    """C19: desvio médio absoluto entre a geração programada e a verificada da usina acima de um limiar."""
+    prog = res.renovavel.get("programacao") or {}
+    pct = prog.get("desvio_medio_absoluto_pct", float("nan"))
+    if prog.get("nivel") != "usina" or not (pct >= LIMIAR_CONCLUSAO_DESVIO_PROGRAMACAO_PCT):
+        return []
+    return [_item("confirmar_agente", "C19", (
+        f"Diferença entre a geração programada pelo ONS e a verificada da usina, com desvio médio absoluto de "
+        f"{fmt_num(prog['desvio_medio_absoluto_mw'], 1)} MW ({fmt_pct(pct)} da potência instalada) em "
+        f"{fmt_int(prog['horas'])} h"), ["programacao_comum"])]
+
+
+# ---------------------------------------------------------------------------
 # Catálogo
 # ---------------------------------------------------------------------------
 
@@ -559,6 +621,7 @@ class RegraConclusao:
     bases_comuns: Tuple[str, ...] = ()
     exige_referencias: bool = False
     descricao: Optional[Callable[[], str]] = None
+    exige_garantia_fisica: bool = False
 
 
 _COM_DISPONIBILIDADE = HIDRELETRICAS + TERMICAS
@@ -619,21 +682,47 @@ CATALOGO_CONCLUSAO: Tuple[RegraConclusao, ...] = (
                    descricao=lambda: (f"C15 geração mais de {fmt_num(LIMIAR_DESVIO_DESPACHO_MW, 0)} MW acima da "
                                       f"programada, sem programação, em ≥ "
                                       f"{fmt_int(LIMIAR_CONCLUSAO_SEM_PROGRAMACAO_HORAS)} h")),
+    # Fase C (spec 006): eólicas e solares; limiares iniciais em regras.py, calibrados na Seriemas 1 e na Praia Formosa
+    RegraConclusao("C16", RENOVAVEIS, ("pontos_atencao",), None, ("energia_cortada",),
+                   ("LIMIAR_CONCLUSAO_ENERGIA_CORTADA_PCT",), funcao_comum=_regra_c16, bases_comuns=("restricao",),
+                   descricao=lambda: (f"C16 energia cortada por restrição de operação ≥ "
+                                      f"{fmt_pct(LIMIAR_CONCLUSAO_ENERGIA_CORTADA_PCT, 0)} da energia estimada")),
+    RegraConclusao("C17", RENOVAVEIS, ("verificar_campo",), None, ("recurso_geracao",),
+                   ("LIMIAR_CONCLUSAO_RECURSO_INVALIDO_PCT",), funcao_comum=_regra_c17, bases_comuns=("recurso",),
+                   descricao=lambda: (f"C17 recurso (vento ou irradiância) inválido em ≥ "
+                                      f"{fmt_pct(LIMIAR_CONCLUSAO_RECURSO_INVALIDO_PCT, 0)} das semi-horas")),
+    RegraConclusao("C18", RENOVAVEIS, ("pontos_atencao",), None, ("fator_capacidade",), (), periodo_minimo_meses=12,
+                   funcao_comum=_regra_c18, bases_comuns=("fator_capacidade",), exige_garantia_fisica=True,
+                   descricao=lambda: ("C18 fator de capacidade publicado da usina, num ano completo, abaixo da razão "
+                                      "entre a garantia física e a potência instalada")),
+    RegraConclusao("C19", RENOVAVEIS, ("confirmar_agente",), None, ("programacao_comum",),
+                   ("LIMIAR_CONCLUSAO_DESVIO_PROGRAMACAO_PCT",), funcao_comum=_regra_c19,
+                   bases_comuns=("programacao",),
+                   descricao=lambda: (f"C19 desvio médio absoluto entre a geração programada e a verificada ≥ "
+                                      f"{fmt_pct(LIMIAR_CONCLUSAO_DESVIO_PROGRAMACAO_PCT, 0)} da potência instalada")),
 )
 # As funções de hoje, na ordem do catálogo (C1 a C11), as únicas do caminho da EVT
 REGRAS_CONCLUSAO = tuple(r.funcao for r in CATALOGO_CONCLUSAO if r.funcao is not None)
 
 NOMES_BASES = {"disponibilidade": "a Disponibilidade por usina", "indicadores": "os Indicadores de desempenho do ONS",
                "despacho": "a Geração térmica por motivo de despacho",
-               "cvu_cmo": "o CVU e o CMO cruzados com a disponibilidade e o despacho"}
+               "cvu_cmo": "o CVU e o CMO cruzados com a disponibilidade e o despacho",
+               "restricao": "a Restrição com detalhe", "recurso": "o recurso válido da Restrição com detalhe",
+               "fator_capacidade": "o Fator de capacidade", "programacao": "a Programação diária"}
 
 
 def _bases_da_usina(res: ResultadosAnalise) -> Dict[str, bool]:
     """Bases das regras presentes no nível da usina (a disponibilidade, os indicadores e o despacho são sempre da
     usina; o CMO é contexto do subsistema)."""
     t = getattr(res, "termica", None) or {}
+    r = getattr(res, "renovavel", None) or {}
+    fc = r.get("fator_capacidade") or {}
     return {"disponibilidade": bool(res.comum.get("disponibilidade")), "indicadores": bool(res.ons),
-            "despacho": bool(t), "cvu_cmo": bool(t.get("cvu_cmo")) and bool(t.get("disponivel_sem_despacho"))}
+            "despacho": bool(t), "cvu_cmo": bool(t.get("cvu_cmo")) and bool(t.get("disponivel_sem_despacho")),
+            # fase C: a restrição com detalhe é sempre da usina; o fator de capacidade e a programação, só no nível dela
+            "restricao": bool(r.get("restricao")), "recurso": bool(r.get("recurso")),
+            "fator_capacidade": fc.get("nivel") == "usina",
+            "programacao": (r.get("programacao") or {}).get("nivel") == "usina"}
 
 
 def _motivo(regra: RegraConclusao, res: ResultadosAnalise) -> Optional[str]:
@@ -646,6 +735,11 @@ def _motivo(regra: RegraConclusao, res: ResultadosAnalise) -> Optional[str]:
         return f"sem {' nem '.join(nomes)} no nível da usina"
     if regra.exige_referencias and _referencias() is None:
         return "sem IP e TEIF de referência no perfil da usina"
+    if regra.exige_garantia_fisica and not perfil_ativo().parametros.garantia_fisica_mwmed:
+        return "sem a garantia física no perfil da usina"
+    meses = int((res.cobertura or {}).get("meses_distintos") or 0)
+    if regra.periodo_minimo_meses and meses < regra.periodo_minimo_meses:
+        return f"a série tem {fmt_int(meses)} meses distintos, menos que o período mínimo de {regra.periodo_minimo_meses}"
     return None
 
 

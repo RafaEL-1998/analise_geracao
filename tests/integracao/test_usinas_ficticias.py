@@ -1,4 +1,4 @@
-"""Uma usina fictícia por tipo, de ponta a ponta (spec 006, decisão R23, SC-005; tarefas T052, T053 e T067).
+"""Uma usina fictícia por tipo, de ponta a ponta (spec 006, decisão R23, SC-005; tarefas T052, T053, T067, T083 e T104).
 
 As sete usinas (UHE, PCH, CGH, UTE, UTN, EOL e UFV) rodam ``completo --sem-portal`` sobre os mesmos arquivos brutos
 sintéticos, sem rede, cada uma só com o seu perfil. Cada relatório tem as seções comuns do seu caminho, e nenhuma saída
@@ -136,7 +136,7 @@ def test_utn_com_indicadores_do_onS(execucoes) -> None:
 def test_ufv_com_serie_curta(execucoes) -> None:
     md = execucoes["ufv"]["md"]
     assert "Sazonalidade omitida" in md and "| Fator de capacidade |" in md
-    assert "10/02/2024 00h" in md  # o período começa na primeira hora da série da usina
+    assert "25/01/2024 00h" in md  # o período começa na primeira semi-hora da série da usina (fase C)
 
 
 # ---------------------------------------------------------------------------
@@ -263,3 +263,70 @@ def test_utn_com_a_g3_nao_aplicavel_sem_a_programacao(execucoes) -> None:
                                  keep_default_na=False).set_index("conferencia")
     assert "Programação diária não coletado" in nao_aplicaveis.loc["programacao_despacho", "motivo"]
     assert "08_desvios_despacho_mensal.png" not in {p.name for p in (e["relatorio"] / "figures").iterdir()}
+
+
+# ---------------------------------------------------------------------------
+# Eólicas e solares: fator de capacidade e restrições (spec 006, fase C; tarefa T104)
+# ---------------------------------------------------------------------------
+
+SECOES_RENOVAVEL = ("Fator de capacidade", "Energia cortada por restrição de operação (constrained-off)",
+                    "Recurso × geração")
+
+
+def _manifesto(e, etapa: str) -> dict:
+    return json.loads((e["dados"] / etapa / "etapa.json").read_text(encoding="utf-8"))["resumo"]
+
+
+@pytest.mark.parametrize("tipo", ["eol", "ufv"])
+def test_secoes_de_renovaveis_na_eol_e_na_ufv(execucoes, tipo: str) -> None:
+    e = execucoes[tipo]
+    secoes = _secoes(e["md"])
+    posicoes = [secoes.index(s) for s in ("Perfil horário da geração", *SECOES_RENOVAVEL)]
+    assert posicoes == sorted(posicoes), secoes  # depois do perfil horário (FR-041, item 8)
+    for nome in ("fator_capacidade_horario.csv", "restricao_semi_horaria.csv", "restricao_horaria.csv",
+                 "restricao_razao_semi_horaria.csv"):
+        assert (e["dados"] / "tratamento" / nome).exists(), (tipo, nome)
+    for nome in ("10_fator_capacidade_mensal.png", "11_energia_cortada_por_razao_mensal.png",
+                 "12_geracao_por_faixa_de_recurso.png"):
+        assert (e["relatorio"] / "figures" / nome).stat().st_size > 1000, (tipo, nome)
+    assert "nan" not in e["md"].lower().replace("nanosegundo", "")
+    conferencias = _manifesto(e, "conferencia")
+    assert conferencias["geracao_fontes"]["divergentes"] == 0  # G1: as fontes da geração coincidem
+    assert conferencias["programacao_renovaveis"]["comparados"] == 72  # G5: os três dias da programação
+    assert "| Energia cortada (MWh, % est.) |" in _cabecalho_tabela(_bloco(_resumo(execucoes, tipo), "Evolução anual"))
+
+
+def test_eol_com_vento_invalido_corte_por_razao_e_regras(execucoes) -> None:
+    e = execucoes["eol"]
+    md = e["md"]
+    restricao = _manifesto(e, "tratamento")["restricao_detalhe"]
+    # 160 semi-horas restritas × 25 MW × 0,5 h; o erro da estimativa das 3h fica de fora; 6 dias de vento inválido
+    assert (restricao["energia_cortada_mwh"], restricao["semi_horas_recurso_invalido"]) == (2000.0, 288)
+    assert "| indisponibilidade externa (REL) | 48 | 600 | 30,0% |" in md
+    assert "diferença bruta entre a estimada e a verificada de 2.046 MWh" in md
+    analises = _manifesto(e, "analises")
+    assert {"C16", "C17", "C19"} <= set(analises["regras_da_conclusao"]) and "C18" in analises["omitidos"]
+    assert "### Maiores desvios entre a geração verificada e a programada" in md
+    assert (e["relatorio"] / "figures" / "13_desvio_programacao_mensal.png").exists()
+    nao_aplicaveis = pd.read_csv(e["dados"] / "conferencia" / "nao_aplicaveis.csv", sep=";", dtype=str,
+                                 keep_default_na=False).set_index("conferencia")
+    assert "não está em conjunto" in nao_aplicaveis.loc["soma_conjunto", "motivo"]
+
+
+def test_ufv_em_conjunto_com_a_restricao_como_referencia(execucoes) -> None:
+    e = execucoes["ufv"]
+    md = e["md"]
+    assert "Série de referência: Restrição com detalhe (id ONS GOUFFI; CEG UFV.RS.GO.000107-0.01)" in md
+    tratamento = _manifesto(e, "tratamento")
+    assert tratamento["restricao_detalhe"]["semi_horas_sem_marca"] == 336  # janeiro, no esquema antigo
+    assert tratamento["membros_restricao"] == {bf.MEMBRO_UFV["id_ons"]: 864}
+    auditoria = pd.read_csv(e["dados"] / "coleta" / "auditoria_restricao_detalhe.csv", sep=";", dtype=str,
+                            keep_default_na=False)
+    assert auditoria["mensagem"].str.contains("colunas ausentes no arquivo").sum() == 1
+    soma = _manifesto(e, "conferencia")["soma_conjunto"]
+    assert (soma["comparados"], soma["divergentes"]) == (864, 0)  # G2: a usina e o membro somam o conjunto
+    assert "A razão é a do conjunto de usinas CONJ. SOLAR FICTICIO, id ONS CJU_GOCJUF" in md
+    assert "| Fator de capacidade | conjunto | CJU_GOCJUF |" in md  # o número do conjunto, identificado
+    for nome in ("fator_capacidade_extraido.parquet", "restricao_razao_extraido.parquet"):
+        assert set(pd.read_parquet(e["dados"] / "coleta" / nome)["nivel"]) == {"conjunto"}, nome
+    assert "A série do conjunto" not in md  # a base horária é da usina

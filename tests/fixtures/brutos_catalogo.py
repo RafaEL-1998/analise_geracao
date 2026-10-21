@@ -45,7 +45,8 @@ LINHAS_CADASTRO = [
     f"CGH DELTA;{CGH['ceg']};TIPO III;1.000;COSR-NCO       ;Rede de Distribuição 13,8 kV;GO;GOIAS   ;A;{CGH['id_ons']}",
     "CONJUNTO ALFA;;TIPO II-C;50.000;COSR-NCO       ;SE ALFA 138 KV;GO;GOIAS   ;A;",
     f"USINA EPSILON;{OUTRO['ceg']};TIPO I;10.000;COSR-NCO       ;SE EPSILON;GO;GOIAS   ;A;{OUTRO['id_ons']}",
-    f"EOL ZETA;{EOL['ceg']};TIPO I;30.000;COSR-NCO       ;SE ZETA 230 KV;MT;MATO GROSSO   ;A;{EOL['id_ons']}",
+    # id ONS com espaço no fim, como o ONS publica o da EOL Praia Formosa ("CEUFM ")
+    f"EOL ZETA;{EOL['ceg']};TIPO I;30.000;COSR-NCO       ;SE ZETA 230 KV;MT;MATO GROSSO   ;A;{EOL['id_ons']} ",
     f"UHE SEM DADOS;{SEM_DADOS['ceg']};TIPO I;200.000;COSR-NCO       ;SE OMEGA 500 KV;MT;MATO GROSSO   ;A;{SEM_DADOS['id_ons']}",
 ]
 
@@ -147,6 +148,30 @@ def gravar_series(raw: Path) -> None:
     for mes in MESES_GERACAO:
         _parquet(geracao_do_mes(mes), raw / "geracao_usina_2" / f"GERACAO_USINA-2_{mes.year}_{mes.month:02d}.parquet")
     gravar_termicas(raw)
+    gravar_renovaveis(raw)
+
+
+def gravar_renovaveis(raw: Path) -> None:
+    """Fase C: o Fator de capacidade e as restrições (variantes eólica e fotovoltaica) do mês mais recente. A UFV não
+    tem id ONS no cadastro (achado A1): só o conjunto é achado pelo id; a EOL é achada pelo id dela."""
+    horas = _horas(pd.Period("2026-09", "M"))[:4]
+    semi = pd.date_range(horas[0], periods=8, freq="30min")
+    _parquet(pd.concat([
+        pd.DataFrame({"id_ons": EOL["id_ons"], "ceg": EOL["ceg"], "id_estado": "MT", "din_instante": horas,
+                      "val_geracaoverificada": "12.0", "val_capacidadeinstalada": "30.0"}),
+        pd.DataFrame({"id_ons": UFV["conjunto"], "ceg": "-", "id_estado": "GO", "din_instante": horas,
+                      "val_geracaoverificada": "15.0", "val_capacidadeinstalada": "50.0"}),
+    ]), raw / "fator_capacidade_2" / "FATOR_CAPACIDADE-2_2026_09.parquet")
+    _parquet(pd.DataFrame({"id_ons": EOL["id_ons"], "ceg": EOL["ceg"], "din_instante": semi,
+                           "val_geracaoverificada": 12.0}),
+             raw / "restricao_coff_eolica_detail" / "RESTRICAO_COFF_EOLICA_DETAIL_2026_09.parquet")
+    _parquet(pd.DataFrame({"id_ons": UFV["id_ons_composicao"], "ceg": UFV["ceg"], "din_instante": semi,
+                           "val_geracaoverificada": 7.0}),
+             raw / "restricao_coff_fotovoltaica_detail" / "RESTRICAO_COFF_FOTOVOLTAICA_DETAIL_2026_09.parquet")
+    _parquet(pd.DataFrame({"id_ons": EOL["id_ons"], "ceg": EOL["ceg"], "din_instante": semi, "val_geracao": 12.0}),
+             raw / "restricao_coff_eolica_usi" / "RESTRICAO_COFF_EOLICA_2026_09.parquet")
+    _parquet(pd.DataFrame({"id_ons": UFV["conjunto"], "ceg": "-", "din_instante": semi, "val_geracao": 15.0}),
+             raw / "restricao_coff_fotovoltaica" / "RESTRICAO_COFF_FOTOVOLTAICA_2026_09.parquet")
 
 
 # Fase B (spec 006): códigos de planejamento da UTE no despacho; o 71 sai em 09/2026, o 70 é vigente

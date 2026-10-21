@@ -54,9 +54,10 @@ def _res(completo: bool = True, **mudancas: Any) -> SimpleNamespace:
 
 
 def test_catalogo_e_mapa_consistentes() -> None:
-    assert set(CONJUNTOS) == IDS | {"projeto", "composicao", "capacidade", "despacho", "cvu", "cmo"}  # spec 006
-    for chave, entrada in MAPA_FONTES.items():
-        assert set(entrada.conjuntos) <= set(CONJUNTOS), chave
+    assert set(CONJUNTOS) == IDS | {"projeto", "composicao", "capacidade", "despacho", "cvu", "cmo",  # spec 006
+                                    "fator_capacidade", "restricao_detalhe", "restricao_razao"}  # fase C
+    for chave, entrada in MAPA_FONTES.items():  # "referencia": a série de referência da usina (fase C)
+        assert set(entrada.conjuntos) <= set(CONJUNTOS) | {"referencia"}, chave
         assert set(entrada.conferencias) <= set(CONFERENCIAS), chave
 
 

@@ -1,0 +1,36 @@
+# Rascunho gerado por "python -m src perfil" a partir do catálogo de usinas (data/catalogo/, montado em 2026-10-21 12:55:39 UTC).
+# Confira cada valor com a fonte, complete os pendentes e troque situacao para "conferido".
+# Identificação só pelos códigos (CEG, id ONS, id do conjunto e códigos de programação), nunca pelo nome.
+
+[usina]
+slug = "praia_formosa"
+nome = "EOL PRAIA FORMOSA"            # Modalidade das usinas, publicado em 20/10/2026; ajuste para o nome do relatório
+nome_curto = "EOL PRAIA FORMOSA"      # a conferir
+estado = "CE"                         # Modalidade das usinas
+tipo = "EOL"                          # prefixo do CEG
+modalidade = "TIPO I"                 # Modalidade das usinas
+subsistema = "NE"                     # Capacidade de geração ou Composição dos conjuntos
+inicio_operacao_comercial = 2009      # Capacidade de geração: primeira unidade ativa em 26/08/2009; a conferir
+situacao = "rascunho"
+pendentes = ["parametros.fontes.geral", "parametros.garantia_fisica_mwmed (opcional)"]
+
+[identificacao]
+ceg = "EOL.CV.CE.028631-1.01"         # Modalidade das usinas
+id_ons = "CEUFM"                      # Modalidade das usinas
+codigos_programacao = ["CEUFM"]       # Programação diária, publicado em 20/10/2026
+
+[cobertura]                           # catálogo de usinas; a conferir
+programacao = "proprio"
+geracao = "proprio"
+fator_capacidade = "proprio"
+restricao_detalhe = "proprio"
+restricao_razao = "proprio"
+
+[parametros]
+potencia_instalada_mw = 105.0         # Capacidade de geração: 6 unidades ativas
+unidades_geradoras = 6
+potencias_unidades_mw = [16.8, 16.8, 16.8, 21.0, 16.8, 16.8]
+# garantia_fisica_mwmed =             # pendente: opcional; valor e fonte
+
+[parametros.fontes]
+# geral =                             # pendente: documento e data dos parâmetros

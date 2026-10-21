@@ -563,53 +563,53 @@ python -m pytest tests -q -p no:cacheprovider
   - `003-conferencia.md`: G1, G2 e G5;
   - `004-analises.md`: decisão R19; C16 a C19; período mínimo;
   - `005-geracao-relatorio.md`: seções, figuras e indicadores da capa de renováveis.
-- [ ] T098 [US3] Levar ao usuário os rascunhos da fase C em `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/` e registrar a aprovação. Nenhum código da fase C antes disso.
+- [X] T098 [US3] Levar ao usuário os rascunhos da fase C em `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/` e registrar a aprovação. Nenhum código da fase C antes disso.
 
 ### Tests for User Story 3
 
-- [ ] T099 [P] [US3] Escrever `tests/coleta/test_conjuntos_renovaveis.py`:
+- [X] T099 [P] [US3] Escrever `tests/coleta/test_conjuntos_renovaveis.py`:
   - **fator de capacidade**: pela usina (CEG) ou pelo conjunto (estado, CEG "-");
   - **restrição com detalhe**: semi-horária, pelo id ONS e pelo CEG; colunas ausentes de 05 a 12/2024 aceitas, sem servir de conferência;
   - **restrição com razão**: pela usina ou pelo conjunto;
   - **variantes**: a eólica e a fotovoltaica escolhidas pelo tipo;
   - **série de referência**: a restrição com detalhe (EOL e UFV em conjunto com série própria).
-- [ ] T100 [P] [US3] Escrever `tests/tratamento/test_renovavel.py`:
+- [X] T100 [P] [US3] Escrever `tests/tratamento/test_renovavel.py`:
   - **energia cortada** = máx(estimada − verificada, 0) × 0,5 h, só nas semi-horas com `flg_geracaorestrita = 1`;
   - **semi-horas sem a coluna da marca**: contadas e fora do total;
   - **diferença fora das semi-horas restritas**: não entra;
   - **hora cheia**: média das duas meias-horas, e a hora incompleta fica ausente e contada;
   - **sinalizações**: recurso inválido, fator de capacidade fora de 0 a 1 e geração acima da capacidade;
   - **razão** por semi-hora, com o nível.
-- [ ] T101 [P] [US3] Escrever `tests/conferencia/test_fontes_renovaveis.py`:
+- [X] T101 [P] [US3] Escrever `tests/conferencia/test_fontes_renovaveis.py`:
   - G1 só com pares do mesmo nível;
   - G2 só com `[[identificacao.membros]]` e nos trechos com todas as usinas; sem os membros, não aplicável;
   - G5 (Programação diária × programada do fator de capacidade).
-- [ ] T102 [P] [US3] Escrever `tests/analises/test_renovavel.py`:
+- [X] T102 [P] [US3] Escrever `tests/analises/test_renovavel.py`:
   - fator de capacidade publicado (com o nível) e calculado ("calculado neste relatório");
   - energia cortada por razão, com a razão do conjunto e a energia da usina;
   - recurso × geração por faixa, sem as semi-horas inválidas e com a contagem delas;
   - aderência à programação: desvio médio e maiores desvios;
   - série curta: sazonalidade omitida com o motivo.
-- [ ] T103 [P] [US3] Ampliar `tests/analises/test_conclusao.py` com C16 a C19:
+- [X] T103 [P] [US3] Ampliar `tests/analises/test_conclusao.py` com C16 a C19:
   - C18 só com fator de capacidade próprio e garantia física no perfil;
   - C19 só com programação no nível da usina;
   - regras com período mínimo não avaliadas na série curta.
-- [ ] T104 [P] [US3] Ampliar `tests/fixtures/brutos_ficticios.py` e as usinas fictícias:
+- [X] T104 [P] [US3] Ampliar `tests/fixtures/brutos_ficticios.py` e as usinas fictícias:
   - **`eol`**: Tipo I, com vento inválido, razão da restrição e série desde 10/2021;
   - **`ufv`**: em conjunto, com membros, série curta e o esquema antigo sem as cinco colunas.
   - Em `tests/integracao/test_usinas_ficticias.py`, as seções de renováveis nas duas.
 
 ### Implementation for User Story 3
 
-- [ ] T105 [US3] Acrescentar os conjuntos de renováveis:
+- [X] T105 [US3] Acrescentar os conjuntos de renováveis:
   - em `src/comum/regras.py`, os pacotes `fator-capacidade-2`, `restricao_coff_eolica_detail`, `restricao_coff_fotovoltaica_detail`, `restricao_coff_eolica_usi` e `restricao_coff_fotovoltaica`, com as pastas;
   - em `src/coleta/registro.py`, as entradas `fator_capacidade`, `restricao_detalhe` e `restricao_razao`, com as variantes, e a linha da fase C da decisão R6 em `src/coleta/serie_referencia.py`.
-- [ ] T106 [US3] Ampliar o motor de `src/coleta/conjuntos.py` para as séries semi-horárias e as colunas que faltam em parte dos arquivos, sem mudar a extração dos conjuntos horários de hoje. Portão: `comparar --todas --coleta` com código 0.
-- [ ] T107 [US3] Criar `src/tratamento/renovavel.py`, com os arquivos do data-model 6.2, e chamá-lo em `src/tratamento/etapa.py`.
-- [ ] T108 [P] [US3] Acrescentar G1, G2 e G5 a `src/conferencia/fontes.py`, com a aplicabilidade em `src/conferencia/aplicabilidade.py`.
-- [ ] T109 [US3] Criar `src/analises/renovavel.py` (decisão R19), integrado em `src/analises/etapa.py` e em `ResultadosAnalise.renovavel`.
-- [ ] T110 [US3] Acrescentar C16 a C19 a `src/analises/conclusao.py`, com os limiares iniciais em constantes nomeadas em `src/comum/regras.py`, citados nas notas.
-- [ ] T111 [US3] Criar `src/relatorio/secoes_renovavel.py` e as figuras em `src/relatorio/figuras.py`, em seaborn:
+- [X] T106 [US3] Ampliar o motor de `src/coleta/conjuntos.py` para as séries semi-horárias e as colunas que faltam em parte dos arquivos, sem mudar a extração dos conjuntos horários de hoje. Portão: `comparar --todas --coleta` com código 0.
+- [X] T107 [US3] Criar `src/tratamento/renovavel.py`, com os arquivos do data-model 6.2, e chamá-lo em `src/tratamento/etapa.py`.
+- [X] T108 [P] [US3] Acrescentar G1, G2 e G5 a `src/conferencia/fontes.py`, com a aplicabilidade em `src/conferencia/aplicabilidade.py`.
+- [X] T109 [US3] Criar `src/analises/renovavel.py` (decisão R19), integrado em `src/analises/etapa.py` e em `ResultadosAnalise.renovavel`.
+- [X] T110 [US3] Acrescentar C16 a C19 a `src/analises/conclusao.py`, com os limiares iniciais em constantes nomeadas em `src/comum/regras.py`, citados nas notas.
+- [X] T111 [US3] Criar `src/relatorio/secoes_renovavel.py` e as figuras em `src/relatorio/figuras.py`, em seaborn:
   - fator de capacidade mensal;
   - energia cortada por razão;
   - recurso × geração por faixa;
@@ -1241,3 +1241,26 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
   - Análises: FR-058 (seções de renováveis, decisão R19) e FR-059 (C16 a C19, limiares calibrados nas pilotos);
   - Geração do relatório: FR-045 (três seções e quatro figuras), capa, legendas, notas e o resumo executivo das renováveis (energia cortada como indicador de perda; termos novos com o texto a aprovar).
 - **T098**: rascunhos levados ao usuário; nenhum código da fase C antes da aprovação.
+
+### 20/10/2026 — T098 (aprovação dos rascunhos da fase C)
+
+- Rascunhos da fase C aprovados pelo usuário ("aprovo"). O código da fase C pode começar (T099 em diante).
+
+### 21/10/2026 — T099, T100, T101, T105 e T106 (Coleta das renováveis e testes da fase C)
+
+- **T105**: em `src/comum/regras.py`, os cinco pacotes e as pastas; em `src/coleta/registro.py`, as entradas `fator_capacidade` (horária, usina ou conjunto), `restricao_detalhe` (semi-horária, só da usina, pelo id ONS e conferida pelo CEG; o id do conjunto fica como texto, sem conferir) e `restricao_razao` (semi-horária, usina ou conjunto), com as variantes eólica e fotovoltaica escolhidas pelo tipo (`registro.pacotes(entradas, tipo)`). A linha da fase C da decisão R6 está em `src/coleta/serie_referencia.py`: EOL e UFV sem a geração própria e com a restrição com detalhe da usina usam esta como série de referência. A Coleta grava a série semi-horária no período, o complemento por hora cheia e, com `[[identificacao.membros]]`, a restrição com detalhe das outras usinas do conjunto (`restricao_membros_extraido.parquet`, só para a G2). O catálogo de usinas ganhou as colunas FC, RDT e RRZ, com a cobertura por variante.
+- **T106**: o motor aceita as colunas que faltam em parte dos arquivos (fotovoltaica de 05 a 12/2024) quando a descrição pede (`avisar_colunas_ausentes`): a coluna fica vazia, o arquivo é processado e a auditoria registra "colunas ausentes no arquivo: ...". Achado no caminho: nesses arquivos a marca de irradiância inválida é booleana, e o motor a lia como texto não numérico; `numero_publicado` passou a ler marcas booleanas como 1 e 0 (sem efeito nos conjuntos de hoje, que não têm colunas booleanas). Portão: suíte com 733 aprovados; `comparar --todas --coleta` com william_arjona sem nenhuma diferença e sao_domingos só com as quatro diferenças da Coleta já aceitas (republicação do ONS); código 6 por elas.
+- **T099**: `tests/coleta/test_conjuntos_renovaveis.py` (6 testes) e ajustes em `test_registro.py`, `test_dicionarios.py`, `test_perfil.py`, `test_catalogo_usinas.py` e `brutos_catalogo.py`.
+- **T100**: `tests/tratamento/test_renovavel.py` (8 testes): energia cortada só nas semi-horas restritas, semi-hora sem a marca contada e fora do total, hora cheia pela média das duas meias-horas com a hora incompleta ausente e contada, recurso inválido, fator de capacidade com nível e sinalizações, razão com o nível, restrição como série de referência, membros em hora cheia e gravação/leitura. Confirmado nos dados do ONS que o instante das semi-horas é o do início (00:00 a 23:30).
+- **T101**: `tests/conferencia/test_fontes_renovaveis.py` (6 testes): G1 só com pares do mesmo nível; G2 só nas horas com toda a composição vigente, com as horas incompletas contadas; G5; aplicabilidade pelos níveis (G1 sem par, G2 sem os membros ou sem a geração do conjunto, G5 com níveis diferentes).
+
+### 21/10/2026 — T102 a T104 e T107 a T111 (implementação da fase C)
+
+- **T107** (`src/tratamento/renovavel.py`, chamado em `src/tratamento/etapa.py`): os arquivos do data-model 6.2. Restrição com detalhe por semi-hora (a do arquivo publicado por último, duplicatas conflitantes contadas), com `sinal_recurso_invalido`, `restrita`, `sem_marca_restricao` e `energia_cortada_mwh` = máx(estimada − verificada, 0) × 0,5 h só nas semi-horas com `flg_geracaorestrita = 1` (vazia sem a marca); a razão (REL, CNF, ENE) e o nível dela na mesma semi-hora; a hora cheia pela média das duas meias-horas, com a hora incompleta ausente e contada; o fator de capacidade horário com o nível, `sinal_fc_fora_0_1` e `sinal_acima_capacidade` (folga de 1 MW); os membros do conjunto em hora cheia, só para a G2. Na série de referência da restrição com detalhe, a base horária comum vem dela, com a disponibilidade e a programação só quando estão no nível da usina (a base é da usina; números do conjunto não entram nela).
+- **T108** (`src/conferencia/fontes.py`, `aplicabilidade.py`, `etapa.py`, `resultado.py`): G1 compara as fontes da geração (Geração por usina, Fator de capacidade e as duas restrições em hora cheia) duas a duas e só no mesmo nível; G2 soma a restrição com detalhe da usina e dos membros só nas horas com toda a composição vigente (horas incompletas contadas) e compara com a Geração por usina do conjunto; G5 compara a Programação diária com o programado do Fator de capacidade. Aplicabilidade pelos níveis das bases (G1 sem duas fontes no mesmo nível; G2 fora de conjunto, sem os membros ou sem a geração do conjunto; G5 com níveis diferentes), com o motivo em `nao_aplicaveis.csv`. As bases da fase C saíram de "ainda não coletadas pelo pipeline".
+- **T109** (`src/analises/renovavel.py`, em `analisar_sem_evt` e em `ResultadosAnalise.renovavel`): fator de capacidade publicado (Σ verificada ÷ Σ capacidade, com o nível) por mês e por ano; energia cortada por mês, por ano e por razão, com a estimada das semi-horas com a marca como base do percentual, as semi-horas sem a marca contadas e a diferença bruta à parte; recurso × geração por faixa (2 m/s; 100 W/m²) sem as semi-horas inválidas, contadas; os maiores desvios da programação (só EOL e UFV); omissões com o motivo (sem a base na cobertura, ou sem horas no período). As horas ausentes da série de referência vêm da restrição quando ela é a referência.
+- **T110** (`src/analises/conclusao.py`): C16 (energia cortada ≥ 5 % da estimada, pontos de atenção), C17 (recurso inválido ≥ 10 % das semi-horas, a verificar em campo), C18 (fator de capacidade publicado da usina, por ano completo, abaixo de GF ÷ potência; só com a garantia física no perfil e período mínimo de 12 meses) e C19 (desvio médio absoluto ≥ 10 % da potência, só com a programação da usina; a confirmar com o agente). Limiares iniciais em `regras.py`, citados na nota da conclusão gerada do catálogo; as regras comuns da fase A continuam fora das eólicas e solares (achado A11).
+- **T111** (`src/relatorio/secoes_renovavel.py` e integração): as três seções em ordem fixa depois do perfil horário (fator de capacidade, energia cortada por restrição de operação, recurso × geração) e os maiores desvios na seção de programação; quatro figuras em seaborn (fator de capacidade mensal, energia cortada mensal por razão empilhada, geração por faixa de recurso, desvio da programação), com a paleta validada pelo script da skill de visualização (azul, laranja e verde da ordem categórica; o calculado tracejado para não sumir sob o publicado); a capa com a energia cortada (% da estimada); a coluna "Energia cortada (MWh, % est.)" nos indicadores anuais e no resumo executivo (até seis colunas); legendas com o id ONS e o CEG na restrição com detalhe e "conjunto de usinas, id ONS CJU_…" nos dados do conjunto; G1, G2 e G5 nas legendas e nas abas CONF_G1/G2/G5; abas REN_*; notas enxutas. Na série de referência da restrição com detalhe, o relatório cita essa base (conjunto `referencia` no mapa de fontes) e as notas de conjunto da capa, das figuras e da tabela anual passaram a depender do nível da base horária, não de qualquer número do conjunto. Conferências das eólicas e solares só entram nas legendas, na aba FONTES e no resumo quando aplicadas (as demais ficam nas notas, decisão R13). Nenhum termo novo entra no resumo executivo, e o glossário não mudou.
+- **T102** (`tests/analises/test_renovavel.py`, 7 testes), **T103** (C16 a C19 em `tests/analises/test_conclusao.py`, com o catálogo C1 a C19) e **T104** (EOL e UFV fictícias com o fator de capacidade e as restrições em `brutos_ficticios.py`; perfis com a cobertura da fase C; a UFV num conjunto com um membro, a restrição como série de referência desde 25/01/2024 e o arquivo de janeiro no esquema antigo; a EOL com vento inválido, semi-horas restritas com REL, CNF e ENE e a programação de três dias; quatro testes novos em `tests/integracao/test_usinas_ficticias.py`). Desvio registrado da T104: a série "desde 10/2021" da EOL ficou como restrição desde 15/01/2024, dentro do período sintético de jan e fev/2024.
+- Achados no caminho: a correlação da programação com série constante agora é ausente sem a divisão por zero do numpy (saída igual); a Coleta passou a gravar o `nivel` no fator de capacidade e na razão extraídos, como no data-model 6.1.
+- Portão: suíte com 773 aprovados; pyflakes sem aviso; `comparar --todas --coleta` com william_arjona sem nenhuma diferença e sao_domingos só com as quatro diferenças da Coleta já aceitas (código 6 por elas): o relatório das duas referências não mudou.

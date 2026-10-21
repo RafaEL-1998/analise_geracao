@@ -186,10 +186,13 @@ def _normalizar(serie: pd.Series) -> pd.Series:
 
 def numero_publicado(serie: pd.Series) -> pd.Series:
     """Números como publicados pelo ONS, com vírgula ou ponto decimal (correção P2); texto não numérico fica
-    ausente."""
-    if pd.api.types.is_numeric_dtype(serie) and not pd.api.types.is_bool_dtype(serie):
+    ausente. Marcas booleanas (as da fotovoltaica de 05 a 12/2024) viram 1 e 0."""
+    if pd.api.types.is_bool_dtype(serie):
+        return serie.astype("float64")
+    if pd.api.types.is_numeric_dtype(serie):
         return pd.to_numeric(serie, errors="coerce").astype("float64")
     texto = serie.astype("string").str.strip().str.replace(",", ".", regex=False)
+    texto = texto.replace({"True": "1", "False": "0", "true": "1", "false": "0"})
     return pd.to_numeric(texto, errors="coerce").astype("float64")
 
 
@@ -325,6 +328,11 @@ def extrair_arquivo(desc: DescricaoConjunto, caminho: Path) -> Tuple[pd.DataFram
                        "%d); verificar mudança de cadastro no ONS.", desc.pacote, caminho.name,
                        auditoria["linhas_so_identificador"], auditoria["linhas_so_conferencia"])
 
+    if desc.avisar_colunas_ausentes:  # colunas de valor ausentes no arquivo: vazias e contadas (fase C, FR-058)
+        ausentes = [c for c in (*desc.colunas_valor, *desc.colunas_texto) if c not in bruto.columns]
+        if ausentes:
+            auditoria["mensagem"] = f"colunas ausentes no arquivo: {', '.join(ausentes)}"
+            logger.warning("%s: arquivo %s sem as colunas %s; ficam vazias.", desc.pacote, caminho.name, ausentes)
     dados = pd.DataFrame(index=usina.index)
     instantes = pd.to_datetime(usina[desc.coluna_instante], errors="coerce")
     invalidos = pd.Series(0, index=usina.index)

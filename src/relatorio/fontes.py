@@ -13,7 +13,9 @@ gravadas pela Coleta; nenhum resultado de conferência é fixo (FR-026). As conf
 instituições ficam fora (decisão do usuário em 06/10/2026).
 
 Nas usinas sem EVT (spec 006, decisão R15), a legenda de um dado de conjunto cita o identificador dele com o nível
-escrito ("conjunto de usinas, id ONS CJU_..."); a da usina continua como hoje.
+escrito ("conjunto de usinas, id ONS CJU_..."); a da usina continua como hoje. O conjunto ``referencia`` é a série de
+referência da usina: a Geração por usina ou, nas eólicas e solares em conjunto com série própria, a restrição com
+detalhe (fase C); as restrições citam o pacote da variante do tipo.
 """
 
 from __future__ import annotations
@@ -37,6 +39,7 @@ from src.comum.regras import (
     CONJUNTO_DESPACHO,
     CONJUNTO_DISPONIBILIDADE,
     CONJUNTO_EVT,
+    CONJUNTO_FATOR_CAPACIDADE,
     CONJUNTO_GERACAO,
     CONJUNTO_HIDROLOGIA,
     CONJUNTO_PROGRAMACAO_DIARIA,
@@ -44,6 +47,7 @@ from src.comum.regras import (
     TOLERANCIA_REPRODUCAO_TAXAS_PP,
 )
 from src.conferencia.resultado import diferenca_absoluta
+from src.relatorio.secoes_renovavel import pacote_variante, referencia_restricao
 
 logger = setup_logger("relatorio")
 
@@ -63,6 +67,8 @@ PROGRAMACAO = "programação diária"
 GERACAO = "geração"
 MOTIVOS_DESPACHO = "motivos de despacho"
 CVU_CMO = "CVU e CMO"
+ESTIMADA = "geração estimada e marca de restrição"
+RECURSO = "vento ou irradiância"
 
 
 # ---------------------------------------------------------------------------
@@ -104,8 +110,25 @@ CONJUNTOS: Dict[str, Conjunto] = {
                          CONJUNTO_DESPACHO),
     "cvu": Conjunto("CVU das usinas térmicas", "códigos de planejamento {planejamento}", CONJUNTO_CVU),
     "cmo": Conjunto("CMO semanal", "subsistema {subsistema}, agregado", CONJUNTO_CMO),
+    # Eólicas e solares (fase C): as restrições na variante do tipo (pacote em ``catalogo_do_conjunto``)
+    "fator_capacidade": Conjunto("Fator de capacidade", "id ONS {id_ons}", CONJUNTO_FATOR_CAPACIDADE),
+    "restricao_detalhe": Conjunto("Restrição com detalhe (constrained-off)", "id ONS {id_ons}; CEG {ceg}", "variante"),
+    "restricao_razao": Conjunto("Restrição com a razão (constrained-off)", "id ONS {id_ons}", "variante"),
     "projeto": Conjunto("parâmetros do projeto", ""),
 }
+
+
+def catalogo_do_conjunto(cid: str) -> str:
+    """Id no catálogo do ONS; nas restrições, o pacote da variante do tipo da usina ativa (vazio nos demais tipos)."""
+    catalogo = CONJUNTOS[cid].catalogo
+    return pacote_variante(cid) if catalogo == "variante" else catalogo
+
+
+def _resolver(cid: str) -> str:
+    """``referencia``: a série de referência da usina ativa (Geração por usina ou restrição com detalhe)."""
+    if cid != "referencia":
+        return cid
+    return "restricao_detalhe" if referencia_restricao() else "geracao"
 
 
 def identificador_da_usina(cid: str) -> str:
@@ -125,6 +148,14 @@ def identificador_com_nivel(res: Any, cid: str) -> Optional[str]:
     if not sem_evt(res):
         return None
     niveis = getattr(res, "niveis", {}) or {}
+    if cid == "geracao" and referencia_restricao():  # fase C: a geração não é a série de referência
+        nivel = registro.nivel_coletado(perfil_ativo(), "geracao")
+        i = perfil_ativo().identificacao
+        return f"conjunto de usinas, id ONS {i.id_conjunto}" if nivel == "conjunto" else f"id ONS {i.id_ons}"
+    if cid in ("fator_capacidade", "restricao_razao") and cid in niveis:
+        n = niveis[cid]
+        return f"conjunto de usinas, id ONS {n['identificador']}" if n["nivel"] == "conjunto" else \
+            f"id ONS {n['identificador']}"
     if cid == "geracao" and "geracao" in niveis:
         g = niveis["geracao"]
         partes = [f"id ONS {g['identificador_usina']}"] if g.get("identificador_usina") else []
@@ -316,6 +347,64 @@ def _curto_verificada_despacho(res: Any) -> str:
             else "geração verificada do despacho " + _curto_horas(c, "Geração por usina"))
 
 
+def _conferencia_renovavel(res: Any, cid: str) -> Optional[Dict[str, Any]]:
+    c = ((getattr(res, "renovavel", None) or {}).get("conferencias") or {}).get(cid)
+    return c if c and c.get("aplicavel") else None
+
+
+def _conf_geracao_fontes(res: Any) -> str:
+    c = _conferencia_renovavel(res, "geracao_fontes")
+    if c is None:
+        return "geração da usina entre fontes: conferência não feita nesta execução"
+    n = len(c["pares"])
+    texto = (f"geração conferida entre as fontes, duas a duas e no mesmo nível (G1): {fmt_int(c['coincidentes'])} de "
+             f"{fmt_int(c['comparados'])} horas coincidentes ({fmt_pct(c['coincidentes'] / c['comparados'] * 100)}) em "
+             f"{fmt_int(n)} {'par' if n == 1 else 'pares'} de fontes, detalhados na aba CONF_G1_PARES")
+    if c["divergentes"]:
+        texto += f"; {fmt_int(c['divergentes'])} divergências, listadas na aba CONF_G1_DIVERGENCIAS"
+    return texto
+
+
+def _curto_geracao_fontes(res: Any) -> str:
+    c = _conferencia_renovavel(res, "geracao_fontes")
+    if c is None:
+        return "geração entre fontes: conferência não feita nesta execução"
+    texto = (f"geração coincidente entre as fontes em {fmt_pct(c['coincidentes'] / c['comparados'] * 100)} das horas "
+             "comparadas")
+    return texto + (f", com {fmt_int(c['divergentes'])} divergências" if c["divergentes"] else "")
+
+
+def _conf_soma_conjunto(res: Any) -> str:
+    c = _conferencia_renovavel(res, "soma_conjunto")
+    if c is None:
+        return "soma das usinas do conjunto: conferência não feita nesta execução"
+    texto = ("soma das usinas do conjunto (Restrição com detalhe) conferida com a Geração por usina do conjunto (G2): "
+             + _texto_horas(c, "CONF_G2_DIVERGENCIAS", "so_a"))
+    if c.get("horas_incompletas"):
+        texto += f"; {fmt_int(c['horas_incompletas'])} horas sem todas as usinas, fora da soma"
+    return texto
+
+
+def _curto_soma_conjunto(res: Any) -> str:
+    c = _conferencia_renovavel(res, "soma_conjunto")
+    return ("soma das usinas do conjunto: conferência não feita nesta execução" if c is None
+            else "soma das usinas do conjunto " + _curto_horas(c, "a Geração por usina do conjunto"))
+
+
+def _conf_programacao_renovaveis(res: Any) -> str:
+    c = _conferencia_renovavel(res, "programacao_renovaveis")
+    if c is None:
+        return "programação diária: conferência com o Fator de capacidade não feita nesta execução"
+    return ("programação diária conferida com o programado do Fator de capacidade (G5): "
+            + _texto_horas(c, "CONF_G5_DIVERGENCIAS", "so_a"))
+
+
+def _curto_programacao_renovaveis(res: Any) -> str:
+    c = _conferencia_renovavel(res, "programacao_renovaveis")
+    return ("programação diária: conferência com o Fator de capacidade não feita nesta execução" if c is None
+            else "programação diária " + _curto_horas(c, "o programado do Fator de capacidade"))
+
+
 def _curto_cadastro(res: Any) -> str:
     divergencias = str(res.cadastro.get("divergencias") or "").strip()
     return "cadastro " + (f"com divergências ({divergencias})" if divergencias else "sem divergência")
@@ -333,6 +422,13 @@ CONFERENCIAS: Dict[str, Conferencia] = {
                                         _curto_programacao_despacho),
     "verificada_despacho": Conferencia("geração verificada do despacho", "despacho", _conf_verificada_despacho,
                                        _curto_verificada_despacho),
+    # Eólicas e solares (fase C)
+    "geracao_fontes": Conferencia("geração da usina entre fontes", "geracao", _conf_geracao_fontes,
+                                  _curto_geracao_fontes),
+    "soma_conjunto": Conferencia("soma das usinas do conjunto", "restricao_detalhe", _conf_soma_conjunto,
+                                 _curto_soma_conjunto),
+    "programacao_renovaveis": Conferencia("programação diária", "fator_capacidade", _conf_programacao_renovaveis,
+                                          _curto_programacao_renovaveis),
 }
 
 
@@ -340,8 +436,20 @@ CONFERENCIAS: Dict[str, Conferencia] = {
 # Mapa das figuras, tabelas e blocos (PDF e Markdown)
 # ---------------------------------------------------------------------------
 
+CONFERENCIAS_RENOVAVEIS: Tuple[str, ...] = ("geracao_fontes", "soma_conjunto", "programacao_renovaveis")
+
+
+def conferencia_feita(res: Any, cid: str) -> bool:
+    """A conferência tem base nesta execução: o conjunto da base carregado e, nas das eólicas e solares, aplicável à
+    usina (a não aplicável fica nas notas, com o motivo; decisão R13)."""
+    if CONFERENCIAS[cid].base not in _carregados(res):
+        return False
+    return cid not in CONFERENCIAS_RENOVAVEIS or _conferencia_renovavel(res, cid) is not None
+
+
 CONFERENCIAS_SEM_EVT: Tuple[str, ...] = ("teifa_teip", "dispf_horas", "cadastro", "programacao_despacho",
-                                         "verificada_despacho")  # G3 e G4 só com o despacho (fase B)
+                                         "verificada_despacho",  # G3 e G4 só com o despacho (fase B)
+                                         "geracao_fontes", "soma_conjunto", "programacao_renovaveis")  # fase C
 _CONF_EVT = ("geracao", "disponibilidade")
 _CONF_EVT_VAZOES = ("geracao", "disponibilidade", "vazoes")
 
@@ -397,29 +505,31 @@ MAPA_FONTES: Dict[str, Entrada] = {
     "faixas_afluencia": _e(["hidrologia", "evt"], ["vazoes"], [AFLUENCIA, EVT], calculado=True),
     "perfil_hidrologico": _e(["hidrologia", "evt"], ["vazoes"], [AFLUENCIA_NIVEL], calculado=True),
     # Usinas sem EVT (spec 006, decisões R14 e R15): a série de referência (Geração por usina) no lugar da EVT
-    "bloco_identificacao_comum": _e(["cadastro", "geracao", "capacidade", "despacho"]),
-    "tab_capa_indicadores_comum": _e(["geracao", "disponibilidade", "dispf_mensal", "teif_teip"],
+    "bloco_identificacao_comum": _e(["cadastro", "referencia", "capacidade", "despacho"]),
+    "tab_capa_indicadores_comum": _e(["referencia", "disponibilidade", "dispf_mensal", "teif_teip", "restricao_detalhe"],
                                      ["dispf_horas", "teifa_teip"], [GERACAO], calculado=True),
-    "tab_fonte_cobertura": _e(["geracao"]),
-    "tab_niveis": _e(["geracao", "programacao", "disponibilidade", "dispf_mensal", "cadastro", "composicao"]),
-    "tab_trechos": _e(["geracao", "composicao"], calculado=True),
-    "tab_anuais_comum": _e(["geracao", "disponibilidade", "projeto"], (), [GERACAO], calculado=True),
-    "tab_disponibilidade_anual_comum": _e(["disponibilidade", "geracao"], (), [SINCRONIZADA, GERACAO],
+    "tab_fonte_cobertura": _e(["referencia"]),
+    "tab_niveis": _e(["referencia", "geracao", "programacao", "disponibilidade", "dispf_mensal", "cadastro",
+                      "composicao", "fator_capacidade", "restricao_detalhe", "restricao_razao"]),
+    "tab_trechos": _e(["referencia", "composicao"], calculado=True),
+    "tab_anuais_comum": _e(["referencia", "disponibilidade", "restricao_detalhe", "projeto"], ["soma_conjunto"],
+                           [GERACAO], calculado=True),
+    "tab_disponibilidade_anual_comum": _e(["disponibilidade", "referencia"], (), [SINCRONIZADA, GERACAO],
                                           calculado=True),
-    "tab_eventos_indisponibilidade_comum": _e(["disponibilidade", "geracao"], calculado=True),
+    "tab_eventos_indisponibilidade_comum": _e(["disponibilidade", "referencia"], calculado=True),
     "tab_ons_disp_anual_comum": _e(["disponibilidade", "dispf_mensal"], ["dispf_horas"], calculado=True),
-    "tab_programacao_mensal_comum": _e(["programacao", "geracao"], (), [PROGRAMACAO, GERACAO], calculado=True),
-    "tab_programacao_eventos_comum": _e(["programacao", "geracao"], (), [PROGRAMACAO, GERACAO], calculado=True),
-    "tab_sinalizacoes": _e(["geracao", "disponibilidade"], calculado=True),
-    "tab_ausencias": _e(["geracao"]),
+    "tab_programacao_mensal_comum": _e(["programacao", "referencia"], (), [PROGRAMACAO, GERACAO], calculado=True),
+    "tab_programacao_eventos_comum": _e(["programacao", "referencia"], (), [PROGRAMACAO, GERACAO], calculado=True),
+    "tab_sinalizacoes": _e(["referencia", "disponibilidade"], calculado=True),
+    "tab_ausencias": _e(["referencia"]),
     "tab_omitidos": _e(["projeto"], calculado=True),
     "tab_nao_aplicaveis": _e(["projeto"], calculado=True),
     "tab_parametros_comum": _e(["projeto"]),
-    "serie_temporal_comum": _e(["geracao", "disponibilidade"], (), [GERACAO], calculado=True),
-    "geracao_mensal": _e(["geracao"], (), [GERACAO], calculado=True),
-    "sazonalidade": _e(["geracao"], (), [GERACAO], calculado=True),
-    "perfil_horario_comum": _e(["geracao"], (), [GERACAO], calculado=True),
-    "disponibilidade_comum": _e(["disponibilidade", "geracao"], (), [SINCRONIZADA], calculado=True),
+    "serie_temporal_comum": _e(["referencia", "disponibilidade"], (), [GERACAO], calculado=True),
+    "geracao_mensal": _e(["referencia"], (), [GERACAO], calculado=True),
+    "sazonalidade": _e(["referencia"], (), [GERACAO], calculado=True),
+    "perfil_horario_comum": _e(["referencia"], (), [GERACAO], calculado=True),
+    "disponibilidade_comum": _e(["disponibilidade", "referencia"], (), [SINCRONIZADA], calculado=True),
     # Térmicas (fase B)
     "tab_motivos_termica": _e(["despacho"], ["verificada_despacho"], [MOTIVOS_DESPACHO], calculado=True),
     "tab_despacho_anual": _e(["despacho"], ["programacao_despacho", "verificada_despacho"], calculado=True),
@@ -431,6 +541,19 @@ MAPA_FONTES: Dict[str, Entrada] = {
     "inflexibilidade_mensal": _e(["despacho"], (), [MOTIVOS_DESPACHO], calculado=True),
     "desvios_despacho": _e(["despacho"], ["programacao_despacho", "verificada_despacho"], calculado=True),
     "cvu_cmo": _e(["cvu", "cmo"], (), [CVU_CMO], calculado=True),
+    # Eólicas e solares (fase C)
+    "tab_fc_anual": _e(["fator_capacidade", "referencia", "projeto"], ["geracao_fontes", "programacao_renovaveis"],
+                       calculado=True),
+    "tab_corte_anual": _e(["restricao_detalhe"], ["geracao_fontes", "soma_conjunto"], [ESTIMADA], calculado=True),
+    "tab_corte_razao": _e(["restricao_detalhe", "restricao_razao"], ["geracao_fontes"], [ESTIMADA], calculado=True),
+    "tab_recurso_faixas": _e(["restricao_detalhe"], ["geracao_fontes"], [RECURSO], calculado=True),
+    "tab_desvios_programacao_renovavel": _e(["programacao", "referencia"], ["programacao_renovaveis"]),
+    "fc_mensal": _e(["fator_capacidade", "referencia", "projeto"], ["geracao_fontes", "programacao_renovaveis"],
+                    calculado=True),
+    "corte_razao_mensal": _e(["restricao_detalhe", "restricao_razao"], ["geracao_fontes"], [ESTIMADA],
+                             calculado=True),
+    "recurso_geracao": _e(["restricao_detalhe"], ["geracao_fontes"], [RECURSO], calculado=True),
+    "desvio_programacao": _e(["programacao", "referencia"], ["programacao_renovaveis"], calculado=True),
 }
 
 
@@ -504,6 +627,22 @@ _ABAS_EXATAS: Dict[str, Entrada] = {
     "CONF_G3_DIVERGENCIAS": _e(["programacao", "despacho"], ["programacao_despacho"]),
     "CONF_G4_MENSAL": _e(["despacho", "geracao"], ["verificada_despacho"]),
     "CONF_G4_DIVERGENCIAS": _e(["despacho", "geracao"], ["verificada_despacho"]),
+    # Eólicas e solares (fase C)
+    "REN_FC_ANUAL": MAPA_FONTES["tab_fc_anual"],
+    "REN_FC_MENSAL": MAPA_FONTES["fc_mensal"],
+    "REN_CORTE_ANUAL": MAPA_FONTES["tab_corte_anual"],
+    "REN_CORTE_MENSAL": MAPA_FONTES["corte_razao_mensal"],
+    "REN_CORTE_RAZAO": MAPA_FONTES["tab_corte_razao"],
+    "REN_RECURSO_FAIXAS": MAPA_FONTES["tab_recurso_faixas"],
+    "REN_DESVIOS_PROGRAMACAO": MAPA_FONTES["tab_desvios_programacao_renovavel"],
+    "CONF_G1_PARES": _e(["geracao", "fator_capacidade", "restricao_detalhe", "restricao_razao"], ["geracao_fontes"]),
+    "CONF_G1_MENSAL": _e(["geracao", "fator_capacidade", "restricao_detalhe", "restricao_razao"], ["geracao_fontes"]),
+    "CONF_G1_DIVERGENCIAS": _e(["geracao", "fator_capacidade", "restricao_detalhe", "restricao_razao"],
+                               ["geracao_fontes"]),
+    "CONF_G2_MENSAL": _e(["restricao_detalhe", "geracao"], ["soma_conjunto"]),
+    "CONF_G2_DIVERGENCIAS": _e(["restricao_detalhe", "geracao"], ["soma_conjunto"]),
+    "CONF_G5_MENSAL": _e(["programacao", "fator_capacidade"], ["programacao_renovaveis"]),
+    "CONF_G5_DIVERGENCIAS": _e(["programacao", "fator_capacidade"], ["programacao_renovaveis"]),
 }
 # Abas das usinas sem EVT com o mesmo nome de uma aba de hoje, mas sem a EVT na origem
 _ABAS_SEM_EVT: Dict[str, Entrada] = {
@@ -512,6 +651,7 @@ _ABAS_SEM_EVT: Dict[str, Entrada] = {
     "DISP_MENSAL": MAPA_FONTES["disponibilidade_comum"],
     "DISP_ANUAL": MAPA_FONTES["tab_disponibilidade_anual_comum"],
     "ONS_DISP_ANUAL_USINA": MAPA_FONTES["tab_ons_disp_anual_comum"],
+    "GER_AUSENCIAS": MAPA_FONTES["tab_ausencias"],  # as horas ausentes da série de referência
 }
 _ABAS_POR_PREFIXO: List[Tuple[str, Entrada]] = [
     ("PROG_", MAPA_FONTES["tab_programacao_mensal"]),
@@ -548,6 +688,9 @@ def _carregados_sem_evt(res: Any) -> List[str]:
             carregados.append("cvu")
         if t.get("cmo_coletado"):
             carregados.append("cmo")
+    for chave in ("fator_capacidade", "restricao_detalhe", "restricao_razao"):  # fase C
+        if registro.nivel_coletado(perfil_ativo(), chave):
+            carregados.append(chave)
     return carregados
 
 
@@ -569,9 +712,10 @@ def datas_obtencao(res: Any) -> Dict[str, str]:
     """Data (UTC) de obtenção mais recente de cada conjunto, gravada pela Coleta; vazia se não houver registro."""
     registradas = getattr(res, "datas_obtencao", None) or {}
     datas: Dict[str, str] = {}
-    for cid, conjunto in CONJUNTOS.items():
-        if conjunto.catalogo:
-            datas[cid] = str((registradas.get(conjunto.catalogo) or {}).get("obtencao_mais_recente") or "")
+    for cid in CONJUNTOS:
+        catalogo = catalogo_do_conjunto(cid)
+        if catalogo:
+            datas[cid] = str((registradas.get(catalogo) or {}).get("obtencao_mais_recente") or "")
     return datas
 
 
@@ -624,7 +768,7 @@ def fontes_resumo(res: Any) -> List[str]:
     obtencao = (getattr(res, "fontes", None) or {}).get("obtencao") or {}
     grupos: Dict[Tuple[str, str], List[str]] = {}
     for cid in _carregados(res):
-        if cid not in CONJUNTOS or not CONJUNTOS[cid].catalogo:
+        if cid not in CONJUNTOS or not catalogo_do_conjunto(cid):
             continue
         data = str(obtencao.get(cid) or "")
         grupos.setdefault((identificador_da_usina(cid), fmt_data(data) if data else ""), []).append(CONJUNTOS[cid].nome)
@@ -637,11 +781,14 @@ def fontes_resumo(res: Any) -> List[str]:
 
 def _textos_entrada(res: Any, entrada: Entrada) -> Tuple[List[str], List[str]]:
     carregados = _carregados(res)
-    conjuntos = list(entrada.conjuntos) if entrada.todos else (
-        [c for c in entrada.conjuntos if c == "projeto" or c in carregados] or list(entrada.conjuntos))
+    citados = list(dict.fromkeys(_resolver(c) for c in entrada.conjuntos))
+    conjuntos = citados if entrada.todos else (
+        [c for c in citados if c == "projeto" or c in carregados] or citados)
     conferencias = list(entrada.conferencias)
     if sem_evt(res):  # sem a base, a conferência não se aplica e fica nas notas, não "não feita" (decisão R13)
-        conferencias = [c for c in conferencias if CONFERENCIAS[c].base in carregados]
+        conferencias = [c for c in conferencias if conferencia_feita(res, c)]
+    else:  # no caminho de hoje, as conferências das eólicas e solares nunca entram
+        conferencias = [c for c in conferencias if c not in CONFERENCIAS_RENOVAVEIS]
     return [texto_conjunto(res, c) for c in conjuntos], [texto_conferencia(res, c) for c in conferencias]
 
 
@@ -677,12 +824,13 @@ def _entrada_aba(res: Any, aba: str) -> Optional[Entrada]:
         carregados = _carregados(res)
         # nas usinas sem EVT, só as conferências que não dependem da EVT (spec 006, decisão R13)
         candidatas = CONFERENCIAS_SEM_EVT if sem_evt(res) else tuple(CONFERENCIAS)
-        return _e(carregados, [c for c in candidatas if CONFERENCIAS[c].base in carregados], calculado=True)
+        return _e(carregados, [c for c in candidatas if conferencia_feita(res, c)], calculado=True)
     if aba == "PARAMETROS":
         return _e(["projeto", *_carregados(res)])
     if aba == "DICIONARIOS":  # só os conjuntos do tipo e da cobertura da usina (spec 006, decisão R8)
-        da_usina = registro.pacotes(registro.conjuntos_da_usina(perfil_ativo()))
-        return _e([c for c, conjunto in CONJUNTOS.items() if conjunto.catalogo in da_usina], todos=True)
+        da_usina = registro.pacotes(registro.conjuntos_da_usina(perfil_ativo()), registro.tipo_da_usina(perfil_ativo()))
+        return _e([c for c in CONJUNTOS if catalogo_do_conjunto(c) and catalogo_do_conjunto(c) in da_usina],
+                  todos=True)
     if sem_evt(res) and aba in _ABAS_SEM_EVT:
         return _ABAS_SEM_EVT[aba]
     if aba in _ABAS_EXATAS:

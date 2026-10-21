@@ -5,7 +5,9 @@ base de EVT tratada e validação física; indicadores e taxas; programação ho
 hidrologia e geração, com ausências e auditoria completa (spec do Tratamento de dados). O cadastro não tem tratamento.
 
 Nas usinas sem EVT (spec 006, decisão R30), o período vem da série de referência da Coleta, só os conjuntos coletados
-são tratados e a base horária comum (``base_horaria.csv``) fica no lugar da base de EVT.
+são tratados e a base horária comum (``base_horaria.csv``) fica no lugar da base de EVT. Nas eólicas e solares em
+conjunto com série própria (fase C), a base horária vem da restrição com detalhe da usina, pela média das duas
+meias-horas, com a disponibilidade e a programação só quando estão no nível da usina.
 """
 
 from __future__ import annotations
@@ -17,7 +19,7 @@ from typing import Any, Dict, List, Sequence
 
 import pandas as pd
 
-from src.coleta.registro import conjuntos_da_usina, descricoes
+from src.coleta.registro import conjuntos_da_usina, descricoes, nivel_coletado, tipo_da_usina
 from src.coleta.serie_referencia import escolher
 from src.comum import caminhos
 from src.comum.logger import setup_logger
@@ -30,6 +32,14 @@ from src.tratamento.geracao import tratar_geracao
 from src.tratamento.hidrologia import tratar_hidrologia
 from src.tratamento.indicadores import TOLERANCIA_IDENTIDADE_HORAS, exportar_indicadores, montar_indicadores
 from src.tratamento.programacao import exportar_programacao, montar_programacao
+from src.tratamento.renovavel import (
+    exportar_renovavel,
+    montar_membros,
+    montar_razao,
+    montar_restricao,
+    serie_da_referencia,
+    tratar_fator_capacidade,
+)
 from src.tratamento.series import SerieConjunto
 from src.tratamento.termica import exportar_termica, montar_cmo, montar_cvu, montar_despacho
 
@@ -117,14 +127,23 @@ def _tratar_sem_evt(perfil: Any, coleta: Path, pasta: Path, resumo: Dict[str, An
         if nome in chaves:
             series[nome] = _tratar_serie(perfil, nome, coleta, pasta, inicio, fim)
             resumo[nome] = _resumo_serie(series[nome])
+    restricao = _tratar_renovavel(perfil, chaves, coleta, pasta, inicio, fim, resumo)
+    escolha = escolher(perfil)
+    referencia, disponibilidade = series.get("geracao"), series.get("disponibilidade")
+    programada = prog.horaria if prog is not None else None
+    if escolha.conjunto == "restricao_detalhe":  # a base é da usina: os dados do conjunto não entram nela
+        referencia = serie_da_referencia(restricao)
+        if nivel_coletado(perfil, "disponibilidade") != "usina":
+            disponibilidade = None
+        if nivel_coletado(perfil, "programacao") != "usina":
+            programada = None
     arq_coleta = caminhos.ARQUIVOS_COLETA
     complemento = _ler_opcional(coleta / arq_coleta["geracao_complemento"], pd.read_parquet)
     trechos = _ler_opcional(coleta / arq_coleta["trechos"],
                             lambda c: pd.read_csv(c, sep=";", dtype=str, keep_default_na=False))
-    base = montar_base_horaria(series["geracao"], complemento, trechos, series.get("disponibilidade"),
-                               prog.horaria if prog is not None else None, escolher(perfil).niveis[0])
+    base = montar_base_horaria(referencia, complemento, trechos, disponibilidade, programada, escolha.niveis[0])
     exportar_base_horaria(base, pasta)
-    resumo["base_horaria"] = resumo_base_horaria(base, series["geracao"].ausencias)
+    resumo["base_horaria"] = resumo_base_horaria(base, referencia.ausencias)
     _tratar_termica(perfil, chaves, coleta, pasta, inicio, fim, resumo)
 
 
@@ -154,6 +173,39 @@ def _tratar_termica(perfil: Any, chaves: set, coleta: Path, pasta: Path, inicio:
         cmo = montar_cmo(*entrada("cmo"), str(perfil.usina.subsistema), inicio, fim)
         resumo["cmo"] = cmo.resumo
     exportar_termica(pasta, despacho, cvu, cmo)
+
+
+def _tratar_renovavel(perfil: Any, chaves: set, coleta: Path, pasta: Path, inicio: pd.Timestamp, fim: pd.Timestamp,
+                      resumo: Dict[str, Any]) -> Any:
+    """Fator de capacidade, restrição com a razão e com detalhe e os membros do conjunto das eólicas e solares, quando
+    coletados (spec 006, fase C; decisões R11 e R12). Devolve a restrição com detalhe tratada (ou None)."""
+    arq = caminhos.ARQUIVOS_COLETA
+
+    def entrada(nome: str):
+        return pd.read_parquet(coleta / arq[nome]), ler_auditoria_coleta(coleta / arq[f"auditoria_{nome}"])
+
+    if "fator_capacidade" in chaves:
+        fc = tratar_fator_capacidade(descricoes(perfil)["fator_capacidade"], *entrada("fator_capacidade"), inicio,
+                                     fim, pasta)
+        resumo["fator_capacidade"] = {**_resumo_serie(fc), "nivel": nivel_coletado(perfil, "fator_capacidade"),
+                                      "horas_fc_fora_0_1": int(fc.horaria["sinal_fc_fora_0_1"].sum()),
+                                      "horas_acima_capacidade": int(fc.horaria["sinal_acima_capacidade"].sum())}
+    razao = restricao = None
+    if "restricao_razao" in chaves:
+        razao = montar_razao(*entrada("restricao_razao"), nivel_coletado(perfil, "restricao_razao"), inicio, fim)
+        codigos = razao["cod_razaorestricao"].replace("", "sem razão").value_counts().sort_index()
+        resumo["restricao_razao"] = {"semi_horas": len(razao), "nivel": nivel_coletado(perfil, "restricao_razao"),
+                                     "semi_horas_por_razao": {str(k): int(v) for k, v in codigos.items()}}
+    if "restricao_detalhe" in chaves:
+        restricao = montar_restricao(*entrada("restricao_detalhe"), tipo_da_usina(perfil), inicio, fim, razao)
+        resumo["restricao_detalhe"] = restricao.resumo
+    membros = None
+    if (coleta / arq["restricao_membros"]).exists():
+        membros = montar_membros(pd.read_parquet(coleta / arq["restricao_membros"]), inicio, fim)
+        resumo["membros_restricao"] = {str(k): int(v) for k, v in membros.groupby("id_ons").size().items()}
+    if razao is not None or restricao is not None or membros is not None:
+        exportar_renovavel(pasta, restricao, razao, membros)
+    return restricao
 
 
 def executar_tratamento(perfil: Any) -> ResultadoEtapa:

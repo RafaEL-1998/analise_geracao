@@ -47,6 +47,7 @@ from src.analises.hidrologia import analisar_hidrologia
 from src.analises.indicadores import analisar_indicadores_ons
 from src.analises.programacao import analisar_programacao
 from src.analises.resultados import ResultadosAnalise, salvar_resultados
+from src.analises.renovavel import analisar_renovavel, omissoes_renovavel
 from src.analises.termica import analisar_termica
 from src.coleta import registro
 from src.coleta.serie_referencia import escolher
@@ -63,6 +64,7 @@ from src.tratamento.hidrologia import carregar_hidrologia_tratada
 from src.tratamento.indicadores import IndicadoresONS, carregar_indicadores_tratados
 from src.tratamento.programacao import ProgramacaoONS, carregar_programacao_tratada
 from src.tratamento.series import SerieConjunto
+from src.tratamento.renovavel import carregar_renovavel
 from src.tratamento.termica import DespachoTratado, SemanalTratado, carregar_despacho_tratado, carregar_semanal_tratado
 from src.comum.perfil import perfil_ativo
 from src.tratamento.validacao import COLUNA_QUALIDADE, validar_regras_fisicas
@@ -173,12 +175,19 @@ def niveis_da_usina(perfil: Any, composicao: Optional[pd.DataFrame] = None) -> D
         "identificador_conjunto": str(getattr(ident, "id_conjunto", "") or "") if "conjunto" in niveis_ref else "",
         "nome": nome,
     }}
+    if escolher(perfil).conjunto == "restricao_detalhe":  # fase C: a série de referência é a restrição com detalhe
+        saida["geracao"]["fonte"] = "restricao_detalhe"
     nivel_programacao = registro.nivel_coletado(perfil, "programacao")
     if nivel_programacao:
         codigos = getattr(ident, "codigos_programacao", ()) or (ident.cod_programacao,)
         saida["programacao"] = {"nivel": nivel_programacao, "identificador": "; ".join(codigos)}
     if registro.nivel_coletado(perfil, "disponibilidade"):
         saida["disponibilidade"] = {"nivel": "usina", "identificador": str(ident.id_ons or "")}
+    for chave in ("fator_capacidade", "restricao_razao"):  # fase C: usina ou conjunto, identificados
+        nivel = registro.nivel_coletado(perfil, chave)
+        if nivel:
+            saida[chave] = {"nivel": nivel, "identificador": str(getattr(ident, "id_conjunto", "") or "")
+                            if nivel == "conjunto" else str(ident.id_ons or "")}
     return saida
 
 
@@ -201,6 +210,7 @@ def analisar_sem_evt(
     despacho: Optional[DespachoTratado] = None,
     cvu: Optional[SemanalTratado] = None,
     cmo: Optional[SemanalTratado] = None,
+    renovavel: Optional[Dict[str, Optional[pd.DataFrame]]] = None,
 ) -> ResultadosAnalise:
     """Resultados das usinas sem EVT: as seções comuns sobre a base horária comum (decisões R14 e R30).
 
@@ -243,6 +253,17 @@ def analisar_sem_evt(
         elif res.termica and cvu is not None and cmo is not None and not res.termica.get("cvu_cmo"):
             res.omitidos.append({"item": "CVU × CMO", "tipo": "secao",
                                  "motivo": "o CVU e o CMO não têm semanas comuns no período"})
+    if tipo in registro.RENOVAVEIS:  # seções de eólica e solar (fase C, decisão R19)
+        res.renovavel = analisar_renovavel(renovavel or {}, base, tipo, float(perfil.parametros.potencia_instalada_mw),
+                                           comum.get("programacao"))
+        if res.renovavel:  # G1, G2 e G5, para as legendas de fonte e a planilha
+            res.renovavel["conferencias"] = {
+                i: {"aplicavel": r.aplicavel, "motivo": r.motivo, "comparados": r.comparados,
+                    "coincidentes": r.coincidentes, "divergentes": r.divergentes, **r.tabelas.get("resumo", {}),
+                    "pares": r.tabelas.get("pares"), "mensal": r.tabelas.get("mensal"),
+                    "divergencias": r.tabelas.get("divergencias")}
+                for i, r in conferencias.items() if i in ("geracao_fontes", "soma_conjunto", "programacao_renovaveis")}
+        res.omitidos = res.omitidos + omissoes_renovavel(perfil, res.renovavel)
     if tem_indicadores:
         anuais = comum["anuais"]
         da_usina = anuais[anuais["nivel"] == "usina"][["ano", "disponibilidade_relativa_pct"]]
@@ -302,8 +323,10 @@ def _ler_csv_texto(caminho: Path) -> Optional[pd.DataFrame]:
     return _ler_csv(caminho, dtype=str, keep_default_na=False)
 
 
-def carregar_entradas_sem_evt(slug: str) -> Dict[str, Any]:
-    """Base horária comum, conferências e registros da Coleta da usina sem EVT, prontos para ``analisar_sem_evt``."""
+def carregar_entradas_sem_evt(slug: str, referencia: str = "geracao") -> Dict[str, Any]:
+    """Base horária comum, conferências e registros da Coleta da usina sem EVT, prontos para ``analisar_sem_evt``;
+    as horas ausentes são as da série de referência (``referencia``: a Geração por usina ou, na fase C, a restrição
+    com detalhe)."""
     coleta = caminhos.pasta_etapa(slug, "coleta")
     tratamento = caminhos.pasta_etapa(slug, "tratamento")
     conferencia = caminhos.pasta_etapa(slug, "conferencia")
@@ -315,7 +338,8 @@ def carregar_entradas_sem_evt(slug: str) -> Dict[str, Any]:
     auditoria_cadastro = _ler_csv(coleta / caminhos.ARQUIVOS_COLETA["auditoria_cadastro"], keep_default_na=False)
     if auditoria_cadastro is not None:
         auditoria_cadastro = auditoria_cadastro[COLUNAS_AUDITORIA_CADASTRO]
-    ausencias = _ler_csv(tratamento / caminhos.ARQUIVOS_TRATAMENTO["geracao_ausencias"])
+    chave_ausencias = "restricao_ausencias" if referencia == "restricao_detalhe" else "geracao_ausencias"
+    ausencias = _ler_csv(tratamento / caminhos.ARQUIVOS_TRATAMENTO[chave_ausencias])
     if ausencias is not None:
         for coluna in ("inicio", "fim"):
             ausencias[coluna] = pd.to_datetime(ausencias[coluna])
@@ -337,6 +361,7 @@ def carregar_entradas_sem_evt(slug: str) -> Dict[str, Any]:
         "despacho": carregar_despacho_tratado(tratamento),
         "cvu": carregar_semanal_tratado(tratamento, "cvu"),
         "cmo": carregar_semanal_tratado(tratamento, "cmo"),
+        "renovavel": carregar_renovavel(tratamento),
     }
 
 
@@ -370,7 +395,7 @@ def carregar_entradas(slug: str) -> Dict[str, Any]:
 
 
 def _executar_sem_evt(perfil: Any, pasta: Path) -> ResultadoEtapa:
-    entradas = carregar_entradas_sem_evt(perfil.usina.slug)
+    entradas = carregar_entradas_sem_evt(perfil.usina.slug, escolher(perfil).conjunto)
     res = analisar_sem_evt(perfil=perfil, **entradas)
     with registrar_gravacoes() as gravacoes:
         salvar_resultados(res, pasta / caminhos.ARQUIVOS_ANALISES["resultados"])
@@ -389,6 +414,8 @@ def _executar_sem_evt(perfil: Any, pasta: Path) -> ResultadoEtapa:
             "disponibilidade": bool(res.comum.get("disponibilidade")), "cadastro": bool(res.cadastro),
             **({"despacho": bool(res.termica), "cvu_cmo": bool(res.termica.get("cvu_cmo"))}
                if res.tipo in registro.TERMICAS else {}),
+            **({k: bool((res.renovavel or {}).get(k)) for k in ("fator_capacidade", "restricao", "recurso")}
+               if res.tipo in registro.RENOVAVEIS else {}),
         },
     }
     return ResultadoEtapa(codigo=CODIGO_SUCESSO, arquivos=[p for p, _ in gravacoes], resumo=resumo)

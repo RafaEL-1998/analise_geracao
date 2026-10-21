@@ -26,10 +26,15 @@ from src.comum.regras import (
     CONJUNTO_DESPACHO,
     CONJUNTO_DISPONIBILIDADE,
     CONJUNTO_EVT,
+    CONJUNTO_FATOR_CAPACIDADE,
     CONJUNTO_GERACAO,
     CONJUNTO_HIDROLOGIA,
     CONJUNTO_PROGRAMACAO_DIARIA,
     CONJUNTO_RESERVATORIO,
+    CONJUNTO_RESTRICAO_EOLICA,
+    CONJUNTO_RESTRICAO_EOLICA_DETALHE,
+    CONJUNTO_RESTRICAO_FOTOVOLTAICA,
+    CONJUNTO_RESTRICAO_FOTOVOLTAICA_DETALHE,
     CONJUNTOS_INDICADORES_ONS,
     PASTA_CADASTRO_RAW,
     PASTA_CAPACIDADE_RAW,
@@ -38,17 +43,23 @@ from src.comum.regras import (
     PASTA_CVU_RAW,
     PASTA_DESPACHO_RAW,
     PASTA_DISPONIBILIDADE_RAW,
+    PASTA_FATOR_CAPACIDADE_RAW,
     PASTA_GERACAO_RAW,
     PASTA_HIDROLOGIA_RAW,
     PASTA_INDICADORES_RAW,
     PASTA_PROGRAMACAO_RAW,
     PASTA_RESERVATORIO_RAW,
+    PASTA_RESTRICAO_EOLICA_DETALHE_RAW,
+    PASTA_RESTRICAO_EOLICA_RAW,
+    PASTA_RESTRICAO_FOTOVOLTAICA_DETALHE_RAW,
+    PASTA_RESTRICAO_FOTOVOLTAICA_RAW,
     TIPOS_USINA,
 )
 
 # Enumerações (data-model, seção 1)
 HIDRELETRICAS: Tuple[str, ...] = ("UHE", "PCH", "CGH")
 TERMICAS: Tuple[str, ...] = ("UTE", "UTN")
+RENOVAVEIS: Tuple[str, ...] = ("EOL", "UFV")
 NIVEIS: Tuple[str, ...] = ("usina", "conjunto", "agregado")
 RESOLUCOES: Tuple[str, ...] = ("horaria", "semi_horaria", "semanal", "mensal_anual", "estatica")
 COBERTURA_AUSENTE = "ausente"
@@ -72,6 +83,21 @@ COLUNAS_DESPACHO_VERIFICADO: Tuple[str, ...] = (
     "val_verifgfom", "val_verifreposicaoperdas", "val_verifexportacao", "val_verifreservapotencia", "val_verifgsub",
     "val_verifunitcommitment", "val_verifconstrainedoff")
 COLUNAS_CMO: Tuple[str, ...] = ("val_cmomediasemanal", "val_cmoleve", "val_cmomedia", "val_cmopesada")
+# Eólicas e solares (data-model 6.1): fator de capacidade, restrição com detalhe (o recurso muda com o tipo) e com a razão
+COLUNAS_FATOR_CAPACIDADE: Tuple[str, ...] = ("val_geracaoprogramada", "val_geracaoverificada",
+                                             "val_capacidadeinstalada", "val_fatorcapacidade")
+COLUNAS_RECURSO: Dict[str, Tuple[str, str]] = {"EOL": ("val_ventoverificado", "flg_dadoventoinvalido"),
+                                               "UFV": ("val_irradianciaverificado", "flg_dadoirradianciainvalido")}
+COLUNAS_RESTRICAO_RAZAO: Tuple[str, ...] = ("val_geracao", "val_geracaolimitada", "val_disponibilidade",
+                                            "val_geracaoreferencia", "num_minutos_rel", "num_minutos_cnf",
+                                            "num_minutos_ene")
+# (pacote, pasta) de cada variante por tipo (data-model 4, coluna "variantes")
+VARIANTES_RESTRICAO_DETALHE: Dict[str, Tuple[str, str]] = {
+    "EOL": (CONJUNTO_RESTRICAO_EOLICA_DETALHE, PASTA_RESTRICAO_EOLICA_DETALHE_RAW),
+    "UFV": (CONJUNTO_RESTRICAO_FOTOVOLTAICA_DETALHE, PASTA_RESTRICAO_FOTOVOLTAICA_DETALHE_RAW)}
+VARIANTES_RESTRICAO_RAZAO: Dict[str, Tuple[str, str]] = {
+    "EOL": (CONJUNTO_RESTRICAO_EOLICA, PASTA_RESTRICAO_EOLICA_RAW),
+    "UFV": (CONJUNTO_RESTRICAO_FOTOVOLTAICA, PASTA_RESTRICAO_FOTOVOLTAICA_RAW)}
 
 
 def normalizar_texto(valor: Any) -> str:
@@ -118,6 +144,8 @@ class DescricaoConjunto:
     colunas_texto: Tuple[str, ...] = ()
     # Coluna da data publicada, gravada como ``din_instante`` na extração (o CVU traz o início da semana operativa)
     coluna_instante: str = COLUNA_INSTANTE
+    # Colunas de valor que podem faltar em parte dos arquivos (fase C, FR-058): a ausência vai para a mensagem da auditoria
+    avisar_colunas_ausentes: bool = False
 
     @property
     def colunas_leitura(self) -> List[str]:
@@ -231,6 +259,58 @@ def _cmo(perfil: Any) -> DescricaoConjunto:
     )
 
 
+def _por_nivel(perfil: Any, chave: str) -> Tuple[str, Regra, Tuple[Regra, ...], Any]:
+    """Nível do conjunto na cobertura e a identificação nele: da usina, pelo id ONS e o CEG; do conjunto, pelo id do
+    conjunto e o estado (o CEG das linhas de conjunto é "-"; decisão R9)."""
+    ident, estado = perfil.identificacao, perfil.usina.estado
+    nivel = _nivel(entrada(chave), cobertura_da_usina(perfil))
+    if nivel == "conjunto":
+        return (nivel, Regra("id_ons", ident.id_conjunto), (Regra("id_estado", estado),),
+                ((("id_ons", "in", _formas(ident.id_conjunto)),),))
+    return (nivel, Regra("id_ons", ident.id_ons), (Regra("ceg", ident.ceg),),
+            ((("id_ons", "in", _formas(ident.id_ons)),), (("ceg", "in", _formas(ident.ceg)),)))
+
+
+def _fator_capacidade(perfil: Any) -> DescricaoConjunto:
+    """Fator de capacidade, da usina ou do conjunto (decisão R9)."""
+    nivel, identificador, conferencias, filtro = _por_nivel(perfil, "fator_capacidade")
+    return DescricaoConjunto(
+        pacote=CONJUNTO_FATOR_CAPACIDADE, pasta=PASTA_FATOR_CAPACIDADE_RAW, identificador=identificador,
+        conferencias=conferencias, colunas_valor=COLUNAS_FATOR_CAPACIDADE, filtro_parquet=filtro, nivel=nivel,
+        avisar_colunas_ausentes=True,
+    )
+
+
+def descricao_restricao_detalhe(perfil: Any, id_ons: Optional[str] = None, ceg: Optional[str] = None
+                                ) -> DescricaoConjunto:
+    """Restrição com detalhe por usina, na variante do tipo: pelo id ONS, conferida pelo CEG; o id do conjunto fica
+    como texto, sem conferir (achado A7). ``id_ons`` e ``ceg`` de outro membro do conjunto servem à G2."""
+    tipo = tipo_da_usina(perfil)
+    pacote, pasta = VARIANTES_RESTRICAO_DETALHE[tipo]
+    id_ons = id_ons or perfil.identificacao.id_ons
+    ceg = ceg or perfil.identificacao.ceg
+    recurso, invalido = COLUNAS_RECURSO[tipo]
+    return DescricaoConjunto(
+        pacote=pacote, pasta=pasta, identificador=Regra("id_ons", id_ons), conferencias=(Regra("ceg", ceg),),
+        colunas_valor=("val_geracaoestimada", "val_geracaoverificada", recurso, invalido, "flg_geracaorestrita",
+                       "val_geracaoreferenciafinal"),
+        colunas_texto=("id_ons_conjuntousina", "nom_modalidadeoperacao"),
+        filtro_parquet=((("id_ons", "in", _formas(id_ons)),), (("ceg", "in", _formas(ceg)),)),
+        avisar_colunas_ausentes=True,
+    )
+
+
+def _restricao_razao(perfil: Any) -> DescricaoConjunto:
+    """Restrição com a razão (REL, CNF, ENE), da usina ou do conjunto, na variante do tipo (decisão R9; achado A8)."""
+    pacote, pasta = VARIANTES_RESTRICAO_RAZAO[tipo_da_usina(perfil)]
+    nivel, identificador, conferencias, filtro = _por_nivel(perfil, "restricao_razao")
+    return DescricaoConjunto(
+        pacote=pacote, pasta=pasta, identificador=identificador, conferencias=conferencias,
+        colunas_valor=COLUNAS_RESTRICAO_RAZAO, colunas_texto=("cod_razaorestricao",), filtro_parquet=filtro,
+        nivel=nivel, avisar_colunas_ausentes=True,
+    )
+
+
 def _geracao(perfil: Any) -> DescricaoConjunto:
     """Geração no nível da cobertura do perfil; com a lista ``["proprio", "conjunto"]``, a da usina (a do conjunto
     vem de ``descricao_geracao``, na série de referência)."""
@@ -286,15 +366,32 @@ REGISTRO: Tuple[EntradaRegistro, ...] = (
     EntradaRegistro("cvu", ((CONJUNTO_CVU, PASTA_CVU_RAW),), TERMICAS, ("usina",), "semanal", descricao=_cvu),
     EntradaRegistro("cmo", ((CONJUNTO_CMO, PASTA_CMO_RAW),), TERMICAS, ("agregado",), "semanal", descricao=_cmo,
                     campo_usina="subsistema"),
+    # Fase C (spec 006): eólicas e solares; a restrição muda de pacote com o tipo (variantes)
+    EntradaRegistro("fator_capacidade", ((CONJUNTO_FATOR_CAPACIDADE, PASTA_FATOR_CAPACIDADE_RAW),), RENOVAVEIS,
+                    ("usina", "conjunto"), "horaria", descricao=_fator_capacidade),
+    EntradaRegistro("restricao_detalhe", tuple(VARIANTES_RESTRICAO_DETALHE.values()), RENOVAVEIS, ("usina",),
+                    "semi_horaria", referencia=True,
+                    variantes=tuple((t, p) for t, (p, _) in VARIANTES_RESTRICAO_DETALHE.items()),
+                    descricao=descricao_restricao_detalhe),
+    EntradaRegistro("restricao_razao", tuple(VARIANTES_RESTRICAO_RAZAO.values()), RENOVAVEIS, ("usina", "conjunto"),
+                    "semi_horaria", variantes=tuple((t, p) for t, (p, _) in VARIANTES_RESTRICAO_RAZAO.items()),
+                    descricao=_restricao_razao),
     # Decisão R31: liga o CEG ao cod_usina e ao reservatório da EVT e dos dados hidrológicos
     EntradaRegistro("reservatorio", ((CONJUNTO_RESERVATORIO, PASTA_RESERVATORIO_RAW),), HIDRELETRICAS, ("usina",),
                     "estatica", so_catalogo=True),
 )
 
 
-def pacotes(entradas: Iterable[EntradaRegistro]) -> Dict[str, str]:
-    """{pacote: pasta em data/raw/} das entradas, na ordem do registro."""
-    return {pacote: pasta for entrada in entradas for pacote, pasta in entrada.pacotes}
+def pacotes(entradas: Iterable[EntradaRegistro], tipo: Optional[str] = None) -> Dict[str, str]:
+    """{pacote: pasta em data/raw/} das entradas, na ordem do registro; com ``tipo``, só a variante dele nos conjuntos
+    que mudam de pacote com o tipo."""
+    saida: Dict[str, str] = {}
+    for e in entradas:
+        do_tipo = {p for t, p in e.variantes if t == tipo} if tipo and e.variantes else None
+        for pacote, pasta in e.pacotes:
+            if do_tipo is None or pacote in do_tipo:
+                saida[pacote] = pasta
+    return saida
 
 
 # Todos os conjuntos registrados (pacote -> pasta), na ordem do registro

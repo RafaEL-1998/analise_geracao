@@ -80,6 +80,15 @@ ARQUIVOS_COLETA = {
     "auditoria_despacho": "auditoria_despacho.csv",
     "auditoria_cvu": "auditoria_cvu.csv",
     "auditoria_cmo": "auditoria_cmo.csv",
+    # Eólicas e solares (spec 006, fase C; data-model 6.1)
+    "fator_capacidade": "fator_capacidade_extraido.parquet",
+    "restricao_detalhe": "restricao_detalhe_extraido.parquet",
+    "restricao_razao": "restricao_razao_extraido.parquet",
+    "restricao_membros": "restricao_membros_extraido.parquet",  # G2: as outras usinas do conjunto, como contexto
+    "auditoria_fator_capacidade": "auditoria_fator_capacidade.csv",
+    "auditoria_restricao_detalhe": "auditoria_restricao_detalhe.csv",
+    "auditoria_restricao_razao": "auditoria_restricao_razao.csv",
+    "auditoria_restricao_membros": "auditoria_restricao_membros.csv",
 }
 ARQUIVOS_TRATAMENTO = {
     "evt_parquet": "evt_tratado.parquet",
@@ -115,6 +124,17 @@ ARQUIVOS_TRATAMENTO = {
     "cmo_semanal": "cmo_semanal.csv",
     "cmo_ausencias": "cmo_ausencias.csv",
     "auditoria_cmo": "auditoria_cmo.csv",
+    # Eólicas e solares (spec 006, fase C; data-model 6.2)
+    "fator_capacidade_horario": "fator_capacidade_horario.csv",
+    "fator_capacidade_ausencias": "fator_capacidade_ausencias.csv",
+    "auditoria_fator_capacidade": "auditoria_fator_capacidade.csv",
+    "restricao_semi_horaria": "restricao_semi_horaria.csv",
+    "restricao_horaria": "restricao_horaria.csv",
+    "restricao_ausencias": "restricao_ausencias.csv",
+    "auditoria_restricao_detalhe": "auditoria_restricao_detalhe.csv",
+    "restricao_razao_semi_horaria": "restricao_razao_semi_horaria.csv",
+    "auditoria_restricao_razao": "auditoria_restricao_razao.csv",
+    "restricao_membros_horaria": "restricao_membros_horaria.csv",
 }
 ARQUIVOS_CONFERENCIA = {
     "resultados": "conferencias.pkl",
@@ -129,6 +149,9 @@ ARQUIVOS_CONFERENCIA = {
     "nao_aplicaveis": "nao_aplicaveis.csv",  # conferências do catálogo que não se aplicam (spec 006, decisão R13)
     "programacao_despacho": "programacao_despacho.csv",  # G3 (spec 006, fase B)
     "verificada_despacho": "verificada_despacho.csv",  # G4 (spec 006, fase B)
+    "geracao_fontes": "geracao_fontes.csv",  # G1 (spec 006, fase C)
+    "soma_conjunto": "soma_conjunto.csv",  # G2
+    "programacao_renovaveis": "programacao_renovaveis.csv",  # G5
 }
 ARQUIVOS_ANALISES = {"resultados": "resultados.pkl"}
 # Catálogo de usinas (spec 006, data-model, seção 2), em data/catalogo/, sem .bak

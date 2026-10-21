@@ -6,16 +6,18 @@ vazões não atingem a meta de alinhamento (spec da Conferência).
 
 Para todas as usinas, ``nao_aplicaveis.csv`` lista as conferências do catálogo que não se aplicam, com o motivo
 (spec 006, decisão R13). Nas hidrelétricas com EVT, as seis de hoje continuam todas em ``conferencias.pkl``; nas
-usinas sem EVT, só as aplicadas, inclusive a G3 e a G4 das térmicas com o despacho (fase B).
+usinas sem EVT, só as aplicadas, inclusive a G3 e a G4 das térmicas com o despacho (fase B) e a G1, a G2 e a G5 das
+eólicas e solares (fase C).
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
+from src.coleta import registro
 from src.coleta.serie_referencia import escolher
 from src.comum import caminhos
 from src.comum.logger import setup_logger
@@ -23,7 +25,14 @@ from src.comum.persistencia import gravar_csv, registrar_gravacoes
 from src.conferencia.aplicabilidade import aplicaveis, tabela_nao_aplicaveis
 from src.conferencia.cadastro import conferencia_cadastro
 from src.conferencia.disponibilidade import conferencia_disponibilidade
-from src.conferencia.fontes import conferencia_programacao_despacho, conferencia_verificada_despacho
+from src.conferencia.fontes import (
+    conferencia_geracao_fontes,
+    conferencia_programacao_despacho,
+    conferencia_programacao_renovaveis,
+    conferencia_soma_conjunto,
+    conferencia_verificada_despacho,
+    soma_do_conjunto,
+)
 from src.conferencia.geracao import conferencia_geracao
 from src.conferencia.indicadores import conferencia_dispf_horas, conferencia_teifa_teip
 from src.conferencia.resultado import ResultadoConferencia, salvar_conferencias
@@ -35,6 +44,7 @@ from src.tratamento.geracao import carregar_geracao_tratada
 from src.tratamento.hidrologia import carregar_hidrologia_tratada
 from src.tratamento.indicadores import carregar_indicadores_tratados
 from src.tratamento.programacao import carregar_programacao_tratada
+from src.tratamento.renovavel import carregar_renovavel, em_hora_cheia
 from src.tratamento.termica import carregar_despacho_tratado
 
 logger = setup_logger("conferencia")
@@ -51,6 +61,9 @@ CSV_CONFERENCIA: Dict[str, List[tuple]] = {
     "cadastro": [("cadastro", "campos")],
     "programacao_despacho": [("programacao_despacho", "mensal")],
     "verificada_despacho": [("verificada_despacho", "mensal")],
+    "geracao_fontes": [("geracao_fontes", "mensal")],
+    "soma_conjunto": [("soma_conjunto", "mensal")],
+    "programacao_renovaveis": [("programacao_renovaveis", "mensal")],
 }
 
 
@@ -65,6 +78,49 @@ def carregar_ficha_cadastro(pasta_coleta: Path) -> pd.DataFrame:
 
 def _com_evt(perfil: Any) -> bool:
     return escolher(perfil).conjunto == "evt"
+
+
+def fontes_da_geracao(perfil: Any, tratamento: Path) -> Dict[str, Optional[pd.DataFrame]]:
+    """A geração da usina em cada fonte, em hora cheia, com o nível de cada hora (G1 e G2; fase C): a Geração por
+    usina (da base horária, quando é a série de referência), o Fator de capacidade e as duas restrições."""
+    renovavel = carregar_renovavel(tratamento)
+    fontes: Dict[str, Optional[pd.DataFrame]] = {}
+    if escolher(perfil).conjunto == "geracao":
+        base = carregar_base_horaria(tratamento)
+        if base is not None:
+            fontes["geracao"] = base[["din_instante", "geracao_mw", "nivel"]].rename(columns={"geracao_mw": "valor"})
+    else:
+        geracao = carregar_geracao_tratada(tratamento)
+        if geracao is not None and len(geracao.horaria):
+            fontes["geracao"] = pd.DataFrame({"din_instante": pd.to_datetime(geracao.horaria["din_instante"]),
+                                              "valor": geracao.horaria["val_geracao"],
+                                              "nivel": registro.nivel_coletado(perfil, "geracao")})
+    fc = renovavel["fator_capacidade_horario"]
+    if fc is not None and len(fc):
+        fontes["fator_capacidade"] = fc[["din_instante", "val_geracaoverificada", "nivel"]].rename(
+            columns={"val_geracaoverificada": "valor"})
+    detalhe = renovavel["restricao_horaria"]
+    if detalhe is not None and len(detalhe):
+        fontes["restricao_detalhe"] = pd.DataFrame({"din_instante": detalhe["din_instante"],
+                                                    "valor": detalhe["val_geracaoverificada"], "nivel": "usina"})
+    razao = renovavel["restricao_razao_semi_horaria"]
+    if razao is not None and len(razao):
+        horaria = em_hora_cheia(razao, ["val_geracao"], completa="val_geracao")
+        fontes["restricao_razao"] = pd.DataFrame({"din_instante": horaria["din_instante"],
+                                                  "valor": horaria["val_geracao"], "nivel": razao["nivel"].iloc[0]})
+    return fontes
+
+
+def _soma_conjunto(perfil: Any, tratamento: Path) -> ResultadoConferencia:
+    """G2 com as tabelas tratadas: a restrição com detalhe da usina e dos membros × a geração do conjunto."""
+    renovavel = carregar_renovavel(tratamento)
+    soma, incompletas = soma_do_conjunto(renovavel["restricao_horaria"], perfil.identificacao.id_ons,
+                                         renovavel["restricao_membros_horaria"], perfil.identificacao.membros)
+    geracao = fontes_da_geracao(perfil, tratamento).get("geracao")
+    conjunto = None
+    if geracao is not None:
+        conjunto = geracao[geracao["nivel"] == "conjunto"].rename(columns={"valor": "valor_b"})
+    return conferencia_soma_conjunto(soma, incompletas, conjunto)
 
 
 def conferir(perfil: Any) -> Dict[str, ResultadoConferencia]:
@@ -95,6 +151,10 @@ def conferir(perfil: Any) -> Dict[str, ResultadoConferencia]:
                 carregar_programacao_tratada(tratamento), carregar_despacho_tratado(tratamento)),
             "verificada_despacho": lambda: conferencia_verificada_despacho(
                 carregar_base_horaria(tratamento), carregar_despacho_tratado(tratamento)),
+            "geracao_fontes": lambda: conferencia_geracao_fontes(fontes_da_geracao(perfil, tratamento)),
+            "soma_conjunto": lambda: _soma_conjunto(perfil, tratamento),
+            "programacao_renovaveis": lambda: conferencia_programacao_renovaveis(
+                carregar_programacao_tratada(tratamento), carregar_renovavel(tratamento)["fator_capacidade_horario"]),
         }
         resultados = [executores[i]() for i in ids if i in executores]
     for r in resultados:

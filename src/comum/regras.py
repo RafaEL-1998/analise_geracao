@@ -77,6 +77,12 @@ CONJUNTO_RESERVATORIO: str = "reservatorio"
 CONJUNTO_DESPACHO: str = "geracao-termica-despacho-2"
 CONJUNTO_CVU: str = "cvu-usitermica"
 CONJUNTO_CMO: str = "cmo-semanal"
+# Eólicas e solares (spec 006, fase C; decisão R9): a restrição tem uma variante por tipo
+CONJUNTO_FATOR_CAPACIDADE: str = "fator-capacidade-2"
+CONJUNTO_RESTRICAO_EOLICA_DETALHE: str = "restricao_coff_eolica_detail"
+CONJUNTO_RESTRICAO_FOTOVOLTAICA_DETALHE: str = "restricao_coff_fotovoltaica_detail"
+CONJUNTO_RESTRICAO_EOLICA: str = "restricao_coff_eolica_usi"
+CONJUNTO_RESTRICAO_FOTOVOLTAICA: str = "restricao_coff_fotovoltaica"
 CONJUNTOS_INDICADORES_ONS: Dict[str, str] = {
     "ind_disponibilidade_fgeracao_uge_mensal": "Indicadores de disponibilidade da função geração por unidade geradora (base mensal)",
     "ind_disponibilidade_fgeracao_uge_anual": "Indicadores de disponibilidade da função geração por unidade geradora (base anual)",
@@ -97,6 +103,11 @@ PASTA_RESERVATORIO_RAW: str = "reservatorio"
 PASTA_DESPACHO_RAW: str = "geracao_termica_despacho_2"
 PASTA_CVU_RAW: str = "cvu_usitermica"
 PASTA_CMO_RAW: str = "cmo_semanal"
+PASTA_FATOR_CAPACIDADE_RAW: str = "fator_capacidade_2"
+PASTA_RESTRICAO_EOLICA_DETALHE_RAW: str = "restricao_coff_eolica_detail"
+PASTA_RESTRICAO_FOTOVOLTAICA_DETALHE_RAW: str = "restricao_coff_fotovoltaica_detail"
+PASTA_RESTRICAO_EOLICA_RAW: str = "restricao_coff_eolica_usi"
+PASTA_RESTRICAO_FOTOVOLTAICA_RAW: str = "restricao_coff_fotovoltaica"
 # Pacote -> pasta de todos os conjuntos: CONJUNTOS_PIPELINE, derivado do registro (src/coleta/registro.py)
 DIRETORIO_DICIONARIOS: str = "_dicionarios"  # subpasta com os dicionários de dados de cada conjunto
 
@@ -174,6 +185,15 @@ LIMIAR_CONCLUSAO_DESPACHO_ABAIXO_HORAS: int = 24  # C12: horas com a geração a
 LIMIAR_CONCLUSAO_DISPONIVEL_CVU_HORAS: int = 168  # C13: horas disponíveis sem despacho com o CVU abaixo do CMO
 LIMIAR_CONCLUSAO_INFLEXIBILIDADE_PCT: float = 5.0  # C14: inflexibilidade não verificada, em % da programada
 LIMIAR_CONCLUSAO_SEM_PROGRAMACAO_HORAS: int = 24  # C15: horas com geração acima da programada, sem programação
+
+# Eólicas e solares (spec 006, fase C; decisões R12, R16 e R19): limiares iniciais, calibrados na Seriemas 1 e na Praia
+# Formosa e aprovados pelo usuário no fim da fase (tarefa T115)
+LIMIAR_CONCLUSAO_ENERGIA_CORTADA_PCT: float = 5.0  # C16: energia cortada, em % da energia estimada
+LIMIAR_CONCLUSAO_RECURSO_INVALIDO_PCT: float = 10.0  # C17: semi-horas com o recurso inválido, em % das semi-horas
+LIMIAR_CONCLUSAO_DESVIO_PROGRAMACAO_PCT: float = 10.0  # C19: desvio médio absoluto, em % da potência instalada
+DURACAO_SEMI_HORA_H: float = 0.5  # energia de uma semi-hora: potência média × 0,5 h (decisão R12)
+FAIXA_VENTO_MS: float = 2.0  # largura das faixas de vento (m/s) do recurso × geração (decisão R19)
+FAIXA_IRRADIANCIA_WM2: float = 100.0  # largura das faixas de irradiância (W/m²)
 
 # ---------------------------------------------------------------------------
 # Resumo executivo: limites e glossário (iguais para todas as usinas)

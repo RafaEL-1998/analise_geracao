@@ -125,21 +125,38 @@ CADASTRAIS: Dict[str, Cadastral] = {
 }
 
 
+VARIANTES: Dict[str, Dict[str, Tuple[str, str]]] = {"restricao_detalhe": registro.VARIANTES_RESTRICAO_DETALHE,
+                                                    "restricao_razao": registro.VARIANTES_RESTRICAO_RAZAO}
+
+
 @dataclass(frozen=True)
 class Serie:
-    """Conjunto de série verificado na cobertura: chave do registro, pacote, pasta, formatos e prefixo do arquivo."""
+    """Conjunto de série verificado na cobertura: chave do registro, pacote, pasta, formatos e prefixo do arquivo; nas
+    restrições, uma série por variante (eólica e fotovoltaica), com o tipo em ``variante`` (fase C)."""
 
     chave: str
     formatos: Tuple[str, ...]
     prefixo: str = ""  # só a EVT fica na raiz de data/raw/, junto de outros arquivos
+    variante: str = ""
+
+    @property
+    def id(self) -> str:
+        return f"{self.chave}@{self.variante}" if self.variante else self.chave
 
     @property
     def pacote(self) -> str:
+        if self.variante:
+            return VARIANTES[self.chave][self.variante][0]
         return registro.entrada(self.chave).pacotes[0][0]  # nos indicadores, o DISPF mensal
 
     @property
     def pasta(self) -> str:
+        if self.variante:
+            return VARIANTES[self.chave][self.variante][1]
         return registro.entrada(self.chave).pacotes[0][1]
+
+    def serve(self, tipo: str) -> bool:
+        return tipo in registro.entrada(self.chave).tipos and self.variante in ("", tipo)
 
 
 # Os conjuntos de série da [cobertura] já implementados, na ordem do registro, com os formatos que a Coleta lê
@@ -152,9 +169,14 @@ SERIES: Tuple[Serie, ...] = (
     Serie("geracao", ("PARQUET", "CSV")),
     Serie("despacho", ("PARQUET", "CSV")),
     Serie("cvu", ("PARQUET", "CSV")),
+    Serie("fator_capacidade", ("PARQUET", "CSV")),
+    *(Serie("restricao_detalhe", ("PARQUET", "CSV"), variante=t) for t in registro.RENOVAVEIS),
+    *(Serie("restricao_razao", ("PARQUET", "CSV"), variante=t) for t in registro.RENOVAVEIS),
 )
 SIGLAS_SERIES = {"evt": "EVT", "indicadores": "IND", "programacao": "PRG", "disponibilidade": "DSP",
-                 "hidrologia": "HID", "geracao": "GER", "despacho": "DES", "cvu": "CVU"}
+                 "hidrologia": "HID", "geracao": "GER", "despacho": "DES", "cvu": "CVU", "fator_capacidade": "FC",
+                 "restricao_detalhe": "RDT", "restricao_razao": "RRZ"}
+CHAVES_SERIES: Tuple[str, ...] = tuple(dict.fromkeys(s.chave for s in SERIES))  # uma coluna por conjunto na listagem
 
 
 # ---------------------------------------------------------------------------
@@ -382,6 +404,9 @@ COLUNAS_SERIES = {
     "geracao": ["id_ons", "val_geracao"],
     "despacho": ["ceg", "val_proggeracao", "val_verifgeracao"],
     "cvu": ["cod_usinaplanejamento", "val_cvu"],
+    "fator_capacidade": ["id_ons", "val_geracaoverificada"],
+    "restricao_detalhe": ["id_ons", "val_geracaoverificada"],
+    "restricao_razao": ["id_ons", "val_geracao"],
 }
 
 
@@ -399,7 +424,7 @@ def ler_arquivos(raiz_raw: Path) -> Leituras:
         if arquivo is None:
             logger.warning("Catálogo de usinas: nenhum arquivo local de %s; cobertura ausente.", serie.pacote)
             continue
-        series[serie.chave] = (arquivo, _publicacao(pasta, arquivo.name), _ler_tabela(arquivo, COLUNAS_SERIES[serie.chave]))
+        series[serie.id] = (arquivo, _publicacao(pasta, arquivo.name), _ler_tabela(arquivo, COLUNAS_SERIES[serie.chave]))
     pasta_despacho = raiz_raw / registro.entrada("despacho").pacotes[0][1]
     return Leituras(tabelas["cadastro"], tabelas["composicao"], tabelas["capacidade"], tabelas["reservatorio"],
                     arquivos, series, montar_planejamento(pasta_despacho))
@@ -514,8 +539,9 @@ def _programacao(leituras: Leituras, cadastro: pd.DataFrame, conjuntos_ids: Sequ
     if "programacao" not in leituras.series:
         return pd.DataFrame(columns=COLUNAS_PROGRAMACAO)
     arquivo, _, tabela = leituras.series["programacao"]
-    ids_usina = {normalizar_texto(i): str(i) for i in cadastro["id_ons"] if str(i).strip()}
-    ids_conjunto = {normalizar_texto(c)[len(PREFIXO_CONJUNTO):]: str(c) for c in conjuntos_ids
+    # o id sem os espaços das pontas, como na linha da usina (o ONS publica, por exemplo, "CEUFM ")
+    ids_usina = {normalizar_texto(i): str(i).strip() for i in cadastro["id_ons"] if str(i).strip()}
+    ids_conjunto = {normalizar_texto(c)[len(PREFIXO_CONJUNTO):]: str(c).strip() for c in conjuntos_ids
                     if normalizar_texto(c).startswith(PREFIXO_CONJUNTO)}
     linhas = []
     for codigo, g in tabela.groupby(_textos(tabela["cod_exibicaousina"]), sort=False):
@@ -533,17 +559,20 @@ def _codigos_de(programacao: pd.DataFrame, valor: str) -> List[str]:
     return list(programacao.loc[programacao["id_usina_ou_conjunto"] == valor, "codigo_exibicao"]) if valor else []
 
 
-def _nivel_cobertura(chave: str, u: Dict[str, Any], leituras: Leituras, lookups: Dict[str, Dict[str, Tuple[int, int]]],
-                     programacao: pd.DataFrame, vigentes: Optional[Dict[str, List[str]]] = None) -> Dict[str, Any]:
-    """Nível, identificador e contagens de um conjunto de série para uma usina (R3, R31)."""
+def _nivel_cobertura(serie: Any, u: Dict[str, Any], leituras: Leituras,
+                     lookups: Dict[str, Dict[str, Tuple[int, int]]], programacao: pd.DataFrame,
+                     vigentes: Optional[Dict[str, List[str]]] = None) -> Dict[str, Any]:
+    """Nível, identificador e contagens de um conjunto de série para uma usina (R3, R31); ``serie`` é a série do
+    catálogo (na variante do tipo, nas restrições) ou só a chave do registro."""
+    chave, sid = (serie.chave, serie.id) if isinstance(serie, Serie) else (serie, serie)
     linha = {"ceg": u["ceg"], "conjunto_ons": chave, "nivel": "ausente", "identificador": "", "linhas": 0,
              "linhas_sem_valor": 0, "arquivo": "", "publicacao": ""}
-    if chave in leituras.series:
-        arquivo, publicacao, _ = leituras.series[chave]
+    if sid in leituras.series:
+        arquivo, publicacao, _ = leituras.series[sid]
         linha.update(arquivo=arquivo.name, publicacao=publicacao)
     if normalizar_texto(u["modalidade"]) in MODALIDADES_TIPO_III:
         return {**linha, "nivel": "agregado"}
-    contagens = lookups.get(chave, {})
+    contagens = lookups.get(sid, {})
 
     def avaliar(coluna: str, valor: str, nivel: str) -> bool:
         linhas, com_valor = contagens.get(normalizar_texto(valor), (0, 0)) if valor else (0, 0)
@@ -568,9 +597,11 @@ def _nivel_cobertura(chave: str, u: Dict[str, Any], leituras: Leituras, lookups:
                          linhas_sem_valor=linhas - com_valor, nivel="proprio" if com_valor else "ausente")
     elif chave == "disponibilidade":
         avaliar("id_ons", u["id_ons"], "proprio")
-    elif chave == "geracao":
+    elif chave in ("geracao", "fator_capacidade", "restricao_razao"):
         if not avaliar("id_ons", u["id_ons"], "proprio"):
             avaliar("id_ons", u["id_conjunto"], "conjunto")
+    elif chave == "restricao_detalhe":  # só a usina: o id do conjunto não identifica (achado A7)
+        avaliar("id_ons", u["id_ons"], "proprio")
     elif chave == "programacao":
         for valor, nivel in ((u["id_ons"], "proprio"), (u["id_conjunto"], "conjunto")):
             codigos = _codigos_de(programacao, valor)
@@ -600,17 +631,18 @@ def montar_usinas(leituras: Leituras, hoje: date) -> Tuple[pd.DataFrame, pd.Data
     vigentes = codigos_vigentes(leituras.planejamento)
     lookups: Dict[str, Dict[str, Tuple[int, int]]] = {}
     for serie in SERIES:
-        if serie.chave not in leituras.series:
+        if serie.id not in leituras.series:
             continue
-        _, _, tabela = leituras.series[serie.chave]
+        _, _, tabela = leituras.series[serie.id]
         coluna = {"evt": "cod_usina", "hidrologia": "cod_usina", "indicadores": "ceg", "programacao": "cod_exibicaousina",
                   "disponibilidade": "id_ons", "geracao": "id_ons", "despacho": "ceg",
-                  "cvu": "cod_usinaplanejamento"}[serie.chave]
+                  "cvu": "cod_usinaplanejamento", "fator_capacidade": "id_ons", "restricao_detalhe": "id_ons",
+                  "restricao_razao": "id_ons"}[serie.chave]
         valores = [c for c in COLUNAS_SERIES[serie.chave] if c.startswith("val_")] or [coluna]
         if serie.chave == "indicadores":
-            lookups[serie.chave] = {k: (n, n) for k, (n, _) in _contagens(tabela, coluna, [coluna]).items()}
+            lookups[serie.id] = {k: (n, n) for k, (n, _) in _contagens(tabela, coluna, [coluna]).items()}
         else:
-            lookups[serie.chave] = _contagens(tabela, coluna, valores)
+            lookups[serie.id] = _contagens(tabela, coluna, valores)
 
     usinas, coberturas = [], []
     for _, r in cadastro.iterrows():
@@ -658,8 +690,8 @@ def montar_usinas(leituras: Leituras, hoje: date) -> Tuple[pd.DataFrame, pd.Data
                      id_reservatorio=str(reservatorio.get("res_id", "")).strip())
         u["divergencias"] = "; ".join(divergencias)
         if tipo in TIPOS_USINA:
-            linhas_cobertura = [_nivel_cobertura(s.chave, u, leituras, lookups, programacao, vigentes) for s in SERIES
-                                if tipo in registro.entrada(s.chave).tipos]
+            linhas_cobertura = [_nivel_cobertura(s, u, leituras, lookups, programacao, vigentes) for s in SERIES
+                                if s.serve(tipo)]
             coberturas += linhas_cobertura
             niveis = {c["nivel"] for c in linhas_cobertura}
             u["cobertura_resumo"] = next((n for n in NIVEIS_ORDEM if n in niveis), "")
@@ -738,8 +770,9 @@ def montar_catalogo(raiz_raw: Path, hoje: date, sem_portal: bool) -> Catalogo:
         "sem_portal": bool(sem_portal),
         "cadastro": {CADASTRAIS[c].pacote: {"arquivo": a.name, "publicacao": p}
                      for c, (a, p) in leituras.arquivos_cadastrais.items()},
-        "cobertura": [{"conjunto": s.chave, "pacote": s.pacote, "arquivo": leituras.series[s.chave][0].name,
-                       "publicacao": leituras.series[s.chave][1]} for s in SERIES if s.chave in leituras.series],
+        "cobertura": [{"conjunto": s.chave, **({"variante": s.variante} if s.variante else {}), "pacote": s.pacote,
+                       "arquivo": leituras.series[s.id][0].name, "publicacao": leituras.series[s.id][1]}
+                      for s in SERIES if s.id in leituras.series],
         "agregados": {"meses": [str(m) for m in _meses_completos(hoje) if str(m) not in meses_ausentes],
                       "meses_sem_arquivo": meses_ausentes, "arquivos": arquivos_agregados},
         "contagens": {"por_tipo": {str(k): int(v) for k, v in usinas["tipo"].value_counts().sort_index().items()},
@@ -832,16 +865,16 @@ def listar(catalogo: Dict[str, Any], filtradas: pd.DataFrame, raiz_usinas: Path,
     cobertura = catalogo["cobertura"]
     niveis = {(normalizar_texto(r["ceg"]), r["conjunto_ons"]): r["nivel"] for _, r in cobertura.iterrows()}
     cabecalho = ["UF", "TIPO", "USINA", "CEG", "ID ONS", "MODALIDADE", "MW", "CONJUNTO",
-                 *[SIGLAS_SERIES[s.chave] for s in SERIES], "PERFIL"]
+                 *[SIGLAS_SERIES[c] for c in CHAVES_SERIES], "PERFIL"]
     linhas = []
     for _, u in filtradas.iterrows():
         chave = normalizar_texto(u["ceg"])
-        letras = [LETRAS.get(niveis.get((chave, s.chave), ""), " ") for s in SERIES]
+        letras = [LETRAS.get(niveis.get((chave, c), ""), " ") for c in CHAVES_SERIES]
         potencia = fmt_num(u["potencia_autorizada_mw"], 1) if str(u["potencia_autorizada_mw"]).strip() else ""
         linhas.append([u["id_estado"], u["tipo"], u["nom_usina"][:40], u["ceg"], u["id_ons"], u["modalidade"],
                        potencia, u["id_conjunto"], *letras, perfis.get(chave, "")])
     larguras = [max([len(str(c)) for c in coluna] or [0]) for coluna in zip(cabecalho, *linhas)]
-    alinhamento = ["<", "<", "<", "<", "<", "<", ">", "<", *["^"] * len(SERIES), "<"]
+    alinhamento = ["<", "<", "<", "<", "<", "<", ">", "<", *["^"] * len(CHAVES_SERIES), "<"]
     for linha in [cabecalho, *linhas]:
         print("  ".join(f"{str(c):{a}{w}}" for c, a, w in zip(linha, alinhamento, larguras)).rstrip(), file=saida)
     contagem = filtradas["tipo"].value_counts().sort_index()

@@ -243,7 +243,9 @@ def programacao_comum(base: pd.DataFrame, nivel_programacao: str, dias_ausentes:
             "inicio": j["din_instante"].min(), "fim": j["din_instante"].max(), "horas_comuns": len(j),
             "geracao_media_mw": _media(j["geracao_mw"]), "programada_media_mw": _media(j["geracao_programada_mw"]),
             "desvio_medio_mw": _media(j["desvio_mw"]), "desvio_medio_absoluto_mw": _media(j["desvio_mw"].abs()),
-            "correlacao": float(j["geracao_mw"].corr(j["geracao_programada_mw"])) if len(j) > 1 else math.nan,
+            # série constante (desvio padrão nulo): correlação indefinida, sem divisão por zero
+            "correlacao": float(j["geracao_mw"].corr(j["geracao_programada_mw"]))
+            if len(j) > 1 and j["geracao_mw"].std() > 0 and j["geracao_programada_mw"].std() > 0 else math.nan,
             "horas_desvio_programacao": int(j["desvio_programacao"].sum()), "eventos_desvio": len(eventos),
             "dias_ausentes": len(dias),
         },
@@ -340,9 +342,6 @@ def omissoes(perfil: Any, tipo: str, comum: Dict[str, Any], indicadores: bool, h
             saida.append(_omitido("CVU × CMO", f"sem o CVU das usinas térmicas ({_cobertura_texto(perfil, 'cvu')})"))
         elif registro.nivel_coletado(perfil, "cmo") is None:
             saida.append(_omitido("CVU × CMO", "sem o CMO semanal: o perfil não traz o subsistema"))
-    if tipo in TIPOS_COM_FATOR_CAPACIDADE:
-        saida.append(_omitido("Seções de eólica e solar", "Fator de capacidade e Restrição de operação: conjuntos "
-                                                          "ainda não coletados pelo pipeline"))
     if getattr(perfil.identificacao, "id_conjunto", None):
         saida.append(_omitido("Composição e geração do conjunto", "seção ainda não gerada pelo pipeline; a "
                                                                   "composição por trecho está na Fonte e cobertura "
@@ -366,6 +365,12 @@ def omissoes(perfil: Any, tipo: str, comum: Dict[str, Any], indicadores: bool, h
         saida.append(_omitido("Conferência da geração entre fontes",
                               "seção ainda não gerada pelo pipeline; os resultados da G3 e da G4 estão nas legendas de "
                               "fonte das seções de térmica e nas abas CONF_G3 e CONF_G4 da planilha"))
+    elif tipo in TIPOS_COM_FATOR_CAPACIDADE and any(registro.nivel_coletado(perfil, c) for c in (
+            "fator_capacidade", "restricao_detalhe", "restricao_razao")):  # fase C
+        saida.append(_omitido("Conferência da geração entre fontes",
+                              "seção ainda não gerada pelo pipeline; os resultados da G1, da G2 e da G5, quando "
+                              "aplicáveis, estão nas legendas de fonte das seções de eólica e solar e nas abas CONF_G1, "
+                              "CONF_G2 e CONF_G5 da planilha"))
     else:
         saida.append(_omitido("Conferência da geração entre fontes",
                               "nenhuma conferência entre fontes de geração se aplica à usina (ver as conferências não "

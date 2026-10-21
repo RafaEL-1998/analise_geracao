@@ -308,7 +308,9 @@ def test_cobertura_obrigatoria_fora_da_uhe(tmp_path: Path) -> None:
 @pytest.mark.parametrize("linha, mensagem", [
     ('hidrologia = "proprio"', "cobertura.hidrologia: conjunto do ONS desconhecido ou que não serve a UFV"),
     ('despacho = "proprio"', "cobertura.despacho: conjunto do ONS desconhecido ou que não serve a UFV"),
-    ('fator_capacidade = "parcial"', "cobertura.fator_capacidade: conjunto do ONS desconhecido ou que não serve a UFV"),
+    ('cvu = "proprio"', "cobertura.cvu: conjunto do ONS desconhecido ou que não serve a UFV"),
+    ('fator_capacidade = "parcial"', 'cobertura.fator_capacidade: use proprio, conjunto, agregado, ausente ou a lista '
+                                     '["proprio", "conjunto"]'),  # chave da fase C: o valor é que está errado
     ('geracao = "parcial"', 'cobertura.geracao: use proprio, conjunto, agregado, ausente ou a lista ["proprio", '
                             '"conjunto"]'),
 ])

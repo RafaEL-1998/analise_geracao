@@ -33,7 +33,6 @@ from src.comum.persistencia import gravar_bytes, gravar_csv, gravar_parquet
 from src.comum.regras import (
     CONJUNTO_CADASTRO,
     CONJUNTO_EVT,
-    CONJUNTO_GERACAO,
     CONJUNTO_PROGRAMACAO_DIARIA,
     CONJUNTOS_INDICADORES_ONS,
     PASTA_CADASTRO_RAW,
@@ -174,7 +173,7 @@ class _Coleta:
         self.datas: Dict[str, Dict[str, Any]] = {}
         # Conjuntos do tipo e da cobertura da usina, na ordem do registro (spec 006, decisão R8; FR-015)
         self.entradas = registro.conjuntos_da_usina(perfil)
-        self.pacotes = registro.pacotes(self.entradas)
+        self.pacotes = registro.pacotes(self.entradas, registro.tipo_da_usina(perfil))  # só a variante do tipo
         # Série de referência (decisão R6), complemento horário e composição do conjunto (para os trechos, R7)
         self.escolha: Optional[serie_referencia.Escolha] = None
         self.complemento: Optional[pd.DataFrame] = None
@@ -245,11 +244,14 @@ def _coletar_evt(c: _Coleta) -> Optional[ResultadoEtapa]:
 
 
 def _coletar_referencia(c: _Coleta) -> Optional[ResultadoEtapa]:
-    """Série de referência das usinas sem EVT (decisões R6 e R7): a Geração por usina, da usina ou do conjunto,
-    varrida em todos os arquivos publicados; o período vai da primeira à última hora com valor."""
+    """Série de referência das usinas sem EVT (decisões R6 e R7): a Geração por usina, da usina ou do conjunto, ou, nas
+    eólicas e solares em conjunto com série própria, a restrição com detalhe da usina (fase C), varrida em todos os
+    arquivos publicados; o período vai da primeira à última hora (ou semi-hora) com valor."""
     perfil, escolha = c.perfil, c.escolha
     descricoes = serie_referencia.descricoes_referencia(perfil, escolha)
-    pasta = c.raw / next(iter(descricoes.values())).pasta
+    primeira = next(iter(descricoes.values()))
+    pasta = c.raw / primeira.pasta
+    coluna = serie_referencia.COLUNA_VALOR[escolha.conjunto]
     fim_aberto = pd.Timestamp.today().normalize() + pd.DateOffset(years=1)
     falhas: List[Dict[str, Any]] = []
     for nivel, desc in descricoes.items():
@@ -257,16 +259,21 @@ def _coletar_referencia(c: _Coleta) -> Optional[ResultadoEtapa]:
             conjuntos.sincronizar_conjunto(d, serie_referencia.INICIO_VARREDURA, fim_aberto, pasta, c.forcar))) or []
     series, auditoria = serie_referencia.extrair_referencia(perfil, escolha, c.raw, falhas)
     auditoria = auditoria.drop(columns=["nivel"], errors="ignore")
-    inicio, fim = serie_referencia.periodo(series)
-    c.gravar_parquet(serie_referencia.combinar(series, inicio, fim), "geracao")
-    c.gravar_csv(auditoria, "auditoria_geracao")
-    complemento = serie_referencia.complemento(series)
+    inicio, fim = serie_referencia.periodo(series, coluna)
+    semi_horaria = escolha.conjunto == "restricao_detalhe"
+    if semi_horaria:  # a série inteira da restrição com detalhe, no período, com todas as colunas extraídas
+        c.gravar_parquet(serie_referencia.recortar(series["usina"], inicio, fim), escolha.conjunto)
+    else:
+        c.gravar_parquet(serie_referencia.combinar(series, inicio, fim), "geracao")
+    c.gravar_csv(auditoria, f"auditoria_{escolha.conjunto}")
+    complemento = serie_referencia.complemento(series, coluna, semi_horaria)
     if inicio is not None:
-        complemento = complemento[(complemento["din_instante"] >= inicio) & (complemento["din_instante"] <= fim)]
+        complemento = complemento[(complemento["din_instante"] >= inicio.floor("h"))
+                                  & (complemento["din_instante"] <= fim)]
     c.complemento = complemento.reset_index(drop=True)
     c.gravar_parquet(c.complemento, "geracao_complemento")
-    c.anotar_datas(CONJUNTO_GERACAO, pasta, _obtidos(auditoria))
-    if c.registrar(CONJUNTO_GERACAO, auditoria, [pasta]):
+    c.anotar_datas(primeira.pacote, pasta, _obtidos(auditoria))
+    if c.registrar(primeira.pacote, auditoria, [pasta]):
         return c.resultado(CODIGO_DADO_NAO_OBTIDO)
     if inicio is None:
         logger.error("A série de referência da usina '%s' (%s) não tem nenhuma hora com valor; os demais conjuntos "
@@ -275,7 +282,8 @@ def _coletar_referencia(c: _Coleta) -> Optional[ResultadoEtapa]:
     c.inicio, c.fim = inicio, fim
     c.resumo["periodo"] = {"inicio": inicio.strftime(FORMATO_DATA), "fim": fim.strftime(FORMATO_DATA)}
     c.resumo["serie_referencia"] = serie_referencia.resumo(escolha, perfil, inicio, fim, auditoria)
-    if "usina" not in escolha.niveis and perfil.identificacao.id_ons:  # linhas próprias sem valor (achado A3)
+    if escolha.conjunto == "geracao" and "usina" not in escolha.niveis and perfil.identificacao.id_ons:
+        # linhas próprias sem valor (achado A3)
         proprias, _ = conjuntos.extrair_conjunto(registro.descricao_geracao(perfil, "usina"), pasta, inicio, fim)
         c.resumo["linhas_usina_sem_valor"] = int(proprias["val_geracao"].isna().sum()) if len(proprias) else 0
     logger.info("Período da série de referência (%s): %s a %s.", escolha.motivo, inicio, fim)
@@ -377,12 +385,34 @@ def _coletar_horario(c: _Coleta, nome: str) -> Optional[ResultadoEtapa]:
     falhas = c.sincronizar(desc.pacote, lambda: conjuntos.sincronizar_conjunto(desc, c.inicio, c.fim, pasta,
                                                                                 c.forcar)) or []
     extraido, auditoria = conjuntos.extrair_conjunto(desc, pasta, c.inicio, c.fim, falhas)
+    if nome in ("fator_capacidade", "restricao_razao"):  # da usina ou do conjunto (data-model 6.1)
+        extraido = extraido.assign(nivel=desc.nivel)
     c.gravar_parquet(extraido, nome)
     c.gravar_csv(auditoria, f"auditoria_{nome}")
     c.anotar_datas(desc.pacote, pasta, _obtidos(auditoria))
     if c.registrar(desc.pacote, auditoria, [pasta]):
         return c.resultado(CODIGO_DADO_NAO_OBTIDO)
     return None
+
+
+def _coletar_membros(c: _Coleta) -> None:
+    """Restrição com detalhe das outras usinas do conjunto (``[[identificacao.membros]]``), só para a G2 (fase C): pelo
+    id ONS e pelo CEG de cada membro, no período, guardadas à parte como contexto identificado (princípio III)."""
+    perfil = c.perfil
+    proprio = registro.normalizar_texto(perfil.identificacao.id_ons or "")
+    outros = [m for m in getattr(perfil.identificacao, "membros", ()) or ()
+              if registro.normalizar_texto(m.id_ons) != proprio]
+    if not outros or "restricao_detalhe" not in {e.chave for e in c.entradas}:
+        return
+    partes, auditorias = [], []
+    for m in outros:
+        desc = registro.descricao_restricao_detalhe(perfil, m.id_ons, m.ceg)
+        extraido, auditoria = conjuntos.extrair_conjunto(desc, c.raw / desc.pasta, c.inicio, c.fim)
+        partes.append(extraido.assign(id_ons=m.id_ons))
+        auditorias.append(auditoria.assign(id_ons=m.id_ons))
+    c.gravar_parquet(pd.concat(partes, ignore_index=True), "restricao_membros")
+    c.gravar_csv(pd.concat(auditorias, ignore_index=True), "auditoria_restricao_membros")
+    c.resumo["membros_restricao"] = {m.id_ons: int(len(p)) for m, p in zip(outros, partes)}
 
 
 def _coletar_cadastro(c: _Coleta) -> Optional[ResultadoEtapa]:
@@ -472,7 +502,7 @@ def executar_coleta(perfil: Any, sem_portal: bool = False, forcar_download: bool
     etapas: List[Callable[[_Coleta], Optional[ResultadoEtapa]]] = []
     if c.escolha.conjunto != "evt":  # a série de referência vem antes: ela define o período
         etapas.append(_coletar_referencia)
-        chaves = [k for k in chaves if k != "geracao"]
+        chaves = [k for k in chaves if k != c.escolha.conjunto]
     etapas += [lambda c, k=k: _coletar(c, k) for k in chaves]
     for etapa in etapas:
         interrompida = etapa(c)
@@ -480,6 +510,7 @@ def executar_coleta(perfil: Any, sem_portal: bool = False, forcar_download: bool
             _coletar_dicionarios(c)  # a consulta ao portal obtém os dicionários mesmo com a coleta interrompida
             _gravar_formato_2(c)
             return c.resultado(interrompida.codigo)
+    _coletar_membros(c)
     _gravar_trechos(c)
     _coletar_dicionarios(c)
     _gravar_formato_2(c)

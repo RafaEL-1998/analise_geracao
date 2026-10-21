@@ -1,5 +1,5 @@
 """Figuras das usinas sem EVT, em seaborn, desenhadas a partir das seções comuns e das seções do tipo (spec 006,
-decisões R14, R15 e R18; nas térmicas, as quatro figuras da fase B).
+decisões R14, R15, R18 e R19; nas térmicas, as quatro figuras da fase B; nas eólicas e solares, as quatro da fase C).
 
 Mesmo tema, paleta e tamanho das figuras de hoje (``src/relatorio/figuras.py``). Cada série leva o nível no rótulo
 quando não é da usina ("do conjunto ..."); níveis diferentes nunca são somados na mesma barra ou linha.
@@ -12,9 +12,11 @@ from typing import Dict, List
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from src.analises.renovavel import RAZOES, SEM_RAZAO
 from src.analises.resultados import ResultadosAnalise
 from src.comum.formatacao import MESES_ABREVIADOS, fmt_num
 from src.comum.logger import setup_logger
@@ -50,6 +52,11 @@ NOMES_FIGURAS_COMUM_OPCIONAIS: Dict[str, str] = {
     "inflexibilidade_mensal": "07_inflexibilidade_mensal.png",
     "desvios_despacho": "08_desvios_despacho_mensal.png",
     "cvu_cmo": "09_cvu_cmo_semanal.png",
+    # Eólicas e solares (fase C): cada uma só com a sua base
+    "fc_mensal": "10_fator_capacidade_mensal.png",
+    "corte_razao_mensal": "11_energia_cortada_por_razao_mensal.png",
+    "recurso_geracao": "12_geracao_por_faixa_de_recurso.png",
+    "desvio_programacao": "13_desvio_programacao_mensal.png",
 }
 COR_CONJUNTO = "#184f95"  # azul escuro da rampa: a série do conjunto, ao lado da azul da usina
 # Motivos do despacho: cada motivo com a sua posição fixa na ordem categórica (validada com o script da skill de
@@ -61,6 +68,11 @@ CORES_MOTIVOS: Dict[str, str] = {
     "Demais motivos": COR_CONTEXTO,
 }
 CORES_UNIDADES = ["#2a78d6", "#1baf7a", "#eda100", "#e87ba4"]  # CVU de cada unidade, na ordem dos códigos
+# Razões da restrição (fase C): as três primeiras posições da ordem categórica, validadas com o script da skill de
+# visualização sobre fundo branco (contraste do verde abaixo de 3:1, compensado pela tabela por razão e pela legenda);
+# a semi-hora restrita sem razão publicada, em cinza
+CORES_RAZOES: Dict[str, str] = {**dict(zip(RAZOES.values(), ("#2a78d6", "#eb6834", "#1baf7a"))),
+                                SEM_RAZAO: COR_CONTEXTO}
 
 
 def rotulo_nivel(res: ResultadosAnalise, nivel: str) -> str:
@@ -366,6 +378,122 @@ def _grafico_cvu_cmo(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
     plt.close(fig)
 
 
+# ---------------------------------------------------------------------------
+# Eólicas e solares (fase C)
+# ---------------------------------------------------------------------------
+
+
+def _grafico_fc_mensal(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    fc = res.renovavel["fator_capacidade"]
+    m = fc["mensal"]
+    nome = (res.niveis.get("geracao") or {}).get("nome") or ""
+    publicado = f"Publicado pelo ONS ({f'conjunto {nome}'.strip() if fc['nivel'] == 'conjunto' else 'usina'})"
+    cores = {publicado: COR_CONJUNTO if fc["nivel"] == "conjunto" else COR_GERACAO}
+    partes = [pd.DataFrame({"mes": pd.to_datetime(m["periodo"]), "serie": publicado, "pct": m["fator_capacidade_pct"]})]
+    mensal = res.comum["mensal"]
+    usina = mensal[mensal["nivel"] == "usina"]
+    if len(usina):  # o calculado neste relatório, da série própria e da potência do perfil
+        calculado = "Calculado neste relatório (usina)"
+        cores[calculado] = COR_EVT
+        pinst = perfil_ativo().parametros.potencia_instalada_mw
+        partes.append(pd.DataFrame({"mes": usina["mes"], "serie": calculado,
+                                    "pct": usina["geracao_media_mw"] / pinst * 100.0}))
+    longo = pd.concat(partes, ignore_index=True)
+    # o calculado tracejado: as duas linhas continuam visíveis quando coincidem (codificação além da cor)
+    tracos = {s: ("" if s == publicado else (4, 2)) for s in cores}
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    sns.lineplot(data=longo, x="mes", y="pct", hue="serie", hue_order=list(cores), palette=cores, style="serie",
+                 style_order=list(cores), dashes=tracos, linewidth=1.6, marker="o", markersize=4, legend=False, ax=ax)
+    meses = sorted(longo["mes"].unique())
+    ax.set_xlim(pd.Timestamp(meses[0]) - pd.Timedelta(days=20), pd.Timestamp(meses[-1]) + pd.Timedelta(days=20))
+    ax.set_ylim(bottom=0)
+    ax.set_xlabel("")
+    ax.set_ylabel("Fator de capacidade (%)")
+    ax.yaxis.set_major_formatter(_FORMATADOR_Y)
+    _eixo_tempo(ax, meses[0], meses[-1], diario=False)
+    ax.grid(axis="x", visible=False)
+    ax.set_title("Fator de capacidade mensal")
+    ax.legend(handles=[plt.Line2D([], [], color=cor, lw=2, marker="o", ls="-" if nome == publicado else (0, (4, 2)),
+                                  label=nome) for nome, cor in cores.items()],
+              loc="upper center", bbox_to_anchor=(0.5, -0.09), ncol=len(cores))
+    fig.subplots_adjust(left=0.07, right=0.97, top=0.9, bottom=0.2)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
+def _grafico_corte_razao(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    from src.analises.renovavel import COLUNA_RAZAO
+
+    m = res.renovavel["restricao"]["mensal"]
+    meses = list(pd.to_datetime(m["periodo"]))
+    rotulos = {**RAZOES, SEM_RAZAO: SEM_RAZAO}
+    longo = pd.concat([pd.DataFrame({"mes": meses, "serie": rotulos[razao], "mwh": m[coluna].fillna(0.0).to_numpy()})
+                       for razao, coluna in COLUNA_RAZAO.items()], ignore_index=True)
+    presentes = [s for s in CORES_RAZOES if s in set(longo.loc[longo["mwh"] > 0, "serie"])]
+    cores = {s: CORES_RAZOES[s] for s in presentes}
+    longo = longo[longo["serie"].isin(presentes)]
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    if len(longo):
+        # o seaborn empilha o último nível da ordem embaixo: a ordem invertida deixa REL na base
+        sns.histplot(data=longo, x="mes", weights="mwh", hue="serie", hue_order=presentes[::-1], palette=cores,
+                     multiple="stack", bins=_limites_dos_meses(meses), shrink=0.85, alpha=1, edgecolor="white",
+                     linewidth=0.3, legend=False, ax=ax)
+    _eixo_mensal(ax, meses, "Energia cortada (MWh)", "Energia cortada por restrição de operação, por razão")
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: fmt_num(v, 0)))
+    _legenda_retangulos(ax, cores)
+    fig.subplots_adjust(left=0.08, right=0.97, top=0.9, bottom=0.2)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
+def _grafico_recurso(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    rec = res.renovavel["recurso"]
+    f = rec["faixas"]
+    casas = 0 if float(rec["largura"]).is_integer() else 1
+    rotulos = [f"{fmt_num(a, casas)}–{fmt_num(b, casas)}" for a, b in zip(f["faixa_inicio"], f["faixa_fim"])]
+    tabela = f.assign(rotulo=rotulos)
+    cores = {"Geração verificada média": COR_GERACAO, "Geração estimada média": COR_EVT}
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    sns.barplot(data=tabela, x="rotulo", y="geracao_media_mw", order=rotulos, color=COR_GERACAO, width=0.75,
+                saturation=1, ax=ax)
+    sns.lineplot(x=np.arange(len(tabela)), y=tabela["estimada_media_mw"].to_numpy(), color=COR_EVT, linewidth=1.4,
+                 marker="o", markersize=4, ax=ax)
+    ax.set_ylim(bottom=0)
+    ax.set_xlabel(f"Faixa de {rec['grandeza']} ({rec['unidade']})")
+    ax.set_ylabel("Geração média (MW)")
+    ax.yaxis.set_major_formatter(_FORMATADOR_Y)
+    ax.grid(axis="x", visible=False)
+    ax.set_title(f"Geração média por faixa de {rec['grandeza']}")
+    ax.legend(handles=[plt.Rectangle((0, 0), 1, 1, color=COR_GERACAO, label="Geração verificada média"),
+                       plt.Line2D([], [], color=COR_EVT, lw=2, marker="o", label="Geração estimada média")],
+              loc="upper center", bbox_to_anchor=(0.5, -0.14), ncol=len(cores))
+    fig.subplots_adjust(left=0.07, right=0.97, top=0.9, bottom=0.24)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
+def _grafico_desvio_programacao(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    m = res.comum["programacao"]["mensal"]
+    meses = list(pd.to_datetime(m["mes"]))
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    sns.histplot(x=meses, weights=m["desvio_medio_absoluto_mw"].to_numpy(), color=COR_GERACAO, alpha=1,
+                 bins=_limites_dos_meses(meses), shrink=0.85, edgecolor="white", linewidth=0.3, ax=ax)
+    centros = [pd.Timestamp(x) + pd.Timedelta(days=15) for x in meses]
+    sns.scatterplot(x=centros, y=m["desvio_medio_mw"].to_numpy(), color=COR_EVT, s=30, zorder=3, legend=False, ax=ax)
+    ax.axhline(0, color=COR_TINTA_SECUNDARIA, lw=0.8)
+    _eixo_mensal(ax, meses, "Desvio (MW)", "Desvio da geração verificada em relação à programada")
+    _legenda_retangulos(ax, {"Desvio médio absoluto": COR_GERACAO},
+                        (plt.Line2D([], [], color=COR_EVT, marker="o", lw=0, markersize=5,
+                                    label="Desvio médio (verificada − programada)"),))
+    fig.subplots_adjust(left=0.07, right=0.97, top=0.9, bottom=0.2)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
+def _renovavel(res: ResultadosAnalise, chave: str) -> dict:
+    return (getattr(res, "renovavel", None) or {}).get(chave) or {}
+
+
 def _com_inflexibilidade(res: ResultadosAnalise) -> bool:
     r = (getattr(res, "termica", None) or {}).get("inflexibilidade_resumo") or {}
     return (r.get("programada_mwh") or 0) > 0 or (r.get("verificada_mwh") or 0) > 0
@@ -381,6 +509,10 @@ _GERADORES = {
     "inflexibilidade_mensal": _grafico_inflexibilidade,
     "desvios_despacho": _grafico_desvios,
     "cvu_cmo": _grafico_cvu_cmo,
+    "fc_mensal": _grafico_fc_mensal,
+    "corte_razao_mensal": _grafico_corte_razao,
+    "recurso_geracao": _grafico_recurso,
+    "desvio_programacao": _grafico_desvio_programacao,
 }
 _CONDICOES = {
     "sazonalidade": lambda res: len(res.comum["sazonalidade"]) > 0,
@@ -390,6 +522,12 @@ _CONDICOES = {
     "desvios_despacho": lambda res: bool(getattr(res, "termica", None))
     and len(res.termica["atendimento"]["maiores_desvios"]) > 0,
     "cvu_cmo": lambda res: bool((getattr(res, "termica", None) or {}).get("cvu_cmo")),
+    "fc_mensal": lambda res: bool(_renovavel(res, "fator_capacidade")),
+    "corte_razao_mensal": lambda res: bool(_renovavel(res, "restricao"))
+    and len(_renovavel(res, "restricao")["por_razao"]) > 0,
+    "recurso_geracao": lambda res: bool(_renovavel(res, "recurso")) and len(_renovavel(res, "recurso")["faixas"]) > 0,
+    "desvio_programacao": lambda res: bool(_renovavel(res, "programacao"))
+    and len(_renovavel(res, "programacao")["maiores_desvios"]) > 0,
 }
 
 

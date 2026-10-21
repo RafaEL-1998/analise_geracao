@@ -48,7 +48,7 @@ from src.relatorio.estrutura import secoes_presentes
 from src.relatorio.fontes import (
     CONFERENCIAS,
     CONFERENCIAS_SEM_EVT,
-    conjuntos_carregados,
+    conferencia_feita,
     fontes_resumo,
     texto_conferencia_curto,
 )
@@ -61,12 +61,12 @@ CAMINHO_SEM_EVT = "sem_evt"  # demais usinas, sobre a base horária comum (spec 
 # Colunas da tabela anual do relatório que entram no resumo, por caminho (no máximo seis). No caminho sem EVT, as que a
 # tabela da usina tem, nesta ordem (decisão R6 da spec 007): o nível do número, a geração, a energia, o fator de
 # capacidade (eólicas e solares), a disponibilidade (quando o ONS a publica) e o indicador de perda do tipo (nas
-# térmicas, as horas disponíveis sem despacho; fase B da 006).
+# térmicas, as horas disponíveis sem despacho, fase B da 006; nas eólicas e solares, a energia cortada, fase C).
 COLUNAS_RESUMO_ANUAL: Dict[str, List[str]] = {
     CAMINHO_EVT: ["Ano", "Disp. média (% Pinst)", "Fator de capacidade", "Geração / GF", "EVT (MWh)",
                   "Horas parada c/ EVT"],
     CAMINHO_SEM_EVT: ["Ano", "Nível", "Geração média (MWmed)", "Energia (MWh)", "Fator de capacidade",
-                      "Disp. (% Pinst)", "Disp. sem despacho (h)"],
+                      "Disp. (% Pinst)", "Disp. sem despacho (h)", "Energia cortada (MWh, % est.)"],
 }
 TITULOS_BLOCOS: Tuple[Tuple[str, str], ...] = (  # ordem fixa do documento; a conclusão fecha o resumo
     ("indicadores", "Indicadores-chave"),
@@ -224,9 +224,7 @@ def _dados_sem_evt(res: ResultadosAnalise) -> str:
 def _sobre_os_dados(res: ResultadosAnalise) -> List[str]:
     """Três parágrafos: dados (cobertura e sinalizações), conferências e limites, fontes (data-model 1.2)."""
     if sem_evt(res):
-        carregados = (getattr(res, "fontes", None) or {}).get("carregados") or conjuntos_carregados(res)
-        feitas = [texto_conferencia_curto(res, cid) for cid in CONFERENCIAS_SEM_EVT
-                  if CONFERENCIAS[cid].base in carregados]
+        feitas = [texto_conferencia_curto(res, cid) for cid in CONFERENCIAS_SEM_EVT if conferencia_feita(res, cid)]
         conferencias = (f"Conferências: {'; '.join(feitas)}. " if feitas else "") + FRASE_LIMITES
         return _limitar([_dados_sem_evt(res), conferencias, f"Fontes: {'; '.join(fontes_resumo(res))}."])
     c, g, anuais = res.cobertura, res.globais, res.indicadores_anuais
@@ -241,8 +239,7 @@ def _sobre_os_dados(res: ResultadosAnalise) -> List[str]:
                   "plausibilidade física e foram mantidos nos totais, sinalizados.")
     else:
         dados += ". Nenhum registro viola as regras de plausibilidade física."
-    carregados = (getattr(res, "fontes", None) or {}).get("carregados") or conjuntos_carregados(res)
-    feitas = [texto_conferencia_curto(res, cid) for cid, conf in CONFERENCIAS.items() if conf.base in carregados]
+    feitas = [texto_conferencia_curto(res, cid) for cid in CONFERENCIAS if conferencia_feita(res, cid)]
     conferencias = (f"Conferências: {'; '.join(feitas)}. " if feitas else "") + FRASE_LIMITES
     return _limitar([dados, conferencias, f"Fontes: {'; '.join(fontes_resumo(res))}."])
 

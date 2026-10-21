@@ -288,21 +288,27 @@ def test_analisar_preenche_a_conclusao(df_base: pd.DataFrame) -> None:
 
 REGRAS_COMUNS = {"C2", "C5", "C8", "C10"}
 REGRAS_TERMICAS = {"C12", "C13", "C14", "C15"}  # fase B (spec 006, decisão R16)
+REGRAS_RENOVAVEIS = {"C16", "C17", "C18", "C19"}  # fase C
 
 
 def test_catalogo_declara_os_campos_de_cada_regra() -> None:
     from src.analises.conclusao import CATALOGO_CONCLUSAO, REGRAS_CONCLUSAO
-    from src.coleta.registro import TERMICAS
+    from src.coleta.registro import RENOVAVEIS, TERMICAS
     from src.comum import regras
 
-    assert [r.codigo for r in CATALOGO_CONCLUSAO] == [f"C{i}" for i in range(1, 16)]
+    assert [r.codigo for r in CATALOGO_CONCLUSAO] == [f"C{i}" for i in range(1, 20)]
     for r in CATALOGO_CONCLUSAO:
         assert r.tipos and set(r.listas) <= set(LISTAS) and r.nivel_exigido == "usina", r.codigo
-        assert (callable(r.funcao) or r.codigo in REGRAS_TERMICAS) and r.secoes, r.codigo
+        assert (callable(r.funcao) or r.codigo in REGRAS_TERMICAS | REGRAS_RENOVAVEIS) and r.secoes, r.codigo
         assert all(hasattr(regras, nome) for nome in r.limiares), r.codigo
-        assert r.periodo_minimo_meses is None, r.codigo  # C1 a C11 sem período mínimo novo (decisões R17 e R29)
-    assert {r.codigo for r in CATALOGO_CONCLUSAO if r.funcao_comum is not None} == REGRAS_COMUNS | REGRAS_TERMICAS
+        # C1 a C11 sem período mínimo novo (decisões R17 e R29); C18 só em anos completos
+        assert r.periodo_minimo_meses == (12 if r.codigo == "C18" else None), r.codigo
+    assert {r.codigo for r in CATALOGO_CONCLUSAO if r.funcao_comum is not None} == \
+        REGRAS_COMUNS | REGRAS_TERMICAS | REGRAS_RENOVAVEIS
     assert all(r.tipos == TERMICAS and r.funcao is None for r in CATALOGO_CONCLUSAO if r.codigo in REGRAS_TERMICAS)
+    assert all(r.tipos == RENOVAVEIS and r.funcao is None for r in CATALOGO_CONCLUSAO if r.codigo in REGRAS_RENOVAVEIS)
+    # as regras comuns da fase A não valem para eólicas e solares (achado A11)
+    assert not any(set(r.tipos) & set(RENOVAVEIS) for r in CATALOGO_CONCLUSAO if r.codigo in REGRAS_COMUNS)
     assert len(REGRAS_CONCLUSAO) == 11  # o caminho da EVT continua com C1 a C11 (decisão R29)
 
 
@@ -480,3 +486,90 @@ def test_termica_sem_referencias_e_sem_despacho(tmp_path) -> None:
     assert all("Geração térmica por motivo de despacho" in omitidas[c] for c in ("C12", "C14", "C15"))
     assert "CVU e o CMO" in omitidas["C13"]
 
+
+# ---------------------------------------------------------------------------
+# Regras das eólicas e solares: C16 a C19 (spec 006, fase C; tarefa T103)
+# ---------------------------------------------------------------------------
+
+
+def _res_renovavel(renovavel, meses_distintos: int = 12):
+    res = _res_termica({})
+    res.tipo, res.termica, res.renovavel = "EOL", {}, renovavel
+    res.cobertura = {"meses_distintos": meses_distintos}
+    return res
+
+
+def _renovavel(pct_cortada=float("nan"), pct_invalidas=float("nan"), fc_anual=(), nivel_fc="usina",
+               desvio_pct=float("nan"), nivel_prog="usina"):
+    anual = pd.DataFrame([{"periodo": ano, "nivel": nivel_fc, "fator_capacidade_pct": fc, "ano_parcial": parcial}
+                          for ano, fc, parcial in fc_anual],
+                         columns=["periodo", "nivel", "fator_capacidade_pct", "ano_parcial"])
+    return {
+        "restricao": {"resumo": {"pct_estimada": pct_cortada, "energia_cortada_mwh": 1000.0 * pct_cortada}},
+        "recurso": {"grandeza": "vento", "resumo": {"pct_invalidas": pct_invalidas, "semi_horas": 1000,
+                                                    "semi_horas_invalidas": int(10 * pct_invalidas
+                                                                                if pct_invalidas == pct_invalidas else 0)}},
+        "fator_capacidade": {"nivel": nivel_fc, "anual": anual} if len(anual) else {},
+        "programacao": {"nivel": nivel_prog, "desvio_medio_absoluto_mw": 2.0, "desvio_medio_absoluto_pct": desvio_pct,
+                        "horas": 500},
+    }
+
+
+def _referencia_c18() -> float:
+    from src.comum.perfil import perfil_ativo
+
+    p = perfil_ativo().parametros
+    return 100.0 * p.garantia_fisica_mwmed / p.potencia_instalada_mw
+
+
+def test_c16_a_c19_disparam_e_nao_disparam() -> None:
+    from src.comum.regras import (
+        LIMIAR_CONCLUSAO_DESVIO_PROGRAMACAO_PCT as P19,
+        LIMIAR_CONCLUSAO_ENERGIA_CORTADA_PCT as P16,
+        LIMIAR_CONCLUSAO_RECURSO_INVALIDO_PCT as P17,
+    )
+
+    ref = _referencia_c18()
+    no_limiar = montar_conclusao(_res_renovavel(_renovavel(P16, P17, [(2024, ref - 1, False)], desvio_pct=P19)))
+    assert {(i["regra"], i["lista"]) for i in no_limiar} == {
+        ("C16", "pontos_atencao"), ("C17", "verificar_campo"), ("C18", "pontos_atencao"), ("C19", "confirmar_agente")}
+    secoes = {i["regra"]: i["secoes"] for i in no_limiar}
+    assert secoes == {"C16": ["energia_cortada"], "C17": ["recurso_geracao"], "C18": ["fator_capacidade"],
+                      "C19": ["programacao_comum"]}
+    textos = {i["regra"]: i["texto"] for i in no_limiar}
+    assert "2024" in textos["C18"] and "garantia física" in textos["C18"] and "vento" in textos["C17"]
+    abaixo = montar_conclusao(_res_renovavel(_renovavel(P16 - 0.1, P17 - 0.1, [(2024, ref + 1, False)],
+                                                        desvio_pct=P19 - 0.1)))
+    assert not {i["regra"] for i in abaixo} & REGRAS_RENOVAVEIS
+    for item in no_limiar:  # nenhum termo de parecer
+        assert not any(p in item["texto"].lower() for p in PROIBIDOS), item
+
+
+def test_c18_so_em_ano_completo_com_fc_proprio_e_garantia_fisica() -> None:
+    from dataclasses import replace
+
+    from src.analises.conclusao import regras_omitidas
+    from src.comum.perfil import perfil_ativo
+
+    ref = _referencia_c18()
+    parcial = _res_renovavel(_renovavel(fc_anual=[(2024, ref - 5, True)]))
+    assert not montar_conclusao(parcial)  # o ano parcial não é avaliado
+    do_conjunto = _res_renovavel(_renovavel(fc_anual=[(2024, ref - 5, False)], nivel_fc="conjunto"))
+    assert not montar_conclusao(do_conjunto)
+    assert "Fator de capacidade no nível da usina" in {o["item"]: o["motivo"] for o in regras_omitidas(do_conjunto)}["C18"]
+    curta = _res_renovavel(_renovavel(fc_anual=[(2024, ref - 5, False)]), meses_distintos=5)
+    assert "período mínimo de 12" in {o["item"]: o["motivo"] for o in regras_omitidas(curta)}["C18"]
+    perfil = perfil_ativo()
+    _ativar(replace(perfil, parametros=replace(perfil.parametros, garantia_fisica_mwmed=None)))
+    sem_gf = _res_renovavel(_renovavel(fc_anual=[(2024, 1.0, False)]))
+    assert not montar_conclusao(sem_gf)
+    assert "garantia física" in {o["item"]: o["motivo"] for o in regras_omitidas(sem_gf)}["C18"]
+
+
+def test_c19_so_com_a_programacao_da_usina() -> None:
+    from src.analises.conclusao import regras_omitidas
+    from src.comum.regras import LIMIAR_CONCLUSAO_DESVIO_PROGRAMACAO_PCT as P19
+
+    res = _res_renovavel(_renovavel(desvio_pct=P19 + 5, nivel_prog="conjunto"))
+    assert not montar_conclusao(res)
+    assert "Programação diária no nível da usina" in {o["item"]: o["motivo"] for o in regras_omitidas(res)}["C19"]

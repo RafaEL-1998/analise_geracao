@@ -41,12 +41,14 @@ from src.comum.regras import (
     CONJUNTO_CMO,
     CONJUNTO_CVU,
     CONJUNTO_DESPACHO,
+    CONJUNTO_FATOR_CAPACIDADE,
     CONJUNTO_GERACAO,
     LIMIAR_DESVIO_DESPACHO_MW,
     PERIODO_MINIMO_SAZONALIDADE_MESES,
     TIPOS_COM_FATOR_CAPACIDADE,
     TOLERANCIA_GERACAO_ACIMA_DISPONIBILIDADE_MW,
 )
+from src.coleta import registro
 from src.conferencia.aplicabilidade import CATALOGO_CONFERENCIAS
 from src.relatorio.conteudo import (
     nota_conclusao_catalogo,
@@ -56,8 +58,10 @@ from src.relatorio.conteudo import (
     linhas_tabela_ons_ug_anual,
     titulo_capa_relatorio,
 )
+from src.relatorio.secoes_renovavel import SECOES_RENOVAVEL, pacote_variante, referencia_restricao
 
 ROTULO_NIVEL = {"usina": "usina", "conjunto": "conjunto", "agregado": "agregado"}
+COLUNA_CORTE = "Energia cortada (MWh, % est.)"  # o indicador de perda das eólicas e solares (decisão R6 da spec 007)
 DESCRICAO_CONFERENCIAS = {c.id: c.descricao for c in CATALOGO_CONFERENCIAS}
 
 
@@ -104,8 +108,17 @@ def nome_conjunto(res: ResultadosAnalise) -> str:
     return g.get("nome") or g.get("identificador_conjunto") or ""
 
 
+def pacote_referencia() -> str:
+    """Pacote do ONS da série de referência: a Geração por usina ou, na fase C, a restrição com detalhe."""
+    return pacote_variante("restricao_detalhe") if referencia_restricao() else CONJUNTO_GERACAO
+
+
 def serie_referencia_texto(res: ResultadosAnalise) -> str:
-    """"Geração por usina (id ONS X)" ou "Geração por usina (conjunto de usinas, id ONS CJU_...)"."""
+    """"Geração por usina (id ONS X)" ou "Geração por usina (conjunto de usinas, id ONS CJU_...)"; na fase C,
+    "Restrição com detalhe (id ONS X; CEG Y)"."""
+    if referencia_restricao():
+        ident = perfil_ativo().identificacao
+        return f"Restrição com detalhe (id ONS {ident.id_ons}; CEG {ident.ceg})"
     g = _g(res)
     partes = []
     if g.get("identificador_usina"):
@@ -223,6 +236,11 @@ def indicadores_capa(res: ResultadosAnalise) -> Tuple[List[Tuple[str, str, str]]
         if res.tipo in TIPOS_COM_FATOR_CAPACIDADE and nivel == "usina":
             pinst = perfil_ativo().parametros.potencia_instalada_mw
             tiles.append(("Fator de capacidade", fmt_pct(media / pinst * 100.0), "geração média ÷ potência instalada"))
+            corte = ((getattr(res, "renovavel", None) or {}).get("restricao") or {}).get("resumo")
+            if corte:  # fase C (data-model 6.5)
+                tiles.append(("Energia cortada", fmt_pct(corte["pct_estimada"]),
+                              f"{fmt_num(corte['energia_cortada_mwh'], 0)} MWh por restrição de operação, da energia "
+                              "estimada nas semi-horas com a marca"))
         elif getattr(res, "termica", None) and nivel == "usina":  # térmicas com o despacho (data-model 6.5)
             t = res.termica
             tiles.append(("Horas com despacho", fmt_pct(t["horas_com_despacho"] / t["periodo"]["horas"] * 100.0
@@ -247,7 +265,7 @@ def indicadores_capa(res: ResultadosAnalise) -> Tuple[List[Tuple[str, str, str]]
                       else "média das unidades"))
     nota = ("Indicadores calculados a partir da série de referência e da disponibilidade publicadas pelo ONS; não "
             "substituem os índices regulatórios. ")
-    if com_conjunto(res):
+    if "conjunto" in niveis_da_base(res):
         nota += ("Os números do conjunto de usinas são da soma das usinas do conjunto, como o ONS publica, e não são "
                  "divididos entre elas. ")
     return tiles[:4], nota + "Ver notas metodológicas."
@@ -264,7 +282,7 @@ def pares_cobertura(res: ResultadosAnalise) -> List[Tuple[str, str]]:
     aus = q["ausencias"]
     pares = [
         ("Série de referência", f"{serie_referencia_texto(res)} — Portal de Dados Abertos do ONS "
-                                f"({ONS_PORTAL_DATASET_URL}{CONJUNTO_GERACAO})"),
+                                f"({ONS_PORTAL_DATASET_URL}{pacote_referencia()})"),
         ("Período", f"{fmt_data_hora(c['inicio'])} a {fmt_data_hora(c['fim'])}"),
         ("Registros", f"{fmt_int(c['horas_observadas'])} de {fmt_int(c['horas_esperadas'])} horas do período; "
                       f"{fmt_int(c['horas_ausentes'])} horas ausentes em {fmt_int(len(aus))} "
@@ -288,14 +306,31 @@ def linhas_tabela_niveis(res: ResultadosAnalise) -> Tuple[List[str], List[List[s
     cabecalho = ["Conjunto do ONS", "Nível", "Identificador", "Obtenção"]
     ident = perfil_ativo().identificacao
     g = _g(res)
-    linhas = [["Geração por usina (série de referência)", _nivel_texto(g.get("nivel", "")),
-               "; ".join(i for i in (g.get("identificador_usina"), g.get("identificador_conjunto")) if i),
-               _datas(res, CONJUNTO_GERACAO)]]
+    if referencia_restricao():  # fase C: a restrição com detalhe da usina; a geração, do conjunto
+        linhas = [["Restrição com detalhe (série de referência)", "usina", f"id ONS {ident.id_ons}; CEG {ident.ceg}",
+                   _datas(res, pacote_referencia())]]
+        nivel_geracao = registro.nivel_coletado(perfil_ativo(), "geracao")
+        if nivel_geracao:
+            linhas.append(["Geração por usina", _nivel_texto(nivel_geracao),
+                           str(ident.id_conjunto if nivel_geracao == "conjunto" else ident.id_ons),
+                           _datas(res, CONJUNTO_GERACAO)])
+    else:
+        linhas = [["Geração por usina (série de referência)", _nivel_texto(g.get("nivel", "")),
+                   "; ".join(i for i in (g.get("identificador_usina"), g.get("identificador_conjunto")) if i),
+                   _datas(res, CONJUNTO_GERACAO)]]
     for chave, nome, pacote in (("programacao", "Programação diária", "programacao_diaria"),
                                 ("disponibilidade", "Disponibilidade por usina", "disponibilidade_usina")):
         n = res.niveis.get(chave)
         if n:
             linhas.append([nome, _nivel_texto(n["nivel"]), n["identificador"], _datas(res, pacote)])
+    for chave, nome, pacote in (("fator_capacidade", "Fator de capacidade", CONJUNTO_FATOR_CAPACIDADE),
+                                ("restricao_razao", "Restrição com a razão", pacote_variante("restricao_razao"))):
+        n = res.niveis.get(chave)  # fase C
+        if n:
+            linhas.append([nome, _nivel_texto(n["nivel"]), n["identificador"], _datas(res, pacote)])
+    if not referencia_restricao() and registro.nivel_coletado(perfil_ativo(), "restricao_detalhe"):
+        linhas.append(["Restrição com detalhe", "usina", f"id ONS {ident.id_ons}; CEG {ident.ceg}",
+                       _datas(res, pacote_variante("restricao_detalhe"))])
     if res.ons:
         linhas.append(["Indicadores de desempenho do ONS", "usina", f"CEG {ident.ceg}",
                        _datas(res, "ind_disponibilidade_fgeracao_uge_mensal")])
@@ -341,6 +376,9 @@ def linhas_tabela_anuais(res: ResultadosAnalise) -> Tuple[List[str], List[List[s
     sem_despacho = _sem_despacho_por_ano(res)
     if sem_despacho is not None:  # o indicador de perda das térmicas (decisão R6 da spec 007)
         cabecalho.append("Disp. sem despacho (h)")
+    corte = _corte_por_ano(res)
+    if corte is not None:  # o das eólicas e solares (fase C)
+        cabecalho.append(COLUNA_CORTE)
     linhas = []
     for r in a.itertuples():
         linha = [_rotulo_ano(r.ano, r.ano_parcial), _nivel_texto(r.nivel), fmt_int(r.horas), fmt_int(r.horas_com_valor),
@@ -353,8 +391,19 @@ def linhas_tabela_anuais(res: ResultadosAnalise) -> Tuple[List[str], List[List[s
         if sem_despacho is not None:
             horas = sem_despacho.get(int(r.ano)) if r.nivel == "usina" else None
             linha.append("—" if horas is None else fmt_int(horas))
+        if corte is not None:
+            c = corte.get(int(r.ano)) if r.nivel == "usina" else None
+            linha.append("—" if c is None else f"{fmt_num(c[0], 0)} ({fmt_pct(c[1])})")
         linhas.append(linha)
     return cabecalho, linhas
+
+
+def _corte_por_ano(res: ResultadosAnalise) -> Optional[Dict[int, Tuple[float, float]]]:
+    """Energia cortada e % da estimada por ano (eólicas e solares com a restrição com detalhe); None nas demais."""
+    c = ((getattr(res, "renovavel", None) or {}).get("restricao") or {}).get("anual")
+    if c is None or not len(c):
+        return None
+    return {int(r.periodo): (float(r.energia_cortada_mwh), float(r.pct_estimada)) for r in c.itertuples()}
 
 
 def _sem_despacho_por_ano(res: ResultadosAnalise) -> Optional[Dict[int, int]]:
@@ -449,7 +498,8 @@ def linhas_tabela_nao_aplicaveis(res: ResultadosAnalise) -> Tuple[List[str], Lis
 def textos_tabelas(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
     """Subtítulo e nota de cada tabela do caminho sem EVT (chaves do mapa de fontes)."""
     granularidade = (" Nível: usina, ou conjunto de usinas quando o ONS publica só a soma do conjunto (decisão "
-                     "de não dividir os números do conjunto entre as usinas)." if com_conjunto(res) else "")
+                     "de não dividir os números do conjunto entre as usinas)." if "conjunto" in niveis_da_base(res)
+                     else "")
     return {
         "tab_niveis": ("Conjuntos do ONS, nível e identificador", ""),
         "tab_trechos": ("Trechos do período", "Trecho novo a cada mudança de modalidade, de composição do conjunto "
@@ -461,7 +511,9 @@ def textos_tabelas(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
             + ("; disp. = disponibilidade operacional média da usina (Disponibilidade por usina)"
                if res.comum.get("disponibilidade") else "")
             + ("; disp. sem despacho = horas disponíveis, sem programação e sem geração no despacho"
-               if _sem_despacho_por_ano(res) is not None else "") + "." + granularidade)),
+               if _sem_despacho_por_ano(res) is not None else "")
+            + ("; energia cortada = por restrição de operação, nas semi-horas com a marca de restrição, e % da "
+               "energia estimada nelas" if _corte_por_ano(res) is not None else "") + "." + granularidade)),
         "tab_disponibilidade_anual_comum": ("Disponibilidade e geração da usina por ano", (
             f"* Ano parcial. Só as horas com a disponibilidade e a geração da usina. Indisponibilidade total = "
             f"disponibilidade operacional até {fmt_num(LIMIAR_INDISPONIBILIDADE_TOTAL_MW, 3)} MW; parada disponível = "
@@ -498,6 +550,7 @@ def textos_tabelas(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
         "tab_nao_aplicaveis": ("Conferências que não se aplicam à usina", ""),
         "tab_parametros_comum": ("Parâmetros utilizados", ""),
         **_textos_termica(res),
+        **_textos_renovavel(res),
     }
 
 
@@ -509,6 +562,14 @@ def _textos_termica(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
     return secoes_termica.textos_tabelas(res)
 
 
+def _textos_renovavel(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
+    if not getattr(res, "renovavel", None):
+        return {}
+    from src.relatorio import secoes_renovavel
+
+    return secoes_renovavel.textos_tabelas(res)
+
+
 # ---------------------------------------------------------------------------
 # Legendas das figuras
 # ---------------------------------------------------------------------------
@@ -518,7 +579,7 @@ def legenda_figura(res: ResultadosAnalise, chave: str) -> str:
     c = res.cobertura
     pinst = fmt_num(perfil_ativo().parametros.potencia_instalada_mw, 0)
     conjunto = (f" A série do conjunto {nome_conjunto(res)} é a soma das usinas do conjunto, como o ONS publica."
-                if com_conjunto(res) else "")
+                if "conjunto" in niveis_da_base(res) else "")
     if chave == "serie_temporal_comum":
         disp = " e da disponibilidade operacional da usina" if res.comum.get("disponibilidade") else ""
         linha = f" Linha tracejada: potência instalada da usina ({pinst} MW)." if "usina" in niveis_da_base(res) else ""
@@ -542,6 +603,10 @@ def legenda_figura(res: ResultadosAnalise, chave: str) -> str:
         from src.relatorio import secoes_termica
 
         return secoes_termica.legenda_figura(res, chave)
+    if getattr(res, "renovavel", None):
+        from src.relatorio import secoes_renovavel
+
+        return secoes_renovavel.legenda_figura(res, chave)
     return ""
 
 
@@ -563,7 +628,14 @@ def notas(res: ResultadosAnalise) -> List[str]:
                                           "planilha, e " if c["horas_ausentes"] else "")
          + "as horas sinalizadas ficam na base e nos totais, com o código da regra."),
     ]
-    if com_conjunto(res):
+    if com_conjunto(res) and referencia_restricao():  # fase C: a série de referência é da usina
+        ident = perfil_ativo().identificacao
+        saida.append(
+            f"Granularidade: o ONS publica a geração, o fator de capacidade e a razão da restrição do conjunto "
+            f"{nome_conjunto(res) or ident.id_conjunto} ({ident.id_conjunto}), e a restrição com detalhe de cada usina; "
+            "a série de referência é a da usina. Os números do conjunto são identificados como tais e não são divididos "
+            "entre as usinas; a conclusão da usina não usa números do conjunto.")
+    elif com_conjunto(res):
         saida.append(
             f"Granularidade: o ONS publica a geração do conjunto {nome_conjunto(res)} ({_g(res).get('identificador_conjunto', '')}), "
             "e não a da usina isolada. Os números do conjunto são identificados como tais e não são divididos entre as "
@@ -572,6 +644,12 @@ def notas(res: ResultadosAnalise) -> List[str]:
         from src.relatorio import secoes_termica
 
         saida.append(secoes_termica.nota(res))
+    if getattr(res, "renovavel", None):
+        from src.relatorio import secoes_renovavel
+
+        texto = secoes_renovavel.nota(res)
+        if texto:
+            saida.append(texto)
     saida.append(nota_conclusao_catalogo(res))
     if res.omitidos or len(res.comum.get("conferencias_nao_aplicaveis", ())):
         saida.append("As seções e as regras sem base para a usina e as conferências que não se aplicam a ela estão "
@@ -611,9 +689,11 @@ def tabela_parametros(res: ResultadosAnalise) -> pd.DataFrame:
         ("Análise", "Sazonalidade", f"≥ {PERIODO_MINIMO_SAZONALIDADE_MESES} meses distintos", "", analise),
         *([("Análise", "Desvio do despacho", f"|verificada − programada| > {fmt_num(LIMIAR_DESVIO_DESPACHO_MW, 1)}",
             "MW", analise)] if getattr(res, "termica", None) else []),
+        *([("Análise", f"Faixa de {recurso['grandeza']}", fmt_num(recurso["largura"], 0), recurso["unidade"], analise)]
+          if (recurso := (getattr(res, "renovavel", None) or {}).get("recurso")) else []),
         ("Validação", "Tolerância de geração acima da disponibilidade (R7)",
          fmt_num(TOLERANCIA_GERACAO_ACIMA_DISPONIBILIDADE_MW, 1), "MW", analise),
-        ("Fonte", "Série de referência", serie_referencia_texto(res), "", f"{ONS_PORTAL_DATASET_URL}{CONJUNTO_GERACAO}"),
+        ("Fonte", "Série de referência", serie_referencia_texto(res), "", f"{ONS_PORTAL_DATASET_URL}{pacote_referencia()}"),
     ]
     for chave, nome, pacote in (("programacao", "Programação diária", "programacao_diaria"),
                                 ("disponibilidade", "Disponibilidade por usina", "disponibilidade_usina")):
@@ -637,6 +717,15 @@ def tabela_parametros(res: ResultadosAnalise) -> pd.DataFrame:
         if t.get("cmo_coletado"):
             linhas.append(("Fonte", "CMO semanal", f"subsistema {p.usina.subsistema} (agregado)", "",
                            f"{ONS_PORTAL_DATASET_URL}{CONJUNTO_CMO}"))
+    for chave, nome, pacote in (("fator_capacidade", "Fator de capacidade", CONJUNTO_FATOR_CAPACIDADE),
+                                ("restricao_razao", "Restrição com a razão", pacote_variante("restricao_razao"))):
+        n = res.niveis.get(chave)  # fase C
+        if n:
+            linhas.append(("Fonte", nome, f"{_nivel_texto(n['nivel'])}: {n['identificador']}", "",
+                           f"{ONS_PORTAL_DATASET_URL}{pacote}"))
+    if not referencia_restricao() and registro.nivel_coletado(p, "restricao_detalhe"):
+        linhas.append(("Fonte", "Restrição com detalhe", f"id ONS {p.identificacao.id_ons}; CEG {p.identificacao.ceg}",
+                       "", f"{ONS_PORTAL_DATASET_URL}{pacote_variante('restricao_detalhe')}"))
     return pd.DataFrame(linhas, columns=["grupo", "parametro", "valor", "unidade", "origem"])
 
 
@@ -713,6 +802,10 @@ def blocos_secao(res: ResultadosAnalise, chave: str) -> List[Bloco]:
         cab, linhas = linhas_tabela_programacao_eventos(res)
         if linhas:
             b.append(_tabela("tab_programacao_eventos_comum", (cab, linhas), [1.2, 1.2, 0.8, 1.0], range(2, 4)))
+        if getattr(res, "renovavel", None):  # aderência à programação das eólicas e solares (fase C)
+            from src.relatorio import secoes_renovavel
+
+            b.extend(secoes_renovavel.blocos_programacao(res))
     elif chave == "disponibilidade_sincronizada_comum":
         b.append(Bloco("figura", "disponibilidade_comum"))
     elif chave == "qualidade_comum":
@@ -726,6 +819,10 @@ def blocos_secao(res: ResultadosAnalise, chave: str) -> List[Bloco]:
         from src.relatorio import secoes_termica
 
         b.extend(secoes_termica.blocos(res, chave))
+    elif chave in SECOES_RENOVAVEL:
+        from src.relatorio import secoes_renovavel
+
+        b.extend(secoes_renovavel.blocos(res, chave))
     elif chave == "notas_comum":
         b.append(Bloco("notas", textos=notas(res)))
         cab, linhas = linhas_tabela_omitidos(res)

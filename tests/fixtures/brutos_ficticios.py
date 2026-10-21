@@ -14,6 +14,13 @@ conjuntos e a Capacidade de geração. Nenhum valor de usina real.
 Térmicas (spec 006, fase B; tarefa T083): o despacho, o CVU (com revisões) e o CMO da UTE e da UTN. A UTE tem 2023
 inteiro sem geração, disponível, com o código de planejamento 901, trocado em 01/2024 pelas unidades 902 (gás) e 903
 (óleo); o arquivo anual de 2024 repete os mensais, como o ONS publica.
+
+Eólicas e solares (spec 006, fase C; tarefa T104): o Fator de capacidade e as duas restrições. A EOL tem tudo próprio,
+com a restrição desde 15/01/2024 (adaptação da série longa da tarefa ao período sintético), vento inválido de 20 a
+25/01 e semi-horas restritas de 01 a 10/02 com a razão REL, CNF e ENE; a programação de três dias. A UFV fica num
+conjunto com um membro: a geração, o fator de capacidade, a razão e a programação só do conjunto; a restrição com
+detalhe da usina desde 25/01/2024 (série de referência curta), com o arquivo de janeiro no esquema antigo, sem as cinco
+colunas e com a marca de irradiância booleana.
 """
 
 from __future__ import annotations
@@ -219,9 +226,9 @@ FICTICIAS: Dict[str, Dict[str, str]] = {
 }
 CONJUNTO = {"id_ons": "CJU_GOCJFI", "nome": "CONJ. HIDRAULICO FICTICIO"}
 MEMBRO = {"ceg": "CGH.PH.GO.000102-0.01", "id_ons": "GOCGMB", "nome": "CGH MEMBRO", "entrada": "2024-02-01"}
-CODIGOS_PROGRAMACAO = {"GOCJFI-1": 6.0, "GOCJFI-2": 6.0, "GOUTFI": 100.0}
+CODIGOS_PROGRAMACAO = {"GOCJFI-1": 6.0, "GOCJFI-2": 6.0, "GOUTFI": 100.0, "GOEOFI": 20.0, "GOCJUF-1": 12.0}
 DIAS_PROGRAMACAO = pd.date_range("2024-02-01", "2024-02-03", freq="D")
-INICIO_UFV = pd.Timestamp("2024-02-10")  # série curta (decisão R17)
+INICIO_UFV = pd.Timestamp("2024-01-25")  # série curta (decisão R17): a restrição com detalhe da UFV começa aqui
 DISP_REDUZIDA_UTE = (pd.Timestamp("2024-01-15 00:00"), pd.Timestamp("2024-01-24 23:00"))  # 80 MW: regra R7
 PARADA_UTE = (pd.Timestamp("2024-02-05 00:00"), pd.Timestamp("2024-02-07 23:00"))  # indisponibilidade total
 PARADA_UTN = (pd.Timestamp("2024-02-10 00:00"), pd.Timestamp("2024-02-12 23:00"))
@@ -231,6 +238,18 @@ CODIGOS_UTE = {"antigo": 901, "gas": 902, "oleo": 903}
 CODIGO_UTN = 950
 CVU_UTE = {901: (150.0, 160.0), 902: (200.0, 210.0), 903: (900.0, 900.0)}  # (revisão 0, revisão 1)
 CMO_SE = {2023: 300.0, 2024: 100.0}
+# Eólicas e solares (fase C)
+CONJUNTO_UFV = {"id_ons": "CJU_GOCJUF", "nome": "CONJ. SOLAR FICTICIO"}
+MEMBRO_UFV = {"ceg": "UFV.RS.GO.000108-0.01", "id_ons": "GOUFMB", "nome": "UFV MEMBRO", "entrada": "2023-01-01"}
+INICIO_RESTRICAO_EOL = pd.Timestamp("2024-01-15")
+VENTO_INVALIDO_EOL = (pd.Timestamp("2024-01-20 00:00"), pd.Timestamp("2024-01-25 23:30"))  # C17
+RESTRICAO_EOL = (pd.Timestamp("2024-02-01"), pd.Timestamp("2024-02-10"), 10, 17)  # dias e horas restritas (C16)
+CORTE_EOL_MW = 25.0
+RAZOES_EOL = {"REL": ("2024-02-01", "2024-02-03"), "CNF": ("2024-02-04", "2024-02-06"),
+              "ENE": ("2024-02-07", "2024-02-10")}
+RESTRICAO_UFV = (pd.Timestamp("2024-02-12"), pd.Timestamp("2024-02-14"), 10, 14)
+CORTE_UFV_MW = 5.0
+CAPACIDADE_CONJUNTO_UFV = 35.0
 
 
 def _horas_periodo() -> pd.DatetimeIndex:
@@ -248,23 +267,41 @@ def _linhas_geracao(chave: str, horas: pd.DatetimeIndex, valores) -> pd.DataFram
                          "cod_modalidadeoperacao": u["modalidade"], "nom_tipousina": u["tipo_ons"]})
 
 
+def geracao_eol(h: pd.DatetimeIndex) -> np.ndarray:
+    return 10.0 + (np.asarray(h.hour) % 6) * 4.0
+
+
+def solar(h: pd.DatetimeIndex, pico: float) -> np.ndarray:
+    return np.clip(pico * np.sin(np.pi * (np.asarray(h.hour) - 6) / 12.0), 0.0, None)
+
+
+def geracao_ufv(h: pd.DatetimeIndex) -> np.ndarray:
+    """A UFV, só desde o início da série dela (antes, o conjunto é só o membro)."""
+    return np.where(np.asarray(h >= INICIO_UFV), solar(h, 20.0), 0.0)
+
+
+def geracao_conjunto_ufv(h: pd.DatetimeIndex) -> np.ndarray:
+    return geracao_ufv(h) + solar(h, 8.0)
+
+
 def geracao_ficticias() -> pd.DataFrame:
-    """Geração por usina das usinas sem EVT e do conjunto, com as colunas do arquivo publicado."""
+    """Geração por usina das usinas sem EVT e dos conjuntos, com as colunas do arquivo publicado (a UFV só pelo
+    conjunto dela, como a Seriemas 1)."""
     h = _horas_periodo()
     hora = np.asarray(h.hour)
-    solar = np.clip(20.0 * np.sin(np.pi * (hora - 6) / 12.0), 0.0, None)
-    ufv = np.asarray(h >= INICIO_UFV)
     partes = [
         _linhas_geracao("pch", h, np.full(len(h), np.nan)),  # linhas próprias sem valor (achado A3)
         _linhas_geracao("cgh", h, np.where((hora >= 6) & (hora <= 18), 3.0, 2.0)),
         _linhas_geracao("ute", h, geracao_ute(h)),
         _linhas_geracao("utn", h, np.where(_entre(h, PARADA_UTN), 0.0, 600.0)),
-        _linhas_geracao("eol", h, 10.0 + (hora % 6) * 4.0),
-        _linhas_geracao("ufv", h[ufv], solar[ufv]),
+        _linhas_geracao("eol", h, geracao_eol(h)),
         pd.DataFrame({"din_instante": h, "id_subsistema": "SE", "id_estado": "GO", "nom_usina": CONJUNTO["nome"],
                       "id_ons": CONJUNTO["id_ons"], "ceg": "-",
                       "val_geracao": np.where(np.asarray(h.month) == 1, 12.0, 15.0),
                       "cod_modalidadeoperacao": "Conjunto de Usinas", "nom_tipousina": "HIDROELÉTRICA"}),
+        pd.DataFrame({"din_instante": h, "id_subsistema": "SE", "id_estado": "GO", "nom_usina": CONJUNTO_UFV["nome"],
+                      "id_ons": CONJUNTO_UFV["id_ons"], "ceg": "-", "val_geracao": geracao_conjunto_ufv(h),
+                      "cod_modalidadeoperacao": "Conjunto de Usinas", "nom_tipousina": "FOTOVOLTAICA"}),
     ]
     return pd.concat(partes, ignore_index=True)
 
@@ -353,10 +390,11 @@ def _programacao_ficticias(raw: Path) -> None:
                  raw / "programacao_diaria" / f"PROGRAMACAO_DIARIA_{dia.year}_{dia.month:02d}_{dia.day:02d}.parquet")
 
 
-def _membro_conjunto(ceg: str, id_ons: str, nome: str, inicio: str) -> Dict[str, object]:
+def _membro_conjunto(ceg: str, id_ons: str, nome: str, inicio: str, conjunto: Dict[str, str] = CONJUNTO,
+                     tipo: tuple = ("UHE", "Hidroelétrica ", 7)) -> Dict[str, object]:
     return {"id_subsistema": "SE", "nom_subsistema": "Sudeste/Centro-Oeste", "estad_id": "GO", "nom_estado": "GOIAS",
-            "id_tipousina": "UHE", "nom_tipousina": "Hidroelétrica ", "id_conjuntousina": 7,
-            "id_ons_conjunto": CONJUNTO["id_ons"], "id_ons_usina": id_ons, "nom_conjunto": CONJUNTO["nome"],
+            "id_tipousina": tipo[0], "nom_tipousina": tipo[1], "id_conjuntousina": tipo[2],
+            "id_ons_conjunto": conjunto["id_ons"], "id_ons_usina": id_ons, "nom_conjunto": conjunto["nome"],
             "nom_usina": nome, "ceg": ceg, "dat_iniciorelacionamento": inicio, "dat_fimrelacionamento": "9999-12-31"}
 
 
@@ -367,11 +405,18 @@ def _cadastrais_ficticias(raw: Path) -> None:
                         "GO", "GOIAS", "A", u["id_ons"]]) for u in FICTICIAS.values()]
     linhas.append(";".join([CONJUNTO["nome"], "", "TIPO II-C", "30.000", "COSR-NCO", "SE CONJUNTO 138 KV", "GO", "GOIAS",
                             "A", ""]))
+    linhas.append(";".join([CONJUNTO_UFV["nome"], "", "TIPO II-C", "35.000", "COSR-NCO", "SE CONJUNTO SOLAR 138 KV", "GO",
+                            "GOIAS", "A", ""]))
     cadastro.write_text(cadastro.read_text(encoding="utf-8") + "\n".join(linhas) + "\n", encoding="utf-8")
 
-    pch = FICTICIAS["pch"]
+    pch, ufv = FICTICIAS["pch"], FICTICIAS["ufv"]
+    solar_ = ("UFV", "Fotovoltaica", 8)
     _parquet(pd.DataFrame([_membro_conjunto(pch["ceg"], pch["id_ons"], pch["nome"], "2016-03-01"),
-                           _membro_conjunto(MEMBRO["ceg"], MEMBRO["id_ons"], MEMBRO["nome"], MEMBRO["entrada"])]),
+                           _membro_conjunto(MEMBRO["ceg"], MEMBRO["id_ons"], MEMBRO["nome"], MEMBRO["entrada"]),
+                           _membro_conjunto(ufv["ceg"], ufv["id_ons"], ufv["nome"], INICIO_UFV.strftime("%Y-%m-%d"),
+                                            CONJUNTO_UFV, solar_),
+                           _membro_conjunto(MEMBRO_UFV["ceg"], MEMBRO_UFV["id_ons"], MEMBRO_UFV["nome"],
+                                            MEMBRO_UFV["entrada"], CONJUNTO_UFV, solar_)]),
              raw / "usina_conjunto" / "USINA_CONJUNTO.parquet")
 
     unidades = {"pch": (8.0, 8.0), "cgh": (2.0, 2.0), "ute": (60.0, 60.0), "utn": (320.0, 320.0),
@@ -509,6 +554,117 @@ def _termicas(raw: Path) -> None:
         _parquet(t, raw / "cmo_semanal" / nome)
 
 
+# ---------------------------------------------------------------------------
+# Eólicas e solares: fator de capacidade e restrições (spec 006, fase C)
+# ---------------------------------------------------------------------------
+
+
+def _semi_horas(inicio: pd.Timestamp) -> pd.DatetimeIndex:
+    return pd.date_range(inicio, "2024-02-29 23:30", freq="30min")
+
+
+def _restrita(semi: pd.DatetimeIndex, janela) -> np.ndarray:
+    dias, horas = np.asarray(semi.normalize()), np.asarray(semi.hour)
+    return (dias >= janela[0]) & (dias <= janela[1]) & (horas >= janela[2]) & (horas <= janela[3])
+
+
+def _cabecalho(chave_ou_conjunto, semi: pd.DatetimeIndex, modalidade: str) -> Dict[str, object]:
+    if isinstance(chave_ou_conjunto, str):
+        u = FICTICIAS[chave_ou_conjunto]
+        return {"id_subsistema": "SE", "id_estado": "GO", "nom_modalidadeoperacao": modalidade,
+                "nom_usina": u["nome"], "id_ons": u["id_ons"], "ceg": u["ceg"], "din_instante": semi}
+    c = chave_ou_conjunto
+    return {"id_subsistema": "SE", "id_estado": "GO", "nom_modalidadeoperacao": modalidade, "nom_usina": c["nome"],
+            "id_ons": c["id_ons"], "ceg": c.get("ceg", "-"), "din_instante": semi}
+
+
+def fator_capacidade_ficticio() -> pd.DataFrame:
+    """Fator de capacidade horário da EOL (própria) e do conjunto da UFV (CEG "-")."""
+    h = _horas_periodo()
+    eol, conjunto = geracao_eol(h), geracao_conjunto_ufv(h)
+    return pd.concat([
+        pd.DataFrame({**_cabecalho("eol", h, "TIPO I"), "val_geracaoprogramada": 20.0, "val_geracaoverificada": eol,
+                      "val_capacidadeinstalada": 40.0, "val_fatorcapacidade": eol / 40.0}),
+        pd.DataFrame({**_cabecalho(CONJUNTO_UFV, h, "Conjunto de Usinas"), "val_geracaoprogramada": 12.0,
+                      "val_geracaoverificada": conjunto, "val_capacidadeinstalada": CAPACIDADE_CONJUNTO_UFV,
+                      "val_fatorcapacidade": conjunto / CAPACIDADE_CONJUNTO_UFV}),
+    ], ignore_index=True)
+
+
+def restricao_eol() -> Dict[str, pd.DataFrame]:
+    """A restrição com detalhe e a com a razão da EOL, desde 15/01/2024: vento inválido de 20 a 25/01; semi-horas
+    restritas de 01 a 10/02, das 10h às 17h, com 25 MW de corte; às 3h, um erro da estimativa fora da restrição."""
+    semi = _semi_horas(INICIO_RESTRICAO_EOL)
+    verificada = geracao_eol(semi)
+    restrita = _restrita(semi, RESTRICAO_EOL)
+    estimada = verificada + np.where(restrita, CORTE_EOL_MW, 0.0) + np.where(np.asarray(semi.hour) == 3, 1.0, 0.0)
+    invalido = ((semi >= VENTO_INVALIDO_EOL[0]) & (semi <= VENTO_INVALIDO_EOL[1])).astype(int)
+    detalhe = pd.DataFrame({**_cabecalho("eol", semi, "TIPO I"), "nom_conjuntousina": "",
+                            "val_ventoverificado": np.where(invalido == 1, 0.0, 8.0), "flg_dadoventoinvalido": invalido,
+                            "val_geracaoestimada": estimada, "val_geracaoverificada": verificada,
+                            "id_ons_conjuntousina": "", "flg_geracaorestrita": restrita.astype(int),
+                            "val_geracaoreferenciafinal": np.nan})
+    dias = np.asarray(semi.normalize())
+    codigo = np.full(len(semi), None, dtype=object)
+    for razao, (inicio, fim) in RAZOES_EOL.items():
+        codigo[restrita & (dias >= pd.Timestamp(inicio)) & (dias <= pd.Timestamp(fim))] = razao
+    razao = pd.DataFrame({**_cabecalho("eol", semi, "TIPO I"), "val_geracao": verificada,
+                          "val_geracaolimitada": np.where(restrita, verificada, np.nan),
+                          "val_disponibilidade": estimada, "val_geracaoreferencia": estimada,
+                          "cod_razaorestricao": codigo,
+                          **{f"num_minutos_{r.lower()}": np.where(codigo == r, 30, 0) for r in RAZOES_EOL}})
+    return {"detalhe": detalhe, "razao": razao}
+
+
+def restricao_ufv() -> Dict[str, pd.DataFrame]:
+    """A restrição com detalhe da UFV (desde 25/01/2024) e do membro, e a com a razão do conjunto; o arquivo de
+    janeiro da detalhada no esquema antigo (sem as cinco colunas, marca de irradiância booleana)."""
+    partes = []
+    for chave, inicio, pico in (("ufv", INICIO_UFV, 20.0), (MEMBRO_UFV, pd.Timestamp("2024-01-01"), 8.0)):
+        semi = _semi_horas(inicio)
+        verificada = solar(semi, pico)
+        restrita = _restrita(semi, RESTRICAO_UFV) if chave == "ufv" else np.zeros(len(semi), dtype=bool)
+        cabecalho = _cabecalho(chave, semi, "TIPO II-C")
+        partes.append(pd.DataFrame({**cabecalho, "nom_conjuntousina": CONJUNTO_UFV["nome"],
+                                    "val_irradianciaverificado": solar(semi, 800.0),
+                                    "flg_dadoirradianciainvalido": 0,
+                                    "val_geracaoestimada": verificada + np.where(restrita, CORTE_UFV_MW, 0.0),
+                                    "val_geracaoverificada": verificada, "id_ons_conjuntousina": CONJUNTO_UFV["id_ons"],
+                                    "flg_geracaorestrita": restrita.astype(int), "val_geracaoreferenciafinal": np.nan,
+                                    "nom_origemirradiancia": "Supervisão", "flg_dadoirradianciasupervisaoinvalido": 0}))
+    detalhe = pd.concat(partes, ignore_index=True)
+    semi = _semi_horas(pd.Timestamp("2024-01-01"))
+    restrita = _restrita(semi, RESTRICAO_UFV)
+    conjunto = geracao_conjunto_ufv(semi)
+    razao = pd.DataFrame({**_cabecalho(CONJUNTO_UFV, semi, "Conjunto de Usinas"), "val_geracao": conjunto,
+                          "val_geracaolimitada": np.where(restrita, conjunto, np.nan),
+                          "val_disponibilidade": conjunto + np.where(restrita, CORTE_UFV_MW, 0.0),
+                          "val_geracaoreferencia": conjunto + np.where(restrita, CORTE_UFV_MW, 0.0),
+                          "cod_razaorestricao": np.where(restrita, "REL", None),
+                          "num_minutos_rel": np.where(restrita, 30, 0), "num_minutos_cnf": 0, "num_minutos_ene": 0})
+    return {"detalhe": detalhe, "razao": razao}
+
+
+ESQUEMA_ANTIGO = ["id_ons_conjuntousina", "nom_origemirradiancia", "flg_dadoirradianciasupervisaoinvalido",
+                  "val_geracaoreferenciafinal", "flg_geracaorestrita"]
+
+
+def _renovaveis(raw: Path) -> None:
+    for sufixo, t in _por_mes(fator_capacidade_ficticio()).items():
+        _parquet(t, raw / "fator_capacidade_2" / f"FATOR_CAPACIDADE-2_{sufixo}.parquet")
+    eol, ufv = restricao_eol(), restricao_ufv()
+    for sufixo, t in _por_mes(eol["detalhe"]).items():
+        _parquet(t, raw / "restricao_coff_eolica_detail" / f"RESTRICAO_COFF_EOLICA_DETAIL_{sufixo}.parquet")
+    for sufixo, t in _por_mes(eol["razao"]).items():
+        _parquet(t, raw / "restricao_coff_eolica_usi" / f"RESTRICAO_COFF_EOLICA_{sufixo}.parquet")
+    for sufixo, t in _por_mes(ufv["detalhe"]).items():
+        if sufixo == "2024_01":  # esquema antigo
+            t = t.drop(columns=ESQUEMA_ANTIGO).assign(flg_dadoirradianciainvalido=False)
+        _parquet(t, raw / "restricao_coff_fotovoltaica_detail" / f"RESTRICAO_COFF_FOTOVOLTAICA_DETAIL_{sufixo}.parquet")
+    for sufixo, t in _por_mes(ufv["razao"]).items():
+        _parquet(t, raw / "restricao_coff_fotovoltaica" / f"RESTRICAO_COFF_FOTOVOLTAICA_{sufixo}.parquet")
+
+
 def gerar_brutos_tipos(raw: Path) -> None:
     """Os brutos da UHE fictícia mais os das usinas fictícias dos outros tipos, nos mesmos arquivos do ONS."""
     raw = Path(raw)
@@ -522,3 +678,4 @@ def gerar_brutos_tipos(raw: Path) -> None:
     _programacao_ficticias(raw)
     _cadastrais_ficticias(raw)
     _termicas(raw)
+    _renovaveis(raw)
