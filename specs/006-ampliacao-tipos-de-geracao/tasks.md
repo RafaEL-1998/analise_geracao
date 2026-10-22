@@ -1407,3 +1407,8 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 - `python -m src comparar --todas --coleta` com cinco referências: os **cinco relatórios idênticos aos aprovados**; bandeirante sem nenhuma diferença; na Coleta, sao_domingos, william_arjona e praia_formosa só com as diferenças de dados publicados pelo ONS depois do congelamento (aceitas pelo usuário até o próximo congelamento); seriemas_1 com as mesmas diferenças de publicação (45 valores da geração do conjunto republicados em 21/10/2026 e o cadastro) e `auditoria_capacidade_membros.csv` só na Coleta refeita (arquivo da T159, posterior ao congelamento dela). Código 6 só por essas diferenças da Coleta.
 - **Fase D concluída**; commit pedido ao usuário (código, testes, rascunhos, perfil e referência da Bandeirante, referência da Seriemas 1).
 
+### 22/10/2026 — decisão do usuário sobre a CCEE
+
+- Catálogo de dados abertos da CCEE conferido (metadados, não os arquivos): `geracao_horaria_usina` (geração horária por parcela de usina desde 03/2024, com os componentes do despacho; sem CEG), `parcela_usina_montante_mensal` (por usina e mês desde 2024, **com o CEG**, geração, garantia física, capacidade e MRE), `pch_cgh_gf_definida`, `eolica_gf_definida`, `fotovoltaica_gf_definida` e os CVU (sem CEG). Nenhum conjunto de constrained-off. Ganho maior nas PCH e CGH em conjunto ou Tipo III e nas UFV sem série própria no ONS; menor nas UTE; pouco nas UHE.
+- Decisão: a avaliação da CCEE como fonte nova (`/speckit-assess-intake`; pede mudança do princípio IV da constituição) fica **para depois das fases E e F**, com a PCH Bandeirante como piloto e um mês de `geracao_horaria_usina` e de `parcela_usina_montante_mensal` baixado pelo usuário para confirmar a identificação.
+
