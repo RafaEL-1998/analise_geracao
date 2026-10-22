@@ -111,9 +111,13 @@ def _esperado(catalogo: Dict[str, Any], u: pd.Series, hoje: date) -> Dict[str, A
     cobertura = {r["conjunto_ons"]: r["nivel"] for _, r in cobertura_tab[cobertura_tab["ceg"] == u["ceg"]].iterrows()}
     programacao = catalogo["programacao"]
     codigos: List[str] = []
+    periodos: Dict[str, Tuple[str, str]] = {}
     for valor in (u["id_ons"], u["id_conjunto"]):
         if valor:
-            codigos = list(programacao.loc[programacao["id_usina_ou_conjunto"] == valor, "codigo_exibicao"])
+            ligados = programacao[programacao["id_usina_ou_conjunto"] == valor]
+            codigos = list(ligados["codigo_exibicao"])  # todos os do período, na ordem do primeiro dia (fase D)
+            periodos = {r["codigo_exibicao"]: (r.get("primeiro_dia", ""), r.get("ultimo_dia", ""))
+                        for _, r in ligados.iterrows()}
             if codigos:
                 break
     codigos_estado = sorted(programacao.loc[programacao["estado"] == u["id_estado"], "codigo_exibicao"])
@@ -125,8 +129,25 @@ def _esperado(catalogo: Dict[str, Any], u: pd.Series, hoje: date) -> Dict[str, A
             inicio = m["inicio"] or ""
             if (not inicio or inicio <= hoje.isoformat()) and (not m["fim"] or m["fim"] > hoje.isoformat()):
                 membros.append({"id_ons": m["id_ons_usina"], "ceg": m["ceg"], "inicio": inicio, "fim": m["fim"]})
+    ultimo_dia = max((str(d) for d in programacao.get("ultimo_dia", pd.Series(dtype=str)) if str(d)), default="")
     return {"tipo": tipo, "cobertura": cobertura, "codigos": codigos, "codigos_estado": codigos_estado,
+            "periodos_codigos": periodos, "ultimo_dia_programacao": ultimo_dia,
             "membros": membros, "planejamento": planejamento_da_usina(catalogo, u["ceg"])}
+
+
+def texto_periodos_codigos(esperado: Dict[str, Any]) -> str:
+    """"MSCAO-9761 de 01/10/2024 a 02/07/2025; MSCAO-9764 desde 05/07/2025" (vigente: presente no último dia publicado
+    da Programação diária); vazio sem os dias no catálogo."""
+    partes = []
+    for codigo in esperado["codigos"]:
+        inicio, fim = esperado.get("periodos_codigos", {}).get(codigo, ("", ""))
+        if not inicio:
+            return ""
+        if fim and fim != esperado.get("ultimo_dia_programacao"):
+            partes.append(f"{codigo} de {fmt_data(inicio)} a {fmt_data(fim)}")
+        else:
+            partes.append(f"{codigo} desde {fmt_data(inicio)}")
+    return "; ".join(partes)
 
 
 def planejamento_da_usina(catalogo: Dict[str, Any], ceg: str) -> List[Dict[str, Any]]:
@@ -306,6 +327,9 @@ def montar_rascunho(catalogo: Dict[str, Any], u: pd.Series, esperado: Dict[str, 
                 pendentes.append(f"identificacao.{campo}")
     if esperado["codigos"]:
         linhas.append(_linha("codigos_programacao", esperado["codigos"], _origem(info, "programacao")))
+        periodos = texto_periodos_codigos(esperado)
+        if periodos:  # o Tratamento soma os códigos por patamar: confira se os períodos não se sobrepõem (fase D)
+            linhas.append(f"#   períodos na Programação diária: {periodos}")
         preenchidos += 1
     else:
         linhas.append(_pendente("codigos_programacao", "código de exibição na Programação diária; nenhum código ligado "

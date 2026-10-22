@@ -272,9 +272,10 @@ def programacao_comum(base: pd.DataFrame, nivel_programacao: str, dias_ausentes:
 # ---------------------------------------------------------------------------
 
 
-def qualidade_comum(base: pd.DataFrame, ausencias: Optional[pd.DataFrame],
-                    linhas_usina_sem_valor: int) -> Dict[str, Any]:
-    """Horas sinalizadas por código, horas sem valor, ausências listadas e linhas próprias sem valor (A3)."""
+def qualidade_comum(base: pd.DataFrame, ausencias: Optional[pd.DataFrame], linhas_usina_sem_valor: int,
+                    linhas_usina_sem_valor_periodo: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+    """Horas sinalizadas por código, horas sem valor, ausências listadas e linhas próprias sem valor (A3), com o período
+    delas (fase D)."""
     codigos = base["sinalizacoes"].fillna("").str.split(",").explode()
     contagem = codigos[codigos != ""].value_counts()
     sinalizacoes = pd.DataFrame([{"codigo": c, "descricao": DESCRICAO_SINALIZACOES.get(c, c), "horas": int(n)}
@@ -285,6 +286,7 @@ def qualidade_comum(base: pd.DataFrame, ausencias: Optional[pd.DataFrame],
         "horas_sem_valor": int(base["geracao_mw"].isna().sum()),
         "ausencias": ausencias if ausencias is not None else pd.DataFrame(columns=["tipo", "inicio", "fim", "horas"]),
         "linhas_usina_sem_valor": int(linhas_usina_sem_valor),
+        "linhas_usina_sem_valor_periodo": dict(linhas_usina_sem_valor_periodo or {}),
     }
 
 
@@ -332,8 +334,11 @@ def _cobertura_texto(perfil: Any, chave: str) -> str:
 
 
 def omissoes(perfil: Any, tipo: str, comum: Dict[str, Any], indicadores: bool, hidrologia: bool,
-             niveis_sem_sazonalidade: List[str]) -> List[Dict[str, str]]:
-    """Seções da decisão R14 sem base para a usina, com o motivo (FR-024), na ordem do relatório."""
+             niveis_sem_sazonalidade: List[str], conjunto: bool = False,
+             hidrologia_presente: bool = False) -> List[Dict[str, str]]:
+    """Seções da decisão R14 sem base para a usina, com o motivo (FR-024), na ordem do relatório.
+
+    ``conjunto`` e ``hidrologia_presente``: a seção do conjunto e a de afluência têm base (fase D)."""
     saida: List[Dict[str, str]] = []
     com_disponibilidade = tipo in HIDRELETRICAS + TERMICAS
     if com_disponibilidade and not comum.get("disponibilidade"):
@@ -355,10 +360,9 @@ def omissoes(perfil: Any, tipo: str, comum: Dict[str, Any], indicadores: bool, h
             saida.append(_omitido("CVU × CMO", f"sem o CVU das usinas térmicas ({_cobertura_texto(perfil, 'cvu')})"))
         elif registro.nivel_coletado(perfil, "cmo") is None:
             saida.append(_omitido("CVU × CMO", "sem o CMO semanal: o perfil não traz o subsistema"))
-    if getattr(perfil.identificacao, "id_conjunto", None):
-        saida.append(_omitido("Composição e geração do conjunto", "seção ainda não gerada pelo pipeline; a "
-                                                                  "composição por trecho está na Fonte e cobertura "
-                                                                  "dos dados"))
+    if getattr(perfil.identificacao, "id_conjunto", None) and not conjunto:  # fase D (decisão R20)
+        saida.append(_omitido("Composição e geração do conjunto",
+                              "sem a Geração por usina do conjunto, ou sem a usina na composição, no período"))
     if not comum.get("programacao"):
         if not comum.get("programacao_coletada"):
             motivo = f"sem a Programação diária ({_cobertura_texto(perfil, 'programacao')})"
@@ -370,9 +374,9 @@ def omissoes(perfil: Any, tipo: str, comum: Dict[str, Any], indicadores: bool, h
     if com_disponibilidade and not comum.get("disponibilidade"):
         saida.append(_omitido("Disponibilidade operacional e sincronizada",
                               f"sem a Disponibilidade por usina ({_cobertura_texto(perfil, 'disponibilidade')})"))
-    if tipo in HIDRELETRICAS:
+    if tipo in HIDRELETRICAS and not hidrologia_presente:  # fase D: a seção sem os cruzamentos com a EVT (T150)
         saida.append(_omitido("Afluência, vertimento e nível do reservatório",
-                              "a seção cruza os Dados hidrológicos com a base de EVT, que a usina não tem" if hidrologia
+                              "os Dados hidrológicos não têm horas no período da série de referência" if hidrologia
                               else f"sem os Dados hidrológicos ({_cobertura_texto(perfil, 'hidrologia')})"))
     if tipo in TERMICAS and registro.nivel_coletado(perfil, "despacho") is not None:
         saida.append(_omitido("Conferência da geração entre fontes",
@@ -403,6 +407,9 @@ def analisar_comum(
     indicadores: bool = False,
     hidrologia: bool = False,
     base_programacao: Optional[pd.DataFrame] = None,
+    linhas_usina_sem_valor_periodo: Optional[Dict[str, str]] = None,
+    conjunto: bool = False,
+    hidrologia_presente: bool = False,
 ) -> Tuple[Dict[str, Any], List[Dict[str, str]]]:
     """Campo ``comum`` de ``ResultadosAnalise`` e as omissões das seções (decisões R14 e R17).
 
@@ -425,6 +432,7 @@ def analisar_comum(
                                           dias_ausentes_programacao) if nivel_programacao else {}),
         "programacao_coletada": nivel_programacao is not None,
         "programacao_horas": int(horas_programacao),
-        "qualidade": qualidade_comum(base, ausencias, linhas_usina_sem_valor),
+        "qualidade": qualidade_comum(base, ausencias, linhas_usina_sem_valor, linhas_usina_sem_valor_periodo),
     }
-    return comum, omissoes(perfil, tipo, comum, indicadores, hidrologia, sem_sazonalidade)
+    return comum, omissoes(perfil, tipo, comum, indicadores, hidrologia, sem_sazonalidade, conjunto,
+                           hidrologia_presente)

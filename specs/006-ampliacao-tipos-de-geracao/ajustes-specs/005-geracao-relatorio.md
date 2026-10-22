@@ -114,3 +114,41 @@ Redação final. Os requisitos novos seguem a numeração da spec da Geração d
 |---|---|---|
 | Seções de renováveis (FR-045) | com as bases | não se aplica |
 | Indicadores da capa de renováveis | com as bases | não se aplica |
+
+## Fase D — PCH e CGH em conjunto; hidrelétricas sem EVT com hidrologia (rascunho para aprovação, tarefa T119)
+
+Já entregue na fase A, sem mudança: a capa com os indicadores do conjunto identificados; a nota de granularidade ("o ONS publica a geração do conjunto … e não a da usina isolada"); as omissões com o motivo; a frase da conclusão sem itens.
+
+### Requisitos novos
+
+- **FR-046** (seção "Composição e geração do conjunto", item 8 da FR-041, depois das seções do tipo): em toda usina em conjunto com a geração do conjunto (FR-060 das Análises), inclusive a eólica ou solar com série própria (decisão do usuário de 22/10/2026). A seção sai da lista das omitidas, onde hoje aparece como "seção ainda não gerada pelo pipeline".
+  - **Texto**: a composição de cada trecho e a geração do conjunto, sempre "do conjunto <nome>"; a divergência do tipo publicado, quando há.
+  - **Tabelas**:
+    - composição: usina, tipo, CEG, entrada e saída no conjunto, potência (MW);
+    - geração por trecho: trecho, início, fim, tipos, horas com valor, energia (MWh), média (MWmed), máxima (MW) e a potência somada das usinas do trecho (MW).
+  - **Figura em seaborn**: a geração média mensal do conjunto, colorida por trecho de composição, com a potência somada de cada trecho em degrau e uma linha vertical em cada mudança de composição.
+  - **Legendas**: "Geração por usina (conjunto de usinas, id ONS CJU_…)", "Composição dos conjuntos de usinas (CJU_…)" e "Capacidade de geração (CEG das usinas da composição)"; a potência somada como "calculado neste relatório".
+  - **Seção 1** (fonte e cobertura): na usina com esta seção, a tabela de trechos deixa a coluna "Composição (CEG)", que passa a esta seção com os nomes das usinas. Na usina sem conjunto, a tabela não muda.
+- **FR-047** (seção "Afluência, vertimento e nível do reservatório" na hidrelétrica sem EVT, item 11 da FR-041; tarefa T150), com a FR-061 das Análises:
+  - **com o alinhamento confirmado**: o texto com a cobertura e o resultado do alinhamento, a tabela anual de hoje e uma figura em seaborn com as médias mensais da afluência e das vazões turbinada e vertida;
+  - **sem o alinhamento confirmado**: só o texto com a cobertura e o resultado da conferência;
+  - **legendas**: "Dados hidrológicos horários (cod_usina …, reservatório …)", com o alinhamento pela geração como conferência;
+  - sem a tabela e a figura das faixas de afluência da EVT e sem o perfil por hora do dia, que comparam os dias com parada com EVT.
+- **Notas** (só quando a seção nova aparece):
+  - usina em conjunto: o período começa na entrada da usina no conjunto (FR-054 da Coleta); a composição vem da Composição dos conjuntos e a potência, das unidades da Capacidade de geração;
+  - hidrelétrica sem EVT: a hora da hidrologia conferida pela geração da usina (FR-026 da Conferência), e não pela EVT.
+- **FR-048** (relatório em duas partes; decisões do usuário de 22/10/2026, depois de ver o relatório da Bandeirante): na usina em conjunto sem série própria, em que todos os números de operação são do conjunto (série de referência = Geração por usina do conjunto), o relatório tem duas partes:
+  1. **a usina**: a seção "A usina no conjunto", logo depois da fonte e cobertura dos dados, com o que o ONS publica da usina isolada (a ficha do cadastro, na capa; as unidades e a entrada no conjunto; as linhas próprias sem valor) e o que não publica (geração, disponibilidade, indicadores), onde a geração da usina pode ser obtida (medição da CCEE e registros do agente, fora deste relatório, que usa só os dados abertos do ONS) e a tabela do peso da usina na potência do conjunto por composição (FR-060 das Análises). As seções com base própria da usina, quando há (disponibilidade, indicadores, afluência), continuam no lugar de hoje;
+  2. **o conjunto**: uma seção "Operação do conjunto <nome> (<id>)" logo antes da conclusão (depois da qualidade dos dados), com as análises do conjunto em subseções: indicadores anuais, série temporal da geração, geração mensal e sazonalidade, perfil horário, composição e geração por trecho e programação × verificada. As constatações do conjunto ficam no início dela.
+  - A usina em conjunto com série própria (Seriemas 1) mantém a estrutura da FR-046. O resumo executivo remete à seção do conjunto para a evolução anual.
+  - Proposta registrada para uma spec futura (decisão do usuário de 22/10/2026): a geração da usina isolada pela medição da CCEE, com download manual (a CCEE bloqueia o download por script), para medir quanto a usina pesa na geração do conjunto.
+- **Resumo executivo**: sem indicador novo; os números do conjunto continuam identificados como tais.
+- **Efeito nas referências**: a São Domingos, a William Arjona e a Praia Formosa não mudam (fora de conjunto e, a São Domingos, com EVT). A Seriemas 1 ganha a seção do conjunto (Conj. Inocência 230 kV, oito usinas) e perde a coluna de composição na tabela de trechos e a linha da seção nas omitidas. Por isso a referência dela é refeita, com a aprovação do usuário, junto com a da Bandeirante (tarefa T126).
+
+### Aplicabilidade por tipo (fase D, acréscimo)
+
+| Elemento | Usina em conjunto (PCH, CGH, EOL, UFV) | UHE, PCH, CGH sem EVT, com hidrologia | Demais |
+|---|---|---|---|
+| Seção do conjunto (FR-046) | com a geração do conjunto | — | não se aplica |
+| Seção de afluência sem EVT (FR-047) | — | sim | hidrelétrica com EVT: a seção de hoje; demais tipos: não se aplica |
+| Tabela de trechos da seção 1 | sem a coluna de composição | como hoje | como hoje |

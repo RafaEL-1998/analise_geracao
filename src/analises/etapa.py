@@ -19,7 +19,8 @@ import json
 import pandas as pd
 
 from src.analises.cadastro import analisar_cadastro
-from src.analises.comum_tipos import agentes_atuais, analisar_comum, base_programacao_conjunto
+from src.analises.comum_tipos import agentes_atuais, analisar_comum, base_programacao_conjunto, cobertura_comum
+from src.analises.conjunto import analisar_conjunto
 from src.analises.cobertura import analisar_cobertura
 from src.analises.conclusao import montar_conclusao, regras_omitidas
 from src.analises.constatacoes import montar_achados, montar_achados_comum
@@ -43,7 +44,7 @@ from src.analises.evt import (
     preparar_dados,
 )
 from src.analises.geracao import analisar_geracao_oficial
-from src.analises.hidrologia import analisar_hidrologia
+from src.analises.hidrologia import analisar_hidrologia, analisar_hidrologia_sem_evt
 from src.analises.indicadores import analisar_indicadores_ons
 from src.analises.programacao import analisar_programacao
 from src.analises.resultados import ResultadosAnalise, salvar_resultados
@@ -162,6 +163,21 @@ def _obtido_em(datas: Dict[str, Dict[str, Any]], conjunto: str) -> str:
     return str((datas.get(conjunto) or {}).get("obtencao_mais_recente") or "")
 
 
+def serie_do_conjunto(perfil: Any, base: pd.DataFrame, geracao: Optional[SerieConjunto]) -> Optional[pd.DataFrame]:
+    """Geração do conjunto hora a hora (``din_instante``, ``geracao_mw``) da usina em conjunto (fase D): as horas do
+    nível do conjunto da base horária, quando a série de referência é a do conjunto; senão, a Geração por usina do
+    conjunto (eólica ou solar com série própria, fase C). None fora de conjunto."""
+    if not getattr(perfil.identificacao, "id_conjunto", None):
+        return None
+    if escolher(perfil).conjunto == "geracao":
+        return base.loc[base["nivel"] == "conjunto", ["din_instante", "geracao_mw"]]
+    if geracao is None or not len(geracao.horaria) or registro.nivel_coletado(perfil, "geracao") != "conjunto":
+        return None
+    h = geracao.horaria
+    return pd.DataFrame({"din_instante": pd.to_datetime(h["din_instante"]),
+                         "geracao_mw": pd.to_numeric(h["val_geracao"], errors="coerce")})
+
+
 def niveis_da_usina(perfil: Any, composicao: Optional[pd.DataFrame] = None) -> Dict[str, Dict[str, str]]:
     """Nível e identificador da série de referência, da programação e da disponibilidade (decisão R15)."""
     ident = perfil.identificacao
@@ -212,12 +228,27 @@ def analisar_sem_evt(
     cmo: Optional[SemanalTratado] = None,
     renovavel: Optional[Dict[str, Optional[pd.DataFrame]]] = None,
     geracao_conjunto: Optional[SerieConjunto] = None,
+    linhas_usina_sem_valor_periodo: Optional[Dict[str, str]] = None,
+    capacidade_membros: Optional[pd.DataFrame] = None,
+    tipo_publicado: Optional[pd.DataFrame] = None,
+    hidrologia: Optional[SerieConjunto] = None,
 ) -> ResultadosAnalise:
     """Resultados das usinas sem EVT: as seções comuns sobre a base horária comum (decisões R14 e R30).
 
-    Os campos de EVT ficam vazios; ``cobertura`` traz o período da série de referência, e ``comum``, as seções.
+    Os campos de EVT ficam vazios; ``cobertura`` traz o período da série de referência, e ``comum``, as seções. Na
+    usina em conjunto, também a composição e a geração do conjunto (fase D, decisão R20); na hidrelétrica com os Dados
+    hidrológicos, a afluência sem os cruzamentos com a EVT (fase D, tarefa T150).
     """
     tipo = registro.tipo_da_usina(perfil)
+    niveis = niveis_da_usina(perfil, composicao)
+    conjunto = analisar_conjunto(serie_do_conjunto(perfil, base, geracao_conjunto), trechos, composicao,
+                                 capacidade_membros, tipo_publicado, str(getattr(perfil.identificacao, "id_conjunto", "")
+                                                                         or ""), niveis["geracao"].get("nome", ""),
+                                 str(perfil.identificacao.ceg))
+    hidro = (analisar_hidrologia_sem_evt(hidrologia, conferencias.get("alinhamento_hidrologia"),
+                                         cobertura_comum(base, ausencias_geracao),
+                                         _obtido_em(datas_obtencao or {}, CONJUNTO_HIDROLOGIA))
+             if tipo in registro.HIDRELETRICAS else {})
     tem_indicadores = indicadores is not None and len(indicadores.ug_mensal) > 0
     nivel_programacao = registro.nivel_coletado(perfil, "programacao") if programacao is not None else None
     base_programacao = None  # T157: base da usina (restrição com detalhe) e programação do conjunto
@@ -229,7 +260,8 @@ def analisar_sem_evt(
         programacao.dias_ausentes if programacao is not None else None,
         len(programacao.horaria) if programacao is not None else 0,
         indicadores=tem_indicadores, hidrologia=registro.nivel_coletado(perfil, "hidrologia") is not None,
-        base_programacao=base_programacao)
+        base_programacao=base_programacao, linhas_usina_sem_valor_periodo=linhas_usina_sem_valor_periodo,
+        conjunto=bool(conjunto), hidrologia_presente=bool(hidro))
     comum["conferencias_nao_aplicaveis"] = nao_aplicaveis if nao_aplicaveis is not None else pd.DataFrame(
         columns=["conferencia", "motivo"])
     comum["agentes"] = agentes_atuais(capacidade, comum["cobertura"]["fim"])
@@ -241,8 +273,9 @@ def analisar_sem_evt(
         mudanca_classificacao={}, anomalias=vazio, resumo_anomalias=vazio, extremos=vazio, perfil_estatistico=vazio,
     )
     res.tipo, res.modalidade = tipo, str(getattr(perfil.usina, "modalidade", "") or "")
-    res.niveis = niveis_da_usina(perfil, composicao)
+    res.niveis = niveis
     res.trechos = trechos if trechos is not None else pd.DataFrame()
+    res.conjunto, res.hidrologia = conjunto, hidro
     res.comum, res.omitidos = comum, omitidos
     res.datas_obtencao = datas_obtencao or {}
     if tipo in registro.TERMICAS:  # seções de térmica (fase B, decisão R18)
@@ -357,6 +390,11 @@ def carregar_entradas_sem_evt(slug: str, referencia: str = "geracao") -> Dict[st
         "programacao": carregar_programacao_tratada(tratamento, auditoria_prog),
         "ausencias_geracao": ausencias,
         "linhas_usina_sem_valor": int(resumo_coleta.get("linhas_usina_sem_valor") or 0),
+        "linhas_usina_sem_valor_periodo": resumo_coleta.get("linhas_usina_sem_valor_periodo") or {},
+        # fase D: as unidades das usinas do conjunto e o tipo publicado (ausentes nas Coletas anteriores)
+        "capacidade_membros": _ler_csv_texto(coleta / caminhos.ARQUIVOS_COLETA["capacidade_membros"]),
+        "tipo_publicado": _ler_csv_texto(coleta / caminhos.ARQUIVOS_COLETA["tipo_publicado"]),
+        "hidrologia": carregar_hidrologia_tratada(tratamento),
         "trechos": _ler_csv_texto(coleta / caminhos.ARQUIVOS_COLETA["trechos"]),
         "composicao": _ler_csv_texto(coleta / caminhos.ARQUIVOS_COLETA["composicao"]),
         "cadastro": ficha_do_cadastro(coleta, conferencias.get("cadastro")),
@@ -368,7 +406,7 @@ def carregar_entradas_sem_evt(slug: str, referencia: str = "geracao") -> Dict[st
         "cvu": carregar_semanal_tratado(tratamento, "cvu"),
         "cmo": carregar_semanal_tratado(tratamento, "cmo"),
         "renovavel": carregar_renovavel(tratamento),
-        # a Geração por usina do conjunto, para a comparação com a programação do conjunto (T157)
+        # a Geração por usina do conjunto, para a comparação com a programação do conjunto (T157) e a seção do conjunto
         "geracao_conjunto": carregar_geracao_tratada(tratamento) if referencia == "restricao_detalhe" else None,
     }
 
@@ -424,6 +462,9 @@ def _executar_sem_evt(perfil: Any, pasta: Path) -> ResultadoEtapa:
                if res.tipo in registro.TERMICAS else {}),
             **({k: bool((res.renovavel or {}).get(k)) for k in ("fator_capacidade", "restricao", "recurso")}
                if res.tipo in registro.RENOVAVEIS else {}),
+            # fase D: a seção do conjunto e a de afluência sem EVT
+            **({"conjunto": bool(res.conjunto)} if getattr(perfil.identificacao, "id_conjunto", None) else {}),
+            **({"hidrologia": bool(res.hidrologia)} if res.tipo in registro.HIDRELETRICAS else {}),
         },
     }
     return ResultadoEtapa(codigo=CODIGO_SUCESSO, arquivos=[p for p, _ in gravacoes], resumo=resumo)

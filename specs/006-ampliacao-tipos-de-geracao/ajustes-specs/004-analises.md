@@ -106,3 +106,33 @@ Redação final. Os requisitos novos seguem a numeração da spec das Análises 
 |---|---|---|
 | Seções de renováveis (FR-058) | com as bases; números do conjunto identificados | não se aplica |
 | Regras C16 a C19 | com as bases no nível da usina | não se aplica |
+
+## Fase D — PCH e CGH em conjunto; hidrelétricas sem EVT com hidrologia (rascunho para aprovação, tarefa T119)
+
+Já entregue na fase A, sem mudança: as seções comuns sobre a geração do conjunto, identificada como tal; a disponibilidade e os indicadores oficiais omitidos, com o motivo; as linhas próprias sem valor na qualidade dos dados; a conclusão sem itens, com a frase de que o ONS publica para a usina só os números do conjunto (FR-054).
+
+### Requisitos novos
+
+- **FR-060** (composição e geração do conjunto, decisão R20), no campo `conjunto` dos resultados. Vale para toda usina em conjunto com a Geração por usina do conjunto coletada, inclusive a eólica ou solar com série própria (Seriemas 1). Usa `trechos.csv`, `composicao_conjunto.csv`, `capacidade_membros.csv` e `tipo_publicado.csv` da Coleta e a base horária do Tratamento.
+  - **Composição por trecho**: as usinas de cada trecho, com o nome, o tipo (pelo CEG), o CEG, a entrada e a saída no conjunto e a potência no trecho (unidades ativas da Capacidade de geração). A potência somada das usinas do trecho é identificada como "calculado neste relatório".
+  - **Geração do conjunto por trecho de composição**: horas, horas com valor, energia (MWh), média (MWmed) e máxima (MW) de cada trecho, com os tipos do trecho; a média mensal, para a figura.
+  - **Tipo publicado**: o tipo e o combustível que o ONS publica na série do conjunto, por trecho, comparados com os tipos da composição. A divergência entra na qualidade dos dados, como fato (no Conj. Chapadão, "TÉRMICA"/"Biomassa" também no trecho só com as quatro PCH).
+  - Nenhum número do conjunto é dividido entre as usinas (FR-023 da spec 006), nem entra na conclusão (FR-054). A geração do conjunto não é dividida pela potência somada: nenhum fator de capacidade do conjunto é calculado.
+  - **Peso da usina na potência do conjunto** (decisão do usuário de 22/10/2026), por trecho de composição: a potência das unidades da usina em operação no trecho ÷ a potência somada das usinas do trecho. É fato da Capacidade de geração e nunca estima a geração da usina (a geração do conjunto não é dividida pela potência, decisão R20). Na Bandeirante: 6,7 % de 27/09/2019 a 30/06/2025 e 35,7 % desde 01/07/2025; antes de 12/10/2019, as unidades dela ainda não estavam em operação.
+  - Constatação "A usina no conjunto", só no relatório em duas partes da FR-048 do rascunho 005: o peso por composição e o que o ONS publica da usina isolada.
+- **Linhas próprias sem valor**: o texto da qualidade dos dados passa a dizer o período dessas linhas (FR-047 e FR-048 da Coleta). Na Bandeirante: 4.128 linhas, de 01/05/2026 a 19/10/2026.
+- **FR-061** (afluência, vertimento e nível na hidrelétrica sem EVT; tarefa T150), no campo `hidrologia` dos resultados, que hoje fica vazio nesse caminho:
+  - **com o alinhamento confirmado** pela FR-026 da Conferência:
+    - a tabela anual de hoje: horas, afluência média e máxima, vazões turbinada e vertida, nível de montante mínimo e máximo, volume útil e horas acima do engolimento máximo;
+    - as médias mensais da afluência e das vazões turbinada e vertida, para a figura;
+  - **sem o alinhamento confirmado**: só a cobertura e o resultado da conferência, como a FR-034 faz hoje;
+  - **sem os cruzamentos com a EVT**: ficam de fora as horas e a EVT por faixa de afluência, o perfil por hora do dia nos dias com parada com EVT e as regras C3 e C11, que continuam só no caminho com EVT, como na fase A.
+  - Os valores sinalizados saem só do campo afetado, como hoje (regra H4 e volume útil negativo).
+
+### Aplicabilidade por tipo (fase D, acréscimo)
+
+| Análise | Usina em conjunto (PCH, CGH, EOL, UFV) | UHE, PCH, CGH sem EVT, com hidrologia | Demais |
+|---|---|---|---|
+| Composição e geração do conjunto (FR-060) | com a geração do conjunto | — | não se aplica |
+| Afluência, vertimento e nível (FR-061) | — | com o alinhamento confirmado; sem ele, só a cobertura | hidrelétrica com EVT: como hoje; demais tipos: não se aplica |
+| Conclusão | PCH e CGH: sem itens, com a frase (fase A); EOL e UFV: C16 a C19 só com a usina | as regras comuns da fase A; C3 e C11 só com a EVT | sem mudança |

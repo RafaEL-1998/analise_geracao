@@ -4,7 +4,9 @@ Cada conferência declara os tipos de usina, os conjuntos do registro que ela co
 A que não se aplica à usina (tipo, conjunto não coletado, base ainda fora do pipeline, conjunto sem membros no
 perfil, níveis diferentes, ou resultado sem base) vai para ``nao_aplicaveis.csv``, com o motivo (FR-019, princípio
 VI). As seis de hoje são feitas como hoje; G3 e G4 nas térmicas com o despacho (fase B); G1, G2 e G5 nas eólicas e
-solares com as bases da fase C, sempre no mesmo nível.
+solares com as bases da fase C, sempre no mesmo nível; o alinhamento da hidrologia pela geração nas hidrelétricas sem
+EVT (fase D; rascunho 003, FR-026). Este último só é registrado como não aplicável nas hidrelétricas: nos demais
+tipos, a conferência das vazões já registra que a hidrologia não se aplica, e os relatórios aprovados não mudam.
 """
 
 from __future__ import annotations
@@ -55,6 +57,8 @@ class ConferenciaCatalogo:
     fontes_no_mesmo_nivel: bool = False  # G1: duas fontes da geração em um mesmo nível
     geracao_do_conjunto: bool = False  # G2: a Geração por usina no nível do conjunto
     programacao_no_nivel_do_fc: bool = False  # G5: a Programação diária no nível do Fator de capacidade
+    so_sem_evt: bool = False  # só na usina sem EVT (na hidrelétrica com EVT, a conferência das vazões faz o mesmo)
+    registrada_so_nos_tipos: bool = False  # fora dos tipos, nenhuma linha em nao_aplicaveis.csv
 
 
 CATALOGO_CONFERENCIAS: Tuple[ConferenciaCatalogo, ...] = (
@@ -78,6 +82,9 @@ CATALOGO_CONFERENCIAS: Tuple[ConferenciaCatalogo, ...] = (
                         ("geracao", "despacho"), geracao_da_usina=True),
     ConferenciaCatalogo("programacao_renovaveis", "G5. Programação diária × geração programada do Fator de capacidade",
                         RENOVAVEIS, ("programacao", "fator_capacidade"), programacao_no_nivel_do_fc=True),
+    ConferenciaCatalogo("alinhamento_hidrologia", "hora dos Dados hidrológicos conferida pela geração da usina",
+                        HIDRELETRICAS, ("hidrologia", "geracao"), geracao_da_usina=True, so_sem_evt=True,
+                        registrada_so_nos_tipos=True),
 )
 
 
@@ -101,6 +108,8 @@ def _motivo_estatico(c: ConferenciaCatalogo, perfil: Any) -> Optional[str]:
     tipo = registro.tipo_da_usina(perfil)
     if tipo not in c.tipos:
         return f"não se aplica a {tipo}: conferência de {_lista(c.tipos)}"
+    if c.so_sem_evt and "evt" in {e.chave for e in registro.conjuntos_da_usina(perfil)}:
+        return "na hidrelétrica com EVT, a hora da hidrologia é conferida pelas vazões da base de EVT"
     ident = perfil.identificacao
     if c.exige_membros:
         if not getattr(ident, "id_conjunto", None):
@@ -142,7 +151,10 @@ def tabela_nao_aplicaveis(perfil: Any, resultados: Dict[str, ResultadoConferenci
     """``nao_aplicaveis.csv``: as conferências do catálogo que não se aplicam à usina, com o motivo, na ordem do
     catálogo; as que rodaram sem base entram com o motivo do resultado."""
     linhas = []
+    tipo = registro.tipo_da_usina(perfil)
     for c in CATALOGO_CONFERENCIAS:
+        if c.registrada_so_nos_tipos and tipo not in c.tipos:
+            continue
         motivo = _motivo_estatico(c, perfil)
         r = resultados.get(c.id)
         if motivo is None and r is not None and not r.aplicavel:

@@ -728,7 +728,11 @@ class PDFReportGenerator:
     def _secao_blocos(self, story: List[Any], chave: str, titulo: str) -> None:
         """Seção do caminho sem EVT: os blocos de ``comum.blocos_secao``, com os componentes de hoje."""
         self._inicio_secao(story, chave, titulo, 200)
+        subtitulo = None  # subseção pendente: vai junto com a figura seguinte, ou com espaço para o início da tabela
         for b in comum.blocos_secao(self.res, chave):
+            if subtitulo is not None and b.tipo != "figura":
+                story += [CondPageBreak(ALTURA_ABERTURA_CURTA), subtitulo]
+                subtitulo = None
             if b.tipo == "chave_valor":
                 linhas = [[self._p(f"<b>{escape(k)}</b>", "celula"), self._p(escape(v), "celula")] for k, v in b.pares]
                 tabela = Table(linhas, colWidths=[130, LARGURA_UTIL - 130])
@@ -741,13 +745,20 @@ class PDFReportGenerator:
                 story += self._bloco_tabela(b.chave, b.cabecalho, b.linhas, self._escala(b.larguras), b.numericas,
                                             b.intro)
             elif b.tipo == "figura":
-                story.append(KeepTogether(self._figura(b.chave, escape(comum.legenda_figura(self.res, b.chave)))))
+                abertura = [subtitulo] if subtitulo is not None else []
+                subtitulo = None
+                story.append(KeepTogether(abertura + self._figura(b.chave,
+                                                                  escape(comum.legenda_figura(self.res, b.chave)))))
             elif b.tipo == "texto":
                 story += [self._p(escape(t), "corpo") for t in b.textos]
+            elif b.tipo == "subtitulo":  # subseção (a parte do conjunto, FR-048 do rascunho 005)
+                subtitulo = self._p(escape(b.textos[0]), "subsecao")
             elif b.tipo == "notas":
                 story += [self._p(f"• {escape(t)}", "nota") for t in b.textos]
             elif b.tipo == "sem_linhas":
                 story += self._sem_linhas(b.chave, escape(b.textos[0]))
+        if subtitulo is not None:
+            story.append(subtitulo)
 
     def _secao_notas(self, story: List[Any], titulo: str) -> None:
         self._inicio_secao(story, "notas", titulo, 200)

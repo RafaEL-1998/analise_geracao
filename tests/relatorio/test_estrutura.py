@@ -299,8 +299,9 @@ def test_figura_opcional_de_execucao_anterior_sai_da_pasta(tmp_path: Path, monke
 SECOES_UTE = ["fonte_cobertura", "anuais_comum", "disponibilidade_geracao_comum", "serie_temporal_comum",
               "geracao_mensal", "perfil_horario_comum", "disponibilidade_sincronizada_comum", "qualidade_comum",
               "conclusao", "notas_comum"]
-SECOES_PCH = ["fonte_cobertura", "anuais_comum", "serie_temporal_comum", "geracao_mensal", "perfil_horario_comum",
-              "qualidade_comum", "conclusao", "notas_comum"]
+# fase D (rascunho 005, FR-048): a PCH em conjunto sem série própria em duas partes, a usina e, antes da conclusão, o
+# conjunto, com as seções dos números do conjunto como subseções
+SECOES_PCH = ["fonte_cobertura", "usina_no_conjunto", "qualidade_comum", "parte_conjunto", "conclusao", "notas_comum"]
 
 
 @pytest.fixture(scope="module")

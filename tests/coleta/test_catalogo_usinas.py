@@ -190,13 +190,23 @@ def test_cobertura_agregada_ausente_e_so_do_arquivo_mais_recente(montado) -> Non
 
 
 def test_codigos_de_programacao_ligados_pelo_id_ons_ou_pelo_conjunto(montado) -> None:
+    """Fase D (rascunho 001, FR-051): os códigos de todos os arquivos da Programação diária, com o primeiro e o último
+    dia; o conjunto que trocou de código fica com os dois."""
     p = montado["programacao"]
-    assert list(p.columns) == ["codigo_exibicao", "id_usina_ou_conjunto", "modalidade", "estado", "arquivo"]
+    assert list(p.columns) == ["codigo_exibicao", "id_usina_ou_conjunto", "modalidade", "estado", "arquivo",
+                               "primeiro_dia", "ultimo_dia"]
     ligacao = dict(zip(p["codigo_exibicao"], p["id_usina_ou_conjunto"]))
     assert ligacao == {bc.UHE["id_ons"]: bc.UHE["id_ons"], bc.UTE["id_ons"]: bc.UTE["id_ons"],
-                       "GOCJA-101": bc.PCH["conjunto"], "GOCJA-102": bc.PCH["conjunto"], "GOCJB": bc.UFV["conjunto"],
-                       "GOOUTRO": "", bc.EOL["id_ons"]: bc.EOL["id_ons"]}  # só o arquivo mais recente
-    assert set(p["arquivo"]) == {"PROGRAMACAO_DIARIA_2026_10_18.parquet"}
+                       "GOCJA-100": bc.PCH["conjunto"], "GOCJA-101": bc.PCH["conjunto"],
+                       "GOCJA-102": bc.PCH["conjunto"], "GOCJB": bc.UFV["conjunto"], "GOOUTRO": "", "GOVELHO": "",
+                       bc.EOL["id_ons"]: bc.EOL["id_ons"]}
+    antigo = p.set_index("codigo_exibicao").loc["GOCJA-100"]
+    assert (antigo["primeiro_dia"], antigo["ultimo_dia"], antigo["arquivo"]) == (
+        "2026-10-17", "2026-10-17", "PROGRAMACAO_DIARIA_2026_10_17.parquet")
+    atuais = p[~p["codigo_exibicao"].isin(["GOCJA-100", "GOVELHO"])]
+    assert set(atuais["arquivo"]) == {"PROGRAMACAO_DIARIA_2026_10_18.parquet"}
+    assert set(atuais["primeiro_dia"]) == {"2026-10-18"}
+    assert list(p["codigo_exibicao"][:2]) == ["GOCJA-100", "GOVELHO"]  # na ordem do primeiro dia
     assert dict(zip(p["codigo_exibicao"], p["estado"]))[bc.EOL["id_ons"]] == "MT"
 
 
@@ -377,8 +387,9 @@ def test_sincronizacao_baixa_os_cadastrais_o_mais_recente_de_cada_serie_e_12_mes
             "capacidade-geracao/CAPACIDADE_GERACAO.parquet", "reservatorio/RESERVATORIO.parquet"} <= baixados
     assert "energia-vertida-turbinavel/ENERGIA_VERTIDA_TURBINAVEL_2026_09.csv" in baixados
     assert "energia-vertida-turbinavel/ENERGIA_VERTIDA_TURBINAVEL_2026_08.csv" not in baixados
-    assert "programacao_diaria/PROGRAMACAO_DIARIA_2026_10_18.parquet" in baixados
-    assert "programacao_diaria/PROGRAMACAO_DIARIA_2026_10_17.parquet" not in baixados
+    # todos os arquivos da Programação diária, para os códigos de todo o período (fase D), como o despacho (fase B)
+    assert {"programacao_diaria/PROGRAMACAO_DIARIA_2026_10_18.parquet",
+            "programacao_diaria/PROGRAMACAO_DIARIA_2026_10_17.parquet"} <= baixados
     geracao = sorted(b for b in baixados if b.startswith("geracao-usina-2/"))
     assert geracao == [f"geracao-usina-2/GERACAO_USINA-2_{m.year}_{m.month:02d}.parquet"
                        for m in pd.period_range("2025-10", "2026-09", freq="M")]

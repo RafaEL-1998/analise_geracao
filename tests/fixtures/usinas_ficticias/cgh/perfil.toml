@@ -1,4 +1,5 @@
-# Usina fictícia do tipo CGH (spec 006, decisão R23), só para testes: geração própria, sem os demais conjuntos.
+# Usina fictícia do tipo CGH (spec 006, decisão R23), só para testes: geração própria, sem EVT; com os Dados
+# hidrológicos desde a fase D (tarefa T150: a afluência da hidrelétrica sem EVT, com a hora conferida pela geração).
 # Valores inventados; identificadores que não existem no ONS.
 
 [usina]
@@ -13,6 +14,9 @@ modalidade = "TIPO II-C"
 [identificacao]
 ceg = "CGH.PH.GO.000103-0.01"
 id_ons = "GOCGFI"
+cod_usina = 998
+nome_ons = "CGH FICTICIA"
+id_reservatorio = "PNCGFI"
 codigos_programacao = ["GOCGFI"]  # exigido em todo tipo (contrato do perfil); sem programação publicada
 
 [cobertura]
@@ -20,13 +24,19 @@ evt = "ausente"
 indicadores = "ausente"
 programacao = "ausente"
 disponibilidade = "ausente"
-hidrologia = "ausente"
+hidrologia = "proprio"
 geracao = "proprio"
 
 [parametros]
 potencia_instalada_mw = 4.0
 unidades_geradoras = 2
 potencia_unitaria_mw = 2.0
+tipo_turbina = "Francis de eixo horizontal"
+engolimento_nominal_ug_m3s = 10.0
+queda_bruta_m = 20.0
+perda_hidraulica_m = 0.5
+rendimento_turbina_gerador = 0.88
+vazao_remanescente_m3s = 0.5
 
 [parametros.fontes]
 geral = "Ficha técnica fictícia da CGH, Tabela 1"

@@ -73,6 +73,10 @@ ARQUIVOS_COLETA = {
     "capacidade": "capacidade_ficha.csv",
     "auditoria_composicao": "auditoria_composicao.csv",
     "auditoria_capacidade": "auditoria_capacidade.csv",
+    # Usinas em conjunto (spec 006, fase D; rascunho 001, FR-060 e FR-061)
+    "capacidade_membros": "capacidade_membros.csv",  # as unidades de cada usina da composição do conjunto
+    "auditoria_capacidade_membros": "auditoria_capacidade_membros.csv",
+    "tipo_publicado": "tipo_publicado.csv",  # o tipo que o ONS publica na série do conjunto, por trecho
     # Térmicas (spec 006, fase B; data-model 6.1)
     "despacho": "despacho_extraido.parquet",
     "cvu": "cvu_extraido.parquet",
@@ -152,6 +156,7 @@ ARQUIVOS_CONFERENCIA = {
     "geracao_fontes": "geracao_fontes.csv",  # G1 (spec 006, fase C)
     "soma_conjunto": "soma_conjunto.csv",  # G2
     "programacao_renovaveis": "programacao_renovaveis.csv",  # G5
+    "alinhamento_hidrologia": "alinhamento_hidrologia.csv",  # hidrelétricas sem EVT (spec 006, fase D; FR-026)
 }
 ARQUIVOS_ANALISES = {"resultados": "resultados.pkl"}
 # Catálogo de usinas (spec 006, data-model, seção 2), em data/catalogo/, sem .bak

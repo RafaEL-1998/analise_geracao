@@ -56,7 +56,10 @@ def test_geracao_por_usina_pelo_id_ons_ou_pelo_conjunto(tipo: str, cobertura: Di
         assert descricoes["conjunto"].identificador.valor == "CJU_GOCONJ"
     if "usina" in descricoes:
         assert descricoes["usina"].identificador.valor == "GOUSIN"
-    assert all(d.colunas_texto == ("cod_modalidadeoperacao",) for d in descricoes.values())
+    # no conjunto, também o tipo publicado (fase D; rascunho 001, FR-061)
+    assert all(d.colunas_texto == ("cod_modalidadeoperacao",) + (("nom_tipousina", "nom_tipocombustivel")
+                                                                   if nivel == "conjunto" else ())
+               for nivel, d in descricoes.items())
 
 
 def test_sem_serie_de_referencia_e_erro() -> None:
@@ -177,3 +180,46 @@ def test_um_so_trecho_nao_e_mostrado() -> None:
     comp = _complemento(("2024-01-01 00:00", "2024-01-02 00:00", "TIPO I", "usina"))
     trechos = sr.trechos(comp, pd.DataFrame(columns=COMPOSICAO.columns), (), "")
     assert len(trechos) == 1 and not trechos["mostrar"].iloc[0]
+
+
+# ---------------------------------------------------------------------------
+# Usina em conjunto (fase D; rascunho 001, FR-054, FR-060 e FR-061)
+# ---------------------------------------------------------------------------
+
+COMPOSICAO_D = pd.DataFrame([
+    {"id_conjunto": "CJU_GOCONJ", "ceg": "PCH.XX.GO.000001-0.01", "tipo": "PCH", "inicio": "2019-08-22", "fim": ""},
+    {"id_conjunto": "CJU_GOCONJ", "ceg": "PCH.XX.GO.000002-0.01", "tipo": "PCH", "inicio": "2012-03-21", "fim": ""},
+    {"id_conjunto": "CJU_GOCONJ", "ceg": "UTE.XX.GO.000009-0.01", "tipo": "UTE", "inicio": "2011-01-06",
+     "fim": "2019-01-01"},
+])
+
+
+def test_intervalos_da_usina_e_recorte_da_serie_do_conjunto() -> None:
+    intervalos = sr.intervalos_da_usina(COMPOSICAO_D, "pch.xx.go.000001-0.01")  # o CEG normalizado
+    assert intervalos == [(pd.Timestamp("2019-08-22"), None)]
+    assert sr.intervalos_da_usina(COMPOSICAO_D, "PCH.XX.GO.000099-0.01") == []  # fora da composição
+    serie = pd.DataFrame({"din_instante": pd.date_range("2019-08-21 22:00", periods=4, freq="h"),
+                          "val_geracao": [1.0, 2.0, 3.0, 4.0]})
+    recortada = sr.no_intervalo(serie, intervalos)
+    assert list(recortada["val_geracao"]) == [3.0, 4.0]  # antes da entrada, a geração do conjunto não tem a usina
+    saida = sr.no_intervalo(serie, [(pd.Timestamp("2019-08-01"), pd.Timestamp("2019-08-21 23:00"))])
+    assert list(saida["val_geracao"]) == [1.0]  # a saída não entra
+
+
+def test_membros_no_periodo() -> None:
+    assert sr.membros_no_periodo(COMPOSICAO_D, pd.Timestamp("2019-08-22"), pd.Timestamp("2026-10-19")) == [
+        "PCH.XX.GO.000001-0.01", "PCH.XX.GO.000002-0.01"]  # a UTE saiu antes do período
+    assert sr.membros_no_periodo(COMPOSICAO_D, pd.Timestamp("2018-01-01"), pd.Timestamp("2018-12-31")) == [
+        "PCH.XX.GO.000002-0.01", "UTE.XX.GO.000009-0.01"]
+
+
+def test_tipo_publicado_por_trecho() -> None:
+    comp = _complemento(("2025-06-30 00:00", "2025-07-01 23:00", "Conjunto de Usinas", "conjunto"))
+    trechos = sr.trechos(comp, COMPOSICAO, (), "CJU_GOCONJ")
+    serie = pd.DataFrame({"din_instante": comp["din_instante"], "nom_tipousina": "TÉRMICA ",
+                          "nom_tipocombustivel": "Biomassa"})
+    tabela = sr.tipos_publicados(serie, trechos)
+    assert list(tabela.columns) == ["trecho", "inicio", "fim", "nom_tipousina", "nom_tipocombustivel", "horas"]
+    assert list(tabela["trecho"]) == [1, 2] and list(tabela["horas"]) == [24, 24]
+    assert set(tabela["nom_tipousina"]) == {"TÉRMICA"}  # sem os espaços das pontas
+    assert sr.tipos_publicados(None, trechos).empty

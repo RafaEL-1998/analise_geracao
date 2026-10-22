@@ -798,22 +798,67 @@ def _achado_qualidade_comum(res: ResultadosAnalise) -> Tuple[str, str]:
     if q["horas_sem_valor"]:
         texto += f" {fmt_int(q['horas_sem_valor'])} horas da série de referência sem valor, fora das médias."
     if q["linhas_usina_sem_valor"]:
+        periodo = q.get("linhas_usina_sem_valor_periodo") or {}
+        desde = (f", de {fmt_data(periodo['inicio'])} a {fmt_data(periodo['fim'])}"
+                 if periodo.get("inicio") else " no período")
         texto += (f" A Geração por usina traz {fmt_int(q['linhas_usina_sem_valor'])} linhas próprias da usina sem "
-                  f"valor no período; a série usada é a do conjunto.")
+                  f"valor{desde}; a série usada é a do conjunto.")
+    from src.analises.conjunto import frases_tipo_publicado  # fase D: o tipo publicado divergente da composição
+
+    for frase in frases_tipo_publicado(getattr(res, "conjunto", None) or {}):
+        texto += f" {frase}"
     return "Qualidade dos dados", texto
+
+
+def _achado_afluencia_comum(res: ResultadosAnalise) -> Optional[Tuple[str, str]]:
+    """Afluência e vertimento na hidrelétrica sem EVT (spec 006, fase D; tarefa T150): a cobertura, a hora conferida
+    pela geração da usina e, com ela confirmada, as médias do período, sem os cruzamentos com a EVT."""
+    h = res.hidrologia
+    if not h or not h.get("sem_evt"):
+        return None
+    r = h["resumo"]
+    texto = (f"Os dados hidrológicos horários do ONS para a usina cobrem de {fmt_data(r['inicio'])} a "
+             f"{fmt_data(r['fim'])} ({fmt_int(r['horas'])} horas, convertidas da hora de fim para a hora de início)")
+    a = h["alinhamento"].iloc[0]
+    if h.get("motivo_alinhamento"):
+        return "Afluência e vertimento", (
+            f"{texto}; a hora não pôde ser conferida pela geração da usina ({h['motivo_alinhamento']}): só a cobertura é "
+            "mostrada. Os dados hidrológicos são informados pelos agentes e não são consistidos pelo ONS.")
+    correlacoes = (f"correlação entre a vazão turbinada e a geração de {fmt_num(a['correlacao_0h'], 3)} sem deslocamento, "
+                   f"{fmt_num(a['correlacao_menos_1h'], 3)} com −1 h e {fmt_num(a['correlacao_mais_1h'], 3)} com +1 h, "
+                   f"em {fmt_int(a['horas_comuns'])} horas comuns")
+    if not h["publicado"]:
+        return "Afluência e vertimento", (
+            f"{texto}; a hora não foi confirmada pela geração da usina ({correlacoes}): a série não é usada e só a "
+            "cobertura é mostrada. Os dados hidrológicos são informados pelos agentes e não são consistidos pelo ONS.")
+    texto += (
+        f"; a hora foi conferida pela geração da usina ({correlacoes}). Afluência média de "
+        f"{fmt_num(r['afluencia_media_m3s'], 1)} m³/s (máxima de {fmt_num(r['afluencia_maxima_m3s'], 0)} m³/s); vazão "
+        f"turbinada média de {fmt_num(r['turbinada_media_m3s'], 1)} m³/s e vertida de {fmt_num(r['vertida_media_m3s'], 1)} "
+        f"m³/s; afluência acima do engolimento máximo da usina ({fmt_num(perfil_ativo().engolimento_maximo_m3s, 1)} "
+        f"m³/s) em {fmt_int(r['horas_afluencia_acima_engolimento'])} horas. Os dados hidrológicos são informados pelos "
+        "agentes e não são consistidos pelo ONS.")
+    return "Afluência e vertimento", texto
 
 
 def montar_achados_comum(res: ResultadosAnalise) -> List[Tuple[str, str]]:
     """Constatações das usinas sem EVT, a partir das seções comuns (decisão R30) e das seções do tipo."""
+    from src.analises.conjunto import achado_usina_no_conjunto, achados_conjunto, em_duas_partes  # fase D
     from src.analises.renovavel import achados_renovavel  # seções de eólica e solar (fase C)
     from src.analises.termica import achados_termica  # seções de térmica (fase B)
 
+    usina_no_conjunto = ([achado_usina_no_conjunto(res.conjunto, perfil_ativo().usina.nome,
+                                                   perfil_ativo().parametros.potencia_instalada_mw)]
+                         if em_duas_partes(res) else [])
     return [
         _achado_cobertura_comum(res),
         *[a for a in (_achado_cadastro(res),) if a is not None],
+        *usina_no_conjunto,
         _achado_geracao_comum(res),
         *[a for a in (_achado_disponibilidade_comum(res), _achado_programacao_comum(res)) if a is not None],
         *achados_termica(getattr(res, "termica", None) or {}),
         *achados_renovavel(getattr(res, "renovavel", None) or {}),
+        *achados_conjunto(getattr(res, "conjunto", None) or {}),
+        *[a for a in (_achado_afluencia_comum(res),) if a is not None],
         _achado_qualidade_comum(res),
     ]

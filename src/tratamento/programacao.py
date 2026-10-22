@@ -39,16 +39,18 @@ class ProgramacaoONS:
 def somar_codigos(patamares: pd.DataFrame) -> pd.DataFrame:
     """Soma dos códigos em cada patamar (``cod_exibicaousina`` presente só com mais de um código).
 
-    O patamar só tem soma quando todos os códigos da extração têm valor nele; sem a linha ou sem o valor de algum
-    código, a soma fica ausente, nunca completada (princípio V).
+    Cada código vale do primeiro ao último dia em que aparece na extração (spec 006, fase D: um conjunto pode trocar os
+    códigos, como o Conj. Chapadão em 07/2025). O patamar só tem soma quando todos os códigos vigentes no dia têm valor
+    nele; sem a linha ou sem o valor de algum deles, a soma fica ausente, nunca completada (princípio V).
     """
     if COLUNA_CODIGO not in patamares.columns:
         return patamares
     p = patamares.dropna(subset=["num_patamar"])
-    codigos = p[COLUNA_CODIGO].nunique()
+    limites = p.groupby(COLUNA_CODIGO)["dia"].agg(["min", "max"])
+    vigentes = {dia: int(((limites["min"] <= dia) & (limites["max"] >= dia)).sum()) for dia in p["dia"].unique()}
     somas = p.groupby(["dia", "num_patamar"]).agg(geracao_programada_mw=("geracao_programada_mw", "sum"),
                                                   _valores=("geracao_programada_mw", "count")).reset_index()
-    somas.loc[somas["_valores"] < codigos, "geracao_programada_mw"] = float("nan")
+    somas.loc[somas["_valores"] < somas["dia"].map(vigentes), "geracao_programada_mw"] = float("nan")
     return somas.drop(columns="_valores")
 
 

@@ -7,6 +7,7 @@ from typing import Dict, Optional, Tuple
 
 import pandas as pd
 
+from src.analises.conjunto import em_duas_partes
 from src.analises.resultados import ResultadosAnalise, sem_evt
 from src.comum.logger import setup_logger
 from src.relatorio.conteudo import tabela_conclusao
@@ -78,6 +79,15 @@ def _abas_sem_evt(res: ResultadosAnalise) -> Dict[str, pd.DataFrame]:
         for sigla, cid in (("G1", "geracao_fontes"), ("G2", "soma_conjunto"), ("G5", "programacao_renovaveis")):
             conf = conferencias.get(cid) or {}
             abas.update({f"CONF_{sigla}_MENSAL": conf.get("mensal"), f"CONF_{sigla}_DIVERGENCIAS": conf.get("divergencias")})
+    cj = getattr(res, "conjunto", None) or {}
+    if cj:  # seção do conjunto (fase D): as tabelas completas, com a composição de cada trecho
+        abas.update({"CONJ_TRECHOS": cj.get("trechos"), "CONJ_COMPOSICAO": cj.get("composicao"),
+                     "CONJ_MENSAL": cj.get("mensal"), "CONJ_TIPO_PUBLICADO": cj.get("tipo_publicado"),
+                     "CONJ_PESO_USINA": cj.get("peso_usina") if em_duas_partes(res) else None})
+    h = res.hidrologia or {}
+    if h:  # afluência da hidrelétrica sem EVT (fase D, T150)
+        abas.update({"HID_ALINHAMENTO": h.get("alinhamento"), "HID_MENSAL": h.get("mensal"), "HID_ANUAL": h.get("anual"),
+                     "HID_AUSENCIAS": h.get("ausencias"), "HID_AUDITORIA": h.get("auditoria")})
     return {nome: t for nome, t in abas.items()
             if t is not None and (len(t) or nome in ("CONSTATACOES", "CONCLUSAO", "BASE_ANUAL", "OMITIDOS"))}
 

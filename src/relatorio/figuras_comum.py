@@ -57,6 +57,9 @@ NOMES_FIGURAS_COMUM_OPCIONAIS: Dict[str, str] = {
     "corte_razao_mensal": "11_energia_cortada_por_razao_mensal.png",
     "recurso_geracao": "12_geracao_por_faixa_de_recurso.png",
     "desvio_programacao": "13_desvio_programacao_mensal.png",
+    # Fase D: a geração do conjunto por trecho de composição e as vazões da hidrelétrica sem EVT
+    "conjunto_mensal": "14_geracao_do_conjunto_por_trecho.png",
+    "hidrologia_mensal_comum": "15_vazoes_mensais.png",
 }
 COR_CONJUNTO = "#184f95"  # azul escuro da rampa: a série do conjunto, ao lado da azul da usina
 # Motivos do despacho: cada motivo com a sua posição fixa na ordem categórica (validada com o script da skill de
@@ -73,6 +76,11 @@ CORES_UNIDADES = ["#2a78d6", "#1baf7a", "#eda100", "#e87ba4"]  # CVU de cada uni
 # a semi-hora restrita sem razão publicada, em cinza
 CORES_RAZOES: Dict[str, str] = {**dict(zip(RAZOES.values(), ("#2a78d6", "#eb6834", "#1baf7a"))),
                                 SEM_RAZAO: COR_CONTEXTO}
+# Trechos de composição do conjunto (fase D): a ordem categórica fixa, validada com o script da skill de visualização
+# sobre fundo branco (contraste abaixo de 3:1 em três cores, compensado pela legenda e pela tabela por trecho); a partir
+# do sexto trecho, cinza ("demais composições"), nunca uma cor nova
+CORES_TRECHOS = ("#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4")
+DEMAIS_COMPOSICOES = "Demais composições"
 
 
 def rotulo_nivel(res: ResultadosAnalise, nivel: str) -> str:
@@ -493,6 +501,94 @@ def _grafico_desvio_programacao(res: ResultadosAnalise, caminho: Path, dpi: int)
     plt.close(fig)
 
 
+# ---------------------------------------------------------------------------
+# Usina em conjunto e hidrelétrica sem EVT (fase D)
+# ---------------------------------------------------------------------------
+
+
+def _grafico_conjunto(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    """Geração média mensal do conjunto, uma cor por trecho de composição, a potência somada de cada trecho tracejada e
+    uma linha vertical em cada mudança de composição (um só eixo, em MW)."""
+    from src.relatorio.secoes_conjunto import rotulo_trecho
+
+    c = res.conjunto
+    trechos = c["trechos"]
+    rotulos = {int(r.trecho): (f"Composição {rotulo_trecho(r)}" if i < len(CORES_TRECHOS) else DEMAIS_COMPOSICOES)
+               for i, r in enumerate(trechos.itertuples())}
+    cores = {}
+    for i, rotulo in enumerate(dict.fromkeys(rotulos.values())):
+        cores[rotulo] = CORES_TRECHOS[i] if rotulo != DEMAIS_COMPOSICOES else COR_CONTEXTO
+    # cada média mensal no meio do mês: a mudança de composição (no dia dela) fica entre os pontos dos dois trechos
+    m = c["mensal"].assign(serie=c["mensal"]["trecho"].map(rotulos),
+                           meio=pd.to_datetime(c["mensal"]["mes"]) + pd.Timedelta(days=14))
+    meses = sorted(pd.to_datetime(m["mes"]).unique())
+    poucos = len(meses) <= 36
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    sns.lineplot(data=m, x="meio", y="geracao_media_mw", hue="serie", hue_order=list(cores), palette=cores,
+                 units="trecho", estimator=None, linewidth=1.6 if poucos else 1.3, marker="o",
+                 markersize=6 if poucos else 2.5, legend=False, ax=ax)
+    if c.get("com_capacidade"):  # a potência somada de cada trecho, nas datas do trecho
+        for r in trechos.itertuples():
+            if pd.notna(r.potencia_somada_mw):
+                sns.lineplot(x=[pd.Timestamp(r.inicio), pd.Timestamp(r.fim)], y=[r.potencia_somada_mw] * 2,
+                             color=cores[rotulos[int(r.trecho)]], linewidth=1.0, linestyle=(0, (4, 3)), ax=ax)
+    for r in list(trechos.itertuples())[1:]:
+        ax.axvline(pd.Timestamp(r.inicio), color=COR_TINTA_SUAVE, lw=0.8, ls=(0, (1, 2)), zorder=1)
+    ax.set_xlim(pd.Timestamp(meses[0]) - pd.Timedelta(days=5),
+                pd.Timestamp(meses[-1]) + pd.offsets.MonthBegin(1) + pd.Timedelta(days=5))
+    topo = max(m["geracao_media_mw"].max(), trechos["potencia_somada_mw"].max() if c.get("com_capacidade") else 0)
+    ax.set_ylim(0, (topo if pd.notna(topo) and topo > 0 else 1.0) * 1.1)
+    ax.set_xlabel("")
+    ax.set_ylabel("MW")
+    ax.yaxis.set_major_formatter(_FORMATADOR_Y)
+    _eixo_tempo(ax, meses[0], meses[-1], diario=False)
+    ax.grid(axis="x", visible=False)
+    ax.set_title(f"Geração média mensal do conjunto {c.get('nome') or c.get('id')}, por composição")
+    alcas = [plt.Line2D([], [], color=cor, lw=2, marker="o", markersize=4, label=nome) for nome, cor in cores.items()]
+    if c.get("com_capacidade"):
+        alcas.append(plt.Line2D([], [], color=COR_TINTA_SECUNDARIA, lw=1.0, ls=(0, (4, 3)),
+                                label="Potência somada do trecho"))
+    ax.legend(handles=alcas, loc="upper center", bbox_to_anchor=(0.5, -0.09), ncol=min(3, len(alcas)))
+    fig.subplots_adjust(left=0.07, right=0.97, top=0.9, bottom=0.26 if len(alcas) > 3 else 0.2)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
+def _grafico_hidrologia_comum(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    """Vazões afluente, turbinada e vertida médias por mês (um só eixo, em m³/s), com as cores da figura das vazões
+    das hidrelétricas com EVT."""
+    from src.relatorio.figuras import COR_AFLUENCIA
+
+    m = res.hidrologia["mensal"]
+    meses = pd.PeriodIndex(m["mes"], freq="M").to_timestamp()
+    vazoes = {"afluencia_media_m3s": ("Vazão afluente", COR_AFLUENCIA),
+              "turbinada_media_m3s": ("Vazão turbinada", COR_GERACAO),
+              "vertida_media_m3s": ("Vazão vertida", COR_EVT)}
+    longo = pd.concat([pd.DataFrame({"mes": meses, "serie": nome, "m3s": m[coluna].to_numpy()})
+                       for coluna, (nome, _) in vazoes.items()], ignore_index=True)
+    poucos = len(meses) <= 36
+    fig, ax = plt.subplots(figsize=TAMANHO_FIGURA_PADRONIZADA)
+    sns.lineplot(data=longo, x="mes", y="m3s", hue="serie", hue_order=[n for n, _ in vazoes.values()],
+                 palette={n: c for n, c in vazoes.values()}, linewidth=1.6 if poucos else 1.2,
+                 marker="o" if poucos else None, markersize=4, legend=False, ax=ax)
+    ax.axhline(perfil_ativo().engolimento_maximo_m3s, color=COR_TINTA_SUAVE, lw=0.9, ls=(0, (4, 3)), zorder=1)
+    _rotulo_referencia(ax, perfil_ativo().engolimento_maximo_m3s,
+                       f"Engolimento máximo\n{fmt_num(perfil_ativo().engolimento_maximo_m3s, 0)} m³/s")
+    ax.set_xlim(meses.min() - pd.Timedelta(days=20), meses.max() + pd.Timedelta(days=20))
+    ax.set_ylim(bottom=0)
+    ax.set_xlabel("")
+    ax.set_ylabel("m³/s (média mensal)")
+    ax.yaxis.set_major_formatter(_FORMATADOR_Y)
+    _eixo_tempo(ax, meses.min(), meses.max(), diario=False)
+    ax.grid(axis="x", visible=False)
+    ax.set_title("Vazões médias mensais")
+    ax.legend(handles=[plt.Line2D([], [], color=cor, lw=2, label=nome) for nome, cor in vazoes.values()],
+              loc="upper center", bbox_to_anchor=(0.5, -0.09), ncol=3)
+    fig.subplots_adjust(left=0.07, right=0.86, top=0.9, bottom=0.2)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
 def _renovavel(res: ResultadosAnalise, chave: str) -> dict:
     return (getattr(res, "renovavel", None) or {}).get(chave) or {}
 
@@ -516,6 +612,8 @@ _GERADORES = {
     "corte_razao_mensal": _grafico_corte_razao,
     "recurso_geracao": _grafico_recurso,
     "desvio_programacao": _grafico_desvio_programacao,
+    "conjunto_mensal": _grafico_conjunto,
+    "hidrologia_mensal_comum": _grafico_hidrologia_comum,
 }
 _CONDICOES = {
     "sazonalidade": lambda res: len(res.comum["sazonalidade"]) > 0,
@@ -531,6 +629,9 @@ _CONDICOES = {
     "recurso_geracao": lambda res: bool(_renovavel(res, "recurso")) and len(_renovavel(res, "recurso")["faixas"]) > 0,
     "desvio_programacao": lambda res: bool(_renovavel(res, "programacao"))
     and len(_renovavel(res, "programacao")["maiores_desvios"]) > 0,
+    "conjunto_mensal": lambda res: bool(getattr(res, "conjunto", None)) and len(res.conjunto["mensal"]) > 0,
+    "hidrologia_mensal_comum": lambda res: bool((getattr(res, "hidrologia", None) or {}).get("publicado"))
+    and len(res.hidrologia.get("mensal", ())) > 0,
 }
 
 

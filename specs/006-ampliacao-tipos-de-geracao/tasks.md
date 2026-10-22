@@ -68,7 +68,7 @@ python -m pytest tests -q -p no:cacheprovider
 **Purpose**: conferir as pré-condições, guardar o estado aprovado e aprovar os ajustes das specs da fase A antes de qualquer código.
 
 - [X] T001 Congelar e conferir a versão de fiscalização (FR-028) e as pré-condições; registrar em `specs/006-ampliacao-tipos-de-geracao/tasks.md` ("Registro de execução"):
-  - **pasta**: `C:\Users\rlazaro\Desktop\UHE_SAO_DOMINGOS_versao_fiscalizacao\`, fora do projeto, com `src/` e `tests/` do commit aprovado `c82a64e` (sem mudanças pendentes), `usinas/sao_domingos/perfil.toml`, `data/raw/`, `data/usinas/sao_domingos/`, `reports/sao_domingos/`, `README.md`, `requirements.txt` e um `LEIA-ME.txt` com o uso;
+  - **pasta**: `C:\Users\rlazaro\Desktop\UHE_SAO_DOMINGOS_versao_fiscalizacao`, fora do projeto, com `src/` e `tests/` do commit aprovado `c82a64e` (sem mudanças pendentes), `usinas/sao_domingos/perfil.toml`, `data/raw/`, `data/usinas/sao_domingos/`, `reports/sao_domingos/`, `README.md`, `requirements.txt` e um `LEIA-ME.txt` com o uso;
   - **conferência**: nessa pasta, com o Python do `venv` do projeto, `python -m src completo --usina sao_domingos --sem-portal --data-geracao "07/10/2026 08:53"` com código 0 e `python -m src comparar --usina sao_domingos --referencia <projeto>\_backup_2026-10-08_antes_ampliacao_tipos_de_geracao\linha_de_base` com "Nenhuma diferença.";
   - **projeto principal**: nenhuma coleta com o portal depois de 08/10/2026. Usar um script no scratchpad que lê todos os `_manifesto_ons.json` de `data/raw/`, inclusive os de `_dicionarios/`, e mostra o maior `registrado_em_utc` e o maior `obtido_em_utc`. Com registro posterior, parar e levar ao usuário (decisão R22).
 - [X] T002 Criar a cópia de segurança com `python -m src copia-seguranca --motivo antes_fase_A`, ainda com o código de hoje.
@@ -644,37 +644,37 @@ python -m pytest tests -q -p no:cacheprovider
 
 ### Preparação da fase D
 
-- [ ] T117 [US4] Criar a cópia `python -m src copia-seguranca --motivo antes_fase_D` e conferir as referências na cópia nova. Registrar.
-- [ ] T118 [P] [US4] Acrescentar a fase D aos rascunhos:
+- [X] T117 [US4] Criar a cópia `python -m src copia-seguranca --motivo antes_fase_D` e conferir as referências na cópia nova. Registrar.
+- [X] T118 [P] [US4] Acrescentar a fase D aos rascunhos:
   - `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/001-coleta-dados.md`: composição por trecho e linhas próprias sem valor;
   - `004-analises.md`: decisão R20;
   - `005-geracao-relatorio.md`: seções de conjunto e notas do nível de conjunto.
-- [ ] T119 [US4] Levar ao usuário os rascunhos da fase D em `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/` e registrar a aprovação. Nenhum código da fase D antes disso.
+- [X] T119 [US4] Levar ao usuário os rascunhos da fase D em `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/` e registrar a aprovação. Nenhum código da fase D antes disso.
 
 ### Tests for User Story 4
 
-- [ ] T120 [P] [US4] Escrever `tests/analises/test_conjunto.py`, com a PCH fictícia (térmicas saem do conjunto no meio do período):
+- [X] T120 [P] [US4] Escrever `tests/analises/test_conjunto.py`, com a PCH fictícia (térmicas saem do conjunto no meio do período):
   - geração do conjunto por trecho de composição, com os tipos de cada trecho;
   - nenhum número dividido entre as usinas;
   - linhas próprias sem valor contadas na qualidade dos dados;
   - disponibilidade e indicadores oficiais omitidos, com o motivo;
   - conclusão sem itens e com a frase.
-- [ ] T121 [P] [US4] Ampliar `tests/integracao/test_usinas_ficticias.py` com as seções de conjunto na `pch` e na `cgh` fictícias e a nota de que o ONS não publica a geração da usina isolada.
+- [X] T121 [P] [US4] Ampliar `tests/integracao/test_usinas_ficticias.py` com as seções de conjunto na `pch` e na `cgh` fictícias e a nota de que o ONS não publica a geração da usina isolada.
 
 ### Implementation for User Story 4
 
-- [ ] T122 [US4] Criar `src/analises/conjunto.py` (decisão R20), integrado em `src/analises/etapa.py` e em `ResultadosAnalise.conjunto`, usando `trechos.csv` e `composicao_conjunto.csv`.
-- [ ] T123 [US4] Criar `src/relatorio/secoes_conjunto.py` e a figura da geração do conjunto por trecho em `src/relatorio/figuras.py`, em seaborn.
+- [X] T122 [US4] Criar `src/analises/conjunto.py` (decisão R20), integrado em `src/analises/etapa.py` e em `ResultadosAnalise.conjunto`, usando `trechos.csv` e `composicao_conjunto.csv`.
+- [X] T123 [US4] Criar `src/relatorio/secoes_conjunto.py` e a figura da geração do conjunto por trecho em `src/relatorio/figuras.py`, em seaborn.
   - Também as notas do nível de conjunto em `src/relatorio/conteudo.py`.
 
 ### Validação real da User Story 4
 
-- [ ] T124 [US4] Gerar o perfil da PCH Bandeirante com `python -m src perfil --ceg PCH.PH.MS.032163-0.01 --slug bandeirante`.
+- [X] T124 [US4] Gerar o perfil da PCH Bandeirante com `python -m src perfil --ceg PCH.PH.MS.032163-0.01 --slug bandeirante`.
   - Conferir os quatro códigos de programação `MSCAO-*`.
   - O usuário completa e confere o perfil. Registrar.
-- [ ] T125 [US4] Rodar `python -m src completo --usina bandeirante --data-geracao "<data>"` e conferir os itens do quickstart 6. Conferir o relatório pelo quickstart 8. Registrar.
-- [ ] T126 [US4] Levar o relatório ao usuário. Depois da aprovação, `python -m src referencia --usina bandeirante`, com as datas, e o pedido de commit. Registrar.
-- [ ] T127 [US4] Portão do fim da fase D: suíte; `pyflakes`; `/speckit-converge`; `comparar --todas --coleta` com código 0, com cinco referências. Registrar.
+- [X] T125 [US4] Rodar `python -m src completo --usina bandeirante --data-geracao "<data>"` e conferir os itens do quickstart 6. Conferir o relatório pelo quickstart 8. Registrar.
+- [X] T126 [US4] Levar o relatório ao usuário. Depois da aprovação, `python -m src referencia --usina bandeirante`, com as datas, e o pedido de commit. Registrar.
+- [X] T127 [US4] Portão do fim da fase D: suíte; `pyflakes`; `/speckit-converge`; `comparar --todas --coleta` com código 0, com cinco referências. Registrar.
 
 **Checkpoint**: PCH e CGH em conjunto com relatório honesto sobre o nível dos dados; cinco referências protegidas.
 
@@ -870,7 +870,7 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 ### 09/10/2026 — T001 (versão de fiscalização e pré-condições)
 
 - **Decisão do usuário (09/10/2026)**: começar a implementação já, "deixando os códigos salvos em uma pasta" (FR-028 ajustada).
-- **Pasta**: `C:\Users\rlazaro\Desktop\UHE_SAO_DOMINGOS_versao_fiscalizacao\` (4,1 GB), com:
+- **Pasta**: `C:\Users\rlazaro\Desktop\UHE_SAO_DOMINGOS_versao_fiscalizacao` (4,1 GB), com:
   - `src/` e `tests/` do commit `c82a64e`, sem mudanças pendentes em `src/`, `tests/` e `usinas/`;
   - `usinas/sao_domingos/perfil.toml`, `data/raw/`, `data/usinas/sao_domingos/` e `reports/sao_domingos/`;
   - `README.md`, `requirements.txt`, `.gitignore` e o `LEIA-ME.txt` com o uso.
@@ -1134,7 +1134,7 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 ## Phase 9: Convergence
 
 - [X] T149 Gerar o resumo executivo das usinas sem EVT executando a US3 da spec 007 (T027 a T030), cuja dependência (a tabela anual da base horária comum) a fase A cumpriu, antes de levar o relatório da William Arjona à aprovação per Constituição, Produtos (partial)
-- [ ] T150 Implementar na fase D a seção "Afluência, vertimento e nível do reservatório" das hidrelétricas sem EVT com Dados hidrológicos (análise sem os cruzamentos com a EVT, seção e figura em seaborn, teste com uma hidrelétrica fictícia sem EVT e com hidrologia), hoje omitida com o motivo per FR-020 e decisão R14, seção 13 (missing)
+- [X] T150 Implementar na fase D a seção "Afluência, vertimento e nível do reservatório" das hidrelétricas sem EVT com Dados hidrológicos (análise sem os cruzamentos com a EVT, seção e figura em seaborn, teste com uma hidrelétrica fictícia sem EVT e com hidrologia), hoje omitida com o motivo per FR-020 e decisão R14, seção 13 (missing)
 - [X] T151 Tratar na conferência do cadastro (`src/conferencia/cadastro.py`) o perfil sem id ONS (PCH, CGH, EOL e UFV em conjunto): "não informado" no texto, no lugar de "None", e divergência só quando o cadastro e o perfil diferem de fato, com teste per FR-019 e FR-025 (partial)
 - [X] T152 Usar `Secao.legenda` nas legendas das seções do caminho sem EVT ou retirá-lo de `src/relatorio/estrutura.py`, ajustando o data-model 6.5 per data-model 6.5 (partial)
 - [ ] T153 Registrar na incorporação (fase F) os desvios do plano aprovados na fase A: `VERSAO_FORMATO` 3 das Análises e os módulos `src/relatorio/comum.py` e `src/relatorio/figuras_comum.py` per plan.md, estrutura de módulos (contradicts)
@@ -1307,3 +1307,103 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 - O usuário aprovou as mudanças da T157 nos dois relatórios piloto. As duas referências, ainda sem commit, foram removidas e registradas de novo com `python -m src referencia --usina <slug> --data-geracao "21/10/2026 10:00" --aprovado-em "21/10/2026"`, iguais aos relatórios atuais.
 - Portão final: suíte com 777 aprovados; pyflakes sem aviso; `/speckit-converge` feito (Phase 11: T157 concluída, T158 para a fase F); `comparar --todas --coleta` com quatro referências: seriemas_1 e praia_formosa sem nenhuma diferença; relatórios da sao_domingos e da william_arjona idênticos; na Coleta, a sao_domingos com as quatro diferenças já aceitas (republicação do ONS de 19/10/2026) e a william_arjona com as diferenças de dados publicados depois do congelamento dela (republicação de 20/10/2026 e o dia 19/10/2026), propostas ao usuário para o mesmo tratamento. Código 6 só por essas diferenças da Coleta.
 - Fase C fechada no código; falta o commit do usuário (código, testes, rascunhos, perfis e as duas referências novas).
+
+### 22/10/2026 — T117 (cópia de segurança da fase D)
+
+- Pré-condição: o código, os rascunhos e as referências da fase C já estavam no commit 03b0b7e (árvore limpa).
+- `python -m src copia-seguranca --motivo antes_fase_D`: código 0; `_backup_2026-10-22_antes_fase_D` criada e conferida (472 arquivos), com as quatro referências (`sao_domingos`, `william_arjona`, `seriemas_1` e `praia_formosa`; cada `referencia.json` com o mesmo SHA-256 do projeto) e o `LEIA-ME.txt` listando-as. Excluída a mais antiga, `_backup_2026-10-19_antes_fase_B`; ficam `_backup_2026-10-20_antes_fase_C` e `_backup_2026-10-22_antes_fase_D`.
+
+### 22/10/2026 — T118 (rascunhos da fase D)
+
+- Contratos conferidos nos arquivos do ONS já baixados (Geração por usina de 2000 a 10/2026, Programação diária de 10/2024 a 10/2026, Composição dos conjuntos, catálogo):
+  - a geração do Conj. Chapadão (`CJU_MSCAO`) vai de 01/08/2012 a 19/10/2026, sempre publicada como "TÉRMICA"/"Biomassa", com outubro/2021 ausente; a Bandeirante só entra no conjunto em 22/08/2019;
+  - as linhas próprias das quatro PCH existem desde 01/05/2026, todas sem valor;
+  - a programação do conjunto trocou os quatro códigos em 07/2025 (`MSCAO-9761/9762/9763/9766` até 02/07/2025; `MSCAO-9764/9765/9784/10205` desde 05/07/2025), e o catálogo de hoje só conhece os quatro atuais;
+  - nenhuma usina de MS tem Dados hidrológicos sem a EVT (no Brasil, só a UHE Pimental e a UHE Canastra).
+- Seção "Fase D" acrescentada a quatro rascunhos de `ajustes-specs/` (o Tratamento não muda):
+  - Coleta: FR-051 e FR-053 (códigos de programação de todo o período, com o primeiro e o último dia); FR-054 (período da usina em conjunto recortado pela entrada e saída dela na composição; trechos sem mudança); FR-047/FR-048 (período das linhas próprias sem valor); FR-060 (`capacidade_membros.csv`) e FR-061 (`tipo_publicado.csv`);
+  - Conferência: FR-026 (alinhamento da hidrologia pela geração na hidrelétrica sem EVT; tarefa T150);
+  - Análises: FR-060 (composição e geração do conjunto por trecho, tipo publicado na qualidade dos dados, nada dividido nem na conclusão) e FR-061 (afluência sem a EVT; tarefa T150);
+  - Geração do relatório: FR-046 (seção do conjunto, com tabela, figura e legendas; a tabela de trechos da seção 1 sem a coluna de composição nas usinas em conjunto) e FR-047 (seção de afluência sem a EVT), notas e o efeito nas referências (a Seriemas 1 ganha a seção do conjunto e terá a referência refeita com a aprovação do usuário).
+- Pontos levados ao usuário com a T119: o recorte do período pela composição, a seção do conjunto também na Seriemas 1, a potência das usinas da composição e o alinhamento da hidrologia pela geração.
+
+### 22/10/2026 — T119 em curso (decisões do usuário sobre os rascunhos da fase D)
+
+- Quatro pontos levados ao usuário, todos decididos pela opção proposta:
+  1. **período da usina em conjunto**: recortado pela entrada e saída da usina na composição (Bandeirante desde 22/08/2019, e não desde 01/08/2012);
+  2. **seção do conjunto**: em toda usina em conjunto, inclusive a Seriemas 1, cuja referência será refeita com a aprovação do usuário na T126;
+  3. **potência das usinas da composição**: incluída (`capacidade_membros.csv`), sem dividir número do conjunto e sem fator de capacidade do conjunto;
+  4. **hidrologia sem EVT** (T150): hora conferida pela correlação da vazão turbinada com a geração da usina (−1, 0 e +1 h), sem meta.
+- Decisões anotadas nos rascunhos 001 (FR-054, FR-060), 003 (FR-026) e 005 (FR-046). Falta a aprovação dos rascunhos da fase D como um todo; nenhum código antes dela.
+
+### 22/10/2026 — T119 (aprovação dos rascunhos da fase D) e republicação na Coleta da William Arjona
+
+- Rascunhos da fase D aprovados pelo usuário ("aprovado os rascunhos"), com as quatro decisões já anotadas. O código da fase D pode começar (T120 em diante), com a T150 e os itens novos da Coleta (FR-051, FR-053, FR-054, FR-060 e FR-061 do rascunho 001).
+- Decisão do usuário ("OK para tratativas William Arjona"): as diferenças da Coleta da William Arjona causadas por dados que o ONS publicou depois do congelamento dela (republicação de 20/10/2026 e dias novos) contam como aprovadas em `comparar --todas --coleta`, como as da São Domingos, até o próximo congelamento; o relatório refeito a partir da Coleta congelada continua tendo de dar "nenhuma diferença".
+
+### 22/10/2026 — fase D, código e testes (T120 a T123, T150 e os itens novos da Coleta)
+
+- **Coleta** (rascunho 001):
+  - FR-051 e FR-053: o catálogo lê todos os arquivos da Programação diária (733 em 22/10/2026), e `programacao.csv` ganha `primeiro_dia` e `ultimo_dia`; o nível da cobertura continua pelo arquivo mais recente (R3). O rascunho do perfil traz todos os códigos ligados, com os períodos em comentário (Bandeirante: os quatro `MSCAO-976x` até 02/07/2025 e os quatro atuais desde 05/07/2025).
+  - FR-054: na usina em conjunto sem série própria, a Composição dos conjuntos é coletada antes da série de referência, e as horas do conjunto só contam com a usina na composição (`intervalos_da_usina` e `no_intervalo` em `src/coleta/serie_referencia.py`; resumo `composicao_da_usina`); usina fora da composição: código 2, com a mensagem.
+  - FR-047/FR-048: as linhas próprias sem valor contadas só no período (antes, o mês inteiro do arquivo) e com a primeira e a última hora (`linhas_usina_sem_valor_periodo`).
+  - FR-060: `capacidade_membros.csv` (as unidades de cada usina da composição no período, pelo CEG, sem conferir o estado); FR-061: `tipo_publicado.csv` (tipo e combustível publicados na série do conjunto, por trecho).
+- **Conferência** (rascunho 003, FR-026): `alinhamento_hidrologia` em `src/conferencia/vazoes.py` (correlação da vazão turbinada com a geração da usina com −1, 0 e +1 h; confirmada quando a de 0 h é a maior; sem meta; CSV com os três deslocamentos). Precisão anotada no rascunho 003: fora das hidrelétricas, sem linha em `nao_aplicaveis.csv`, para os relatórios aprovados da William Arjona e da Praia Formosa não mudarem.
+- **T122** (`src/analises/conjunto.py`, rascunho 004, FR-060): trechos de composição (os trechos da Coleta com a mesma composição juntos), a geração do conjunto por trecho e por mês, a composição com a potência das unidades em operação em algum momento do trecho (a usina sem unidade cadastrada fica sem potência e é contada), o tipo publicado comparado com os tipos da composição e a constatação "Composição do conjunto"; integrado em `analisar_sem_evt` (a geração do conjunto vem da base horária, quando é a série de referência, ou da Geração por usina do conjunto, na eólica ou solar com série própria). A omissão "seção ainda não gerada pelo pipeline" saiu.
+- **T150** (rascunho 004, FR-061): `analisar_hidrologia_sem_evt` em `src/analises/hidrologia.py` (tabela anual e médias mensais, sem as faixas de afluência nem os dias com parada com EVT; sem a hora confirmada, só a cobertura e o resultado da conferência) e a constatação "Afluência e vertimento" das usinas sem EVT.
+- **T123** (`src/relatorio/secoes_conjunto.py`, rascunho 005, FR-046 e FR-047): seção "Composição e geração do conjunto" depois das seções do tipo (tabela por trecho, figura 14 `14_geracao_do_conjunto_por_trecho.png` e a composição, uma linha por usina, com a potência), a tabela de trechos da seção 1 sem a coluna dos CEGs nas usinas com a seção, a linha da capacidade das usinas do conjunto na tabela dos conjuntos do ONS, a seção "Afluência, vertimento e nível do reservatório (ONS)" das hidrelétricas sem EVT (tabela anual e figura 15 `15_vazoes_mensais.png`), notas, legendas e as abas CONJ_* e HID_*. As figuras ficam em `src/relatorio/figuras_comum.py`, como nas fases B e C (desvio a registrar na fase F, com a T153); paleta dos trechos validada com o script da skill de visualização (todas as verificações passam; aviso de contraste compensado pela legenda e pela tabela), um eixo só em cada figura.
+- **Achado no caminho (fase C), corrigido**: no resumo executivo, a linha "Fontes" usava sempre o identificador da usina; na Seriemas 1, a Geração por usina, o Fator de capacidade e a Restrição com a razão apareciam como "(id ONS MSSRI1)", sendo do conjunto. Agora usa o identificador com o nível, como as legendas (decisão R15). Não muda a São Domingos, a William Arjona nem a Praia Formosa.
+- **Testes**: T120 em `tests/analises/test_conjunto.py` (11), T150 em `tests/analises/test_hidrologia_sem_evt.py` (4) e em `tests/conferencia/test_conferencias.py` (3); T121 em `tests/integracao/test_usinas_ficticias.py`: a PCH fictícia entra no conjunto em 10/01/2024 (período recortado), uma térmica sai em 15/02/2024 e o conjunto é publicado como "TÉRMICA" (três trechos de composição, a divergência na constatação, 1.224 linhas próprias sem valor de 10/01 a 29/02/2024, omissões e a frase da conclusão); a CGH fictícia (geração própria) ganhou os Dados hidrológicos e é a hidrelétrica sem EVT da T150, sem a seção do conjunto; a UFV fictícia em conjunto ganha a seção, sem a nota do período. Desvio registrado da T121: a CGH fictícia tem geração própria, por isso não tem a seção do conjunto; o caso da CGH em conjunto é o mesmo caminho da PCH, cujo conjunto fictício tem uma CGH. Ajustes nos testes do catálogo, do rascunho, da série de referência, da aplicabilidade, das fontes e da estrutura. Suíte: 810 aprovados; pyflakes sem aviso.
+- **Portão intermediário** (`comparar --todas --coleta`): a primeira passada achou a conferência nova citada na aba FONTES e no resumo da São Domingos (caminho da EVT); corrigido (`conferencia_feita` só a aceita no resultado da hidrelétrica sem EVT, com teste). Na segunda passada: São Domingos, relatório sem diferença e só as quatro diferenças aceitas da Coleta; William Arjona, relatório sem diferença e só as diferenças da Coleta aceitas pelo usuário hoje; Praia Formosa sem diferença; Seriemas 1 com as mudanças decididas (seção do conjunto, três abas, `capacidade_membros.csv` na Coleta) e a linha "Fontes" do resumo corrigida, a levar ao usuário na T126.
+
+### 22/10/2026 — T124 (perfil da PCH Bandeirante)
+
+- Catálogo remontado com os arquivos locais (`python -m src usinas --sem-portal --estado MS --tipo PCH`), já com os códigos de programação de todo o período: `CJU_MSCAO` com `MSCAO-9761`, `-9762`, `-9763` e `-9766` de 01/10/2024 a 02/07/2025 e `MSCAO-9764`, `-9765`, `-9784` e `-10205` desde 05/07/2025.
+- Rascunho com `python -m src perfil --ceg PCH.PH.MS.032163-0.01 --slug bandeirante`: 20 campos do ONS e 4 pendentes (a fonte; garantia física, IP e TEIF opcionais). Os quatro códigos `MSCAO-*` pedidos na tarefa são agora oito, com os períodos em comentário.
+- Decisão do usuário (22/10/2026): perfil completado só com os dados do ONS, como o da William Arjona: nome "PCH Bandeirante", nome curto "Bandeirante", 3 unidades de 9,3333 MW (Capacidade de geração), início em 2019, sem garantia física, IP e TEIF de referência. `situacao = "conferido"`; o `perfil` não mostra diferença em relação ao catálogo.
+
+### 22/10/2026 — T125 (relatório da PCH Bandeirante)
+
+- `python -m src completo --usina bandeirante --data-geracao "22/10/2026 10:00"` com o portal: 3 min, código 0 em todas as etapas. Período de 22/08/2019 (entrada da usina no conjunto) a 20/10/2026, 62.064 horas do conjunto; outubro/2021 ausente (744 h, listadas).
+- **Achado e correção na primeira execução**: a seção de programação saiu omitida ("sem horas com a programação e a geração verificada no mesmo nível"), porque a soma por patamar do Tratamento pedia todos os oito códigos no mesmo dia, e o conjunto trocou os quatro códigos em 07/2025. Corrigido em `src/tratamento/programacao.py` (`somar_codigos`: cada código vale do primeiro ao último dia em que aparece; o código vigente sem valor ainda deixa a soma ausente), com teste; precisão anotada no rascunho 001 (FR-053). Nenhuma referência aprovada tem mais de um código. Refeito com `--sem-portal`.
+- **Quickstart 6**: geração do Conj. Chapadão por trecho de composição (três: 8 usinas, PCH e UTE, até 26/09/2019; 9 usinas até 30/06/2025; só as 4 PCH desde 01/07/2025, 47,0 MWmed contra 78,5 MW somados); a nota de que o ONS não publica a geração da usina isolada; a disponibilidade e os indicadores oficiais omitidos, com o motivo; as 4.152 linhas próprias sem valor, de 01/05/2026 a 20/10/2026, na qualidade dos dados; a conclusão sem itens, com a frase. Também a divergência do tipo publicado, na constatação: o ONS publica a série do conjunto como "TÉRMICA (Biomassa)" de 01/07/2025 a 20/10/2026, quando a composição tem só PCH (nas duas primeiras composições, com as UTE, o tipo corresponde).
+- **Seção 8 do quickstart**: nenhuma ocorrência de "satisfat" ou "cumpre" no relatório e no resumo; nenhum identificador das outras pilotos (MSUHSD, CEUFM, MSSRI1, PRUHSD, MSUTWI); nenhum "nan"; todo número do conjunto identificado nas legendas ("conjunto de usinas, id ONS CJU_MSCAO").
+- Relatório com 10 seções, 14 páginas, 5 figuras e 20 abas; resumo executivo de 1 página (263 palavras). Programação do conjunto × geração do conjunto: 17.472 horas comuns de 01/10/2024 a 20/10/2026, correlação de 0,92, 20 dias sem arquivo.
+- Suíte com 811 aprovados; pyflakes sem aviso.
+
+### 22/10/2026 — decisões do usuário sobre o relatório da Bandeirante e o relatório em duas partes
+
+- **Pergunta do usuário** (ao ver o relatório da Bandeirante): e os dados da usina especificamente? A parte do conjunto ficaria melhor só antes da conclusão, para ver quanto a PCH pesa no todo.
+- **Conferido nos dados abertos do ONS**: nada da operação da Bandeirante isolada. Só a ficha do cadastro, as unidades (3 × 9,33 MW, em operação desde 12/10/2019), a entrada no conjunto (22/08/2019) e as linhas próprias na Geração por usina desde 05/2026, todas sem valor. Os quatro códigos `MSCAO-*` da Programação diária têm o mesmo valor em 100 % dos patamares (o programado do conjunto dividido em partes iguais), em cada um dos dois grupos de códigos: não são da usina.
+- **Decisões** (perguntas com as opções recomendadas escolhidas):
+  1. relatório em **duas partes** na usina em conjunto sem série própria: a usina, logo depois da fonte e cobertura, e a operação do conjunto, logo antes da conclusão (rascunho 005, FR-048); a Seriemas 1 (série própria) fica com a estrutura da FR-046;
+  2. o **peso da usina na potência do conjunto**, por composição, só a potência, sem estimar a geração (rascunho 004, FR-060): Bandeirante com 6,7 % de 27/09/2019 a 30/06/2025 e 35,7 % desde 01/07/2025;
+  3. a geração da usina pela **CCEE** (download manual) fica registrada como proposta para uma spec futura; o relatório diz onde a geração da usina pode ser obtida.
+- **Implementação**: `peso_da_usina`, `em_duas_partes` e a constatação "A usina no conjunto" em `src/analises/conjunto.py`; em `src/relatorio/estrutura.py`, as seções "A usina no conjunto" e "Operação do conjunto <nome> (<id>)" e as seções dos números do conjunto fora do relatório em duas partes (viram subseções da parte do conjunto), com o mapa das constatações desse caso; em `src/relatorio/comum.py`, os blocos das duas partes e a tabela do peso; bloco `subtitulo` no Markdown e no PDF (no PDF, a subseção vai junto com a figura seguinte, ou com espaço para o início da tabela); aba CONJ_PESO_USINA; o resumo executivo remete à parte do conjunto para a evolução anual. A proposta de título da seção 3 ("Série temporal da geração", sem a disponibilidade) ficou resolvida pela reestruturação: na Bandeirante, a subseção é "Série temporal da geração do conjunto".
+- **Bandeirante refeita** (`--sem-portal`, "22/10/2026 10:00"): 6 seções (fonte e cobertura; a usina no conjunto; qualidade dos dados; operação do Conj. Chapadão, com seis subseções; conclusão; notas), 13 páginas, conferidas página a página.
+- **Testes**: a PCH fictícia em duas partes (o peso de 34,8 %, 34,8 % e 100 % nas três composições, a última só com a PCH e a CGH membro sem unidade cadastrada); unitários do peso e da condição; estrutura da `pch_alfa`. Suíte com 814 aprovados; pyflakes sem aviso.
+
+## Phase 12: Convergence
+
+- [X] T159 CRITICAL: conferir as unidades das usinas do conjunto em `capacidade_membros.csv` (`_gravar_capacidade_membros`, `src/coleta/etapa.py`) com um campo de conferência, o subsistema da linha da composição (o estado não serve: o Conj. Chapadão teve UTE de GO), e contar na auditoria as linhas em que só o CEG confere, com teste per Constitution IV (contradicts)
+- [X] T160 Levar a divergência do tipo publicado (`tipo_publicado.csv` × tipos da composição) para a constatação da qualidade dos dados, sem repetir a frase na seção do conjunto, com o teste ajustado per rascunho 004, FR-060, e caso de borda da spec 006 (partial)
+- [X] T161 Testar a Coleta da usina em conjunto ausente da composição do conjunto declarado no perfil: código 2, com a mensagem que cita o id do conjunto e o CEG per rascunho 001, FR-054 (partial)
+- [ ] T162 Registrar na incorporação (fase F), com a T153, a T156 e a T158, os desvios e acréscimos da fase D: figuras em `figuras_comum.py` e blocos e notas em `comum.py` e `secoes_conjunto.py` (a T123 citava `figuras.py` e `conteudo.py`); os arquivos novos (`capacidade_membros.csv`, `tipo_publicado.csv`, `alinhamento_hidrologia.csv`) e os campos novos de `ResultadosAnalise` (`conjunto`, `hidrologia` das usinas sem EVT) no data-model; o relatório em duas partes (FR-048) na tabela da decisão R14; o bloco `subtitulo`; as abas CONJ_* e HID_*; a linha "Fontes" do resumo com o nível; os desvios da T121 (CGH fictícia com geração própria) e da T124 (oito códigos de programação) per plan.md, data-model e research R14 (contradicts)
+
+### 22/10/2026 — T126 (aprovação e referências) e convergência da fase D (T159 a T161)
+
+- **Aprovação do usuário** ("o resto está ok"): o relatório e o resumo da PCH Bandeirante em duas partes, as mudanças da Seriemas 1 (seção do conjunto e a linha "Fontes" do resumo) e as diferenças da Coleta da Praia Formosa causadas por dados que o ONS publicou depois do congelamento dela (cadastro republicado e o dia 20/10/2026, baixados pela Coleta da Bandeirante com o portal), contadas como aprovadas até o próximo congelamento, como as da São Domingos e da William Arjona. O usuário observou que a conclusão da PCH fica sem itens porque o ONS só publica o conjunto: é a regra da decisão R16 (indício só com dado da usina); a geração da usina pela CCEE ficou como proposta para uma spec futura.
+- **Referências**: etapas 2 a 5 refeitas das duas usinas a partir da Coleta de cada uma; `python -m src referencia` da Bandeirante ("22/10/2026 10:00", aprovada em 22/10/2026) e da Seriemas 1 ("21/10/2026 10:00", aprovada em 22/10/2026), código 0. Cinco referências.
+- **`/speckit-converge`** (fase D): 4 achados, na Phase 12 (T159 a T162): T159 CRITICAL (princípio IV: as unidades das usinas do conjunto sem campo de conferência nem contagem na auditoria), T160 (a divergência do tipo publicado na qualidade dos dados, como pede o caso de borda da spec), T161 (teste da usina fora da composição) e T162 (desvios a registrar na fase F).
+- **T159**: as unidades de `capacidade_membros.csv` conferidas pelo subsistema da linha da usina na composição (o estado não serve: o Conj. Chapadão teve UTE de GO), com `auditoria_capacidade_membros.csv` (linhas da usina, linhas só com o CEG e a mensagem com as usinas da composição e as com unidades) e o aviso no log; teste com uma unidade da térmica do conjunto em outro subsistema.
+- **T160**: a frase do tipo publicado divergente saiu da constatação "Composição do conjunto" e entrou na constatação da qualidade dos dados (`frases_tipo_publicado`); testes ajustados.
+- **T161**: teste da Coleta com a PCH fictícia fora da composição: código 2, a mensagem com o CEG e o id do conjunto, e nenhum outro conjunto coletado.
+- **Efeito nas referências ainda sem commit**: a Bandeirante refeita (`--sem-portal`, mesmos brutos) mudou só a frase do tipo publicado (da seção 4 para a 3) e ganhou o arquivo de auditoria; a referência dela foi removida e registrada de novo, como na T157. A Seriemas 1 não muda o relatório (não tem o tipo publicado: a série de referência é a da usina), mas a Coleta dela é anterior à T159: refazê-la agora traria os 45 valores da geração do conjunto que o ONS republicou em 21/10/2026 e mudaria números aprovados. Fica como registrada; a Coleta refeita dela terá `auditoria_capacidade_membros.csv` a mais até o próximo congelamento.
+- Suíte com 816 aprovados; pyflakes sem aviso.
+
+### 22/10/2026 — T127 (portão do fim da fase D)
+
+- Suíte com 816 aprovados; pyflakes sem aviso; `/speckit-converge` feito (Phase 12: T159 a T161 concluídas; T162 para a fase F, com a T153, a T156 e a T158).
+- `python -m src comparar --todas --coleta` com cinco referências: os **cinco relatórios idênticos aos aprovados**; bandeirante sem nenhuma diferença; na Coleta, sao_domingos, william_arjona e praia_formosa só com as diferenças de dados publicados pelo ONS depois do congelamento (aceitas pelo usuário até o próximo congelamento); seriemas_1 com as mesmas diferenças de publicação (45 valores da geração do conjunto republicados em 21/10/2026 e o cadastro) e `auditoria_capacidade_membros.csv` só na Coleta refeita (arquivo da T159, posterior ao congelamento dela). Código 6 só por essas diferenças da Coleta.
+- **Fase D concluída**; commit pedido ao usuário (código, testes, rascunhos, perfil e referência da Bandeirante, referência da Seriemas 1).
+

@@ -1,0 +1,82 @@
+{
+ "etapa": "relatorio",
+ "usina": "bandeirante",
+ "versao_formato": 1,
+ "iniciada_em": "2026-10-22T16:00:19Z",
+ "concluida_em": "2026-10-22T16:00:23Z",
+ "status": "concluida",
+ "codigo_saida": 0,
+ "etapa_anterior": {
+  "etapa": "analises",
+  "concluida_em": "2026-10-22T16:00:19Z"
+ },
+ "arquivos": [
+  {
+   "nome": "relatorio_analise_estatistica.pdf",
+   "bytes": 1037601,
+   "sha256": "809371f7f36354316301edeee4cd801f5f1f796716ace87f58a69597521dfdcc"
+  },
+  {
+   "nome": "relatorio_analise_estatistica.md",
+   "bytes": 25831,
+   "sha256": "cc0fe70ed0952c3371d502300583b34aac1a3f573d5e1f04bd31cbbaf0b62f65"
+  },
+  {
+   "nome": "perfil_estatistico_anual.xlsx",
+   "bytes": 35861,
+   "sha256": "7b8f169a2c12a238f161202598c666b01e19e2b49a6eb2fc5578343976c8e138"
+  },
+  {
+   "nome": "perfil_estatistico_anual.csv",
+   "bytes": 834,
+   "sha256": "6672305eff114a1c75f718a0c62fe510f73ff27bd90bcc7e563ad7a90d43c1ee"
+  },
+  {
+   "nome": "resumo_executivo.pdf",
+   "bytes": 79408,
+   "sha256": "8603f2573c03a07c21a7f1cf9537fd062fb43ca6cfb431342be4a89917012b72"
+  },
+  {
+   "nome": "resumo_executivo.md",
+   "bytes": 2573,
+   "sha256": "ed80b524ff370d1ae98113c08d7f265b6c2dc78df74c5fcb1a59aba2ea1065fe"
+  },
+  {
+   "nome": "figures/01_serie_temporal_geracao_disponibilidade.png",
+   "bytes": 307970,
+   "sha256": "a82d9f79baf23e43d0348c62dd424fbf6fbba196f24e8ffc36e7529b479b97a6"
+  },
+  {
+   "nome": "figures/02_geracao_mensal.png",
+   "bytes": 80599,
+   "sha256": "92a783c48a5b5853778ccf1bb07369d2eff94e44d4a228c2b5d26bcd46c8f9d3"
+  },
+  {
+   "nome": "figures/03_geracao_por_mes_do_ano.png",
+   "bytes": 81545,
+   "sha256": "d5e504192b3bcfc8223be6060d1ab870778682a8379e7058ab6f5192e2ec567d"
+  },
+  {
+   "nome": "figures/04_perfil_horario_geracao.png",
+   "bytes": 80924,
+   "sha256": "97d505ab03b2b10974cb5fcd7213877ba0e0ec177f6f14819df1b66638ea65fd"
+  },
+  {
+   "nome": "figures/14_geracao_do_conjunto_por_trecho.png",
+   "bytes": 157858,
+   "sha256": "8ef506e43fea89dfe1689d4f10f078e1747d6453fc51ad3fa71e8018c4ef7ffb"
+  }
+ ],
+ "resumo": {
+  "data_geracao": "22/10/2026 10:00",
+  "secoes": 6,
+  "paginas_pdf": 13,
+  "figuras": 5,
+  "abas_planilha": 21,
+  "resumo_executivo": {
+   "paginas": 1,
+   "evolucao_anual": true,
+   "palavras": 263
+  }
+ }
+}

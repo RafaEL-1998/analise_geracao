@@ -179,3 +179,58 @@ Contratos conferidos nos dados abertos em 20/10/2026: o Fator de capacidade é h
 | Fator de capacidade | — | — | — | — | — | S | S |
 | Restrição com detalhe | — | — | — | — | — | S (eólica) | S (fotovoltaica) |
 | Restrição com a razão | — | — | — | — | — | S (eólica) | S (fotovoltaica) |
+
+## Fase D — PCH e CGH em conjunto; hidrelétricas sem EVT com hidrologia (rascunho para aprovação, tarefa T119)
+
+Contratos conferidos em 22/10/2026 nos arquivos do ONS já baixados (Geração por usina de 2000 a 10/2026, Programação diária de 10/2024 a 10/2026, Composição dos conjuntos e catálogo de usinas):
+
+- **Geração do Conj. Chapadão** (`CJU_MSCAO`, CEG "-"): de 01/08/2012 a 19/10/2026. É publicada sempre como "TÉRMICA"/"Biomassa", inclusive depois de 01/07/2025, quando só as quatro PCH ficaram no conjunto. O nome mudou em 01/05/2026 ("Conj. Chapadão" passou a "CONJUNTO HIDRAULICO CHAPADAO"). Faltam outubro/2021 inteiro e quatro dias (em 2013, 2014, 2015 e 2018); há 24 horas sem valor em 21/08/2012.
+- **Composição**: a PCH Bandeirante entra no conjunto em 22/08/2019 e a PCH Areado em 27/09/2019. As PCH Indaiá Grande e Indaiazinho estão nele desde 2012, e as cinco UTE (duas cadastradas em GO) saem em 01/07/2025.
+- **Linhas próprias**: as quatro PCH têm linhas próprias na Geração por usina desde 01/05/2026, todas sem valor (4.128 cada até 19/10/2026).
+- **Programação**: o conjunto foi programado em dois grupos de quatro códigos, sem nenhum dia com os dois grupos:
+  - `MSCAO-9761`, `-9762`, `-9763` e `-9766` ("CONJUNTO HID/TER", térmica), de 01/10/2024 a 02/07/2025;
+  - `MSCAO-9764`, `-9765`, `-9784` e `-10205` ("CONJUNTO HIDRAULICO"), desde 05/07/2025.
+  - O catálogo de hoje lê só o arquivo mais recente e liga à usina só os quatro códigos atuais.
+- **Sem dado** para a Bandeirante e para o conjunto: disponibilidade, indicadores e hidrologia.
+- **Hidrologia sem EVT**: no catálogo nacional, só duas usinas têm Dados hidrológicos sem a EVT (UHE Pimental, PA, e UHE Canastra, RS), e nenhuma está em MS. A seção da tarefa T150 é validada com uma hidrelétrica fictícia.
+
+### Requisitos alterados
+
+- **FR-051** (catálogo): o catálogo passa a ler todos os arquivos da Programação diária, como já faz com o despacho desde a fase B. Em 22/10/2026 são 733 arquivos diários desde 01/10/2024, com 109 MB.
+  - `programacao.csv` ganha `primeiro_dia` e `ultimo_dia` de cada código.
+  - A ligação do código à usina ou ao conjunto não muda: pelo id ONS, ou pelo id do conjunto sem o prefixo `CJU_`.
+  - Motivo: o Conj. Chapadão trocou os quatro códigos em 07/2025. Lendo só o arquivo mais recente, o perfil perderia a programação de 10/2024 a 07/2025.
+- **FR-053** (rascunho do perfil): `codigos_programacao` traz todos os códigos ligados, de qualquer arquivo, com o primeiro e o último dia de cada um em comentário, para o fiscal conferir.
+  - A lista continua simples (sem período por código): o Tratamento soma por patamar os códigos presentes, como hoje.
+  - Precisão na implementação (22/10/2026): cada código vale do primeiro ao último dia em que aparece na extração, e o patamar só tem soma quando todos os códigos vigentes no dia têm valor nele (a regra de hoje pedia todos os códigos da lista, o que deixaria a programação da Bandeirante inteira sem soma). Nenhuma referência aprovada tem mais de um código.
+  - Num perfil existente, o `perfil` mostra os códigos que faltam como diferença (código 6).
+- **FR-054** (período da usina em conjunto; decisão do usuário de 22/10/2026): na usina em conjunto sem série própria, as horas da série do conjunto só contam enquanto a usina está na composição, entre a data de entrada e a de saída da linha dela na Composição dos conjuntos.
+  - O período vai da primeira à última hora com valor nesse intervalo.
+  - Bandeirante: o período começa em 22/08/2019, e não em 01/08/2012. Antes da entrada, a geração do conjunto não tem a usina.
+  - Usina ausente da composição do conjunto declarado no perfil: a Coleta para com o código 2, como a série de referência sem nenhuma hora com valor, e a mensagem cita o id do conjunto e o CEG.
+  - Com a cobertura `["proprio", "conjunto"]`, o recorte vale só para as horas do nível do conjunto.
+  - Efeito nas referências: nenhum. Nenhuma das quatro tem a geração do conjunto como série de referência.
+- **FR-054** (trechos): sem mudança. `trechos.csv` já corta o período nas datas da composição e grava os tipos de cada trecho. Com o recorte, a Bandeirante fica com três trechos:
+  1. com as cinco UTE e sem a Areado, até 26/09/2019;
+  2. com a Areado, até 30/06/2025;
+  3. só com as quatro PCH, desde 01/07/2025.
+- **FR-047 e FR-048** (resumo): além da quantidade, `linhas_usina_sem_valor` passa a trazer a primeira e a última hora dessas linhas, para a qualidade dos dados dizer desde quando o ONS publica a linha da usina vazia.
+
+### Requisitos novos
+
+- **FR-060** (unidades das usinas do conjunto; decisão do usuário de 22/10/2026): na usina em conjunto, a Coleta DEVE gravar `capacidade_membros.csv`.
+  - O conteúdo: as unidades geradoras da Capacidade de geração de cada CEG da composição, em todos os trechos do período, com a potência efetiva e as datas de entrada em operação e de desativação. Elas dão a potência de cada usina em cada trecho.
+  - O arquivo é novo. `capacidade_ficha.csv` continua só com as unidades da usina.
+- **FR-061** (tipo publicado da série do conjunto): na usina cuja série de referência é a do conjunto, a Coleta DEVE gravar `tipo_publicado.csv`.
+  - O conteúdo: por trecho, o tipo e o combustível publicados (`nom_tipousina` e `nom_tipocombustivel`), com as horas de cada um.
+  - A comparação com os tipos da composição fica com as Análises, na qualidade dos dados (caso de borda da spec 006: o tipo vem do CEG, e a divergência vai para a qualidade dos dados).
+  - O arquivo é novo; os arquivos de hoje não mudam (decisão R8).
+
+### Aplicabilidade por tipo (fase D, acréscimo)
+
+| Regra ou arquivo | UHE | PCH | CGH | UTE | UTN | EOL | UFV |
+|---|---|---|---|---|---|---|---|
+| Programação diária com os códigos de todo o período (catálogo e rascunho) | S | S | S | S | S | S | S |
+| Período recortado pela composição (FR-054) | — | em conjunto, sem série própria | em conjunto, sem série própria | — | — | em conjunto, sem série própria | em conjunto, sem série própria |
+| `capacidade_membros.csv` (FR-060) | — | em conjunto | em conjunto | — | — | em conjunto | em conjunto |
+| `tipo_publicado.csv` (FR-061) | — | série do conjunto | série do conjunto | — | — | série do conjunto | série do conjunto |

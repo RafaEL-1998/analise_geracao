@@ -63,10 +63,11 @@ Calculado neste relatório a partir de: Restrição com detalhe (constrained-off
 6. [Fator de capacidade](#6-fator-de-capacidade)
 7. [Energia cortada por restrição de operação (constrained-off)](#7-energia-cortada-por-restrição-de-operação-constrained-off)
 8. [Recurso × geração](#8-recurso--geração)
-9. [Programação diária × geração verificada](#9-programação-diária--geração-verificada)
-10. [Qualidade dos dados](#10-qualidade-dos-dados)
-11. [Conclusão](#11-conclusão)
-12. [Notas metodológicas e limitações](#12-notas-metodológicas-e-limitações)
+9. [Composição e geração do conjunto](#9-composição-e-geração-do-conjunto)
+10. [Programação diária × geração verificada](#10-programação-diária--geração-verificada)
+11. [Qualidade dos dados](#11-qualidade-dos-dados)
+12. [Conclusão](#12-conclusão)
+13. [Notas metodológicas e limitações](#13-notas-metodológicas-e-limitações)
 
 ## 1. Fonte e cobertura dos dados
 
@@ -95,16 +96,17 @@ Fonte dos dados: Restrição com detalhe (constrained-off) (id ONS MSSRI1; CEG U
 | Restrição com a razão | conjunto | CJU_MS4FINO | obtido em 21/10/2026 |
 | Modalidade das usinas | usina | CEG UFV.RS.MS.052257-0.01 | obtido em 21/10/2026 |
 | Composição dos conjuntos de usinas | conjunto | CJU_MS4FINO | obtido em 21/10/2026 |
+| Capacidade de geração | usinas do conjunto | CEG das usinas de CJU_MS4FINO | obtido em 21/10/2026 |
 
 Fonte dos dados: Restrição com detalhe (constrained-off) (id ONS MSSRI1; CEG UFV.RS.MS.052257-0.01), obtido em 21/10/2026; Geração por usina (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026; Programação diária (conjunto de usinas, MS4FINO), obtido em 20/10/2026; Modalidade das usinas (CEG UFV.RS.MS.052257-0.01), obtido em 21/10/2026; Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026; Fator de capacidade (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026; Restrição com a razão (constrained-off) (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026.
 
 ### Trechos do período
 
-| Trecho | Início | Fim | Modalidade | Nível | Composição (CEG) | Tipos |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | 22/08/2026 00h | 19/10/2026 23h | Tipo II-C | usina | UFV.RS.MS.052257-0.01; UFV.RS.MS.052258-9.01; UFV.RS.MS.052259-7.01; UFV.RS.MS.052260-0.01; UFV.RS.MS.052261-9.01; UFV.RS.MS.052262-7.01; UFV.RS.MS.052263-5.01; UFV.RS.MS.052264-3.01 | UFV |
+| Trecho | Início | Fim | Modalidade | Nível | Tipos |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 22/08/2026 00h | 19/10/2026 23h | Tipo II-C | usina | UFV |
 
-Trecho novo a cada mudança de modalidade, de composição do conjunto ou de código; composição pelos CEGs das usinas do conjunto.
+Trecho novo a cada mudança de modalidade, de composição do conjunto ou de código; as usinas de cada composição estão na seção do conjunto.
 
 Calculado neste relatório a partir de: Restrição com detalhe (constrained-off) (id ONS MSSRI1; CEG UFV.RS.MS.052257-0.01), obtido em 21/10/2026; Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026.
 
@@ -240,7 +242,45 @@ Geração verificada e estimada médias por faixa de irradiância (W/m²), sem a
 Calculado neste relatório a partir de: Restrição com detalhe (constrained-off) (id ONS MSSRI1; CEG UFV.RS.MS.052257-0.01), obtido em 21/10/2026. Conferência: geração conferida entre as fontes, duas a duas e no mesmo nível (G1): 4.248 de 4.248 horas coincidentes (100,0%) em 3 pares de fontes, detalhados na aba CONF_G1_PARES. Sem outra fonte para conferir: vento ou irradiância.
 
 
-## 9. Programação diária × geração verificada
+## 9. Composição e geração do conjunto
+
+**Composição do conjunto.** O conjunto Conj. Inocência 230 kV (CJU_MS4FINO) teve 1 composição no período: de 22/08/2026 a 19/10/2026, 8 usinas (UFV), geração média do conjunto de 66,7 MWmed. Os números são do conjunto, sem divisão entre as usinas.
+
+### Geração do conjunto Conj. Inocência 230 kV (CJU_MS4FINO) por trecho de composição
+
+| Trecho | Início | Fim | Usinas | Tipos | Horas com valor | Energia (MWh) | Média (MWmed) | Máxima (MW) | Potência somada (MW) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 22/08/2026 00h | 19/10/2026 23h | 8 | UFV | 1.416 | 94.481 | 66,7 | 393,3 | 400,0 |
+
+Trecho novo a cada mudança da composição do conjunto (Composição dos conjuntos); horas e médias da série do conjunto, sem divisão entre as usinas; potência somada = soma das unidades da Capacidade de geração em operação em algum momento do trecho, das usinas com unidade cadastrada (as demais aparecem com «—» na composição).
+
+Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026; Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026; Capacidade de geração (CEG das usinas do conjunto CJU_MS4FINO), obtido em 21/10/2026. Conferência: soma das usinas do conjunto (Restrição com detalhe) conferida com a Geração por usina do conjunto (G2): 1.105 de 1.296 horas coincidentes (85,3%), 191 divergências, listadas na aba CONF_G2_DIVERGENCIAS; 120 horas sem todas as usinas, fora da soma. Sem outra fonte para conferir: geração.
+
+![Composição e geração do conjunto](figures/14_geracao_do_conjunto_por_trecho.png)
+
+Geração média mensal do conjunto Conj. Inocência 230 kV (CJU_MS4FINO) (MWmed), uma cor por trecho de composição; linhas verticais nas mudanças de composição. Linhas tracejadas: potência somada das usinas de cada trecho (unidades em operação). Os números são do conjunto, como o ONS publica.
+
+Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026; Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026; Capacidade de geração (CEG das usinas do conjunto CJU_MS4FINO), obtido em 21/10/2026. Conferência: soma das usinas do conjunto (Restrição com detalhe) conferida com a Geração por usina do conjunto (G2): 1.105 de 1.296 horas coincidentes (85,3%), 191 divergências, listadas na aba CONF_G2_DIVERGENCIAS; 120 horas sem todas as usinas, fora da soma. Sem outra fonte para conferir: geração.
+
+### Usinas da composição no período
+
+| Usina | Tipo | CEG | Entrada no conjunto | Saída | Potência (MW) |
+| --- | --- | --- | --- | --- | --- |
+| Seriemas 1 | UFV | UFV.RS.MS.052257-0.01 | 13/04/2026 | — | 50,0 |
+| Seriemas 2 | UFV | UFV.RS.MS.052258-9.01 | 13/04/2026 | — | 50,0 |
+| Seriemas 3 | UFV | UFV.RS.MS.052259-7.01 | 13/04/2026 | — | 50,0 |
+| Seriemas 4 | UFV | UFV.RS.MS.052260-0.01 | 13/04/2026 | — | 50,0 |
+| Seriemas 5 | UFV | UFV.RS.MS.052261-9.01 | 13/04/2026 | — | 50,0 |
+| Seriemas 6 | UFV | UFV.RS.MS.052262-7.01 | 13/04/2026 | — | 50,0 |
+| Seriemas 7 | UFV | UFV.RS.MS.052263-5.01 | 13/04/2026 | — | 50,0 |
+| Seriemas 8 | UFV | UFV.RS.MS.052264-3.01 | 13/04/2026 | — | 50,0 |
+
+Entrada e saída da usina no conjunto, como o ONS publica na Composição dos conjuntos; tipo pelo prefixo do CEG; potência = maior soma das unidades em operação num trecho em que a usina está no conjunto.
+
+Calculado neste relatório a partir de: Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026; Capacidade de geração (CEG das usinas do conjunto CJU_MS4FINO), obtido em 21/10/2026.
+
+
+## 10. Programação diária × geração verificada
 
 **Programação diária do ONS.** Nas 1.296 horas com programação e geração verificada do conjunto Conj. Inocência 230 kV, geração verificada média de 69,6 MW e programada de 40,8 MW (desvio médio absoluto de 43,9 MW; correlação de 0,63); 4 horas com geração até 1 MW e programação acima de 5 MW.
 
@@ -301,7 +341,7 @@ Desvio médio e desvio médio absoluto mensais entre a geração verificada e a 
 Calculado neste relatório a partir de: Programação diária (conjunto de usinas, MS4FINO), obtido em 20/10/2026; Geração por usina (conjunto de usinas, id ONS CJU_MS4FINO), obtido em 21/10/2026. Conferência: programação diária conferida com o programado do Fator de capacidade (G5): 1.104 de 1.104 horas coincidentes (100,0%), 192 horas só numa das fontes.
 
 
-## 10. Qualidade dos dados
+## 11. Qualidade dos dados
 
 **Qualidade dos dados.** Nenhuma hora sinalizada na base horária.
 
@@ -314,7 +354,7 @@ Nenhuma hora sinalizada.
 Nenhuma hora ausente.
 
 
-## 11. Conclusão
+## 12. Conclusão
 
 Indícios a confirmar, gerados pelas regras descritas nas notas metodológicas a partir dos resultados das seções indicadas; não afirmam causa nem avaliam o desempenho da usina.
 
@@ -327,13 +367,14 @@ Indícios a confirmar, gerados pelas regras descritas nas notas metodológicas a
 - Medição de irradiância marcada como inválida pelo ONS em 564 das 2.832 semi-horas da usina (19,9%) (seção 8).
 
 
-## 12. Notas metodológicas e limitações
+## 13. Notas metodológicas e limitações
 
 - Fonte: Portal de Dados Abertos do ONS. Série de referência: Restrição com detalhe (id ONS MSSRI1; CEG UFV.RS.MS.052257-0.01), varrida em todos os arquivos publicados; o período vai da primeira à última hora com valor. Os dados passam por consistência recorrente e podem ser revisados pelo ONS após a publicação.
 - Base horária comum: uma linha por hora da série de referência, com a disponibilidade e a programação do ONS na mesma hora, quando há. Os horários são os publicados pelo ONS (hora de início do intervalo).
 - Nenhum valor é preenchido: as horas sinalizadas ficam na base e nos totais, com o código da regra.
 - Granularidade: o ONS publica a geração, o fator de capacidade e a razão da restrição do conjunto Conj. Inocência 230 kV (CJU_MS4FINO), e a restrição com detalhe de cada usina; a série de referência é a da usina. Os números do conjunto são identificados como tais e não são divididos entre as usinas; a conclusão da usina não usa números do conjunto.
 - Energia cortada: só nas semi-horas com a marca de restrição da Restrição com detalhe, pela geração estimada menos a verificada, sem valores negativos; a semi-hora sem a marca (arquivo publicado sem a coluna) fica fora do total e é contada. A geração estimada 0 com a usina gerando é estimativa que o ONS não calculou: fica fora dos totais e das médias da estimada e, nas semi-horas com a marca de restrição, o corte não é calculado. As semi-horas são levadas à hora cheia pela média das duas meias-horas só nos cruzamentos com séries horárias; a hora com uma só meia-hora fica ausente. O recurso marcado como inválido pelo ONS ou acima do limite físico (1.500 W/m²) fica fora das faixas do recurso × geração.
+- A composição de cada trecho vem da Composição dos conjuntos e a potência, das unidades da Capacidade de geração (pelo CEG de cada usina, inclusive as cadastradas em outro estado); a geração do conjunto não é dividida pela potência somada nem entre as usinas.
 - Conclusão: indícios gerados pelas regras do catálogo para UFV, iguais para as usinas do tipo e só com dados do nível da usina, a partir dos resultados das seções: C16 energia cortada por restrição de operação ≥ 5% da energia estimada; C17 recurso (vento ou irradiância) inválido em ≥ 10% das semi-horas; C18 fator de capacidade publicado da usina, num ano completo, abaixo da razão entre a garantia física e a potência instalada; C19 desvio médio absoluto entre a geração programada e a verificada ≥ 15% da potência instalada. O relatório mostra até 5 itens por lista, na ordem das regras; todos estão na aba CONCLUSAO da planilha. Não avaliadas nesta usina: C18 e C19 (motivos na tabela abaixo).
 - As seções e as regras sem base para a usina e as conferências que não se aplicam a ela estão nas tabelas abaixo, com o motivo de cada uma.
 
@@ -342,7 +383,6 @@ Indícios a confirmar, gerados pelas regras descritas nas notas metodológicas a
 | Seção ou regra | Motivo |
 | --- | --- |
 | Sazonalidade (distribuição por mês do ano) | a série do nível usina tem menos de 12 meses distintos (3) |
-| Composição e geração do conjunto | seção ainda não gerada pelo pipeline; a composição por trecho está na Fonte e cobertura dos dados |
 | Conferência da geração entre fontes | seção ainda não gerada pelo pipeline; os resultados da G1, da G2 e da G5, quando aplicáveis, estão nas legendas de fonte das seções de eólica e solar e nas abas CONF_G1, CONF_G2 e CONF_G5 da planilha |
 | C18 | sem o Fator de capacidade no nível da usina |
 | C19 | sem a Programação diária no nível da usina |

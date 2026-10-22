@@ -9,7 +9,9 @@ A série de referência define o período da análise (princípio IV), pelo tipo
   base, semi-horária, pelo id ONS; o complemento e os trechos ficam por hora.
 
 A série é varrida em todos os arquivos publicados, com o filtro do identificador na leitura do Parquet. O período vai
-da primeira à última hora com valor preenchido.
+da primeira à última hora com valor preenchido. Na usina em conjunto sem série própria (fase D; rascunho 001, FR-054),
+as horas do conjunto só contam enquanto a usina está na composição: antes da entrada dela, a geração do conjunto não a
+inclui.
 
 Fora das hidrelétricas com EVT, o período é dividido em trechos quando muda a modalidade (hora a hora, na Geração por
 usina), o nível do dado, a composição do conjunto ou o código de planejamento da térmica. Só os trechos que mudam o
@@ -31,6 +33,9 @@ INICIO_VARREDURA = pd.Timestamp("1990-01-01")  # antes do primeiro arquivo publi
 COLUNA_MODALIDADE = "cod_modalidadeoperacao"
 COLUNAS_TRECHOS = ["trecho", "inicio", "fim", "modalidade", "id_conjunto", "composicao", "tipos_composicao",
                    "codigos_planejamento", "nivel_geracao", "mostrar"]
+# Tipo e combustível que o ONS publica na série do conjunto (fase D; rascunho 001, FR-061)
+COLUNAS_TIPO_PUBLICADO = ("nom_tipousina", "nom_tipocombustivel")
+COLUNAS_TABELA_TIPO_PUBLICADO = ["trecho", "inicio", "fim", "nom_tipousina", "nom_tipocombustivel", "horas"]
 FORMATO = "%Y-%m-%d %H:%M:%S"
 MOTIVOS = {
     "evt": "UHE, PCH ou CGH com Energia Vertida Turbinável",
@@ -79,8 +84,9 @@ def descricoes_referencia(perfil: Any, escolha: Escolha) -> Dict[str, DescricaoC
                                  nivel="usina", referencia=True, resolucao="semi_horaria")}
     if escolha.conjunto != "geracao":
         return {}
+    # no conjunto, também o tipo publicado, comparado depois com os tipos da composição (fase D)
     return {nivel: replace(registro.descricao_geracao(perfil, nivel), chave="geracao", nivel=nivel, referencia=True,
-                           colunas_texto=(COLUNA_MODALIDADE,))
+                           colunas_texto=(COLUNA_MODALIDADE, *(COLUNAS_TIPO_PUBLICADO if nivel == "conjunto" else ())))
             for nivel in escolha.niveis}
 
 
@@ -270,3 +276,72 @@ def trechos(complemento_horario: pd.DataFrame, composicao: pd.DataFrame, planeja
     tabela["mostrar"] = tabela["mostrar"].astype(bool)
     tabela.insert(0, "trecho", range(1, len(tabela) + 1))
     return tabela[COLUNAS_TRECHOS]
+
+
+# ---------------------------------------------------------------------------
+# Usina em conjunto (fase D; rascunho 001, FR-054 e FR-061)
+# ---------------------------------------------------------------------------
+
+
+def intervalos_da_usina(composicao: pd.DataFrame, ceg: str) -> List[Tuple[pd.Timestamp, Optional[pd.Timestamp]]]:
+    """Intervalos [entrada, saída) da usina na composição do conjunto (``composicao_conjunto.csv``), pelo CEG; a saída
+    vazia é a usina ainda no conjunto. Sem a usina na composição, lista vazia."""
+    if composicao is None or composicao.empty:
+        return []
+    alvo = normalizar_texto(ceg)
+    da_usina = composicao[composicao["ceg"].map(normalizar_texto) == alvo]
+    intervalos = []
+    for linha in da_usina.to_dict("records"):
+        inicio = _data(linha.get("inicio")) or INICIO_VARREDURA
+        intervalos.append((inicio, _data(linha.get("fim"))))
+    return sorted(intervalos, key=lambda i: i[0])
+
+
+def membros_no_periodo(composicao: pd.DataFrame, inicio: pd.Timestamp, fim: pd.Timestamp) -> List[str]:
+    """CEGs das usinas que estiveram na composição do conjunto em algum momento do período, na ordem da composição."""
+    if composicao is None or composicao.empty:
+        return []
+    cegs = []
+    for linha in composicao.to_dict("records"):
+        entrada, saida = _data(linha.get("inicio")), _data(linha.get("fim"))
+        if (entrada is None or entrada <= fim) and (saida is None or saida > inicio):
+            cegs.append(str(linha.get("ceg") or "").strip())
+    return list(dict.fromkeys(c for c in cegs if c))
+
+
+def no_intervalo(serie: pd.DataFrame, intervalos: Sequence[Tuple[pd.Timestamp, Optional[pd.Timestamp]]]
+                 ) -> pd.DataFrame:
+    """Linhas da série com o instante em algum dos intervalos [entrada, saída)."""
+    if serie is None or not len(serie):
+        return serie
+    instantes = pd.to_datetime(serie["din_instante"])
+    dentro = pd.Series(False, index=serie.index)
+    for inicio, fim in intervalos:
+        dentro |= (instantes >= inicio) & ((instantes < fim) if fim is not None else True)
+    return serie[dentro].reset_index(drop=True)
+
+
+def trecho_de_cada_hora(instantes: pd.Series, tabela_trechos: pd.DataFrame) -> pd.Series:
+    """Número do trecho de cada instante (a tabela de ``trechos``); vazio fora de todo trecho."""
+    saida = pd.Series(pd.NA, index=instantes.index, dtype="Int64")
+    for linha in tabela_trechos.to_dict("records"):
+        dentro = (instantes >= pd.Timestamp(linha["inicio"])) & (instantes <= pd.Timestamp(linha["fim"]))
+        saida[dentro & saida.isna()] = int(linha["trecho"])
+    return saida
+
+
+def tipos_publicados(serie_conjunto: pd.DataFrame, tabela_trechos: pd.DataFrame) -> pd.DataFrame:
+    """``tipo_publicado.csv``: por trecho, o tipo e o combustível que o ONS publica na série do conjunto e as horas de
+    cada um (o tipo da usina vem do CEG; a comparação com a composição fica com as Análises)."""
+    if serie_conjunto is None or not len(serie_conjunto) or tabela_trechos is None or not len(tabela_trechos):
+        return pd.DataFrame(columns=COLUNAS_TABELA_TIPO_PUBLICADO)
+    s = serie_conjunto.assign(din_instante=pd.to_datetime(serie_conjunto["din_instante"]))
+    s = s.assign(trecho=trecho_de_cada_hora(s["din_instante"], tabela_trechos)).dropna(subset=["trecho"])
+    for coluna in COLUNAS_TIPO_PUBLICADO:
+        s[coluna] = s[coluna].astype("string").fillna("").str.strip() if coluna in s.columns else ""
+    limites = tabela_trechos.set_index("trecho")[["inicio", "fim"]]
+    linhas = [{"trecho": int(trecho), "inicio": limites.loc[int(trecho), "inicio"],
+               "fim": limites.loc[int(trecho), "fim"], "nom_tipousina": tipo, "nom_tipocombustivel": combustivel,
+               "horas": len(g)}
+              for (trecho, tipo, combustivel), g in s.groupby(["trecho", *COLUNAS_TIPO_PUBLICADO], sort=True)]
+    return pd.DataFrame(linhas, columns=COLUNAS_TABELA_TIPO_PUBLICADO)

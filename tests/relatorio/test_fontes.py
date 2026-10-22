@@ -55,7 +55,8 @@ def _res(completo: bool = True, **mudancas: Any) -> SimpleNamespace:
 
 def test_catalogo_e_mapa_consistentes() -> None:
     assert set(CONJUNTOS) == IDS | {"projeto", "composicao", "capacidade", "despacho", "cvu", "cmo",  # spec 006
-                                    "fator_capacidade", "restricao_detalhe", "restricao_razao"}  # fase C
+                                    "fator_capacidade", "restricao_detalhe", "restricao_razao",  # fase C
+                                    "capacidade_membros"}  # fase D: as unidades das usinas do conjunto
     for chave, entrada in MAPA_FONTES.items():  # "referencia" e "geracao_programacao": apelidos da fase C
         assert set(entrada.conjuntos) <= set(CONJUNTOS) | {"referencia", "geracao_programacao"}, chave
         assert set(entrada.conferencias) <= set(CONFERENCIAS), chave
@@ -191,3 +192,17 @@ def test_fontes_do_resumo_agrupadas_por_identificador_e_data() -> None:
     assert fontes[0] == "Energia Vertida Turbinável (cod_usina 153), obtido em 01/10/2026"
     assert "Disponibilidade por usina e Geração por usina (id ONS MSUHSD), obtidos em 05/10/2026" in fontes
     assert fontes_resumo(_res(completo=False)) == fontes[:1]
+
+
+def test_alinhamento_da_hidrologia_so_na_hidreletrica_sem_evt() -> None:
+    """Fase D: a hora da hidrologia conferida pela geração só entra nas legendas, na aba FONTES e no resumo da
+    hidrelétrica sem EVT; com a EVT (a São Domingos), vale a conferência das vazões, e o relatório aprovado não muda."""
+    from types import SimpleNamespace
+
+    from src.relatorio.fontes import conferencia_feita
+
+    com_evt = SimpleNamespace(fontes={"carregados": ["evt", "hidrologia"]}, hidrologia={"publicado": True})
+    sem_evt = SimpleNamespace(fontes={"carregados": ["geracao", "hidrologia"]},
+                              hidrologia={"publicado": True, "sem_evt": True})
+    assert not conferencia_feita(com_evt, "alinhamento_hidrologia") and conferencia_feita(com_evt, "vazoes")
+    assert conferencia_feita(sem_evt, "alinhamento_hidrologia")

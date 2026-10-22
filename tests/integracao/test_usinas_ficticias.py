@@ -79,7 +79,7 @@ def test_completo_com_codigo_zero_e_as_saidas(execucoes, tipo: str) -> None:
     assert (e["relatorio"] / "perfil_estatistico_anual.csv").stat().st_size > 100, tipo  # um ano já basta
 
 
-@pytest.mark.parametrize("tipo", [t for t in TIPOS if t != "uhe"])
+@pytest.mark.parametrize("tipo", [t for t in TIPOS if t not in ("uhe", "pch")])
 def test_secoes_comuns_nas_usinas_sem_evt(execucoes, tipo: str) -> None:
     secoes = _secoes(execucoes[tipo]["md"])
     assert all(s in secoes for s in SECOES_COMUNS), (tipo, secoes)
@@ -112,11 +112,132 @@ def test_pch_em_conjunto_com_trechos_e_linhas_sem_valor(execucoes) -> None:
     md = e["md"]
     assert "Geração média do conjunto CONJ. HIDRAULICO FICTICIO" in md
     trechos = pd.read_csv(e["dados"] / "coleta" / "trechos.csv", sep=";", dtype=str, keep_default_na=False)
-    assert len(trechos) == 2 and list(trechos["mostrar"]) == ["True", "True"]  # o membro entra em 02/2024: os dois
-    assert bf.MEMBRO["ceg"] in trechos.iloc[1]["composicao"]
+    # fase D: o período começa na entrada da PCH (10/01); o membro entra em 02/2024 e a térmica sai em 15/02
+    assert list(trechos["inicio"]) == ["2024-01-10 00:00:00", "2024-02-01 00:00:00", "2024-02-15 00:00:00"]
+    assert list(trechos["tipos_composicao"]) == ["PCH;UTE", "CGH;PCH;UTE", "CGH;PCH"]
+    assert list(trechos["mostrar"]) == ["True", "True", "True"]
+    assert bf.MEMBRO["ceg"] in trechos.iloc[1]["composicao"] and bf.MEMBRO_UTE["ceg"] not in trechos.iloc[2]["composicao"]
     resumo = json.loads((e["dados"] / "coleta" / "etapa.json").read_text(encoding="utf-8"))["resumo"]
-    assert resumo["linhas_usina_sem_valor"] == 1440
+    assert resumo["periodo"]["inicio"] == "2024-01-10 00:00:00"  # e não 01/01, o início da série do conjunto
+    assert resumo["composicao_da_usina"] == [{"inicio": "2024-01-10 00:00:00", "fim": ""}]
+    assert resumo["linhas_usina_sem_valor"] == 51 * 24  # só no período
+    assert resumo["linhas_usina_sem_valor_periodo"] == {"inicio": "2024-01-10 00:00:00", "fim": "2024-02-29 23:00:00"}
+    assert ("A Geração por usina traz 1.224 linhas próprias da usina sem valor, de 10/01/2024 a 29/02/2024; a série "
+            "usada é a do conjunto.") in md
     assert "### Trechos do período" in md and "Sem itens: as regras da conclusão usam só dados do nível da usina" in md
+
+
+# ---------------------------------------------------------------------------
+# PCH e CGH (spec 006, fase D; tarefas T121 e T150)
+# ---------------------------------------------------------------------------
+
+SECAO_CONJUNTO = "Composição e geração do conjunto"
+SECAO_AFLUENCIA = "Afluência, vertimento e nível do reservatório (ONS)"
+PARTE_CONJUNTO = "Operação do conjunto CONJ. HIDRAULICO FICTICIO (CJU_GOCJFI)"
+
+
+def _secao(md: str, titulo: str) -> str:
+    return md.split(f"{titulo}\n", 1)[1].split("\n## ", 1)[0]
+
+
+def test_pch_em_duas_partes_a_usina_e_o_conjunto(execucoes) -> None:
+    """Decisões do usuário de 22/10/2026 (rascunho 005, FR-048): primeiro a usina, com o peso dela na potência do
+    conjunto; depois, logo antes da conclusão, a parte do conjunto, com as análises do conjunto em subseções."""
+    md = execucoes["pch"]["md"]
+    assert _secoes(md) == ["Fonte e cobertura dos dados", "A usina no conjunto", "Qualidade dos dados", PARTE_CONJUNTO,
+                           "Conclusão", "Notas metodológicas e limitações"]
+    usina = _secao(md, "A usina no conjunto")
+    assert usina.startswith("\n**A usina no conjunto.** O ONS publica a geração, a programação e os demais dados de "
+                            "operação do conjunto CONJ. HIDRAULICO FICTICIO (CJU_GOCJFI), e não os da PCH Fictícia isolada.")
+    assert "Peso da usina (16,0 MW) na potência das usinas do conjunto: 34,8% de 10/01/2024 a 31/01/2024" in usina
+    assert "esse peso não estima a geração dela" in usina and "medição da CCEE" in usina
+    assert "| 3 | 15/02/2024 | 29/02/2024 | 16,0 | 16,0 | 100,0% |" in usina  # a CGH membro sem unidade cadastrada
+    assert "Os dados de operação são os do conjunto, na seção 4, antes da conclusão." in usina
+    parte = _secao(md, PARTE_CONJUNTO)
+    assert parte.lstrip().startswith("**Geração.** Geração média do conjunto CONJ. HIDRAULICO FICTICIO")
+    subsecoes = [linha[4:] for linha in parte.splitlines() if linha.startswith("### ")]
+    assert subsecoes[:4] == ["Indicadores anuais do conjunto", "Série temporal da geração do conjunto",
+                             "Geração mensal e sazonalidade do conjunto", "Perfil horário da geração do conjunto"]
+    assert "Programação diária × geração verificada do conjunto" in subsecoes
+    resumo = _resumo(execucoes, "pch")
+    assert "Colunas e definições na seção 4 do relatório completo." in resumo  # a tabela anual na parte do conjunto
+
+
+def test_pch_com_a_secao_do_conjunto_por_trecho(execucoes) -> None:
+    e = execucoes["pch"]
+    md = e["md"]
+    secao = _secao(md, PARTE_CONJUNTO)
+    assert ("O conjunto CONJ. HIDRAULICO FICTICIO (CJU_GOCJFI) teve 3 composições no período: de 10/01/2024 a "
+            "31/01/2024, 2 usinas (PCH e UTE), geração média do conjunto de 22,0 MWmed;") in secao
+    divergencia = ("O ONS publica a série do conjunto como TÉRMICA (Biomassa) de 15/02/2024 a 29/02/2024, quando a "
+                   "composição tem só CGH e PCH; o tipo das usinas vem do CEG.")
+    assert divergencia not in secao and divergencia in _secao(md, "Qualidade dos dados")  # T160
+    # potência somada: PCH 16 + térmica 30 enquanto ela está no conjunto; a CGH membro sem unidade ("—")
+    assert "| 1 | 10/01/2024 00h | 31/01/2024 23h | 2 | PCH, UTE | 528 | 11.616 | 22,0 | 22,0 | 46,0 |" in secao
+    assert "| 3 | 15/02/2024 00h | 29/02/2024 23h | 2 | CGH, PCH | 360 | 5.400 | 15,0 | 15,0 | 16,0 |" in secao
+    assert "| CGH MEMBRO | CGH | CGH.PH.GO.000102-0.01 | 01/02/2024 | — | — |" in secao
+    assert "| UTE MEMBRO | UTE | UTE.BI.GO.000109-0.01 | 01/03/2016 | 15/02/2024 | 30,0 |" in secao
+    assert ("Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_GOCJFI)"
+            in secao and "Capacidade de geração (CEG das usinas do conjunto CJU_GOCJFI)" in secao)
+    assert (e["relatorio"] / "figures" / "14_geracao_do_conjunto_por_trecho.png").stat().st_size > 1000
+    # a composição com os nomes fica na seção do conjunto: a tabela de trechos da seção 1 sem os CEGs
+    assert "| Trecho | Início | Fim | Modalidade | Nível | Tipos |" in md and "Composição (CEG)" not in md
+    coleta = e["dados"] / "coleta"
+    membros = pd.read_csv(coleta / "capacidade_membros.csv", sep=";", dtype=str, keep_default_na=False)
+    assert set(membros["ceg"]) == {bf.FICTICIAS["pch"]["ceg"], bf.MEMBRO_UTE["ceg"]}  # a CGH membro sem unidade
+    tipos = pd.read_csv(coleta / "tipo_publicado.csv", sep=";", dtype=str, keep_default_na=False)
+    assert set(tipos["nom_tipousina"]) == {"TÉRMICA"} and list(tipos["trecho"]) == ["1", "2", "3"]
+
+
+def test_pch_sem_a_usina_isolada_nas_notas_e_sem_itens(execucoes) -> None:
+    md = execucoes["pch"]["md"]
+    notas = md.split("Notas metodológicas e limitações\n")[-1]
+    assert ("Granularidade: o ONS publica a geração do conjunto CONJ. HIDRAULICO FICTICIO (CJU_GOCJFI), e não a da "
+            "usina isolada.") in notas
+    assert "O período começa na entrada da usina no conjunto (Composição dos conjuntos)" in notas
+    assert "| Disponibilidade e geração por ano | sem a Disponibilidade por usina (cobertura: ausente) |" in notas
+    assert "| Indicadores oficiais do ONS por unidade geradora | sem os Indicadores de desempenho do ONS" in notas
+    assert SECAO_CONJUNTO + " |" not in notas  # a seção não está mais entre as omitidas
+    conclusao = _secao(md, "Conclusão")
+    assert ("Sem itens: as regras da conclusão usam só dados do nível da usina, e o ONS publica para esta usina só os "
+            "números do conjunto CONJ. HIDRAULICO FICTICIO") in conclusao
+    analises = json.loads((execucoes["pch"]["dados"] / "analises" / "etapa.json").read_text(encoding="utf-8"))
+    assert analises["resumo"]["conclusao"] == {} and analises["resumo"]["bases_complementares"]["conjunto"] is True
+
+
+def test_cgh_sem_conjunto_com_a_afluencia_sem_evt(execucoes) -> None:
+    e = execucoes["cgh"]
+    md = e["md"]
+    secoes = _secoes(md)
+    assert SECAO_CONJUNTO not in secoes and "Granularidade" not in md  # a CGH tem geração própria
+    assert secoes.index("Perfil horário da geração") < secoes.index(SECAO_AFLUENCIA) < secoes.index("Qualidade dos dados")
+    secao = _secao(md, SECAO_AFLUENCIA)
+    assert "a hora foi conferida pela geração da usina (correlação entre a vazão turbinada e a geração de 1,000" in secao
+    assert "afluência acima do engolimento máximo da usina (20,0 m³/s) em 24 horas" in secao  # o dia de cheia
+    assert "faixa de afluência" not in secao.lower() and "EVT" not in secao.replace("sem EVT", "")
+    assert "### Afluência, vazões, nível e volume útil por ano" in secao
+    assert "Conferência: hora dos Dados hidrológicos conferida pela geração da usina" in secao
+    assert (e["relatorio"] / "figures" / "15_vazoes_mensais.png").stat().st_size > 1000
+    conferencia = json.loads((e["dados"] / "conferencia" / "etapa.json").read_text(encoding="utf-8"))["resumo"]
+    assert conferencia["alinhamento_hidrologia"]["coincidentes"] == conferencia["alinhamento_hidrologia"]["comparados"]
+    assert "vazoes" in conferencia["nao_aplicaveis"]  # a conferência das vazões pede a EVT
+    notas = md.split("Notas metodológicas e limitações\n")[-1]
+    assert "e não pela EVT, que a usina não tem" in notas and SECAO_AFLUENCIA.split(" (")[0] + " |" not in notas
+
+
+def test_secao_do_conjunto_tambem_na_solar_com_serie_propria(execucoes) -> None:
+    """Decisão do usuário de 22/10/2026: a seção do conjunto em toda usina em conjunto, inclusive a eólica ou solar
+    com série própria (a Seriemas 1); sem a nota do período recortado, que só vale com a série do conjunto."""
+    md = execucoes["ufv"]["md"]
+    assert SECAO_CONJUNTO in _secoes(md)
+    assert "O conjunto CONJ. SOLAR FICTICIO (CJU_GOCJUF) teve 1 composição no período" in md
+    assert "O período começa na entrada da usina no conjunto" not in md
+    # as fontes do resumo com o nível, como nas legendas: o dado do conjunto não leva o id ONS da usina (decisão R15)
+    fontes = next(linha for linha in _resumo(execucoes, "ufv").splitlines() if linha.startswith("Fontes:"))
+    assert re.search(r"Fator de capacidade[^;]*\(conjunto de usinas, id ONS CJU_GOCJUF\)", fontes), fontes
+    assert not re.search(r"Fator de capacidade[^;]*\(id ONS GOUFFI\)", fontes), fontes
+    for tipo in ("ute", "utn", "eol", "uhe"):
+        assert SECAO_CONJUNTO not in _secoes(execucoes[tipo]["md"]), tipo
 
 
 def test_ute_com_programacao_disponibilidade_e_regras_comuns(execucoes) -> None:

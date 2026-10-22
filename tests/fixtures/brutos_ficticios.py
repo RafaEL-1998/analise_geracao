@@ -15,6 +15,11 @@ Térmicas (spec 006, fase B; tarefa T083): o despacho, o CVU (com revisões) e o
 inteiro sem geração, disponível, com o código de planejamento 901, trocado em 01/2024 pelas unidades 902 (gás) e 903
 (óleo); o arquivo anual de 2024 repete os mensais, como o ONS publica.
 
+PCH e CGH (spec 006, fase D; tarefas T120, T121 e T150): a PCH entra no conjunto em 10/01/2024, depois do início da
+série do conjunto (o período é recortado pela composição); uma térmica sai do conjunto em 15/02/2024; o ONS publica o
+conjunto como "TÉRMICA" também depois da saída dela (tipo publicado divergente da composição). A CGH, com geração
+própria e sem EVT, tem os Dados hidrológicos na convenção de fim de hora, com a vazão turbinada proporcional à geração.
+
 Eólicas e solares (spec 006, fase C; tarefa T104): o Fator de capacidade e as duas restrições. A EOL tem tudo próprio,
 com a restrição desde 15/01/2024 (adaptação da série longa da tarefa ao período sintético), vento inválido de 20 a
 25/01 e semi-horas restritas de 01 a 10/02 com a razão REL, CNF e ENE; a programação de três dias. A UFV fica num
@@ -226,6 +231,16 @@ FICTICIAS: Dict[str, Dict[str, str]] = {
 }
 CONJUNTO = {"id_ons": "CJU_GOCJFI", "nome": "CONJ. HIDRAULICO FICTICIO"}
 MEMBRO = {"ceg": "CGH.PH.GO.000102-0.01", "id_ons": "GOCGMB", "nome": "CGH MEMBRO", "entrada": "2024-02-01"}
+# Fase D: a entrada da PCH no conjunto (depois do início da série dele) e a térmica que sai no meio do período
+ENTRADA_PCH = "2024-01-10"
+MEMBRO_UTE = {"ceg": "UTE.BI.GO.000109-0.01", "id_ons": "GOUTMB", "nome": "UTE MEMBRO", "entrada": "2016-03-01",
+              "saida": "2024-02-15", "unidades": (15.0, 15.0)}
+GERACAO_UTE_MEMBRO_MW = 10.0
+# Fase D (T150): a CGH com os Dados hidrológicos, sem EVT; um dia de cheia acima do engolimento máximo (2 × 10 m³/s)
+COD_USINA_CGH = 998
+ID_RESERVATORIO_CGH = "PNCGFI"
+PRODUTIVIDADE_CGH = 0.2  # turbinada de 15 m³/s de dia e 10 à noite: só a cheia passa do engolimento
+CHEIA_CGH = pd.Timestamp("2024-02-20")
 CODIGOS_PROGRAMACAO = {"GOCJFI-1": 6.0, "GOCJFI-2": 6.0, "GOUTFI": 100.0, "GOEOFI": 16.0, "GOCJUF-1": 12.0}
 DIAS_PROGRAMACAO = pd.date_range("2024-02-01", "2024-02-03", freq="D")
 INICIO_UFV = pd.Timestamp("2024-01-25")  # série curta (decisão R17): a restrição com detalhe da UFV começa aqui
@@ -292,22 +307,33 @@ def geracao_ficticias() -> pd.DataFrame:
     """Geração por usina das usinas sem EVT e dos conjuntos, com as colunas do arquivo publicado (a UFV só pelo
     conjunto dela, como a Seriemas 1)."""
     h = _horas_periodo()
-    hora = np.asarray(h.hour)
     partes = [
         _linhas_geracao("pch", h, np.full(len(h), np.nan)),  # linhas próprias sem valor (achado A3)
-        _linhas_geracao("cgh", h, np.where((hora >= 6) & (hora <= 18), 3.0, 2.0)),
+        _linhas_geracao("cgh", h, geracao_cgh(h)),
         _linhas_geracao("ute", h, geracao_ute(h)),
         _linhas_geracao("utn", h, np.where(_entre(h, PARADA_UTN), 0.0, 600.0)),
         _linhas_geracao("eol", h, geracao_eol(h)),
         pd.DataFrame({"din_instante": h, "id_subsistema": "SE", "id_estado": "GO", "nom_usina": CONJUNTO["nome"],
-                      "id_ons": CONJUNTO["id_ons"], "ceg": "-",
-                      "val_geracao": np.where(np.asarray(h.month) == 1, 12.0, 15.0),
-                      "cod_modalidadeoperacao": "Conjunto de Usinas", "nom_tipousina": "HIDROELÉTRICA"}),
+                      "id_ons": CONJUNTO["id_ons"], "ceg": "-", "val_geracao": geracao_conjunto(h),
+                      # como o Conj. Chapadão: publicado como térmico mesmo depois da saída da térmica (fase D)
+                      "cod_modalidadeoperacao": "Conjunto de Usinas", "nom_tipousina": "TÉRMICA",
+                      "nom_tipocombustivel": "Biomassa"}),
         pd.DataFrame({"din_instante": h, "id_subsistema": "SE", "id_estado": "GO", "nom_usina": CONJUNTO_UFV["nome"],
                       "id_ons": CONJUNTO_UFV["id_ons"], "ceg": "-", "val_geracao": geracao_conjunto_ufv(h),
                       "cod_modalidadeoperacao": "Conjunto de Usinas", "nom_tipousina": "FOTOVOLTAICA"}),
     ]
     return pd.concat(partes, ignore_index=True)
+
+
+def geracao_conjunto(h: pd.DatetimeIndex) -> np.ndarray:
+    """O conjunto da PCH: 12 MW em janeiro e 15 MW em fevereiro, mais a térmica enquanto ela está no conjunto."""
+    base = np.where(np.asarray(h.month) == 1, 12.0, 15.0)
+    return base + np.where(np.asarray(h < pd.Timestamp(MEMBRO_UTE["saida"])), GERACAO_UTE_MEMBRO_MW, 0.0)
+
+
+def geracao_cgh(h: pd.DatetimeIndex) -> np.ndarray:
+    hora = np.asarray(h.hour)
+    return np.where((hora >= 6) & (hora <= 18), 3.0, 2.0)
 
 
 def geracao_ute(h: pd.DatetimeIndex) -> np.ndarray:
@@ -395,11 +421,11 @@ def _programacao_ficticias(raw: Path) -> None:
 
 
 def _membro_conjunto(ceg: str, id_ons: str, nome: str, inicio: str, conjunto: Dict[str, str] = CONJUNTO,
-                     tipo: tuple = ("UHE", "Hidroelétrica ", 7)) -> Dict[str, object]:
+                     tipo: tuple = ("UHE", "Hidroelétrica ", 7), fim: str = "9999-12-31") -> Dict[str, object]:
     return {"id_subsistema": "SE", "nom_subsistema": "Sudeste/Centro-Oeste", "estad_id": "GO", "nom_estado": "GOIAS",
             "id_tipousina": tipo[0], "nom_tipousina": tipo[1], "id_conjuntousina": tipo[2],
             "id_ons_conjunto": conjunto["id_ons"], "id_ons_usina": id_ons, "nom_conjunto": conjunto["nome"],
-            "nom_usina": nome, "ceg": ceg, "dat_iniciorelacionamento": inicio, "dat_fimrelacionamento": "9999-12-31"}
+            "nom_usina": nome, "ceg": ceg, "dat_iniciorelacionamento": inicio, "dat_fimrelacionamento": fim}
 
 
 def _cadastrais_ficticias(raw: Path) -> None:
@@ -415,8 +441,11 @@ def _cadastrais_ficticias(raw: Path) -> None:
 
     pch, ufv = FICTICIAS["pch"], FICTICIAS["ufv"]
     solar_ = ("UFV", "Fotovoltaica", 8)
-    _parquet(pd.DataFrame([_membro_conjunto(pch["ceg"], pch["id_ons"], pch["nome"], "2016-03-01"),
+    _parquet(pd.DataFrame([_membro_conjunto(pch["ceg"], pch["id_ons"], pch["nome"], ENTRADA_PCH),
                            _membro_conjunto(MEMBRO["ceg"], MEMBRO["id_ons"], MEMBRO["nome"], MEMBRO["entrada"]),
+                           _membro_conjunto(MEMBRO_UTE["ceg"], MEMBRO_UTE["id_ons"], MEMBRO_UTE["nome"],
+                                            MEMBRO_UTE["entrada"], tipo=("UTE", "Termelétrica", 1),
+                                            fim=MEMBRO_UTE["saida"]),
                            _membro_conjunto(ufv["ceg"], ufv["id_ons"], ufv["nome"], INICIO_UFV.strftime("%Y-%m-%d"),
                                             CONJUNTO_UFV, solar_),
                            _membro_conjunto(MEMBRO_UFV["ceg"], MEMBRO_UFV["id_ons"], MEMBRO_UFV["nome"],
@@ -434,6 +463,12 @@ def _cadastrais_ficticias(raw: Path) -> None:
                   "num_unidadegeradora": str(n), "nom_combustivel": combustivel[k], "dat_entradateste": "0001-01-01",
                   "dat_entradaoperacao": "2016-03-01", "dat_desativacao": "9999-12-31", "val_potenciaefetiva": p}
                  for k, u in FICTICIAS.items() for n, p in enumerate(unidades[k], start=1)]
+    # a térmica que saiu do conjunto (fase D); a CGH membro fica sem unidade cadastrada (potência "—")
+    linhas_ug += [{**linhas_ug[0], "nom_modalidadeoperacao": "TIPO II-B", "nom_tipousina": "TÉRMICA",
+                   "nom_usina": MEMBRO_UTE["nome"], "ceg": MEMBRO_UTE["ceg"], "nom_unidadegeradora": f"UG{n}",
+                   "cod_equipamento": f"{MEMBRO_UTE['ceg']}-UG{n}", "num_unidadegeradora": str(n),
+                   "nom_combustivel": "BIOMASSA", "val_potenciaefetiva": p}
+                  for n, p in enumerate(MEMBRO_UTE["unidades"], start=1)]
     _parquet(pd.DataFrame(linhas_ug), raw / "capacidade_geracao" / "CAPACIDADE_GERACAO.parquet")
 
 
@@ -674,6 +709,26 @@ def _renovaveis(raw: Path) -> None:
         _parquet(t, raw / "restricao_coff_fotovoltaica" / f"RESTRICAO_COFF_FOTOVOLTAICA_{sufixo}.parquet")
 
 
+def _hidrologia_cgh(raw: Path) -> None:
+    """Dados hidrológicos da CGH (fase D, T150), acrescentados aos arquivos da UHE fictícia, na convenção de fim de
+    hora (a última hora do dia às 23:59), com a vazão turbinada proporcional à geração e um dia de cheia."""
+    h = _horas_periodo()
+    turbinada = geracao_cgh(h) / PRODUTIVIDADE_CGH
+    vertida = np.where(np.asarray(h.normalize() == CHEIA_CGH), 30.0, 1.0)
+    instantes = pd.Series(h)
+    publicado = instantes.where(instantes.dt.hour != 23, instantes.dt.normalize() + pd.Timedelta(minutes=23 * 60 + 59))
+    publicado = publicado.where(instantes.dt.hour == 23, instantes + pd.Timedelta(hours=1))
+    hid = pd.DataFrame({
+        "id_reservatorio": ID_RESERVATORIO_CGH, "nom_reservatorio": FICTICIAS["cgh"]["nome"], "cod_usina": float(COD_USINA_CGH),
+        "din_instante": publicado, "val_nivelmontante": 520.0, "val_niveljusante": 500.0, "val_volumeutil": 80.0,
+        "val_vazaoafluente": turbinada + vertida, "val_vazaodefluente": turbinada + vertida,
+        "val_vazaoturbinada": turbinada, "val_vazaovertida": vertida, "val_vazaooutrasestruturas": np.nan,
+        "val_vazaovertidanaoturbinavel": 0.0,
+    })
+    for mes, g in hid.groupby(h.to_period("M")):
+        _acrescentar(g, raw / "dados_hidrologicos_ho" / f"DADOS_HIDROLOGICOS_HO_{mes.year}_{mes.month:02d}.parquet")
+
+
 def gerar_brutos_tipos(raw: Path) -> None:
     """Os brutos da UHE fictícia mais os das usinas fictícias dos outros tipos, nos mesmos arquivos do ONS."""
     raw = Path(raw)
@@ -688,3 +743,4 @@ def gerar_brutos_tipos(raw: Path) -> None:
     _cadastrais_ficticias(raw)
     _termicas(raw)
     _renovaveis(raw)
+    _hidrologia_cgh(raw)

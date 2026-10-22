@@ -66,3 +66,60 @@ def conferencia_vazoes(serie: Optional[SerieConjunto], evt: pd.DataFrame) -> Res
         meta_atingida=bool(a["confirmado"]),
         tabelas={"alinhamento": alinhamento},
     )
+
+
+# ---------------------------------------------------------------------------
+# Hidrelétricas sem EVT (spec 006, fase D; rascunho 003, FR-026; tarefa T150)
+# ---------------------------------------------------------------------------
+
+BASES_ALINHAMENTO = ("Dados hidrológicos horários (val_vazaoturbinada)", "Geração por usina (geração da usina)")
+DESLOCAMENTOS_ALINHAMENTO_H = (-1, 0, 1)
+
+
+def _correlacao(a: pd.Series, b: pd.Series) -> float:
+    """Correlação de Pearson; indefinida (NaN) com menos de duas horas ou série constante, sem divisão por zero."""
+    if len(a) < 2 or a.std() == 0 or b.std() == 0:
+        return float("nan")
+    return float(a.corr(b))
+
+
+def alinhar_com_geracao(hid: pd.DataFrame, base: pd.DataFrame) -> pd.DataFrame:
+    """Correlação entre a vazão turbinada (já na hora de início) e a geração da usina, com a hidrologia deslocada de
+    −1, 0 e +1 hora; uma linha por deslocamento, com as horas comuns."""
+    geracao = base.loc[base["nivel"] == "usina", ["din_instante", "geracao_mw"]].dropna()
+    turbinada = limpos(hid)[["din_instante", "val_vazaoturbinada"]].dropna()
+    linhas = []
+    for deslocamento in DESLOCAMENTOS_ALINHAMENTO_H:
+        j = geracao.merge(turbinada.assign(din_instante=turbinada["din_instante"] + pd.Timedelta(hours=deslocamento)),
+                          on="din_instante", how="inner")
+        linhas.append({"deslocamento_h": deslocamento, "horas_comuns": len(j),
+                       "correlacao": _correlacao(j["geracao_mw"], j["val_vazaoturbinada"])})
+    return pd.DataFrame(linhas)
+
+
+def conferencia_alinhamento_hidrologia(serie: Optional[SerieConjunto], base: Optional[pd.DataFrame]
+                                       ) -> ResultadoConferencia:
+    """A hora da hidrologia conferida pela geração da usina, sem a EVT (FR-026): confirmada quando a maior correlação
+    é a do deslocamento 0. Sem meta (decisão R13): o resultado só é registrado; a convenção nunca é ajustada."""
+    if serie is None or not len(serie.horaria):
+        return nao_aplicavel("alinhamento_hidrologia", BASES_ALINHAMENTO, "horas",
+                             "Dados hidrológicos horários sem dados da usina no período")
+    if base is None or not (base["nivel"] == "usina").any():
+        return nao_aplicavel("alinhamento_hidrologia", BASES_ALINHAMENTO, "horas",
+                             "sem a geração no nível da usina no período")
+    deslocamentos = alinhar_com_geracao(serie.horaria, base)
+    por_deslocamento = deslocamentos.set_index("deslocamento_h")["correlacao"]
+    zero = por_deslocamento.get(0, float("nan"))
+    outros = [v for d, v in por_deslocamento.items() if d != 0 and pd.notna(v)]
+    confirmado = bool(pd.notna(zero) and all(zero > v for v in outros))
+    comuns = int(deslocamentos.loc[deslocamentos["deslocamento_h"] == 0, "horas_comuns"].iloc[0])
+    alinhamento = pd.DataFrame([{
+        "horas_comuns": comuns, "correlacao_0h": zero, "correlacao_menos_1h": por_deslocamento.get(-1, float("nan")),
+        "correlacao_mais_1h": por_deslocamento.get(1, float("nan")), "deslocamento_aplicado_h": -1,
+        "confirmado": confirmado,
+    }])
+    return ResultadoConferencia(
+        id="alinhamento_hidrologia", bases=BASES_ALINHAMENTO, unidade="horas", comparados=comuns,
+        coincidentes=comuns if confirmado else 0, divergentes=0 if confirmado else comuns,
+        tabelas={"alinhamento": alinhamento, "deslocamentos": deslocamentos},
+    )

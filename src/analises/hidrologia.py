@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import unicodedata
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -188,4 +188,52 @@ def analisar_hidrologia(
         "mensal": resumir_hidrologia(hid, "M", "mes"),
         "anual": anual,
     })
+    return resultado
+
+
+def analisar_hidrologia_sem_evt(
+    serie: Optional[SerieConjunto],
+    conferencia: Any,
+    cobertura: Dict[str, Any],
+    obtido_em: str = "",
+) -> Dict[str, Any]:
+    """Afluência, vertimento e nível do reservatório na hidrelétrica sem EVT (spec 006, fase D; rascunho 004, FR-061;
+    tarefa T150): sem os cruzamentos com a EVT (faixas de afluência, dias com parada com EVT).
+
+    A hora vem conferida pela geração da usina (FR-026 da Conferência, ``conferencia``); sem a confirmação, só a
+    cobertura e o resultado da conferência são devolvidos, como na FR-034. Vazio sem a série no período.
+    """
+    if serie is None or not len(serie.horaria):
+        return {}
+    aplicavel = conferencia is not None and getattr(conferencia, "aplicavel", False)
+    alinhamento = conferencia.tabelas["alinhamento"] if aplicavel else pd.DataFrame([{"confirmado": False}])
+    resumo = _resumo_serie(serie)
+    qualidade_h = serie.horaria["qualidade"] if "qualidade" in serie.horaria.columns else pd.Series(dtype=object)
+    resumo["sinalizadas_por_regra"] = {
+        regra: {"horas": int(qualidade_h.str.contains(regra).sum()),
+                "anos": serie.horaria.loc[qualidade_h.str.contains(regra), "din_instante"].dt.year.value_counts().sort_index().to_dict()}
+        for regra in ("H1", "H2", "H3", "H4")
+    }
+    resultado: Dict[str, Any] = {
+        "resumo": resumo, "alinhamento": alinhamento, "auditoria": serie.auditoria, "ausencias": serie.ausencias,
+        "obtido_em": obtido_em, "publicado": bool(alinhamento.iloc[0]["confirmado"]), "sem_evt": True,
+        "motivo_alinhamento": "" if aplicavel else str(getattr(conferencia, "motivo", "") or
+                                                       "conferência da hora pela geração não feita"),
+    }
+    if not resultado["publicado"]:
+        return resultado
+    hid = serie.horaria
+    parciais = {str(a) for a in cobertura.get("anos_parciais", [])}
+    anual = resumir_hidrologia(hid, "Y")
+    anual["ano_parcial"] = anual["periodo"].isin(parciais)
+    limpas = limpos(hid)
+    resumo.update({
+        "afluencia_media_m3s": float(limpas["val_vazaoafluente"].mean()),
+        "afluencia_maxima_m3s": float(limpas["val_vazaoafluente"].max()),
+        "turbinada_media_m3s": float(limpas["val_vazaoturbinada"].mean()),
+        "vertida_media_m3s": float(limpas["val_vazaovertida"].mean()),
+        "horas_afluencia_acima_engolimento": int((limpas["val_vazaoafluente"] > perfil_ativo().engolimento_maximo_m3s)
+                                                 .sum()),
+    })
+    resultado.update({"mensal": resumir_hidrologia(hid, "M", "mes"), "anual": anual})
     return resultado

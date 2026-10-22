@@ -261,8 +261,10 @@ def montar_resumo(res: ResultadosAnalise, paginas_relatorio: int, data_geracao: 
     listas = listas_conclusao(res)
     sem = sem_evt(res)
     tiles, _ = comum.indicadores_capa(res) if sem else indicadores_capa(res)
-    evolucao, remissao = _evolucao_anual(res, numeros.get("anuais_comum" if sem else "indicadores_anuais"),
-                                         com_evolucao_anual)
+    # no relatório em duas partes (FR-048 do rascunho 005), a tabela anual fica na parte do conjunto
+    secao_anual = (numeros.get("anuais_comum") or numeros.get("parte_conjunto")) if sem else numeros.get(
+        "indicadores_anuais")
+    evolucao, remissao = _evolucao_anual(res, secao_anual, com_evolucao_anual)
     resumo = ResumoExecutivo(
         nome_usina=nome,
         titulo=f"{nome} — resumo executivo",

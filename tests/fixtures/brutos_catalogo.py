@@ -143,7 +143,9 @@ def gravar_series(raw: Path) -> None:
         return pd.DataFrame(linhas)
     codigos = [UHE["id_ons"], UTE["id_ons"], "GOCJA-101", "GOCJA-102", "GOCJB", "GOOUTRO", EOL["id_ons"]]
     _parquet(programacao(codigos, "2026-10-18"), raw / "programacao_diaria" / "PROGRAMACAO_DIARIA_2026_10_18.parquet")
-    _parquet(programacao(["GOVELHO"], "2026-10-17"), raw / "programacao_diaria" / "PROGRAMACAO_DIARIA_2026_10_17.parquet")
+    # o dia anterior: um código que saiu e o código antigo do conjunto da PCH (fase D: o conjunto trocou de código)
+    _parquet(programacao(["GOVELHO", "GOCJA-100"], "2026-10-17"),
+             raw / "programacao_diaria" / "PROGRAMACAO_DIARIA_2026_10_17.parquet")
 
     for mes in MESES_GERACAO:
         _parquet(geracao_do_mes(mes), raw / "geracao_usina_2" / f"GERACAO_USINA-2_{mes.year}_{mes.month:02d}.parquet")

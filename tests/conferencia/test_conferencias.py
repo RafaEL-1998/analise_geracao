@@ -344,3 +344,46 @@ def test_cadastro_com_perfil_sem_id_ons() -> None:
     assert r.divergentes == 1 and "id ONS MSXXXX (projeto: não informado)" in r.tabelas["divergencias"]
     assert "None" not in r.tabelas["divergencias"]
 
+
+
+# ---------------------------------------------------------------------------
+# Hidrelétrica sem EVT: a hora da hidrologia conferida pela geração (spec 006, fase D; rascunho 003, FR-026)
+# ---------------------------------------------------------------------------
+
+
+def _hidrologia_e_base(desvio_h: int = 0):
+    """Geração que varia de hora em hora e a vazão turbinada proporcional a ela, com a hidrologia deslocada de
+    ``desvio_h`` (a convenção errada)."""
+    from src.conferencia.vazoes import conferencia_alinhamento_hidrologia
+
+    horas = pd.date_range("2024-01-01", periods=72, freq="h")
+    geracao = pd.Series([10.0 + (i * 7) % 23 for i in range(72)])
+    base = pd.DataFrame({"din_instante": horas, "geracao_mw": geracao, "nivel": "usina"})
+    hid = pd.DataFrame({"din_instante": horas + pd.Timedelta(hours=desvio_h), "val_vazaoturbinada": geracao * 2.0,
+                        "qualidade": "OK"})
+    return conferencia_alinhamento_hidrologia, _serie(hid), base
+
+
+def test_alinhamento_da_hidrologia_pela_geracao_confirmado() -> None:
+    conferir, hid, base = _hidrologia_e_base()
+    r = conferir(hid, base)
+    a = r.tabelas["alinhamento"].iloc[0]
+    assert r.aplicavel and bool(a["confirmado"]) and (r.comparados, r.coincidentes) == (72, 72)
+    assert a["correlacao_0h"] == pytest.approx(1.0) and a["correlacao_0h"] > a["correlacao_mais_1h"]
+    assert list(r.tabelas["deslocamentos"]["deslocamento_h"]) == [-1, 0, 1]
+    assert r.meta is None  # sem meta (decisão R13)
+
+
+def test_alinhamento_da_hidrologia_com_uma_hora_de_deslocamento_nao_e_confirmado() -> None:
+    conferir, hid, base = _hidrologia_e_base(desvio_h=1)
+    r = conferir(hid, base)
+    a = r.tabelas["alinhamento"].iloc[0]
+    assert not bool(a["confirmado"]) and (r.coincidentes, r.divergentes) == (0, r.comparados)
+    assert a["correlacao_menos_1h"] == pytest.approx(1.0)  # a convenção errada aparece; nada é ajustado
+
+
+def test_alinhamento_da_hidrologia_sem_base_nao_e_aplicavel() -> None:
+    conferir, hid, base = _hidrologia_e_base()
+    assert not conferir(None, base).aplicavel
+    sem_usina = conferir(hid, base.assign(nivel="conjunto"))
+    assert not sem_usina.aplicavel and "nível da usina" in sem_usina.motivo

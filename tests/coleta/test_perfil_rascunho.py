@@ -116,7 +116,11 @@ def test_rascunho_da_pch_em_conjunto_com_os_membros_vigentes(ambiente) -> None:
     assert _perfil(ambiente, bc.PCH["ceg"])[0] == 0
     d = _toml(ambiente, "pch_alfa")
     i = d["identificacao"]
-    assert (i["id_conjunto"], i["codigos_programacao"]) == (bc.PCH["conjunto"], ["GOCJA-101", "GOCJA-102"])
+    # fase D: também o código antigo do conjunto, com os períodos em comentário para o fiscal conferir
+    assert (i["id_conjunto"], i["codigos_programacao"]) == (bc.PCH["conjunto"], ["GOCJA-100", "GOCJA-101", "GOCJA-102"])
+    texto = (ambiente["usinas"] / "pch_alfa" / "perfil.toml").read_text(encoding="utf-8")
+    assert ("#   períodos na Programação diária: GOCJA-100 de 17/10/2026 a 17/10/2026; GOCJA-101 desde 18/10/2026; "
+            "GOCJA-102 desde 18/10/2026") in texto
     assert i["id_ons"] == bc.PCH["id_ons"]
     assert d["cobertura"]["geracao"] == "conjunto" and d["cobertura"]["programacao"] == "conjunto"
     assert d["cobertura"]["evt"] == "ausente"

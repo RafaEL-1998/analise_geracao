@@ -38,11 +38,13 @@ from src.comum.regras import (
     LIMIAR_SINCRONIZADA_MW,
     NUMERO_EVENTOS_RELATORIO,
     ONS_PORTAL_DATASET_URL,
+    CONJUNTO_CAPACIDADE,
     CONJUNTO_CMO,
     CONJUNTO_CVU,
     CONJUNTO_DESPACHO,
     CONJUNTO_FATOR_CAPACIDADE,
     CONJUNTO_GERACAO,
+    CONJUNTO_HIDROLOGIA,
     LIMIAR_DESVIO_DESPACHO_MW,
     PERIODO_MINIMO_SAZONALIDADE_MESES,
     TIPOS_COM_FATOR_CAPACIDADE,
@@ -51,6 +53,7 @@ from src.comum.regras import (
 from src.coleta import registro
 from src.conferencia.aplicabilidade import CATALOGO_CONFERENCIAS
 from src.relatorio.conteudo import (
+    linhas_tabela_hidrologia_anual,
     nota_conclusao_catalogo,
     linhas_tabela_ons_decomposicao,
     linhas_tabela_ons_divergencias,
@@ -58,6 +61,7 @@ from src.relatorio.conteudo import (
     linhas_tabela_ons_ug_anual,
     titulo_capa_relatorio,
 )
+from src.relatorio import secoes_conjunto
 from src.relatorio.secoes_renovavel import SECOES_RENOVAVEL, pacote_variante, referencia_restricao
 
 ROTULO_NIVEL = {"usina": "usina", "conjunto": "conjunto", "agregado": "agregado"}
@@ -72,7 +76,8 @@ DESCRICAO_CONFERENCIAS = {c.id: c.descricao for c in CATALOGO_CONFERENCIAS}
 
 @dataclass
 class Bloco:
-    """Bloco de uma seção: ``chave_valor``, ``tabela``, ``figura``, ``texto``, ``notas`` ou ``sem_linhas``."""
+    """Bloco de uma seção: ``chave_valor``, ``tabela``, ``figura``, ``texto``, ``subtitulo``, ``notas`` ou
+    ``sem_linhas``."""
 
     tipo: str
     chave: str = ""
@@ -339,18 +344,32 @@ def linhas_tabela_niveis(res: ResultadosAnalise) -> Tuple[List[str], List[List[s
     if getattr(ident, "id_conjunto", None):
         linhas.append(["Composição dos conjuntos de usinas", "conjunto", str(ident.id_conjunto),
                        _datas(res, "usina_conjunto")])
+    if (getattr(res, "conjunto", None) or {}).get("com_capacidade"):  # fase D: a potência das usinas do conjunto
+        linhas.append(["Capacidade de geração", "usinas do conjunto", f"CEG das usinas de {ident.id_conjunto}",
+                       _datas(res, CONJUNTO_CAPACIDADE)])
+    if getattr(res, "hidrologia", None):  # fase D: hidrelétrica sem EVT, com os Dados hidrológicos (T150)
+        linhas.append(["Dados hidrológicos horários", "usina",
+                       f"cod_usina {ident.cod_usina}, reservatório {ident.id_reservatorio}",
+                       _datas(res, CONJUNTO_HIDROLOGIA)])
     return cabecalho, linhas
 
 
+def _com_secao_conjunto(res: ResultadosAnalise) -> bool:
+    return bool(getattr(res, "conjunto", None))
+
+
 def linhas_tabela_trechos(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
-    """Trechos do período (decisão R7) em que muda o nível ou a composição."""
-    cabecalho = ["Trecho", "Início", "Fim", "Modalidade", "Nível", "Composição (CEG)", "Tipos"]
+    """Trechos do período (decisão R7) em que muda o nível ou a composição. Com a seção do conjunto (fase D), sem a
+    coluna dos CEGs: a composição, com os nomes das usinas, fica naquela seção."""
+    com_ceg = not _com_secao_conjunto(res)
+    cabecalho = ["Trecho", "Início", "Fim", "Modalidade", "Nível", *(["Composição (CEG)"] if com_ceg else []), "Tipos"]
     t = res.trechos
     if t is None or not len(t):
         return cabecalho, []
     linhas = [[str(r["trecho"]), fmt_data_hora(r["inicio"]) if r["inicio"] else "",
                fmt_data_hora(r["fim"]) if r["fim"] else "", str(r["modalidade"]), str(r["nivel_geracao"]),
-               str(r["composicao"]).replace(";", "; "), str(r["tipos_composicao"]).replace(";", "; ")]
+               *([str(r["composicao"]).replace(";", "; ")] if com_ceg else []),
+               str(r["tipos_composicao"]).replace(";", "; ")]
               for r in t.to_dict("records")]
     return cabecalho, linhas
 
@@ -503,7 +522,9 @@ def textos_tabelas(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
     return {
         "tab_niveis": ("Conjuntos do ONS, nível e identificador", ""),
         "tab_trechos": ("Trechos do período", "Trecho novo a cada mudança de modalidade, de composição do conjunto "
-                                             "ou de código; composição pelos CEGs das usinas do conjunto."),
+                                             "ou de código; " + ("as usinas de cada composição estão na seção do "
+                                                                 "conjunto." if _com_secao_conjunto(res) else
+                                                                 "composição pelos CEGs das usinas do conjunto.")),
         "tab_anuais_comum": ("", (
             f"* Ano parcial. Geração média = média das horas com valor; horas até {fmt_num(LIMIAR_GERACAO_PARADA_MW, 0)} "
             "MW = horas com geração até esse limiar, sobre as horas com valor"
@@ -551,7 +572,24 @@ def textos_tabelas(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
         "tab_parametros_comum": ("Parâmetros utilizados", ""),
         **_textos_termica(res),
         **_textos_renovavel(res),
+        **secoes_conjunto.textos_tabelas(res),
+        **_textos_hidrologia(res),
+        "tab_usina_peso_potencia": ("Peso da usina na potência do conjunto, por composição", (
+            "Potência das unidades da usina em operação no trecho ÷ potência somada das usinas do conjunto com unidade "
+            "cadastrada (Capacidade de geração); «—» = unidades da usina ainda fora de operação. É um fato do "
+            "cadastro, não uma estimativa da geração da usina: a geração do conjunto não é dividida entre as usinas.")),
     }
+
+
+def _textos_hidrologia(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
+    """A tabela anual da afluência na hidrelétrica sem EVT (fase D, T150), com as mesmas colunas da de hoje."""
+    if not getattr(res, "hidrologia", None):
+        return {}
+    return {"tab_hidrologia_anual_comum": (
+        "Afluência, vazões, nível e volume útil por ano",
+        "Médias sem os valores sinalizados, que saem só do campo afetado (a hora continua nos demais campos); horas acima "
+        f"do engolimento = afluência acima do engolimento máximo da usina "
+        f"({fmt_num(perfil_ativo().engolimento_maximo_m3s, 1)} m³/s). * ano parcial.")}
 
 
 def _textos_termica(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
@@ -599,6 +637,11 @@ def legenda_figura(res: ResultadosAnalise, chave: str) -> str:
     if chave == "disponibilidade_comum":
         return ("Médias mensais da disponibilidade operacional e sincronizada publicadas pelo ONS e da geração da usina, "
                 f"nas horas com os dois dados. Linha tracejada: potência instalada ({pinst} MW).")
+    if chave == "conjunto_mensal":  # fase D
+        return secoes_conjunto.legenda_figura(res, chave)
+    if chave == "hidrologia_mensal_comum":  # fase D, T150
+        return ("Médias mensais da vazão afluente, da turbinada e da vertida publicadas pelo ONS (Dados hidrológicos "
+                "horários), sem os valores sinalizados; a hora da série foi conferida pela geração da usina.")
     if getattr(res, "termica", None):
         from src.relatorio import secoes_termica
 
@@ -650,6 +693,14 @@ def notas(res: ResultadosAnalise) -> List[str]:
         texto = secoes_renovavel.nota(res)
         if texto:
             saida.append(texto)
+    texto = secoes_conjunto.nota(res)  # fase D: só com a seção do conjunto
+    if texto:
+        saida.append(texto)
+    if getattr(res, "hidrologia", None):  # fase D: hidrelétrica sem EVT (T150)
+        saida.append("Dados hidrológicos: informados pelos agentes e não consistidos pelo ONS; a série publicada marca o fim "
+                     "da hora, e a série foi convertida para a hora de início, conferida pela correlação entre a vazão "
+                     "turbinada e a geração da usina, e não pela EVT, que a usina não tem. Valores fora da faixa física "
+                     "são sinalizados e saem só do campo afetado; campos vazios não são tratados como zero.")
     saida.append(nota_conclusao_catalogo(res))
     if res.omitidos or len(res.comum.get("conferencias_nao_aplicaveis", ())):
         saida.append("As seções e as regras sem base para a usina e as conferências que não se aplicam a ela estão "
@@ -752,6 +803,40 @@ def _numericas(cabecalho: List[str], primeiras_texto: int) -> range:
     return range(primeiras_texto, len(cabecalho))
 
 
+def linhas_tabela_peso_usina(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
+    peso = (getattr(res, "conjunto", None) or {}).get("peso_usina")
+    cabecalho = ["Composição", "Início", "Fim", "Potência da usina (MW)", "Potência das usinas do conjunto (MW)",
+                 "Peso da usina"]
+    if peso is None or not len(peso):
+        return cabecalho, []
+    return cabecalho, [[str(r.trecho), fmt_data(r.inicio), fmt_data(r.fim),
+                        "—" if pd.isna(r.potencia_usina_mw) else fmt_num(r.potencia_usina_mw, 1),
+                        fmt_num(r.potencia_somada_mw, 1), "—" if pd.isna(r.peso_pct) else fmt_pct(r.peso_pct)]
+                       for r in peso.itertuples()]
+
+
+def _blocos_usina_no_conjunto(res: ResultadosAnalise) -> List[Bloco]:
+    """A parte da usina (FR-048): o que o ONS publica da usina isolada, onde obter a geração dela e o peso dela na
+    potência do conjunto (o peso e a falta da série própria estão na constatação)."""
+    from src.relatorio.estrutura import secoes_presentes
+
+    q = res.comum["qualidade"]
+    periodo = q.get("linhas_usina_sem_valor_periodo") or {}
+    vazias = (f" e, de {fmt_data(periodo['inicio'])} a {fmt_data(periodo['fim'])}, linhas próprias na Geração por usina, "
+              "todas sem valor" if q.get("linhas_usina_sem_valor") and periodo.get("inicio") else "")
+    numero = next((n for n, s in secoes_presentes(res) if s.chave == "parte_conjunto"), None)
+    onde = f"na seção {numero}, antes da conclusão" if numero else "na parte do conjunto"
+    texto = (f"Da usina isolada, o ONS publica só a ficha do cadastro (na capa), as unidades geradoras e a entrada no "
+             f"conjunto{vazias}; não publica a geração, a disponibilidade nem os indicadores dela. Os dados de operação "
+             f"são os do conjunto, {onde}. A geração da usina isolada consta da medição da CCEE e dos registros do "
+             "agente, que este relatório não usa: ele se limita aos dados abertos do ONS.")
+    b = [Bloco("texto", textos=[texto])]
+    cab, linhas = linhas_tabela_peso_usina(res)
+    if linhas:
+        b.append(_tabela("tab_usina_peso_potencia", (cab, linhas), [0.8, 0.9, 0.9, 1.0, 1.3, 0.8], range(3, 6)))
+    return b
+
+
 def blocos_secao(res: ResultadosAnalise, chave: str) -> List[Bloco]:
     """Blocos de cada seção do caminho sem EVT, na ordem em que o PDF e o Markdown os mostram."""
     b: List[Bloco] = []
@@ -825,6 +910,28 @@ def blocos_secao(res: ResultadosAnalise, chave: str) -> List[Bloco]:
         from src.relatorio import secoes_renovavel
 
         b.extend(secoes_renovavel.blocos(res, chave))
+    elif chave in secoes_conjunto.SECOES_CONJUNTO:  # fase D
+        b.extend(secoes_conjunto.blocos(res, chave))
+    elif chave == "usina_no_conjunto":  # FR-048: a parte da usina
+        b.extend(_blocos_usina_no_conjunto(res))
+    elif chave == "parte_conjunto":  # FR-048: a parte do conjunto, com as seções do conjunto como subseções
+        for titulo, secao in (("Indicadores anuais do conjunto", "anuais_comum"),
+                              ("Série temporal da geração do conjunto", "serie_temporal_comum"),
+                              ("Geração mensal e sazonalidade do conjunto", "geracao_mensal"),
+                              ("Perfil horário da geração do conjunto", "perfil_horario_comum"),
+                              ("", "conjunto"),  # as tabelas da composição já trazem os subtítulos
+                              ("Programação diária × geração verificada do conjunto", "programacao_comum")):
+            if secao == "programacao_comum" and not res.comum.get("programacao"):
+                continue
+            if titulo:
+                b.append(Bloco("subtitulo", textos=[titulo]))
+            b.extend(blocos_secao(res, secao))
+    elif chave == "hidrologia_comum":  # fase D, T150: a cobertura e o alinhamento estão na constatação
+        if res.hidrologia.get("publicado"):
+            cab, linhas = linhas_tabela_hidrologia_anual(res)
+            b.append(_tabela("tab_hidrologia_anual_comum", (cab, linhas), [0.6] + [1.0] * (len(cab) - 1),
+                             _numericas(cab, 1)))
+            b.append(Bloco("figura", "hidrologia_mensal_comum"))
     elif chave == "notas_comum":
         b.append(Bloco("notas", textos=notas(res)))
         cab, linhas = linhas_tabela_omitidos(res)

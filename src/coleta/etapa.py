@@ -51,6 +51,8 @@ COLUNAS_DATAS_OBTENCAO = ["conjunto", "arquivos_registrados", "publicacao_mais_r
 COLUNAS_CAPACIDADE_FICHA = ["cod_equipamento", "num_unidadegeradora", "nom_unidadegeradora", "val_potenciaefetiva",
                             "nom_combustivel", "dat_entradateste", "dat_entradaoperacao", "dat_desativacao",
                             "nom_agenteproprietario", "nom_agenteoperador"]
+# As unidades das usinas da composição do conjunto (fase D), com o CEG e o nome de cada usina
+COLUNAS_CAPACIDADE_MEMBROS = ["ceg", "nom_usina", *COLUNAS_CAPACIDADE_FICHA]
 
 
 def datas_do_escopo(pasta: Path, arquivos: Iterable[str]) -> Dict[str, Any]:
@@ -178,6 +180,14 @@ class _Coleta:
         self.escolha: Optional[serie_referencia.Escolha] = None
         self.complemento: Optional[pd.DataFrame] = None
         self.composicao = pd.DataFrame(columns=["id_conjunto", "ceg", "tipo", "inicio", "fim"])
+        # Usina em conjunto (fase D): o tipo publicado na série do conjunto, para ``tipo_publicado.csv``
+        self.serie_conjunto: Optional[pd.DataFrame] = None
+
+    def recorta_pela_composicao(self) -> bool:
+        """A série de referência é a do conjunto: as horas só contam com a usina na composição (rascunho 001,
+        FR-054)."""
+        return (self.escolha is not None and self.escolha.conjunto == "geracao" and "conjunto" in self.escolha.niveis
+                and bool(getattr(self.perfil.identificacao, "id_conjunto", None)))
 
     def anotar_datas(self, pacote: str, pasta: Path, arquivos: Iterable[str]) -> None:
         """Datas de obtenção do conjunto, só com os arquivos do escopo da usina (``datas_obtencao.csv``)."""
@@ -259,7 +269,25 @@ def _coletar_referencia(c: _Coleta) -> Optional[ResultadoEtapa]:
             conjuntos.sincronizar_conjunto(d, serie_referencia.INICIO_VARREDURA, fim_aberto, pasta, c.forcar))) or []
     series, auditoria = serie_referencia.extrair_referencia(perfil, escolha, c.raw, falhas)
     auditoria = auditoria.drop(columns=["nivel"], errors="ignore")
+    if c.recorta_pela_composicao() and "conjunto" in series:  # fase D: só as horas com a usina na composição
+        intervalos = serie_referencia.intervalos_da_usina(c.composicao, perfil.identificacao.ceg)
+        if not intervalos:
+            logger.error("A usina (CEG %s) não está na Composição dos conjuntos do conjunto %s declarado no perfil; a "
+                         "série do conjunto não tem hora da usina e os demais conjuntos não são coletados.",
+                         perfil.identificacao.ceg, perfil.identificacao.id_conjunto)
+            c.gravar_csv(auditoria, f"auditoria_{escolha.conjunto}")
+            c.registrar(primeira.pacote, auditoria, [pasta])
+            return c.resultado(CODIGO_DADO_NAO_OBTIDO)
+        series["conjunto"] = serie_referencia.no_intervalo(series["conjunto"], intervalos)
+        c.resumo["composicao_da_usina"] = [{"inicio": i.strftime(FORMATO_DATA) if i > serie_referencia.INICIO_VARREDURA
+                                            else "", "fim": f.strftime(FORMATO_DATA) if f is not None else ""}
+                                           for i, f in intervalos]
     inicio, fim = serie_referencia.periodo(series, coluna)
+    if "conjunto" in series and len(series["conjunto"]) and inicio is not None:
+        conjunto = series["conjunto"]
+        instantes = pd.to_datetime(conjunto["din_instante"])
+        c.serie_conjunto = conjunto[(instantes >= inicio) & (instantes <= fim)][
+            ["din_instante", *[col for col in serie_referencia.COLUNAS_TIPO_PUBLICADO if col in conjunto.columns]]]
     semi_horaria = escolha.conjunto == "restricao_detalhe"
     if semi_horaria:  # a série inteira da restrição com detalhe, no período, com todas as colunas extraídas
         c.gravar_parquet(serie_referencia.recortar(series["usina"], inicio, fim), escolha.conjunto)
@@ -285,7 +313,13 @@ def _coletar_referencia(c: _Coleta) -> Optional[ResultadoEtapa]:
     if escolha.conjunto == "geracao" and "usina" not in escolha.niveis and perfil.identificacao.id_ons:
         # linhas próprias sem valor (achado A3)
         proprias, _ = conjuntos.extrair_conjunto(registro.descricao_geracao(perfil, "usina"), pasta, inicio, fim)
-        c.resumo["linhas_usina_sem_valor"] = int(proprias["val_geracao"].isna().sum()) if len(proprias) else 0
+        proprias = serie_referencia.recortar(proprias, inicio, fim)  # os arquivos mensais passam do período
+        sem_valor = proprias.loc[proprias["val_geracao"].isna(), "din_instante"] if len(proprias) else pd.Series([])
+        c.resumo["linhas_usina_sem_valor"] = int(len(sem_valor))
+        if len(sem_valor):  # desde quando o ONS publica a linha da usina vazia (fase D; FR-047 e FR-048)
+            instantes = pd.to_datetime(sem_valor)
+            c.resumo["linhas_usina_sem_valor_periodo"] = {"inicio": instantes.min().strftime(FORMATO_DATA),
+                                                          "fim": instantes.max().strftime(FORMATO_DATA)}
     logger.info("Período da série de referência (%s): %s a %s.", escolha.motivo, inicio, fim)
     return None
 
@@ -329,6 +363,7 @@ def _coletar_cadastral(c: _Coleta, chave: str) -> Optional[ResultadoEtapa]:
     else:
         colunas = [col for col in COLUNAS_CAPACIDADE_FICHA if col in selecionadas.columns]
         c.gravar_csv(selecionadas[colunas].reset_index(drop=True), "capacidade")
+        _gravar_capacidade_membros(c, tabela, linha)
     auditoria = pd.DataFrame([linha], columns=COLUNAS_AUDITORIA_COLETA)
     c.gravar_csv(auditoria, f"auditoria_{chave}")
     c.anotar_datas(cadastral.pacote, pasta, [arquivo.name])
@@ -336,8 +371,44 @@ def _coletar_cadastral(c: _Coleta, chave: str) -> Optional[ResultadoEtapa]:
     return None
 
 
+def _gravar_capacidade_membros(c: _Coleta, capacidade: pd.DataFrame, linha_capacidade: Dict[str, Any]) -> None:
+    """``capacidade_membros.csv`` da usina em conjunto (fase D; rascunho 001, FR-060): as unidades geradoras de cada
+    usina da composição no período, pelo CEG (identificador), conferidas pelo subsistema da linha da usina na
+    composição (princípio IV). O estado não confere: o conjunto pode ter usinas cadastradas em outro estado (o Conj.
+    Chapadão, de MS, teve duas UTE de GO). As linhas em que só o CEG confere vão para a auditoria
+    (``auditoria_capacidade_membros.csv``), sem interrupção."""
+    inicio, fim = getattr(c, "inicio", None), getattr(c, "fim", None)
+    if not getattr(c.perfil.identificacao, "id_conjunto", None) or c.composicao.empty or inicio is None:
+        return
+    normalizar = registro.normalizar_texto
+    membros = {normalizar(ceg) for ceg in serie_referencia.membros_no_periodo(c.composicao, inicio, fim)}
+    subsistema = {normalizar(r["ceg"]): normalizar(r.get("subsistema", "")) for r in c.composicao.to_dict("records")}
+    cegs = [normalizar(x) for x in capacidade["ceg"]]
+    subsistemas = ([normalizar(x) for x in capacidade["id_subsistema"]] if "id_subsistema" in capacidade.columns
+                   else [""] * len(capacidade))
+    identificador = pd.Series([ceg in membros for ceg in cegs], index=capacidade.index)
+    conferencia = pd.Series([bool(subsistema.get(ceg)) and subsistema.get(ceg) == s for ceg, s in zip(cegs, subsistemas)],
+                            index=capacidade.index)
+    selecionadas = capacidade[identificador & conferencia]
+    colunas = [col for col in COLUNAS_CAPACIDADE_MEMBROS if col in capacidade.columns]
+    c.gravar_csv(selecionadas[colunas].reset_index(drop=True), "capacidade_membros")
+    com_unidades = len({normalizar(x) for x in selecionadas["ceg"]})
+    auditoria = dict(linha_capacidade)
+    auditoria.update(linhas_usina=int((identificador & conferencia).sum()),
+                     linhas_so_identificador=int((identificador & ~conferencia).sum()), linhas_so_conferencia=0,
+                     status="PROCESSADO" if com_unidades else "SEM_REGISTROS",
+                     mensagem=f"usinas da composição no período: {len(membros)}; com unidades: {com_unidades}")
+    c.gravar_csv(pd.DataFrame([auditoria], columns=COLUNAS_AUDITORIA_COLETA), "auditoria_capacidade_membros")
+    if auditoria["linhas_so_identificador"]:
+        logger.warning("Capacidade de geração: %d unidades das usinas do conjunto com o CEG e outro subsistema, não "
+                       "extraídas; verificar mudança de cadastro no ONS.", auditoria["linhas_so_identificador"])
+    c.resumo["capacidade_membros"] = {"usinas": len(membros), "com_unidades": com_unidades,
+                                      "linhas_so_identificador": auditoria["linhas_so_identificador"]}
+
+
 def _gravar_trechos(c: _Coleta) -> None:
-    """``trechos.csv`` das usinas sem EVT (decisão R7), com a composição coletada e os códigos do perfil."""
+    """``trechos.csv`` das usinas sem EVT (decisão R7), com a composição coletada e os códigos do perfil; na usina cuja
+    série de referência é a do conjunto, também ``tipo_publicado.csv`` (fase D; rascunho 001, FR-061)."""
     if c.complemento is None:
         return
     ident = c.perfil.identificacao
@@ -345,6 +416,8 @@ def _gravar_trechos(c: _Coleta) -> None:
                                       getattr(ident, "id_conjunto", None) or "")
     c.gravar_csv(tabela, "trechos")
     c.resumo["trechos"] = len(tabela)
+    if c.recorta_pela_composicao():
+        c.gravar_csv(serie_referencia.tipos_publicados(c.serie_conjunto, tabela), "tipo_publicado")
 
 
 def _coletar_indicadores(c: _Coleta) -> Optional[ResultadoEtapa]:
@@ -501,6 +574,9 @@ def executar_coleta(perfil: Any, sem_portal: bool = False, forcar_download: bool
         logger.info("Coleta sem consulta ao portal (--sem-portal): só os arquivos locais de %s.", c.raw)
     etapas: List[Callable[[_Coleta], Optional[ResultadoEtapa]]] = []
     if c.escolha.conjunto != "evt":  # a série de referência vem antes: ela define o período
+        if c.recorta_pela_composicao() and "composicao" in chaves:  # fase D: a composição recorta o período
+            etapas.append(lambda c: _coletar(c, "composicao"))
+            chaves = [k for k in chaves if k != "composicao"]
         etapas.append(_coletar_referencia)
         chaves = [k for k in chaves if k != c.escolha.conjunto]
     etapas += [lambda c, k=k: _coletar(c, k) for k in chaves]

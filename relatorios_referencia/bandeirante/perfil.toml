@@ -1,0 +1,61 @@
+# Rascunho gerado por "python -m src perfil" a partir do catálogo de usinas (data/catalogo/, montado em 2026-10-22 12:46:07 UTC)
+# e completado em 22/10/2026 só com os dados do ONS, por decisão do usuário (sem garantia física, IP e TEIF de referência).
+# Identificação só pelos códigos (CEG, id ONS, id do conjunto e códigos de programação), nunca pelo nome.
+
+[usina]
+slug = "bandeirante"
+nome = "PCH Bandeirante"              # Modalidade das usinas: PCH BANDEIRANTE (CONEXÃO DEFINITIVA)
+nome_curto = "Bandeirante"
+estado = "MS"                         # Modalidade das usinas
+tipo = "PCH"                          # prefixo do CEG
+modalidade = "TIPO II-C"              # Modalidade das usinas
+subsistema = "SE"                     # Capacidade de geração ou Composição dos conjuntos
+inicio_operacao_comercial = 2019      # Capacidade de geração: primeira unidade ativa em 12/10/2019
+situacao = "conferido"
+
+[identificacao]
+ceg = "PCH.PH.MS.032163-0.01"         # Modalidade das usinas
+id_ons = "MSBDT"                      # Modalidade das usinas
+id_conjunto = "CJU_MSCAO"             # Composição dos conjuntos: Conj. Chapadão
+codigos_programacao = ["MSCAO-9761", "MSCAO-9762", "MSCAO-9763", "MSCAO-9766", "MSCAO-10205", "MSCAO-9764", "MSCAO-9765", "MSCAO-9784"] # Programação diária, publicado em 20/10/2026
+#   períodos na Programação diária: MSCAO-9761 de 01/10/2024 a 02/07/2025; MSCAO-9762 de 01/10/2024 a 02/07/2025; MSCAO-9763 de 01/10/2024 a 02/07/2025; MSCAO-9766 de 01/10/2024 a 02/07/2025; MSCAO-10205 desde 05/07/2025; MSCAO-9764 desde 05/07/2025; MSCAO-9765 desde 05/07/2025; MSCAO-9784 desde 05/07/2025
+
+[[identificacao.membros]]             # Composição dos conjuntos
+id_ons = "MSARE"
+ceg = "PCH.PH.MS.033893-1.01"
+inicio = "2019-09-27"
+fim = ""                              # vazio = vigente
+
+[[identificacao.membros]]             # Composição dos conjuntos
+id_ons = "MSBDT"
+ceg = "PCH.PH.MS.032163-0.01"
+inicio = "2019-08-22"
+fim = ""                              # vazio = vigente
+
+[[identificacao.membros]]             # Composição dos conjuntos
+id_ons = "MSUTIN"
+ceg = "PCH.PH.MS.030079-9.01"
+inicio = "2012-05-05"
+fim = ""                              # vazio = vigente
+
+[[identificacao.membros]]             # Composição dos conjuntos
+id_ons = "MSUHIG"
+ceg = "PCH.PH.MS.030078-0.01"
+inicio = "2012-03-21"
+fim = ""                              # vazio = vigente
+
+[cobertura]                           # catálogo de usinas
+evt = "ausente"
+indicadores = "ausente"
+programacao = "conjunto"
+disponibilidade = "ausente"
+hidrologia = "ausente"
+geracao = "conjunto"
+
+[parametros]
+potencia_instalada_mw = 27.9999       # Capacidade de geração: 3 unidades ativas
+unidades_geradoras = 3
+potencia_unitaria_mw = 9.3333
+
+[parametros.fontes]
+geral = "ONS, dados abertos: Capacidade de geração e Modalidade das usinas, publicados em 20/10/2026"

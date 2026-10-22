@@ -70,3 +70,23 @@ Redação final. Os requisitos novos seguem a numeração da spec da Conferênci
 | G1 (geração entre fontes) | só os pares do mesmo nível | não aplicável: sem duas fontes no mesmo nível | não aplicável: tipo |
 | G2 (soma das usinas × conjunto) | em conjunto, com os membros | não aplicável: fora de conjunto ou sem os membros | não aplicável: tipo |
 | G5 (programação × fator de capacidade) | no mesmo nível | não aplicável: sem uma das bases ou níveis diferentes | não aplicável: tipo |
+
+## Fase D — PCH e CGH em conjunto; hidrelétricas sem EVT com hidrologia (rascunho para aprovação, tarefa T119)
+
+Na PCH e na CGH em conjunto, nenhuma conferência nova: a usina não tem série própria com valor, e a soma das usinas do conjunto (como a G2) não existe, porque o ONS publica vazias as linhas próprias das PCH. As conferências de hoje continuam não aplicáveis, com o motivo.
+
+### Requisitos novos
+
+- **FR-026** (alinhamento da hidrologia pela geração, `alinhamento_hidrologia.csv`; decisão do usuário de 22/10/2026): na hidrelétrica sem EVT, com os Dados hidrológicos e a Geração por usina no nível da usina, a hora da hidrologia DEVE ser conferida pela geração, porque não há a EVT para a conferência das vazões de hoje (FR-012 e FR-013).
+  - O cálculo: a correlação entre a vazão turbinada (já na hora de início, deslocada −1 h pelo Tratamento) e a geração da usina, com deslocamento de −1, 0 e +1 hora.
+  - O alinhamento é confirmado quando a maior correlação é a do deslocamento 0. Sem isso, as Análises publicam só a cobertura e o resultado desta conferência (como a FR-034 faz hoje, sem a meta).
+  - Sem meta e sem o código 3: a conferência só registra o resultado (decisão R13). A convenção de hora nunca é ajustada automaticamente (decisão R11).
+  - Sem a geração no nível da usina (hidrelétrica em conjunto), a conferência fica não aplicável, com o motivo.
+
+### Aplicabilidade por tipo (fase D, acréscimo)
+
+| Conferência | UHE, PCH, CGH sem EVT, com hidrologia e geração própria | UHE, PCH, CGH sem EVT, sem uma das duas | Demais tipos e hidrelétrica com EVT |
+|---|---|---|---|
+| Alinhamento da hidrologia pela geração (FR-026) | sim | não aplicável: sem a hidrologia ou sem a geração no nível da usina | hidrelétrica com EVT: não aplicável, vale a conferência das vazões de hoje; demais tipos: sem linha em `nao_aplicaveis.csv` |
+
+Precisão na implementação (22/10/2026): nos tipos fora das hidrelétricas, a conferência não ganha linha em `nao_aplicaveis.csv`, porque a conferência das vazões já registra que a hidrologia não se aplica ao tipo. Assim os relatórios aprovados da William Arjona e da Praia Formosa não mudam, como diz o efeito nas referências do rascunho 005.

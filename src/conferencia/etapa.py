@@ -36,7 +36,7 @@ from src.conferencia.fontes import (
 from src.conferencia.geracao import conferencia_geracao
 from src.conferencia.indicadores import conferencia_dispf_horas, conferencia_teifa_teip
 from src.conferencia.resultado import ResultadoConferencia, salvar_conferencias
-from src.conferencia.vazoes import conferencia_vazoes
+from src.conferencia.vazoes import conferencia_alinhamento_hidrologia, conferencia_vazoes
 from src.pipeline import CODIGO_META_HIDROLOGIA, CODIGO_SUCESSO, ResultadoEtapa
 from src.tratamento.base_horaria import carregar_base_horaria
 from src.tratamento.disponibilidade import carregar_disponibilidade_tratada
@@ -64,6 +64,7 @@ CSV_CONFERENCIA: Dict[str, List[tuple]] = {
     "geracao_fontes": [("geracao_fontes", "mensal")],
     "soma_conjunto": [("soma_conjunto", "mensal")],
     "programacao_renovaveis": [("programacao_renovaveis", "mensal")],
+    "alinhamento_hidrologia": [("alinhamento_hidrologia", "deslocamentos")],
 }
 
 
@@ -155,6 +156,8 @@ def conferir(perfil: Any) -> Dict[str, ResultadoConferencia]:
             "soma_conjunto": lambda: _soma_conjunto(perfil, tratamento),
             "programacao_renovaveis": lambda: conferencia_programacao_renovaveis(
                 carregar_programacao_tratada(tratamento), carregar_renovavel(tratamento)["fator_capacidade_horario"]),
+            "alinhamento_hidrologia": lambda: conferencia_alinhamento_hidrologia(
+                carregar_hidrologia_tratada(tratamento), carregar_base_horaria(tratamento)),
         }
         resultados = [executores[i]() for i in ids if i in executores]
     for r in resultados:

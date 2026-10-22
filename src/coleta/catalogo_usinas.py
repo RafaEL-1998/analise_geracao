@@ -6,6 +6,8 @@ Comando da Coleta, o único além de ``coleta`` e ``completo`` que acessa o port
 - o arquivo mais recente de cada conjunto de série já implementado (nos indicadores, o DISPF mensal);
 - a Geração por usina dos últimos 12 meses completos, para o panorama dos agregados;
 - todos os arquivos da Geração térmica por motivo de despacho, para os códigos de planejamento (``planejamento.csv``);
+- todos os arquivos da Programação diária, para os códigos de exibição de todo o período (``programacao.csv``; fase D:
+  um conjunto pode trocar os códigos, como o Conj. Chapadão em 07/2025);
 - os dicionários de dados desses conjuntos (princípio IV).
 
 Depois monta e grava ``data/catalogo/`` por inteiro, sem ``.bak``, numa pasta temporária conferida antes da troca, e
@@ -95,7 +97,9 @@ COLUNAS_COBERTURA = ["ceg", "conjunto_ons", "nivel", "identificador", "linhas", 
                      "publicacao"]
 COLUNAS_PLANEJAMENTO = ["ceg", "codigo", "primeiro_mes", "ultimo_mes", "nomes_publicados", "arquivos"]
 COLUNAS_LEITURA_PLANEJAMENTO = ["ceg", "cod_usinaplanejamento", "din_instante", "nom_usina"]
-COLUNAS_PROGRAMACAO = ["codigo_exibicao", "id_usina_ou_conjunto", "modalidade", "estado", "arquivo"]
+COLUNAS_PROGRAMACAO = ["codigo_exibicao", "id_usina_ou_conjunto", "modalidade", "estado", "arquivo", "primeiro_dia",
+                       "ultimo_dia"]
+COLUNAS_LEITURA_PROGRAMACAO = ["cod_exibicaousina", "nom_modalidadeoperacao", "id_estado"]
 COLUNAS_AGREGADOS = ["id_estado", "mes", "modalidade", "tipo_ons", "grupo", "energia_mwh", "horas", "horas_ausentes",
                      "previsao", "arquivo"]
 
@@ -367,7 +371,7 @@ def sincronizar_catalogo(raiz_raw: Path, hoje: date, force: bool = False) -> Non
         escolhidos = {max(por_periodo): por_periodo[max(por_periodo)]}
         if serie.chave == "geracao":  # panorama dos agregados: os últimos meses completos (R21)
             escolhidos.update({c: r for c, r in por_periodo.items() if (c[0], c[1]) in meses})
-        if serie.chave == "despacho":  # todos os arquivos: os códigos de planejamento de cada CEG (planejamento.csv)
+        if serie.chave in ("despacho", "programacao"):  # todos os arquivos: os códigos de cada usina no tempo
             escolhidos = dict(por_periodo)
         _baixar([escolhidos[c] for c in sorted(escolhidos)], raiz_raw / serie.pasta, force)
     pacotes = [c.pacote for c in CADASTRAIS.values()] + [s.pacote for s in SERIES]
@@ -393,6 +397,8 @@ class Leituras:
     arquivos_cadastrais: Dict[str, Tuple[Path, str]]  # chave -> (arquivo, publicação)
     series: Dict[str, Tuple[Path, str, pd.DataFrame]]  # chave -> (arquivo, publicação, tabela)
     planejamento: pd.DataFrame = None  # type: ignore[assignment]  # planejamento.csv, de todos os arquivos do despacho
+    # Códigos de exibição de todos os arquivos da Programação diária, com o primeiro e o último dia (fase D)
+    codigos_programacao: pd.DataFrame = None  # type: ignore[assignment]
 
 
 COLUNAS_SERIES = {
@@ -426,8 +432,9 @@ def ler_arquivos(raiz_raw: Path) -> Leituras:
             continue
         series[serie.id] = (arquivo, _publicacao(pasta, arquivo.name), _ler_tabela(arquivo, COLUNAS_SERIES[serie.chave]))
     pasta_despacho = raiz_raw / registro.entrada("despacho").pacotes[0][1]
+    pasta_programacao = raiz_raw / registro.entrada("programacao").pacotes[0][1]
     return Leituras(tabelas["cadastro"], tabelas["composicao"], tabelas["capacidade"], tabelas["reservatorio"],
-                    arquivos, series, montar_planejamento(pasta_despacho))
+                    arquivos, series, montar_planejamento(pasta_despacho), montar_codigos_programacao(pasta_programacao))
 
 
 def _um_por_periodo(arquivos: Iterable[Path], formatos: Sequence[str]) -> List[Path]:
@@ -471,6 +478,39 @@ def montar_planejamento(pasta: Path) -> pd.DataFrame:
                        "primeiro_mes": str(g["primeiro"].min()), "ultimo_mes": str(g["ultimo"].max()),
                        "nomes_publicados": "; ".join(nomes), "arquivos": int(g["arquivo"].nunique())})
     return pd.DataFrame(linhas, columns=COLUNAS_PLANEJAMENTO)
+
+
+def montar_codigos_programacao(pasta: Path) -> pd.DataFrame:
+    """Códigos de exibição de todos os arquivos locais da Programação diária (um por dia), com o primeiro e o último dia
+    em que aparecem, e a modalidade, o estado e o arquivo do último dia (fase D; rascunho 001, FR-051). O dia vem do nome
+    do arquivo, como na Coleta."""
+    colunas = ["codigo_exibicao", "modalidade", "estado", "arquivo", "primeiro_dia", "ultimo_dia"]
+    partes = []
+    for arquivo in _um_por_periodo(_arquivos_locais(pasta, ("PARQUET",)), ("PARQUET",)):
+        ano, mes, dia = _chave_arquivo(arquivo.name)
+        if not (mes and dia):
+            continue
+        try:
+            t = _ler_tabela(arquivo, COLUNAS_LEITURA_PROGRAMACAO)
+        except Exception as exc:  # arquivo ilegível: avisado e fora dos códigos
+            logger.warning("Catálogo de usinas: programação %s não lida (%s).", arquivo.name, exc)
+            continue
+        if t.empty or "cod_exibicaousina" not in t.columns:
+            continue
+        codigos = pd.DataFrame({"codigo_exibicao": _textos(t["cod_exibicaousina"]),
+                                "modalidade": _textos(t.get("nom_modalidadeoperacao", pd.Series("", index=t.index))),
+                                "estado": _textos(t.get("id_estado", pd.Series("", index=t.index)))})
+        codigos = codigos[codigos["codigo_exibicao"] != ""].drop_duplicates("codigo_exibicao")
+        partes.append(codigos.assign(arquivo=arquivo.name, dia=date(ano, mes, dia).isoformat()))
+    if not partes:
+        return pd.DataFrame(columns=colunas)
+    todos = pd.concat(partes, ignore_index=True).sort_values(["dia", "arquivo"], kind="stable")
+    ultimos = todos.drop_duplicates("codigo_exibicao", keep="last").set_index("codigo_exibicao")
+    dias = todos.groupby("codigo_exibicao")["dia"].agg(["min", "max"])
+    tabela = ultimos[["modalidade", "estado", "arquivo"]].join(dias).rename(columns={"min": "primeiro_dia",
+                                                                                   "max": "ultimo_dia"})
+    return tabela.reset_index().sort_values(["primeiro_dia", "codigo_exibicao"], kind="stable")[colunas] \
+        .reset_index(drop=True)
 
 
 def codigos_vigentes(planejamento: pd.DataFrame) -> Dict[str, List[str]]:
@@ -535,27 +575,22 @@ def _unidades_ativas(capacidade: pd.DataFrame, hoje: date) -> pd.DataFrame:
 
 
 def _programacao(leituras: Leituras, cadastro: pd.DataFrame, conjuntos_ids: Sequence[str]) -> pd.DataFrame:
-    """``programacao.csv``: os códigos do arquivo mais recente, ligados pelo id ONS ou pelo id do conjunto (R5)."""
-    if "programacao" not in leituras.series:
+    """``programacao.csv``: os códigos de todos os arquivos da Programação diária, com o primeiro e o último dia,
+    ligados pelo id ONS ou pelo id do conjunto (R5; fase D)."""
+    codigos = leituras.codigos_programacao
+    if codigos is None or codigos.empty:
         return pd.DataFrame(columns=COLUNAS_PROGRAMACAO)
-    arquivo, _, tabela = leituras.series["programacao"]
     # o id sem os espaços das pontas, como na linha da usina (o cadastro do ONS traz ids com espaço no fim)
     ids_usina = {normalizar_texto(i): str(i).strip() for i in cadastro["id_ons"] if str(i).strip()}
     ids_conjunto = {normalizar_texto(c)[len(PREFIXO_CONJUNTO):]: str(c).strip() for c in conjuntos_ids
                     if normalizar_texto(c).startswith(PREFIXO_CONJUNTO)}
-    linhas = []
-    for codigo, g in tabela.groupby(_textos(tabela["cod_exibicaousina"]), sort=False):
-        if not codigo:
-            continue
-        chave = normalizar_texto(codigo)
-        ligado = ids_usina.get(chave) or ids_conjunto.get(chave.split("-", 1)[0], "")
-        linhas.append({"codigo_exibicao": codigo, "id_usina_ou_conjunto": ligado,
-                       "modalidade": _textos(g.get("nom_modalidadeoperacao", pd.Series([""]))).iloc[0],
-                       "estado": _textos(g.get("id_estado", pd.Series([""]))).iloc[0], "arquivo": arquivo.name})
-    return pd.DataFrame(linhas, columns=COLUNAS_PROGRAMACAO)
+    chaves = codigos["codigo_exibicao"].map(normalizar_texto)
+    ligados = [ids_usina.get(c) or ids_conjunto.get(c.split("-", 1)[0], "") for c in chaves]
+    return codigos.assign(id_usina_ou_conjunto=ligados)[COLUNAS_PROGRAMACAO].reset_index(drop=True)
 
 
 def _codigos_de(programacao: pd.DataFrame, valor: str) -> List[str]:
+    """Códigos ligados à usina ou ao conjunto, em todo o período, na ordem do primeiro dia."""
     return list(programacao.loc[programacao["id_usina_ou_conjunto"] == valor, "codigo_exibicao"]) if valor else []
 
 
@@ -602,9 +637,9 @@ def _nivel_cobertura(serie: Any, u: Dict[str, Any], leituras: Leituras,
             avaliar("id_ons", u["id_conjunto"], "conjunto")
     elif chave == "restricao_detalhe":  # só a usina: o id do conjunto não identifica (achado A7)
         avaliar("id_ons", u["id_ons"], "proprio")
-    elif chave == "programacao":
+    elif chave == "programacao":  # a verificação é no arquivo mais recente (R3): só os códigos presentes nele
         for valor, nivel in ((u["id_ons"], "proprio"), (u["id_conjunto"], "conjunto")):
-            codigos = _codigos_de(programacao, valor)
+            codigos = [c for c in _codigos_de(programacao, valor) if normalizar_texto(c) in contagens]
             if not codigos:
                 continue
             linhas = sum(contagens.get(normalizar_texto(c), (0, 0))[0] for c in codigos)

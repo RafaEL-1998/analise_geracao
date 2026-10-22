@@ -1,7 +1,7 @@
 {
  "usina": "seriemas_1",
  "data_geracao": "21/10/2026 10:00",
- "aprovado_em": "21/10/2026",
+ "aprovado_em": "22/10/2026",
  "periodo": {
   "inicio": "2026-08-22 00:00:00",
   "fim": "2026-10-19 23:30:00"
@@ -9,18 +9,18 @@
  "arquivos": [
   {
    "nome": "relatorio_analise_estatistica.pdf",
-   "bytes": 895955,
-   "sha256": "d14574eaafa89aea4360db7e2e89a546ccd43919d5bcf54167afd8e161fe78d6"
+   "bytes": 987461,
+   "sha256": "bd66699e0a69295d57048b75b7aff6573f34078dc942677b1b947171f2704b72"
   },
   {
    "nome": "relatorio_analise_estatistica.md",
-   "bytes": 30301,
-   "sha256": "de71781c7192a919bbe23551a1b7d0f30f4b7079908d5fcc68d216ffa8a4f8a5"
+   "bytes": 34289,
+   "sha256": "92d39004bfc42cecd0b68b8b4201994e46538f1e5570d4e51d9e2eb2cf95ce63"
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
-   "bytes": 35758,
-   "sha256": "91bb2cf3e282743bbae454a42b2e6c2a1d571efc77f4529ba572cc7f301953fc"
+   "bytes": 38558,
+   "sha256": "8241823e9f075561e29f41b2c9eb2d4c1d9e3d925732d1e8d434a480e22e5ee9"
   },
   {
    "nome": "perfil_estatistico_anual.csv",
@@ -29,13 +29,13 @@
   },
   {
    "nome": "resumo_executivo.pdf",
-   "bytes": 79845,
-   "sha256": "19949ba7938a4b346c9bbe1c83886f32a81cffd427f0c710186693e234865333"
+   "bytes": 79861,
+   "sha256": "66396842f8802b8a6f666514ab7a51994527406808750c323e6dd4f445cf3377"
   },
   {
    "nome": "resumo_executivo.md",
-   "bytes": 3221,
-   "sha256": "9bc23d40ebdc7f230ebb57aef39ac006a263d6c082f882118e55e49df6c3f336"
+   "bytes": 3291,
+   "sha256": "505069631a4c28c797433c844e9a8b4c3b442a7699c26f58229c614758565b9f"
   },
   {
    "nome": "figures/01_serie_temporal_geracao_disponibilidade.png",
@@ -71,6 +71,11 @@
    "nome": "figures/13_desvio_programacao_mensal.png",
    "bytes": 84233,
    "sha256": "21add4274828ebc6d3543e09c4f0152264ac9a805431f0d27dc0cec430e811a9"
+  },
+  {
+   "nome": "figures/14_geracao_do_conjunto_por_trecho.png",
+   "bytes": 90502,
+   "sha256": "55225acebf3515a2e021088ed5e6aa0ed94612a8a587fcbd22da157ccc9953e6"
   }
  ],
  "perfil": "5277dd5f44efe2c0d14f7ad21a6ebe33ff39de42d0c9bd62cf4ca34c5d6dda02",
@@ -136,6 +141,11 @@
    "sha256": "dbdc10bc7db508ddf5444606c07b688e6373b5022ac271da1b27138e609316af"
   },
   {
+   "nome": "capacidade_membros.csv",
+   "bytes": 2636,
+   "sha256": "3193fdd897934a5bb01cc9ef18154e84dfa2d8eed16ce8e2aff2c7fdcd1c683d"
+  },
+  {
    "nome": "auditoria_capacidade.csv",
    "bytes": 314,
    "sha256": "8dd75a382007183c5f15be76a156b5c8819f4056e38485336d6443f0b705704e"
@@ -187,8 +197,8 @@
   },
   {
    "nome": "etapa.json",
-   "bytes": 8552,
-   "sha256": "bdc8fced3ed6bb1869b8736f5bcb61790ff3bbd4b61ff4d6752f3da81e70c627"
+   "bytes": 8773,
+   "sha256": "cd0362881b21d20dc6ce94990fa758faa12457ec9935ec5e49eadba5f46ef2c2"
   }
  ]
 }

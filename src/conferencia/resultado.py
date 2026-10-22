@@ -19,7 +19,8 @@ from src.comum.persistencia import ResultadoGravacao, gravar_bytes
 VERSAO_FORMATO = 1
 CONFERENCIAS: Tuple[str, ...] = ("geracao", "disponibilidade", "vazoes", "dispf_horas", "teifa_teip", "cadastro",
                                  "programacao_despacho", "verificada_despacho",  # G3 e G4: spec 006, fase B
-                                 "geracao_fontes", "soma_conjunto", "programacao_renovaveis")  # G1, G2 e G5: fase C
+                                 "geracao_fontes", "soma_conjunto", "programacao_renovaveis",  # G1, G2 e G5: fase C
+                                 "alinhamento_hidrologia")  # hidrelétricas sem EVT: fase D
 
 # A diferença é arredondada antes da comparação com a tolerância: "até 0,01 MW" inclui 0,01 MW, sem o resíduo do
 # ponto flutuante (30,01 − 30,00 dá 0,010000000000001563)
