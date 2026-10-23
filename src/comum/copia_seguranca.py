@@ -3,10 +3,10 @@
 ``python -m src copia-seguranca --motivo <texto>`` cria ``_backup_<AAAA-MM-DD>_<motivo>/`` com o código, os testes, as
 specs, os relatórios, as configurações do Spec Kit, os perfis das usinas (sem os documentos), o README e a lista de
 dependências, mais ``LEIA-ME.txt``, ``conftest.py`` e ``copia.json``. Leva também ``relatorios_referencia/`` inteira,
-com a Coleta e o perfil congelados de cada usina, conferida pelos SHA-256 do ``referencia.json`` de cada uma (spec 006,
-decisão R22). Depois de conferir a cópia (quantidade de arquivos e SHA-256 de cada um), exclui as cópias mais antigas
-até ficarem duas. Se a criação ou a conferência falhar, apaga a cópia incompleta e não exclui nenhuma outra. Dados
-brutos, dados das etapas e documentos de referência ficam fora.
+com a Coleta e o perfil congelados de cada usina, conferida pelos SHA-256 do ``referencia.json`` de cada uma (plano da
+Coleta de dados, D4). Depois de conferir a cópia (quantidade de arquivos e SHA-256 de cada um), exclui as cópias
+mais antigas até ficarem duas. Se a criação ou a conferência falhar, apaga a cópia incompleta e não exclui nenhuma
+outra. Dados brutos, dados das etapas e documentos de referência ficam fora.
 """
 
 from __future__ import annotations

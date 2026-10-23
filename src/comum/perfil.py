@@ -1,4 +1,4 @@
-"""Perfil da usina: leitura, validação e valores derivados (spec da Coleta de dados, FR-006 a FR-009; spec 006).
+"""Perfil da usina: leitura, validação e valores derivados (spec e plano da Coleta de dados, FR-006 a FR-009 e D22).
 
 O perfil (``usinas/<slug>/perfil.toml``) reúne tudo o que é próprio de uma usina: tipo e modalidade, identificação nos
 conjuntos do ONS, cobertura de cada conjunto, parâmetros técnicos com a fonte, características usadas nas análises e
@@ -325,7 +325,8 @@ class _Leitor:
 
 
 def _campo_por_tipo(le: _Leitor, campo: str, tipo: Optional[str], cobertura: Dict[str, Any]) -> bool:
-    """Confere a exigência do ``campo`` para o tipo (data-model 3.2); devolve se ele deve ser lido."""
+    """Confere a exigência do ``campo`` para o tipo (data-model da Coleta de dados, seção 5.1); devolve se ele deve ser
+    lido."""
     if tipo is None:  # tipo desconhecido: sem as regras por tipo, o campo é lido se estiver presente
         return le.presente(campo)
     e = perfil_campos.exigencia(campo, tipo)
@@ -343,7 +344,8 @@ def _campo_por_tipo(le: _Leitor, campo: str, tipo: Optional[str], cobertura: Dic
 
 
 def _cobertura(le: _Leitor, tipo: Optional[str]) -> Dict[str, Any]:
-    """``[cobertura]``: uma chave por conjunto de série do registro que serve ao tipo (data-model 3.3)."""
+    """``[cobertura]``: uma chave por conjunto de série do registro que serve ao tipo (data-model da Coleta de dados,
+    seção 5.1)."""
     from src.coleta.registro import chaves_da_cobertura  # o registro é o único lugar dos conjuntos por tipo
 
     tabela = le.dados.get("cobertura")
@@ -442,7 +444,7 @@ def validar_perfil(dados: Dict[str, Any], slug_pasta: str) -> Tuple[Optional[Dic
         le.problemas += [f"pendente: {p}" for p in c["pendentes"]]
     elif c["pendentes"]:
         le.problemas.append('usina.pendentes: deve estar vazia quando a situação é "conferido"')
-    # identificação comum e tipo usado nas regras por tipo (o do CEG, que é a referência; decisão R1)
+    # identificação comum e tipo usado nas regras por tipo (o do CEG, que é a referência; plano da Coleta de dados, D19)
     c["ceg"] = le.texto("identificacao.ceg")
     prefixo = None
     if c["ceg"] is not None:

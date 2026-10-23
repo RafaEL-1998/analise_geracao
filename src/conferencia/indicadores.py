@@ -136,7 +136,7 @@ def conferencia_dispf_horas(ind: Optional[IndicadoresONS]) -> ResultadoConferenc
 
 def conferencia_teifa_teip(ind: Optional[IndicadoresONS]) -> ResultadoConferencia:
     """TEIFa e TEIP recalculadas × publicadas; só os meses com a janela de 60 meses completa são comparados."""
-    if ind is not None and not ind.horas_estado.empty and ind.taxas.empty:  # achado A12 (spec 006)
+    if ind is not None and not ind.horas_estado.empty and ind.taxas.empty:  # decisão D16
         return nao_aplicavel("teifa_teip", BASES_TAXAS, "meses",
                              "a usina não consta das taxas TEIFa e TEIP publicadas pelo ONS no período",
                              tolerancia=TOLERANCIA_REPRODUCAO_TAXAS_PP)

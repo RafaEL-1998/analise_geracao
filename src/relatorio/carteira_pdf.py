@@ -1,4 +1,4 @@
-"""Relatório de carteira em PDF: A4 retrato (spec 006, decisão R21; rascunho 005 da Geração do relatório, FR-049).
+"""Relatório de carteira em PDF: A4 retrato (spec da Geração do relatório, FR-049; plano, D22).
 
 Desenha o ``Documento`` montado em ``src.relatorio.carteira``, bloco a bloco e na mesma ordem do Markdown, com a fonte,
 as cores, as margens, o estilo das tabelas e o rodapé do resumo executivo. Cada figura fica na página da sua legenda.

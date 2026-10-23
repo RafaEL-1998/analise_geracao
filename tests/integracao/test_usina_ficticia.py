@@ -74,7 +74,8 @@ def test_relatorio_sem_mencao_a_sao_domingos(execucao) -> None:
 
 
 def test_resumo_executivo_entre_as_saidas(execucao) -> None:
-    """Spec 007: o resumo sai junto com o relatório, listado no etapa.json, sem literal da São Domingos."""
+    """Spec da Geração do relatório, FR-050 e FR-064: o resumo sai junto com o relatório, listado no etapa.json, sem
+    literal da São Domingos."""
     relatorio = execucao["relatorio"]
     manifesto = json.loads((relatorio / "etapa.json").read_text(encoding="utf-8"))
     assert {"resumo_executivo.pdf", "resumo_executivo.md"} <= {a["nome"] for a in manifesto["arquivos"]}

@@ -1,9 +1,9 @@
-"""Conferências das térmicas: G3, G4, DISPF × horas e taxas (spec 006, fase B; decisão R13; tarefa T080).
+"""Conferências das térmicas: G3, G4, DISPF × horas e taxas (spec da Conferência, FR-020 a FR-022; decisão D13).
 
 - G3 (Programação diária × programado do despacho) e G4 (verificado do despacho × Geração por usina), com a tolerância
   de 0,01 MW e sem meta;
 - DISPF × horas e TEIFa/TEIP pelo CEG numa térmica;
-- TEIFa e TEIP como não aplicáveis, com o motivo, quando a usina falta nas taxas (achado A12).
+- TEIFa e TEIP como não aplicáveis, com o motivo, quando a usina falta nas taxas (decisão D16).
 """
 
 from __future__ import annotations
@@ -53,7 +53,8 @@ def test_g4_verificado_do_despacho_e_geracao_por_usina_com_o_deslocamento() -> N
     base = pd.DataFrame({"din_instante": HORAS, "nivel": "usina", "geracao_mw": geracao})
     r = conferencia_verificada_despacho(base, _despacho(80.0, geracao))
     assert (r.comparados, r.coincidentes, r.divergentes) == (6, 6, 0)
-    # o despacho uma hora adiantado: a coincidência melhora com o deslocamento, e a G4 o registra (FR-037)
+    # o despacho uma hora adiantado: a coincidência melhora com o deslocamento, e a G4 o registra (spec do Tratamento
+    # de dados, FR-037)
     adiantado = conferencia_verificada_despacho(base, _despacho(80.0, geracao[1:] + [0.0]))
     assert adiantado.divergentes == 2
     resumo = adiantado.tabelas["resumo"]
@@ -84,7 +85,7 @@ def test_taxas_nao_aplicaveis_quando_a_usina_falta_nas_taxas() -> None:
 
 
 def test_dispf_e_horas_por_estado_numa_termica() -> None:
-    """DISPF × horas pelo CEG numa térmica, como nas hidrelétricas (T080, T154; FR-018). Nas térmicas, o HP soma também
+    """DISPF × horas pelo CEG numa térmica, como nas hidrelétricas (FR-022). Nas térmicas, o HP soma também
     as horas equivalentes (HEDP e HEDF), o que não muda a comparação de HDP e HDF com INDISPPF e INDISPFF."""
     from src.conferencia.indicadores import conferencia_dispf_horas
 

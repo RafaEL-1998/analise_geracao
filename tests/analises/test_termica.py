@@ -1,10 +1,11 @@
-"""Seções de térmica das Análises (spec 006, fase B; decisão R18; tarefa T081).
+"""Seções de térmica das Análises (spec das Análises, FR-056; plano das Análises, D20).
 
 - geração por motivo, com as parcelas, e a inflexibilidade programada e verificada;
 - atendimento: horas e energia abaixo e acima, e os maiores desvios;
 - horas disponíveis sem despacho;
 - CVU × CMO por semana e por unidade, sem julgamento;
-- térmica sem geração no período: nenhuma divisão por zero, e a constatação de usina disponível e não despachada (US2-5).
+- térmica sem geração no período: nenhuma divisão por zero, e a constatação de usina disponível e não despachada
+  (US8, cenário 4).
 """
 
 from __future__ import annotations

@@ -50,7 +50,8 @@ def _completo(df: pd.DataFrame):
 
 
 def test_secoes_em_ordem() -> None:
-    """A hidrelétrica com EVT tem exatamente as 17 seções de hoje, na ordem de hoje (spec 006, decisões R14 e R29)."""
+    """A hidrelétrica com EVT tem exatamente as 17 seções de hoje, na ordem de hoje (plano da Geração do relatório,
+    D15 e D17)."""
     assert [s.chave for s in SECOES if COM_EVT in s.caminhos] == CHAVES
     assert SECOES[0].titulo == "Fonte e cobertura dos dados" and SECOES[-1].titulo == "Notas metodológicas e limitações"
 
@@ -293,13 +294,13 @@ def test_figura_opcional_de_execucao_anterior_sai_da_pasta(tmp_path: Path, monke
 
 
 # ---------------------------------------------------------------------------
-# Usinas sem EVT (spec 006, decisões R14 e R15; data-model 6.5; tarefa T050)
+# Usinas sem EVT (plano da Geração do relatório, D15 e D16; data-model da Geração do relatório, seção 2.9)
 # ---------------------------------------------------------------------------
 
 SECOES_UTE = ["fonte_cobertura", "anuais_comum", "disponibilidade_geracao_comum", "serie_temporal_comum",
               "geracao_mensal", "perfil_horario_comum", "disponibilidade_sincronizada_comum", "qualidade_comum",
               "conclusao", "notas_comum"]
-# fase D (rascunho 005, FR-048): a PCH em conjunto sem série própria em duas partes, a usina e, antes da conclusão, o
+# FR-048: a PCH em conjunto sem série própria em duas partes, a usina e, antes da conclusão, o
 # conjunto, com as seções dos números do conjunto como subseções
 SECOES_PCH = ["fonte_cobertura", "usina_no_conjunto", "qualidade_comum", "parte_conjunto", "conclusao", "notas_comum"]
 
@@ -392,7 +393,7 @@ def test_notas_com_omissoes_niveis_e_nao_aplicaveis(sem_evt_gerados, df_base: pd
         assert "### Seções e regras sem base para a usina" in notas
         assert "### Conferências que não se aplicam à usina" in notas and "### Parâmetros utilizados" in notas
     assert "Granularidade: o ONS publica a geração do conjunto CONJ. HIDRAULICO ALFA" in notas_pch
-    assert "Granularidade" not in notas_ute  # o parágrafo só entra com número do conjunto (decisão R15)
+    assert "Granularidade" not in notas_ute  # o parágrafo só entra com número do conjunto (D16)
     assert ("| Disponibilidade operacional e sincronizada | sem a Disponibilidade por usina (cobertura: ausente) |"
             in notas_pch)
     # na hidrelétrica com EVT, as notas de hoje, sem as tabelas novas

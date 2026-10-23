@@ -1,4 +1,4 @@
-"""Conferências entre fontes das eólicas e solares: G1, G2 e G5 (spec 006, fase C; decisão R13; tarefa T101).
+"""Conferências entre fontes das eólicas e solares: G1, G2 e G5 (spec da Conferência, FR-023 a FR-025; decisão D13).
 
 - G1: a geração entre as fontes, duas a duas e só no mesmo nível;
 - G2: a soma das usinas do conjunto só nas horas com toda a composição vigente, contra a geração do conjunto;

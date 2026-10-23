@@ -1,5 +1,5 @@
 """Conjuntos do ONS lidos pelo motor comum da Coleta de dados: disponibilidade, hidrologia e geração por usina e, nas
-térmicas, o despacho (horário), o CVU e o CMO (semanais; spec 006, fase B).
+térmicas, o despacho (horário), o CVU e o CMO (semanais; spec da Coleta de dados, FR-055).
 
 Fluxo (spec da Coleta de dados, FR-016 a FR-019, FR-034 a FR-040, FR-044 e FR-046): catálogo CKAN → arquivos que se
 sobrepõem ao período da base de EVT → um formato por período → download com cache por versão → leitura só das linhas
@@ -52,7 +52,8 @@ COLUNAS_AUDITORIA_COLETA: List[str] = [
 
 
 def descricoes(perfil: Any) -> Dict[str, DescricaoConjunto]:
-    """Descrições dos conjuntos horários da usina, com a identificação do perfil (registro, decisão R8)."""
+    """Descrições dos conjuntos horários da usina, com a identificação do perfil (registro, plano da Coleta de dados,
+    D26)."""
     return registro.descricoes(perfil)
 
 
@@ -207,7 +208,7 @@ def _no_periodo(instantes: pd.Series, inicio: str, fim: str) -> pd.Series:
 def _corresponde(tabela: pd.DataFrame, regra: Regra, instantes: Optional[pd.Series] = None) -> pd.Series:
     if regra.coluna not in tabela.columns:
         return pd.Series(False, index=tabela.index)
-    if regra.modo == "em":  # um dos números da regra (o código vem ora inteiro, ora decimal: achado A4)
+    if regra.modo == "em":  # um dos números da regra (o código vem ora inteiro, ora decimal; FR-055)
         return numero_publicado(tabela[regra.coluna]).isin([float(v) for v in regra.valor])
     if regra.modo == "codigo_no_periodo":
         numeros = numero_publicado(tabela[regra.coluna])
@@ -328,7 +329,7 @@ def extrair_arquivo(desc: DescricaoConjunto, caminho: Path) -> Tuple[pd.DataFram
                        "%d); verificar mudança de cadastro no ONS.", desc.pacote, caminho.name,
                        auditoria["linhas_so_identificador"], auditoria["linhas_so_conferencia"])
 
-    if desc.avisar_colunas_ausentes:  # colunas de valor ausentes no arquivo: vazias e contadas (fase C, FR-058)
+    if desc.avisar_colunas_ausentes:  # colunas de valor ausentes no arquivo: vazias e contadas (FR-058)
         ausentes = [c for c in (*desc.colunas_valor, *desc.colunas_texto) if c not in bruto.columns]
         if ausentes:
             auditoria["mensagem"] = f"colunas ausentes no arquivo: {', '.join(ausentes)}"

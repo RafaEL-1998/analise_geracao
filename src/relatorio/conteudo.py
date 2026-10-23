@@ -150,7 +150,7 @@ def nota_conclusao() -> str:
 
 
 def nota_conclusao_catalogo(res: ResultadosAnalise) -> str:
-    """Item das notas das usinas sem EVT com as regras do catálogo do tipo e os limiares (spec 006, decisão R16)."""
+    """Item das notas das usinas sem EVT com as regras do catálogo do tipo e os limiares (FR-033)."""
     regras = regras_do_tipo(res)
     if not regras:
         return f"Conclusão: o catálogo da conclusão ainda não tem regras para usinas do tipo {res.tipo}."

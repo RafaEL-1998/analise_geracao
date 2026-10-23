@@ -1,4 +1,4 @@
-"""Base horária comum das usinas sem EVT (spec 006, decisão R30; data-model 6.2; tarefas T047 e T061).
+"""Base horária comum das usinas sem EVT (plano do Tratamento de dados, D15; data-model, seção 2.7).
 
 O Tratamento grava ``base_horaria.csv`` com a geração da série de referência (com o nível), a disponibilidade, a
 programação, o trecho e as sinalizações de cada hora. Sinalização não exclui registro (princípio V); as horas ausentes

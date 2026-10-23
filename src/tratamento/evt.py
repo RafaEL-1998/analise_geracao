@@ -144,7 +144,7 @@ def tratar_evt(perfil: Any, entrada: Path, arquivos: Dict[str, Path]) -> Tuple[i
     ``arquivos`` traz os destinos ``evt_parquet``, ``evt_csv``, ``evt_xlsx``, ``validacao_csv`` e ``validacao_md``.
     Devolve o código (0 sucesso; 1 com violação da R1, valor negativo publicado), os arquivos gravados e o resumo
     (período, registros, violações por regra, registros sinalizados e valores ausentes nas grandezas). O dicionário
-    de dados é a cópia gravada pela Coleta ao lado da ``entrada``, nunca o de ``data/raw/`` (spec 006, decisão R22).
+    de dados é a cópia gravada pela Coleta ao lado da ``entrada``, nunca o de ``data/raw/`` (decisão D21).
     """
     dicionario = Path(entrada).parent / caminhos.ARQUIVOS_COLETA["dicionario_evt"]
     df_bruto = carregar_base_consolidada(entrada)

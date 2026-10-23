@@ -1,9 +1,9 @@
-"""Base horária comum das usinas sem EVT (spec 006, decisão R30; data-model 6.2).
+"""Base horária comum das usinas sem EVT (plano do Tratamento de dados, D15; data-model, seção 2.7).
 
 Uma linha por hora da série de referência tratada (a Geração por usina, da usina ou do conjunto), com o nível de
 cada hora, a disponibilidade operacional e a sincronizada (quando há cobertura), a geração programada (quando há), o
-trecho (decisão R7) e as sinalizações. É a base das seções comuns do relatório e das regras comuns da conclusão
-(decisões R14 e R16) nas usinas sem EVT; as hidrelétricas com EVT continuam com a base de EVT.
+trecho (decisão D15) e as sinalizações. É a base das seções comuns do relatório e das regras comuns da conclusão
+(plano das Análises, D16 e D18) nas usinas sem EVT; as hidrelétricas com EVT continuam com a base de EVT.
 
 Sinalização não exclui registro (princípio V): a hora sinalizada fica na base, com os códigos separados por vírgula.
 As horas ausentes da série de referência ficam listadas em ``geracao_ausencias.csv``, nunca preenchidas.

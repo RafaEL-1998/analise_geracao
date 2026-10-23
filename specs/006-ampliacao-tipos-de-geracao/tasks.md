@@ -741,24 +741,24 @@ python -m pytest tests -q -p no:cacheprovider
 
 **Purpose**: incorporar a mudança às specs das etapas, documentar e excluir a spec de mudança (FR-030, SC-008; decisão R26).
 
-- [ ] T139 Criar a cópia `python -m src copia-seguranca --motivo antes_fechamento` e conferir as referências na cópia nova. Registrar.
-- [ ] T140 [P] Incorporar `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/001-coleta-dados.md` à spec da Coleta:
+- [X] T139 Criar a cópia `python -m src copia-seguranca --motivo antes_fechamento` e conferir as referências na cópia nova. Registrar.
+- [X] T140 [P] Incorporar `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/001-coleta-dados.md` à spec da Coleta:
   - `specs/001-coleta-dados/spec.md`, `plan.md`, `data-model.md` e `contracts/`;
   - os contratos de `specs/006-ampliacao-tipos-de-geracao/contracts/` que pertencem à Coleta: `cli-usinas.md`, `cli-perfil.md` e `perfil-multitipo.md`, como contratos dela;
   - a tabela de aplicabilidade por tipo.
-- [ ] T141 [P] Incorporar `ajustes-specs/002-tratamento-dados.md` a `specs/002-tratamento-dados/` (`spec.md`, `plan.md`, `data-model.md`, `contracts/`), com a tabela de aplicabilidade por tipo.
-- [ ] T142 [P] Incorporar `ajustes-specs/003-conferencia.md` a `specs/003-conferencia/` (`spec.md`, `plan.md`, `data-model.md`, `contracts/`), com a tabela de aplicabilidade por tipo.
-- [ ] T143 [P] Incorporar `ajustes-specs/004-analises.md` a `specs/004-analises/` (`spec.md`, `plan.md`, `data-model.md`, `contracts/`), com a tabela de aplicabilidade por tipo.
-- [ ] T144 [P] Incorporar `ajustes-specs/005-geracao-relatorio.md` a `specs/005-geracao-relatorio/` (`spec.md`, `plan.md`, `data-model.md`, `contracts/`), com `cli-carteira.md`, `cli-referencias.md` e a tabela de aplicabilidade por tipo.
-- [ ] T145 Trocar em `src/` e `tests/` as citações da spec de mudança (por exemplo "spec 006, FR-0xx") pelas FR das specs das etapas.
+- [X] T141 [P] Incorporar `ajustes-specs/002-tratamento-dados.md` a `specs/002-tratamento-dados/` (`spec.md`, `plan.md`, `data-model.md`, `contracts/`), com a tabela de aplicabilidade por tipo.
+- [X] T142 [P] Incorporar `ajustes-specs/003-conferencia.md` a `specs/003-conferencia/` (`spec.md`, `plan.md`, `data-model.md`, `contracts/`), com a tabela de aplicabilidade por tipo.
+- [X] T143 [P] Incorporar `ajustes-specs/004-analises.md` a `specs/004-analises/` (`spec.md`, `plan.md`, `data-model.md`, `contracts/`), com a tabela de aplicabilidade por tipo.
+- [X] T144 [P] Incorporar `ajustes-specs/005-geracao-relatorio.md` a `specs/005-geracao-relatorio/` (`spec.md`, `plan.md`, `data-model.md`, `contracts/`), com `cli-carteira.md`, `cli-referencias.md` e a tabela de aplicabilidade por tipo.
+- [X] T145 Trocar em `src/` e `tests/` as citações da spec de mudança (por exemplo "spec 006, FR-0xx") pelas FR das specs das etapas.
   - Conferir com `Get-ChildItem README.md, specs, src, tests, usinas, .specify -Recurse -Include *.md, *.py, *.toml | Select-String -Pattern "006-ampliacao|spec 006|specs/006" -List`, que só pode achar a própria pasta 006.
-- [ ] T146 Reescrever o `README.md`:
+- [X] T146 Reescrever o `README.md`:
   - os sete tipos e os níveis dos dados;
   - os comandos `usinas`, `perfil`, `carteira`, `referencia` e `comparar --todas [--coleta]`;
   - as pastas `data/catalogo/`, `reports/carteiras/` e `relatorios_referencia/`;
   - o fluxo de uma usina nova, do catálogo ao relatório aprovado.
-- [ ] T147 Rodar o quickstart inteiro (seções 1 a 9), com `comparar --todas --coleta` com código 0 para as cinco referências e `/speckit-converge` sem pendência. Registrar.
-- [ ] T148 Levar ao usuário o pedido de exclusão de `specs/006-ampliacao-tipos-de-geracao/` (FR-030), com a lista do que foi incorporado.
+- [X] T147 Rodar o quickstart inteiro (seções 1 a 9), com `comparar --todas --coleta` com código 0 para as cinco referências e `/speckit-converge` sem pendência. Registrar.
+- [X] T148 Levar ao usuário o pedido de exclusão de `specs/006-ampliacao-tipos-de-geracao/` (FR-030), com a lista do que foi incorporado.
   - Depois da aprovação: excluir com `git rm -r specs/006-ampliacao-tipos-de-geracao` e apontar `.specify/feature.json` para `specs/005-geracao-relatorio`.
   - Conferir que `specs/` tem só as cinco specs das etapas (SC-008).
   - Pedir o commit ao usuário. Registrar.
@@ -1137,7 +1137,7 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 - [X] T150 Implementar na fase D a seção "Afluência, vertimento e nível do reservatório" das hidrelétricas sem EVT com Dados hidrológicos (análise sem os cruzamentos com a EVT, seção e figura em seaborn, teste com uma hidrelétrica fictícia sem EVT e com hidrologia), hoje omitida com o motivo per FR-020 e decisão R14, seção 13 (missing)
 - [X] T151 Tratar na conferência do cadastro (`src/conferencia/cadastro.py`) o perfil sem id ONS (PCH, CGH, EOL e UFV em conjunto): "não informado" no texto, no lugar de "None", e divergência só quando o cadastro e o perfil diferem de fato, com teste per FR-019 e FR-025 (partial)
 - [X] T152 Usar `Secao.legenda` nas legendas das seções do caminho sem EVT ou retirá-lo de `src/relatorio/estrutura.py`, ajustando o data-model 6.5 per data-model 6.5 (partial)
-- [ ] T153 Registrar na incorporação (fase F) os desvios do plano aprovados na fase A: `VERSAO_FORMATO` 3 das Análises e os módulos `src/relatorio/comum.py` e `src/relatorio/figuras_comum.py` per plan.md, estrutura de módulos (contradicts)
+- [X] T153 Registrar na incorporação (fase F) os desvios do plano aprovados na fase A: `VERSAO_FORMATO` 3 das Análises e os módulos `src/relatorio/comum.py` e `src/relatorio/figuras_comum.py` per plan.md, estrutura de módulos (contradicts)
 
 ### 19/10/2026 — T074 (portão do fim da fase A), convergência (T151 e T152) e decisão sobre as republicações
 
@@ -1217,7 +1217,7 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 
 - [X] T154 Acrescentar a `tests/conferencia/test_fontes_termica.py` (ou à integração da UTN fictícia) a asserção do resultado da DISPF × horas pelo CEG numa térmica (meses-unidade comparados, coincidentes e divergentes), não só a aplicabilidade, per T080 e FR-018 (partial)
 - [X] T155 Usar `semanal_em_horas` (`src/tratamento/termica.py`) no cruzamento horário do CVU e do CMO com o despacho e a disponibilidade em `src/analises/termica.py`, ou retirá-la e registrar no rascunho 002 que as horas são levadas à semana operativa que as contém, per FR-040 do rascunho 002 (partial)
-- [ ] T156 Registrar na incorporação (fase F), junto com a T153, os desvios aprovados na fase B: o CVU zero sinalizado (decisão do usuário de 20/10/2026) no FR-017 e as figuras e a capa de térmica em `src/relatorio/figuras_comum.py` e `src/relatorio/comum.py`, per FR-017 e T090 (contradicts)
+- [X] T156 Registrar na incorporação (fase F), junto com a T153, os desvios aprovados na fase B: o CVU zero sinalizado (decisão do usuário de 20/10/2026) no FR-017 e as figuras e a capa de térmica em `src/relatorio/figuras_comum.py` e `src/relatorio/comum.py`, per FR-017 e T090 (contradicts)
 
 ### 20/10/2026 — T095 (portão do fim da fase B), T154 e T155
 
@@ -1293,7 +1293,7 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 ## Phase 11: Convergence
 
 - [X] T157 Comparar a Programação diária com a geração verificada no nível do conjunto quando as duas estão nele e a série de referência é a restrição com detalhe da usina (UFV ou EOL em conjunto, como a Seriemas 1): desvio médio e maiores desvios do conjunto, identificados como do conjunto, na seção de programação, sem entrar na base horária da usina e sem a C19 (só com a programação da usina), per US3/AC4 e FR-021 (partial)
-- [ ] T158 Registrar na incorporação (fase F), junto com a T153 e a T156, os desvios aprovados na fase C: as figuras e a capa das renováveis em `src/relatorio/figuras_comum.py` e `src/relatorio/comum.py`; a estimativa ausente (`sinal_estimada_ausente`) no data-model 6.2 e o limite físico do recurso no FR-017 (decisões do usuário de 21/10/2026); a restrição da EOL fictícia desde 15/01/2024 na T104, per plan.md, data-model 6.2 e FR-017 (contradicts)
+- [X] T158 Registrar na incorporação (fase F), junto com a T153 e a T156, os desvios aprovados na fase C: as figuras e a capa das renováveis em `src/relatorio/figuras_comum.py` e `src/relatorio/comum.py`; a estimativa ausente (`sinal_estimada_ausente`) no data-model 6.2 e o limite físico do recurso no FR-017 (decisões do usuário de 21/10/2026); a restrição da EOL fictícia desde 15/01/2024 na T104, per plan.md, data-model 6.2 e FR-017 (contradicts)
 
 ### 21/10/2026 — T116 em curso: convergência da fase C e T157
 
@@ -1388,7 +1388,7 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 - [X] T159 CRITICAL: conferir as unidades das usinas do conjunto em `capacidade_membros.csv` (`_gravar_capacidade_membros`, `src/coleta/etapa.py`) com um campo de conferência, o subsistema da linha da composição (o estado não serve: o Conj. Chapadão teve UTE de GO), e contar na auditoria as linhas em que só o CEG confere, com teste per Constitution IV (contradicts)
 - [X] T160 Levar a divergência do tipo publicado (`tipo_publicado.csv` × tipos da composição) para a constatação da qualidade dos dados, sem repetir a frase na seção do conjunto, com o teste ajustado per rascunho 004, FR-060, e caso de borda da spec 006 (partial)
 - [X] T161 Testar a Coleta da usina em conjunto ausente da composição do conjunto declarado no perfil: código 2, com a mensagem que cita o id do conjunto e o CEG per rascunho 001, FR-054 (partial)
-- [ ] T162 Registrar na incorporação (fase F), com a T153, a T156 e a T158, os desvios e acréscimos da fase D: figuras em `figuras_comum.py` e blocos e notas em `comum.py` e `secoes_conjunto.py` (a T123 citava `figuras.py` e `conteudo.py`); os arquivos novos (`capacidade_membros.csv`, `tipo_publicado.csv`, `alinhamento_hidrologia.csv`) e os campos novos de `ResultadosAnalise` (`conjunto`, `hidrologia` das usinas sem EVT) no data-model; o relatório em duas partes (FR-048) na tabela da decisão R14; o bloco `subtitulo`; as abas CONJ_* e HID_*; a linha "Fontes" do resumo com o nível; os desvios da T121 (CGH fictícia com geração própria) e da T124 (oito códigos de programação) per plan.md, data-model e research R14 (contradicts)
+- [X] T162 Registrar na incorporação (fase F), com a T153, a T156 e a T158, os desvios e acréscimos da fase D: figuras em `figuras_comum.py` e blocos e notas em `comum.py` e `secoes_conjunto.py` (a T123 citava `figuras.py` e `conteudo.py`); os arquivos novos (`capacidade_membros.csv`, `tipo_publicado.csv`, `alinhamento_hidrologia.csv`) e os campos novos de `ResultadosAnalise` (`conjunto`, `hidrologia` das usinas sem EVT) no data-model; o relatório em duas partes (FR-048) na tabela da decisão R14; o bloco `subtitulo`; as abas CONJ_* e HID_*; a linha "Fontes" do resumo com o nível; os desvios da T121 (CGH fictícia com geração própria) e da T124 (oito códigos de programação) per plan.md, data-model e research R14 (contradicts)
 
 ### 22/10/2026 — T126 (aprovação e referências) e convergência da fase D (T159 a T161)
 
@@ -1447,7 +1447,7 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 - [X] T164 Gravar a aba FONTES da carteira com as colunas da aba FONTES da usina (`aba`, `conjuntos_origem`, `conferencias`, `sem_outra_fonte`, `calculado_no_relatorio`) em `src/relatorio/carteira.py`, per R21 (partial)
 - [X] T165 Usar só a TEIFa de dezembro no ano completo, vazia sem dezembro, e a do último mês publicado só no ano parcial, em `src/analises/carteira.py`, per FR-062 do rascunho 004 (partial)
 - [X] T166 Levar a largura das figuras da carteira para `src/comum/regras.py`, ao lado de `TAMANHO_FIGURA_PADRONIZADA`, per plan: VII (partial)
-- [ ] T167 Registrar na fase F, com T153, T156, T158 e T162, os desvios da fase E: os módulos `carteira_pdf.py` e `carteira_figuras.py`, não nomeados na T134, e os testes T131 e T132 escritos depois do código, per tasks T131, T132 e T134 (unrequested)
+- [X] T167 Registrar na fase F, com T153, T156, T158 e T162, os desvios da fase E: os módulos `carteira_pdf.py` e `carteira_figuras.py`, não nomeados na T134, e os testes T131 e T132 escritos depois do código, per tasks T131, T132 e T134 (unrequested)
 
 ### 23/10/2026 — Convergência da fase E (T163 a T166)
 
@@ -1464,4 +1464,59 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 - Suíte com 840 aprovados; pyflakes sem aviso; `/speckit-converge` feita (T163 a T166 resolvidas; T167 fica para a fase F).
 - `comparar --todas --coleta` refeito com o código final: código 6, com as mesmas diferenças do portão final da fase D, linha por linha. Os cinco relatórios de referência sem nenhuma diferença; na Coleta, só as republicações do ONS aceitas pelo usuário e o `auditoria_capacidade_membros.csv` da Seriemas 1.
 - **Fase E fechada.** Pendências: a Coleta da São Domingos com o portal, para fechar as 48 horas de 29 e 30/09/2026 do relatório atualizado (decisão do usuário); o commit da fase E pelo usuário; depois, a fase F (T139 a T148, com T153, T156, T158, T162 e T167 e a fusão da spec 007).
+
+### 23/10/2026 — Fase F: cópia de segurança (T139), incorporação em andamento (T140 a T144) e README (T146)
+
+- Depois do commit da fase E pelo usuário (9244cd5, "Finalização fase E") e do "siga":
+- **T139**: `python -m src copia-seguranca --motivo antes_fechamento` criou `_backup_2026-10-23_antes_fechamento` (540 arquivos), com o SHA-256 dos cinco `referencia.json` igual ao do projeto. A `_backup_2026-10-22_antes_fase_D` foi excluída: ficam a `antes_fase_E` e a `antes_fechamento`.
+- **T140 a T144**: incorporação dos rascunhos às specs das cinco etapas, uma por etapa e em paralelo, com um briefing comum: só a pasta da spec da etapa é editada; o código é a referência do que foi construído; sem citações à spec 006 no texto final; cada etapa devolve o mapa das citações (FRs da 006, decisões do research e, na 005, a spec 007) para a T145. Na 005 entra também a spec 007 (T037 da 007).
+- **T146**: `README.md` reescrito: os sete tipos e os três níveis dos dados; os conjuntos do ONS por tipo e nível (do registro em `src/coleta/registro.py`); os comandos `usinas`, `perfil`, `carteira`, `referencia` e `comparar --todas [--coleta]`, com as opções e os códigos de saída dos contratos; as pastas `data/catalogo/`, `reports/carteiras/` e `relatorios_referencia/`; o caminho do relatório por tipo e o relatório em duas partes; o perfil por tipo; o fluxo de uma usina nova, do catálogo à referência aprovada.
+
+### 23/10/2026 — T140 a T144: incorporação às specs das etapas (e T037 da spec 007)
+
+- As cinco specs das etapas foram reescritas com os rascunhos aprovados, o data-model, o plano, o research e os contratos da 006, conferidos no código ("como construído"), e, na 005, a spec 007 inteira. Cabeçalho "aprovada · atualizada em 2026-10-23".
+  - **Coleta**: FR-001 a FR-061 (novas FR-049 a FR-061), US7 e US8, aplicabilidade por tipo, SC-015 a SC-017, decisões D19 a D33, data-model com o catálogo, o rascunho, o registro, a série de referência e os trechos e as usinas fictícias; contratos `cli-usinas.md` e `cli-perfil.md` novos e `perfil-multitipo.md` fundido em `perfil-usina.md`.
+  - **Tratamento**: FR-001 a FR-044 (novas FR-035 a FR-044), aplicabilidade, SC-011, decisões D15 a D21, data-model 2.7 a 2.9.
+  - **Conferência**: FR-001 a FR-026 (novas FR-018 a FR-026), US5, aplicabilidade, SC-007 a SC-009, decisões D11 a D18, data-model 2.9 a 2.12 e 3.7.
+  - **Análises**: FR-001 a FR-062 (novas FR-052 a FR-062), US7 a US11, catálogo C1 a C19, aplicabilidade, SC-011 e SC-012, decisões D16 a D25, data-model 3.11 a 3.19.
+  - **Geração do relatório**: FR-001 a FR-070 (novas FR-041 a FR-049 da 006 e FR-050 a FR-070 da 007, com FR-n da 007 → FR-(n+49)), US9 a US11, aplicabilidade por tipo e por recorte, SC-013 a SC-020, decisões D15 a D34 (Rn da 007 → D(n+21)), data-model 2.9, 2.10 e 6 a 8; contratos `cli-carteira.md`, `cli-referencias.md` e `resumo-executivo.md`.
+  - Os desvios T153, T156, T158, T162 e T167 entraram como descrição do que foi construído e em "Desvios registrados na implementação" de cada plano.
+- Conferências: nenhuma citação a "spec 006", "spec 007", rascunho, fase, tarefa ou decisão Rn nas cinco specs; as FRs de cada spec estão em sequência e todas as referências cruzadas entre etapas apontam para FRs que existem.
+- **Pontos levados ao usuário com a T148** (o texto descreve o código; a decisão é dele):
+  1. a seção "Conferência da geração entre fontes" nunca foi gerada; nos relatórios das usinas sem EVT ela aparece entre as omitidas como "seção ainda não gerada pelo pipeline";
+  2. a restrição por razão não grava ausências nem auditoria, como o rascunho do Tratamento previa (a chave `auditoria_restricao_razao` existe em `caminhos.py`, mas o arquivo nunca é gravado);
+  3. as conferências G1 a G5 sem hora comum ficam "não aplicáveis" (o código), e não aplicáveis com zero comparados como as seis de hoje;
+  4. nas usinas sem EVT, as horas com D1 a D4 são contadas, mas não saem da disponibilidade (sem efeito nas pilotos);
+  5. no catálogo, os códigos de programação "MSUTWI - 334" e "MSUTWI - 434" (até 11/02/2026) não ficaram ligados à William Arjona;
+  6. a SC-001 das Análises e da Geração do relatório passou a citar a referência registrada em `relatorios_referencia/`;
+  7. histórias e critérios de sucesso que os agentes derivaram da 006 e dos logs (por exemplo US5 da Conferência, US7 a US11 das Análises).
+
+### 23/10/2026 — T145 (citações), desvios registrados e T147 (validação final)
+
+- **T145**: as citações da spec 006 e da spec 007 em `src/` e `tests/` (cerca de 540 trechos em 110 arquivos), nos perfis das usinas fictícias e nos comentários de `usinas/sao_domingos/perfil.toml` e `usinas/william_arjona/perfil.toml` foram trocadas pelas FRs, decisões D e seções do data-model das specs das etapas, com o mapa devolvido pela incorporação, em cinco partes paralelas. Só comentários e docstrings mudaram: a árvore sintática de cada arquivo, sem as docstrings, é igual à do commit 9244cd5 nos 110 arquivos. A busca da seção 9 do quickstart (e por "spec 007", "decisão Rn", "rascunho" e "ajustes-specs") em README, specs das etapas, `src`, `tests`, `usinas` e `.specify` só acha `.specify/feature.json`, que muda na T148.
+- **T153, T156, T158, T162 e T167**: registrados nos planos das etapas, na seção "Desvios registrados na implementação" (Coleta, Tratamento, Conferência, Análises e Geração do relatório), e no texto que descreve o que foi construído.
+- **T147**:
+  - suíte com 840 aprovados; pyflakes sem aviso;
+  - `comparar --todas --coleta`: código 6, com as mesmas diferenças da fase D (só na Coleta, republicações aceitas) e, a mais, o aviso de que os perfis atuais da São Domingos e da William Arjona diferem dos congelados (só nos comentários trocados na T145; a comparação usa os congelados). O quickstart pedia código 0: com as republicações aceitas pelo usuário, o 0 só viria recongelando as referências, o que mudaria números aprovados. Fica para a decisão do usuário (T148);
+  - `usinas --estado MS --sem-portal`: código 0, 171 linhas (CGH 9, PCH 16, UFV 86, UHE 5, UTE 33 e 22 de conjunto), com o slug das quatro pilotos;
+  - `perfil` nas cinco pilotos: código 0 em quatro e 6 na São Domingos, com os arquivos iguais byte a byte. A diferença da São Domingos é a `cobertura.programacao` ("proprio" no perfil, "ausente" no catálogo): o catálogo só liga o código de programação igual ao id ONS ou com o prefixo do conjunto, e o da São Domingos é PRUHSD (o mesmo acontece com "MSUTWI - 334" e "MSUTWI - 434" da William Arjona). O relatório usa a programação normalmente; a limitação é só do catálogo;
+  - recusa: `perfil` da CGH Bela Miragem (só agregado) com código 2, a mensagem com o comando da carteira e nenhuma pasta criada;
+  - seção 8: nenhum termo de parecer nos relatórios, nos resumos e nas carteiras; nenhum identificador de outra piloto em cada relatório;
+  - as `/speckit-converge` das fases A a E foram feitas nos portões de cada fase; a única tarefa aberta da 006 é a T148.
+
+### 23/10/2026 — T148: decisão do usuário sobre o fechamento
+
+- **Decisão do usuário** ("a spec 006 e 007 não precisam ser excluídas. Concordo em anotar os itens 1, 2 e 3 como melhorias futuras, junto com a avaliação da CCEE"):
+  - as pastas `specs/006-ampliacao-tipos-de-geracao/` e `specs/007-resumo-executivo/` ficam como histórico, sem exclusão. O cabeçalho de cada `spec.md` diz que ela foi concluída e incorporada às specs das etapas, que passam a valer. A FR-030 e a SC-008 ("`specs/` só com as cinco specs das etapas") ficam cumpridas na parte da incorporação e dispensadas na da exclusão, por esta decisão; `.specify/feature.json` continua apontando para a 006;
+  - o fechamento aprovado como está: as specs das etapas descrevem o código;
+  - os pontos 1 (seção "Conferência da geração entre fontes"), 2 (ausências e auditoria da restrição por razão) e 3 (ligação dos códigos de programação no catálogo) anotados como melhorias futuras, com a avaliação da CCEE, em `propostas/2026-10-23-melhorias-futuras.md`. Os pontos menores (G1 a G5 sem hora comum; D1 a D4 nas usinas sem EVT) ficam como estão, descritos nas specs.
+- **Coleta da São Domingos com o portal**: pedida pelo usuário na mesma mensagem, para fechar as 48 horas de 29 e 30/09/2026 do relatório atualizado; registrada a seguir.
+- **Spec 006 concluída.** Falta o commit do usuário.
+
+### 23/10/2026 — São Domingos com o portal (pedido do usuário)
+
+- `python -m src completo --usina sao_domingos --data-geracao "23/10/2026 11:30"` (com o portal): código 0. A data de geração é a da execução, e não a de 07/10/2026, porque o relatório vivo agora tem dados até outubro.
+- O arquivo de 09/2026 da EVT foi baixado de novo (720 horas da usina 153, de 01/09 a 30/09/2026 23h); a versão de 30/09/2026 ficou em `data/raw/_versoes_anteriores/`. Aviso da Coleta: o arquivo de 10/2026 dos Dados hidrológicos veio com tamanho diferente do publicado no catálogo (republicação do ONS durante o download); a etapa terminou com código 0.
+- `reports/sao_domingos/`: série de 28/08/2018 a 21/10/2026 23h, 71.447 registros e só a hora ausente de 04/11/2018 (as 48 horas de 29 e 30/09/2026 fechadas); 30 páginas, 8 figuras, 58 abas; resumo executivo com 2 páginas. Conclusão com 4 possíveis problemas, 5 pontos de atenção, 5 itens a confirmar e 5 a verificar, como antes. Indicadores da carteira de 2025 iguais (fator de capacidade 49,2 %, disponibilidade 91,2 %, TEIFa 4,2 %).
+- A referência aprovada em `relatorios_referencia/sao_domingos/` não muda. No próximo `comparar --todas --coleta`, a Coleta refeita da São Domingos deve mostrar mais diferenças por republicação do ONS (a categoria aceita pelo usuário). A carteira de MS em `reports/carteiras/ms/` ainda mostra o período da São Domingos até 19/10/2026.
 

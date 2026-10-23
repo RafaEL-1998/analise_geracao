@@ -95,7 +95,8 @@ def test_falha_na_geracao_mantem_as_saidas_anteriores(tmp_path: Path, monkeypatc
 
 
 def test_falha_no_resumo_executivo_mantem_as_saidas_anteriores(tmp_path: Path, monkeypatch) -> None:
-    """Spec 007, FR-006: resumo acima de duas páginas é erro, e nenhuma saída nova substitui as anteriores."""
+    """Spec da Geração do relatório, FR-055: resumo acima de duas páginas é erro, e nenhuma saída nova substitui as
+    anteriores."""
     pasta = _preparar(tmp_path, monkeypatch, "v1")
     etapa_relatorio.executar_relatorio(PERFIL)
     antes = _conteudo(pasta)

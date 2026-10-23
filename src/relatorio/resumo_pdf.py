@@ -63,7 +63,7 @@ def _estilos(fonte: str, negrito: str) -> Dict[str, ParagraphStyle]:
         "aviso": ParagraphStyle("aviso", **{**base, "textColor": TINTA_SECUNDARIA}, **corpo, spaceAfter=3),
         "secao": ParagraphStyle("secao", **{**base, "fontName": negrito, "textColor": AZUL_TITULO}, fontSize=12.5,
                                 leading=16, spaceBefore=8, spaceAfter=4, keepWithNext=1),
-        # título de cada lista da conclusão junto do primeiro item (decisão R9 da spec 007)
+        # título de cada lista da conclusão junto do primeiro item (plano da Geração do relatório, D30)
         "lista": ParagraphStyle("lista", **{**base, "fontName": negrito}, fontSize=RESUMO_CORPO_PT + 0.5,
                                 leading=ENTRELINHA_CORPO + 0.5, spaceBefore=4, spaceAfter=2, keepWithNext=1),
         "item": ParagraphStyle("item", **base, **corpo, spaceAfter=2, leftIndent=10, firstLineIndent=-10),

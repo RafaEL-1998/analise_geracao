@@ -1,6 +1,6 @@
 """Gera ``tests/fixtures/invariantes_uhe.json``, a fotografia dos invariantes do relatório da hidrelétrica com EVT.
 
-Tarefa T010 da spec 006 (decisão R29): roda a usina fictícia com o código aprovado, ANTES de qualquer mudança da
+Plano da Geração do relatório, D17: roda a usina fictícia com o código aprovado, ANTES de qualquer mudança da
 ampliação, e grava o que os testes de ``tests/relatorio/test_invariantes_uhe.py`` passam a exigir. Só deve ser
 executado de novo com a aprovação do usuário, porque refazer a fotografia aceita qualquer mudança no relatório.
 

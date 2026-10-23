@@ -1,4 +1,4 @@
-"""Composição e geração do conjunto de usinas (spec 006, fase D; decisão R20; rascunho 004, FR-060; tarefa T120).
+"""Composição e geração do conjunto de usinas (spec das Análises, FR-060; plano das Análises, D22).
 
 Uma PCH num conjunto em que uma térmica sai no meio do período e uma CGH entra: a geração do conjunto por trecho de
 composição, com os tipos e a potência das usinas de cada trecho; nenhum número dividido entre as usinas; o tipo que o
@@ -120,7 +120,7 @@ def test_constatacao_identifica_o_conjunto_e_a_divergencia(conjunto) -> None:
     assert texto.startswith("O conjunto Conj. Teste (CJU_GOTEST) teve 3 composições no período: de 10/01/2024 a "
                             "31/01/2024, 2 usinas (PCH e UTE), geração média do conjunto de 22,0 MWmed;")
     assert "Os números são do conjunto, sem divisão entre as usinas." in texto
-    # a divergência do tipo publicado vai para a qualidade dos dados (T160), não para a seção do conjunto
+    # a divergência do tipo publicado vai para a qualidade dos dados, não para a seção do conjunto
     assert "O ONS publica" not in texto
     from src.analises.conjunto import frases_tipo_publicado
 
@@ -131,7 +131,7 @@ def test_constatacao_identifica_o_conjunto_e_a_divergencia(conjunto) -> None:
 
 
 def test_sem_a_capacidade_das_usinas_a_composicao_sai_sem_a_potencia() -> None:
-    """Coleta anterior à fase D (referência congelada): sem ``capacidade_membros.csv``."""
+    """Coleta anterior (referência congelada): sem ``capacidade_membros.csv``."""
     c = analisar_conjunto(_serie(), TRECHOS, MEMBROS, None, None, "CJU_GOTEST", "")
     assert not c["com_capacidade"] and c["trechos"]["potencia_somada_mw"].isna().all()
     assert c["tipo_publicado"].empty and "O ONS publica" not in achados_conjunto(c)[0][1]
@@ -182,6 +182,7 @@ def test_relatorio_em_duas_partes_so_com_todos_os_numeros_do_conjunto(conjunto) 
         return SimpleNamespace(conjunto=c, comum={"cobertura": {"niveis": niveis}})
 
     assert em_duas_partes(res({"conjunto": 10}))
-    assert not em_duas_partes(res({"usina": 10}))  # a série própria (a Seriemas 1): a estrutura da FR-046
+    # a série própria (a Seriemas 1): a estrutura da FR-046 da spec da Geração do relatório
+    assert not em_duas_partes(res({"usina": 10}))
     assert not em_duas_partes(res({"usina": 5, "conjunto": 5}))
     assert not em_duas_partes(res({"conjunto": 10}, c={}))

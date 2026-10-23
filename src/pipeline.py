@@ -30,9 +30,10 @@ logger = setup_logger("pipeline")
 ETAPAS: Tuple[str, ...] = ("coleta", "tratamento", "conferencia", "analises", "relatorio")
 ANTERIOR: Dict[str, str] = {b: a for a, b in zip(ETAPAS, ETAPAS[1:])}
 # Muda quando os arquivos da etapa mudam de formato; a etapa seguinte recusa um formato antigo (código 5).
-# Coleta 2 e Análises 2: datas de obtenção e dicionário da EVT na pasta da Coleta (spec 006, decisão R22).
+# Coleta 2 e Análises 2: datas de obtenção e dicionário da EVT na pasta da Coleta (planos da Coleta de dados, D29, e
+# das Análises, D25).
 # Tratamento 2, Conferência 2 e Análises 3: base horária comum, conferências não aplicáveis e os campos das usinas
-# sem EVT (spec 006, decisões R13 e R30).
+# sem EVT (planos do Tratamento de dados, D15, da Conferência, D11 e D18, e das Análises, D16).
 VERSAO_FORMATO: Dict[str, int] = {"coleta": 2, "tratamento": 2, "conferencia": 2, "analises": 3, "relatorio": 1}
 
 CODIGO_SUCESSO = 0

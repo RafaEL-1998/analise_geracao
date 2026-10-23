@@ -1,12 +1,12 @@
-"""Catálogo das conferências e a aplicabilidade de cada uma à usina (spec 006, decisão R13; data-model 6.3).
+"""Catálogo das conferências e a aplicabilidade de cada uma à usina (plano da Conferência, D11; data-model, seção 3.7).
 
 Cada conferência declara os tipos de usina, os conjuntos do registro que ela compara e as condições de nível.
 A que não se aplica à usina (tipo, conjunto não coletado, base ainda fora do pipeline, conjunto sem membros no
 perfil, níveis diferentes, ou resultado sem base) vai para ``nao_aplicaveis.csv``, com o motivo (FR-019, princípio
-VI). As seis de hoje são feitas como hoje; G3 e G4 nas térmicas com o despacho (fase B); G1, G2 e G5 nas eólicas e
-solares com as bases da fase C, sempre no mesmo nível; o alinhamento da hidrologia pela geração nas hidrelétricas sem
-EVT (fase D; rascunho 003, FR-026). Este último só é registrado como não aplicável nas hidrelétricas: nos demais
-tipos, a conferência das vazões já registra que a hidrologia não se aplica, e os relatórios aprovados não mudam.
+VI). As seis de hoje são feitas como hoje; G3 e G4 nas térmicas com o despacho (FR-020 e FR-021); G1, G2 e G5 nas
+eólicas e solares com as bases do tipo (FR-023 a FR-025), sempre no mesmo nível; o alinhamento da hidrologia pela
+geração nas hidrelétricas sem EVT (FR-026). Este último só é registrado como não aplicável nas hidrelétricas: nos
+demais tipos, a conferência das vazões já registra que a hidrologia não se aplica, e os relatórios aprovados não mudam.
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ FONTES_DA_GERACAO: Tuple[str, ...] = ("geracao", "fator_capacidade", "restricao_
 
 @dataclass(frozen=True)
 class ConferenciaCatalogo:
-    """Conferência do catálogo: tipos, conjuntos comparados e condições (decisão R13)."""
+    """Conferência do catálogo: tipos, conjuntos comparados e condições (decisão D11)."""
 
     id: str
     descricao: str

@@ -1,4 +1,5 @@
-"""Coleta das usinas sem EVT (spec 006, decisões R6 a R9; data-model, seções 5 e 6.1; tarefa T060).
+"""Coleta das usinas sem EVT (plano da Coleta de dados, D24 a D27; data-model da Coleta de dados,
+seções 2.2, 4.3 e 7).
 
 O período vem da série de referência (Geração por usina, da usina ou do conjunto), varrida em todos os arquivos. Fora
 das hidrelétricas com EVT, a Coleta grava também ``geracao_complemento.parquet``, ``trechos.csv``,

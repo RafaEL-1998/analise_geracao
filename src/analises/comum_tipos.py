@@ -1,4 +1,4 @@
-"""Seções comuns das usinas sem EVT, calculadas sobre a base horária comum (spec 006, decisões R14, R15, R17 e R30).
+"""Seções comuns das usinas sem EVT, calculadas sobre a base horária comum (plano das Análises, D16, D17 e D19).
 
 Parte de ``base_horaria.csv`` do Tratamento (geração da série de referência com o nível de cada hora, disponibilidade,
 programação, trecho e sinalizações) e devolve o campo ``comum`` de ``ResultadosAnalise``, com as omissões e os níveis.
@@ -35,7 +35,7 @@ DESCRICAO_SINALIZACOES: Dict[str, str] = {
     **{codigo: f"disponibilidade: {texto}" for codigo, texto in DESCRICAO_QUALIDADE_DISPONIBILIDADE.items()},
     "R7": "geração acima da disponibilidade declarada",
 }
-# Seções do caminho sem EVT, na ordem da decisão R14, para as omissões (só as que dependem de uma base)
+# Seções do caminho sem EVT, na ordem da FR-041 da Geração do relatório, para as omissões (só as que dependem de base)
 TITULO_SAZONALIDADE = "Sazonalidade (distribuição por mês do ano)"
 
 
@@ -123,7 +123,7 @@ def geracao_mensal(base: pd.DataFrame) -> pd.DataFrame:
 
 
 def sazonalidade(base: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
-    """Geração média por mês do ano, por nível, só no nível com os 12 meses distintos (decisão R17).
+    """Geração média por mês do ano, por nível, só no nível com os 12 meses distintos (decisão D19).
 
     Devolve a tabela e os níveis omitidos por falta de meses."""
     linhas, omitidos = [], []
@@ -217,7 +217,7 @@ def disponibilidade_comum(base: pd.DataFrame, potencia_instalada_mw: float,
 
 def base_programacao_conjunto(geracao: pd.DataFrame, programada: pd.DataFrame) -> pd.DataFrame:
     """Geração verificada e programada do conjunto, hora a hora, para a comparação com a Programação diária quando a base
-    horária é da usina (EOL e UFV com a restrição com detalhe como série de referência; tarefa T157): os números do
+    horária é da usina (EOL e UFV com a restrição com detalhe como série de referência): os números do
     conjunto ficam fora da base da usina e levam o nível."""
     g = geracao[["din_instante", "val_geracao"]].assign(din_instante=pd.to_datetime(geracao["din_instante"]))
     p = programada[["din_instante", "geracao_programada_mw"]].assign(
@@ -274,8 +274,8 @@ def programacao_comum(base: pd.DataFrame, nivel_programacao: str, dias_ausentes:
 
 def qualidade_comum(base: pd.DataFrame, ausencias: Optional[pd.DataFrame], linhas_usina_sem_valor: int,
                     linhas_usina_sem_valor_periodo: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
-    """Horas sinalizadas por código, horas sem valor, ausências listadas e linhas próprias sem valor (A3), com o período
-    delas (fase D)."""
+    """Horas sinalizadas por código, horas sem valor, ausências listadas e linhas próprias sem valor (plano da Coleta
+    de dados, D21), com o período delas."""
     codigos = base["sinalizacoes"].fillna("").str.split(",").explode()
     contagem = codigos[codigos != ""].value_counts()
     sinalizacoes = pd.DataFrame([{"codigo": c, "descricao": DESCRICAO_SINALIZACOES.get(c, c), "horas": int(n)}
@@ -291,7 +291,7 @@ def qualidade_comum(base: pd.DataFrame, ausencias: Optional[pd.DataFrame], linha
 
 
 # ---------------------------------------------------------------------------
-# Agente atual (decisão do usuário de 19/10/2026; spec do resumo executivo, FR-008)
+# Agente atual (decisão do usuário de 19/10/2026; spec da Geração do relatório, FR-057)
 # ---------------------------------------------------------------------------
 
 
@@ -336,9 +336,9 @@ def _cobertura_texto(perfil: Any, chave: str) -> str:
 def omissoes(perfil: Any, tipo: str, comum: Dict[str, Any], indicadores: bool, hidrologia: bool,
              niveis_sem_sazonalidade: List[str], conjunto: bool = False,
              hidrologia_presente: bool = False) -> List[Dict[str, str]]:
-    """Seções da decisão R14 sem base para a usina, com o motivo (FR-024), na ordem do relatório.
+    """Seções da decisão D16 sem base para a usina, com o motivo (FR-005), na ordem do relatório.
 
-    ``conjunto`` e ``hidrologia_presente``: a seção do conjunto e a de afluência têm base (fase D)."""
+    ``conjunto`` e ``hidrologia_presente``: a seção do conjunto e a de afluência têm base."""
     saida: List[Dict[str, str]] = []
     com_disponibilidade = tipo in HIDRELETRICAS + TERMICAS
     if com_disponibilidade and not comum.get("disponibilidade"):
@@ -352,7 +352,7 @@ def omissoes(perfil: Any, tipo: str, comum: Dict[str, Any], indicadores: bool, h
         saida.append(_omitido(TITULO_SAZONALIDADE,
                               f"a série do nível {NOME_NIVEL.get(nivel, nivel)} tem menos de "
                               f"{PERIODO_MINIMO_SAZONALIDADE_MESES} meses distintos ({meses})"))
-    if tipo in TERMICAS:  # fase B: as seções de térmica dependem do despacho; o CVU × CMO, também do CVU e do CMO
+    if tipo in TERMICAS:  # as seções de térmica dependem do despacho; o CVU × CMO, também do CVU e do CMO
         if registro.nivel_coletado(perfil, "despacho") is None:
             saida.append(_omitido("Seções de térmica", "sem a Geração térmica por motivo de despacho "
                                                        f"({_cobertura_texto(perfil, 'despacho')})"))
@@ -360,7 +360,7 @@ def omissoes(perfil: Any, tipo: str, comum: Dict[str, Any], indicadores: bool, h
             saida.append(_omitido("CVU × CMO", f"sem o CVU das usinas térmicas ({_cobertura_texto(perfil, 'cvu')})"))
         elif registro.nivel_coletado(perfil, "cmo") is None:
             saida.append(_omitido("CVU × CMO", "sem o CMO semanal: o perfil não traz o subsistema"))
-    if getattr(perfil.identificacao, "id_conjunto", None) and not conjunto:  # fase D (decisão R20)
+    if getattr(perfil.identificacao, "id_conjunto", None) and not conjunto:  # usina em conjunto (decisão D22)
         saida.append(_omitido("Composição e geração do conjunto",
                               "sem a Geração por usina do conjunto, ou sem a usina na composição, no período"))
     if not comum.get("programacao"):
@@ -374,7 +374,7 @@ def omissoes(perfil: Any, tipo: str, comum: Dict[str, Any], indicadores: bool, h
     if com_disponibilidade and not comum.get("disponibilidade"):
         saida.append(_omitido("Disponibilidade operacional e sincronizada",
                               f"sem a Disponibilidade por usina ({_cobertura_texto(perfil, 'disponibilidade')})"))
-    if tipo in HIDRELETRICAS and not hidrologia_presente:  # fase D: a seção sem os cruzamentos com a EVT (T150)
+    if tipo in HIDRELETRICAS and not hidrologia_presente:  # a seção sem os cruzamentos com a EVT (decisão D23)
         saida.append(_omitido("Afluência, vertimento e nível do reservatório",
                               "os Dados hidrológicos não têm horas no período da série de referência" if hidrologia
                               else f"sem os Dados hidrológicos ({_cobertura_texto(perfil, 'hidrologia')})"))
@@ -383,7 +383,7 @@ def omissoes(perfil: Any, tipo: str, comum: Dict[str, Any], indicadores: bool, h
                               "seção ainda não gerada pelo pipeline; os resultados da G3 e da G4 estão nas legendas de "
                               "fonte das seções de térmica e nas abas CONF_G3 e CONF_G4 da planilha"))
     elif tipo in TIPOS_COM_FATOR_CAPACIDADE and any(registro.nivel_coletado(perfil, c) for c in (
-            "fator_capacidade", "restricao_detalhe", "restricao_razao")):  # fase C
+            "fator_capacidade", "restricao_detalhe", "restricao_razao")):  # eólicas e solares
         saida.append(_omitido("Conferência da geração entre fontes",
                               "seção ainda não gerada pelo pipeline; os resultados da G1, da G2 e da G5, quando "
                               "aplicáveis, estão nas legendas de fonte das seções de eólica e solar e nas abas CONF_G1, "
@@ -411,11 +411,11 @@ def analisar_comum(
     conjunto: bool = False,
     hidrologia_presente: bool = False,
 ) -> Tuple[Dict[str, Any], List[Dict[str, str]]]:
-    """Campo ``comum`` de ``ResultadosAnalise`` e as omissões das seções (decisões R14 e R17).
+    """Campo ``comum`` de ``ResultadosAnalise`` e as omissões das seções (decisões D16 e D19).
 
     ``nivel_programacao``: nível da Programação diária coletada (None quando não foi coletada); ``horas_programacao``,
     as horas da programação tratada no período; ``base_programacao``, a base da comparação com a programação quando não é
-    a base horária (a do conjunto, na tarefa T157).
+    a base horária (a do conjunto).
     """
     potencia = float(perfil.parametros.potencia_instalada_mw)
     cobertura = cobertura_comum(base, ausencias)

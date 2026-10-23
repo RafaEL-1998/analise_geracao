@@ -1,4 +1,4 @@
-"""Seção "Composição e geração do conjunto" do relatório (spec 006, fase D; rascunho 005, FR-046; decisão R20).
+"""Seção "Composição e geração do conjunto" do relatório (spec da Geração do relatório, FR-046; plano, D20).
 
 Em toda usina em conjunto com a geração do conjunto, depois das seções do tipo (item 8 da FR-041): a geração do conjunto
 por trecho de composição, a composição (uma linha por usina, com a potência) e a figura da geração mensal do conjunto

@@ -1,4 +1,4 @@
-"""Afluência, vertimento e nível na hidrelétrica sem EVT (spec 006, fase D; rascunho 004, FR-061; tarefa T150).
+"""Afluência, vertimento e nível na hidrelétrica sem EVT (spec das Análises, FR-061; plano das Análises, D23).
 
 A hora da hidrologia vem conferida pela geração da usina (FR-026 da Conferência). Confirmada, a seção traz a tabela
 anual e as médias mensais, sem os cruzamentos com a EVT; sem a confirmação, só a cobertura e o resultado da

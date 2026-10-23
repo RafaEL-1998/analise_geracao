@@ -1,5 +1,6 @@
-"""Figuras das usinas sem EVT, em seaborn, desenhadas a partir das seções comuns e das seções do tipo (spec 006,
-decisões R14, R15, R18 e R19; nas térmicas, as quatro figuras da fase B; nas eólicas e solares, as quatro da fase C).
+"""Figuras das usinas sem EVT, em seaborn, desenhadas a partir das seções comuns e das seções do tipo (plano da
+Geração do relatório, D15, D16, D18 e D19; nas térmicas, as quatro figuras da FR-044; nas eólicas e solares, as
+quatro da FR-045).
 
 Mesmo tema, paleta e tamanho das figuras de hoje (``src/relatorio/figuras.py``). Cada série leva o nível no rótulo
 quando não é da usina ("do conjunto ..."); níveis diferentes nunca são somados na mesma barra ou linha.
@@ -43,16 +44,16 @@ NOMES_FIGURAS_COMUM: Dict[str, str] = {
     "geracao_mensal": "02_geracao_mensal.png",
     "perfil_horario_comum": "04_perfil_horario_geracao.png",
 }
-# Geradas só com a base: sazonalidade com 12 meses distintos (decisão R17) e disponibilidade da usina
+# Geradas só com a base: sazonalidade com 12 meses distintos (FR-041) e disponibilidade da usina
 NOMES_FIGURAS_COMUM_OPCIONAIS: Dict[str, str] = {
     "sazonalidade": "03_geracao_por_mes_do_ano.png",
     "disponibilidade_comum": "05_disponibilidade_operacional_sincronizada_mensal.png",
-    # Térmicas (fase B): só com o despacho; o CVU × CMO, só com o CVU e o CMO
+    # Térmicas: só com o despacho; o CVU × CMO, só com o CVU e o CMO
     "despacho_motivo_mensal": "06_despacho_por_motivo_mensal.png",
     "inflexibilidade_mensal": "07_inflexibilidade_mensal.png",
     "desvios_despacho": "08_desvios_despacho_mensal.png",
     "cvu_cmo": "09_cvu_cmo_semanal.png",
-    # Eólicas e solares (fase C): cada uma só com a sua base
+    # Eólicas e solares: cada uma só com a sua base
     "fc_mensal": "10_fator_capacidade_mensal.png",
     "corte_razao_mensal": "11_energia_cortada_por_razao_mensal.png",
     "recurso_geracao": "12_geracao_por_faixa_de_recurso.png",
@@ -71,12 +72,12 @@ CORES_MOTIVOS: Dict[str, str] = {
     "Demais motivos": COR_CONTEXTO,
 }
 CORES_UNIDADES = ["#2a78d6", "#1baf7a", "#eda100", "#e87ba4"]  # CVU de cada unidade, na ordem dos códigos
-# Razões da restrição (fase C): as três primeiras posições da ordem categórica, validadas com o script da skill de
+# Razões da restrição: as três primeiras posições da ordem categórica, validadas com o script da skill de
 # visualização sobre fundo branco (contraste do verde abaixo de 3:1, compensado pela tabela por razão e pela legenda);
 # a semi-hora restrita sem razão publicada, em cinza
 CORES_RAZOES: Dict[str, str] = {**dict(zip(RAZOES.values(), ("#2a78d6", "#eb6834", "#1baf7a"))),
                                 SEM_RAZAO: COR_CONTEXTO}
-# Trechos de composição do conjunto (fase D): a ordem categórica fixa, validada com o script da skill de visualização
+# Trechos de composição do conjunto: a ordem categórica fixa, validada com o script da skill de visualização
 # sobre fundo branco (contraste abaixo de 3:1 em três cores, compensado pela legenda e pela tabela por trecho); a partir
 # do sexto trecho, cinza ("demais composições"), nunca uma cor nova
 CORES_TRECHOS = ("#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4")
@@ -115,7 +116,7 @@ def _rotulo_mes(valor: float, _: object = None) -> str:
 
 def _eixo_tempo(ax: plt.Axes, inicio: pd.Timestamp, fim: pd.Timestamp, diario: bool = True) -> None:
     """Marcas por ano nas séries longas; nas curtas, por mês ("set/2025"); nas de até dois meses de dados diários,
-    por dia ("10/02"), como as séries das UFV (decisão R17). Os dados mensais nunca têm marcas por dia."""
+    por dia ("10/02"), como as séries das UFV. Os dados mensais nunca têm marcas por dia."""
     dias = (pd.Timestamp(fim) - pd.Timestamp(inicio)).days
     if dias >= ANOS_COM_MARCA_ANUAL * 365:
         ax.xaxis.set_major_locator(mdates.YearLocator())
@@ -387,7 +388,7 @@ def _grafico_cvu_cmo(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Eólicas e solares (fase C)
+# Eólicas e solares
 # ---------------------------------------------------------------------------
 
 
@@ -502,7 +503,7 @@ def _grafico_desvio_programacao(res: ResultadosAnalise, caminho: Path, dpi: int)
 
 
 # ---------------------------------------------------------------------------
-# Usina em conjunto e hidrelétrica sem EVT (fase D)
+# Usina em conjunto e hidrelétrica sem EVT
 # ---------------------------------------------------------------------------
 
 

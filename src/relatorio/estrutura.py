@@ -3,9 +3,9 @@
 Declarada uma vez e usada pelo PDF e pelo Markdown, para que as duas saídas tenham as mesmas seções, na mesma
 ordem, e cada constatação apareça uma única vez, no início da seção a que se refere (FR-009, FR-010 e FR-017).
 
-Uma única lista, em ordem fixa, com os dois caminhos da spec 006 (decisão R14): a hidrelétrica com EVT vê exatamente as
-17 seções de hoje; a usina sem EVT vê as seções comuns do seu tipo, com as seções sem base omitidas e a numeração
-contínua.
+Uma única lista, em ordem fixa, com os dois caminhos do relatório (plano da Geração do relatório, D15): a hidrelétrica
+com EVT vê exatamente as 17 seções de hoje; a usina sem EVT vê as seções comuns do seu tipo, com as seções sem base
+omitidas e a numeração contínua.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ def _sempre(res: Any) -> bool:
     return True
 
 
-# Caminhos do relatório (decisão R14)
+# Caminhos do relatório (D15)
 COM_EVT = "evt"
 SEM_EVT = "sem_evt"
 COM_DISPONIBILIDADE: Tuple[str, ...] = HIDRELETRICAS + TERMICAS
@@ -36,11 +36,11 @@ COM_DISPONIBILIDADE: Tuple[str, ...] = HIDRELETRICAS + TERMICAS
 
 @dataclass(frozen=True)
 class Secao:
-    """Seção do relatório (data-model 6.5): chave estável, título, condição de presença, caminhos e tipos.
+    """Seção do relatório (data-model, seção 3): chave estável, título, condição de presença, caminhos e tipos.
 
     ``titulo`` é um texto, um mapa tipo -> título (com a chave "" como padrão) ou uma função dos resultados (o
     título que depende de uma parte da seção ter base); ``periodo_minimo_meses`` é o
-    período que a seção (ou parte dela) pede (decisão R17). Os tipos só filtram o caminho sem EVT. A legenda de fonte
+    período que a seção (ou parte dela) pede (FR-041). Os tipos só filtram o caminho sem EVT. A legenda de fonte
     é de cada tabela e figura da seção (a chave vem com o bloco, em ``src/relatorio/comum.py``), não da seção.
     """
 
@@ -63,7 +63,7 @@ def _comum(chave: str, titulo: Any, presente: Callable[[Any], bool] = _sempre,
 
 
 def _fora_das_duas_partes(presente: Callable[[Any], bool] = _sempre) -> Callable[[Any], bool]:
-    """Seção de números do conjunto: no relatório em duas partes (FR-048 do rascunho 005), ela vai para a parte do
+    """Seção de números do conjunto: no relatório em duas partes (FR-048), ela vai para a parte do
     conjunto, como subseção."""
     return lambda res: presente(res) and not em_duas_partes(res)
 
@@ -76,7 +76,7 @@ def titulo_parte_conjunto(res: Any) -> str:
 SECOES: Tuple[Secao, ...] = (
     Secao("cobertura", "Fonte e cobertura dos dados"),
     _comum("fonte_cobertura", "Fonte e cobertura dos dados"),
-    # Relatório em duas partes (fase D; rascunho 005, FR-048): primeiro a usina, depois o conjunto, antes da conclusão
+    # Relatório em duas partes (FR-048): primeiro a usina, depois o conjunto, antes da conclusão
     _comum("usina_no_conjunto", "A usina no conjunto", em_duas_partes),
     Secao("indicadores_anuais", "Indicadores anuais"),
     _comum("anuais_comum", "Indicadores anuais", _fora_das_duas_partes()),
@@ -96,7 +96,7 @@ SECOES: Tuple[Secao, ...] = (
            periodo_minimo_meses=PERIODO_MINIMO_SAZONALIDADE_MESES),  # o período mínimo vale para a sazonalidade
     Secao("perfil_horario", "Perfil horário da geração e da EVT"),
     _comum("perfil_horario_comum", "Perfil horário da geração", _fora_das_duas_partes()),
-    # Seções de térmica (fase B; rascunho 005, FR-044), com o despacho: item 8 da FR-041
+    # Seções de térmica (FR-044), com o despacho: item 8 da FR-041
     _comum("despacho_motivo", "Geração por motivo de despacho e inflexibilidade",
            lambda res: bool(getattr(res, "termica", None)), TERMICAS),
     _comum("atendimento_despacho", "Atendimento ao despacho", lambda res: bool(getattr(res, "termica", None)),
@@ -104,14 +104,14 @@ SECOES: Tuple[Secao, ...] = (
     _comum("disponivel_sem_despacho", titulo_disponivel,
            lambda res: bool((getattr(res, "termica", None) or {}).get("disponivel_sem_despacho")
                             or (getattr(res, "termica", None) or {}).get("cvu_cmo")), TERMICAS),
-    # Seções de eólica e solar (fase C; rascunho 005, FR-045), com as bases: item 8 da FR-041
+    # Seções de eólica e solar (FR-045), com as bases: item 8 da FR-041
     _comum("fator_capacidade", TITULOS_RENOVAVEL["fator_capacidade"],
            lambda res: bool((getattr(res, "renovavel", None) or {}).get("fator_capacidade")), RENOVAVEIS),
     _comum("energia_cortada", TITULOS_RENOVAVEL["energia_cortada"],
            lambda res: bool((getattr(res, "renovavel", None) or {}).get("restricao")), RENOVAVEIS),
     _comum("recurso_geracao", TITULOS_RENOVAVEL["recurso_geracao"],
            lambda res: bool((getattr(res, "renovavel", None) or {}).get("recurso")), RENOVAVEIS),
-    # Seção do conjunto (fase D; rascunho 005, FR-046): toda usina em conjunto com a geração do conjunto
+    # Seção do conjunto (FR-046): toda usina em conjunto com a geração do conjunto
     _comum("conjunto", TITULO_CONJUNTO, _fora_das_duas_partes(lambda res: bool(getattr(res, "conjunto", None)))),
     Secao("eventos", "EVT por nível de geração e eventos de usina parada"),
     Secao("programacao", "Operação verificada e programação diária do ONS", lambda res: bool(res.programacao)),
@@ -121,7 +121,7 @@ SECOES: Tuple[Secao, ...] = (
           lambda res: bool(res.disponibilidade)),
     _comum("disponibilidade_sincronizada_comum", "Disponibilidade operacional e sincronizada (ONS)",
            lambda res: bool(res.comum.get("disponibilidade")), COM_DISPONIBILIDADE),
-    # Hidrelétrica sem EVT, com os Dados hidrológicos (fase D; rascunho 005, FR-047; tarefa T150)
+    # Hidrelétrica sem EVT, com os Dados hidrológicos (FR-047)
     _comum("hidrologia_comum", "Afluência, vertimento e nível do reservatório (ONS)",
            lambda res: bool(res.hidrologia), HIDRELETRICAS),
     Secao("hidrologia", "Afluência, vertimento e nível do reservatório (ONS)", lambda res: bool(res.hidrologia)),
@@ -131,7 +131,7 @@ SECOES: Tuple[Secao, ...] = (
     Secao("qualidade", "Qualidade dos dados"),
     _comum("qualidade_comum", "Qualidade dos dados"),
     _comum("parte_conjunto", titulo_parte_conjunto, em_duas_partes),  # FR-048: a parte do conjunto
-    # spec da Geração do relatório, US4: sempre presente, antes das notas; a mesma nos dois caminhos (decisão R16)
+    # spec da Geração do relatório, US4: sempre presente, antes das notas; a mesma nos dois caminhos (D14)
     Secao("conclusao", "Conclusão", caminhos=(COM_EVT, SEM_EVT)),
     Secao("notas", "Notas metodológicas e limitações"),
     _comum("notas_comum", "Notas metodológicas e limitações"),
@@ -182,7 +182,7 @@ MAPA_CONSTATACOES_SEM_EVT: Dict[str, str] = {
 
 
 def caminho(res: Any) -> str:
-    """Caminho do relatório da usina: com EVT ou sem EVT (decisão R14)."""
+    """Caminho do relatório da usina: com EVT ou sem EVT (D15)."""
     return SEM_EVT if sem_evt(res) else COM_EVT
 
 

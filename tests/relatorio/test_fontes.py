@@ -54,10 +54,10 @@ def _res(completo: bool = True, **mudancas: Any) -> SimpleNamespace:
 
 
 def test_catalogo_e_mapa_consistentes() -> None:
-    assert set(CONJUNTOS) == IDS | {"projeto", "composicao", "capacidade", "despacho", "cvu", "cmo",  # spec 006
-                                    "fator_capacidade", "restricao_detalhe", "restricao_razao",  # fase C
-                                    "capacidade_membros"}  # fase D: as unidades das usinas do conjunto
-    for chave, entrada in MAPA_FONTES.items():  # "referencia" e "geracao_programacao": apelidos da fase C
+    assert set(CONJUNTOS) == IDS | {"projeto", "composicao", "capacidade", "despacho", "cvu", "cmo",  # usinas sem EVT
+                                    "fator_capacidade", "restricao_detalhe", "restricao_razao",  # eólicas e solares
+                                    "capacidade_membros"}  # usina em conjunto: as unidades das usinas do conjunto
+    for chave, entrada in MAPA_FONTES.items():  # "referencia" e "geracao_programacao": apelidos
         assert set(entrada.conjuntos) <= set(CONJUNTOS) | {"referencia", "geracao_programacao"}, chave
         assert set(entrada.conferencias) <= set(CONFERENCIAS), chave
 
@@ -153,7 +153,7 @@ def test_rotulo_das_horas_sem_programacao() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Resumo executivo: conferências em texto curto e fontes agrupadas (spec 007, data-model 3)
+# Resumo executivo: conferências em texto curto e fontes agrupadas (data-model da Geração do relatório, seção 2.10.5)
 # ---------------------------------------------------------------------------
 
 _NUMERO = re.compile(r"\d[\d.]*(?:,\d+)?%?")
@@ -195,7 +195,7 @@ def test_fontes_do_resumo_agrupadas_por_identificador_e_data() -> None:
 
 
 def test_alinhamento_da_hidrologia_so_na_hidreletrica_sem_evt() -> None:
-    """Fase D: a hora da hidrologia conferida pela geração só entra nas legendas, na aba FONTES e no resumo da
+    """A hora da hidrologia conferida pela geração só entra nas legendas, na aba FONTES e no resumo da
     hidrelétrica sem EVT; com a EVT (a São Domingos), vale a conferência das vazões, e o relatório aprovado não muda."""
     from types import SimpleNamespace
 

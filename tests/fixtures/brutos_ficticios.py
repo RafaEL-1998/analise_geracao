@@ -5,23 +5,23 @@ indicadores e taxas, Disponibilidade por usina, Dados hidrológicos horários (c
 e Modalidade das usinas, mais o dicionário de dados da EVT. Cada conjunto traz uma linha de homônimo em que só o
 identificador confere. Não há Programação diária: a seção correspondente sai do relatório.
 
-``gerar_brutos_tipos`` acrescenta, nos mesmos arquivos, as usinas fictícias dos outros tipos (spec 006, decisão R23;
-``tests/fixtures/usinas_ficticias/``): PCH em conjunto, com linhas próprias sem valor e um membro que entra em
+``gerar_brutos_tipos`` acrescenta, nos mesmos arquivos, as usinas fictícias dos outros tipos (plano da Coleta de dados,
+D30; ``tests/fixtures/usinas_ficticias/``): PCH em conjunto, com linhas próprias sem valor e um membro que entra em
 02/2024; CGH, UTE e UTN com geração própria (as térmicas com disponibilidade; a UTN com os indicadores do ONS); EOL;
 UFV com série curta; a Programação diária de três dias (o conjunto por dois códigos e a UTE); a Composição dos
 conjuntos e a Capacidade de geração. Nenhum valor de usina real.
 
-Térmicas (spec 006, fase B; tarefa T083): o despacho, o CVU (com revisões) e o CMO da UTE e da UTN. A UTE tem 2023
+Térmicas: o despacho, o CVU (com revisões) e o CMO da UTE e da UTN. A UTE tem 2023
 inteiro sem geração, disponível, com o código de planejamento 901, trocado em 01/2024 pelas unidades 902 (gás) e 903
 (óleo); o arquivo anual de 2024 repete os mensais, como o ONS publica.
 
-PCH e CGH (spec 006, fase D; tarefas T120, T121 e T150): a PCH entra no conjunto em 10/01/2024, depois do início da
+PCH e CGH: a PCH entra no conjunto em 10/01/2024, depois do início da
 série do conjunto (o período é recortado pela composição); uma térmica sai do conjunto em 15/02/2024; o ONS publica o
 conjunto como "TÉRMICA" também depois da saída dela (tipo publicado divergente da composição). A CGH, com geração
 própria e sem EVT, tem os Dados hidrológicos na convenção de fim de hora, com a vazão turbinada proporcional à geração.
 
-Eólicas e solares (spec 006, fase C; tarefa T104): o Fator de capacidade e as duas restrições. A EOL tem tudo próprio,
-com a restrição desde 15/01/2024 (adaptação da série longa da tarefa ao período sintético), vento inválido de 20 a
+Eólicas e solares: o Fator de capacidade e as duas restrições. A EOL tem tudo próprio,
+com a restrição desde 15/01/2024 (adaptação da série longa ao período sintético), vento inválido de 20 a
 25/01 e semi-horas restritas de 01 a 10/02 com a razão REL, CNF e ENE; a programação de três dias. A UFV fica num
 conjunto com um membro: a geração, o fator de capacidade, a razão e a programação só do conjunto; a restrição com
 detalhe da usina desde 25/01/2024 (série de referência curta), com o arquivo de janeiro no esquema antigo, sem as cinco
@@ -211,7 +211,7 @@ def _indicadores(raiz: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Usinas fictícias dos outros tipos (spec 006, decisão R23; tests/fixtures/usinas_ficticias/)
+# Usinas fictícias dos outros tipos (plano da Coleta de dados, D30; tests/fixtures/usinas_ficticias/)
 # ---------------------------------------------------------------------------
 
 # Identificadores das seis usinas sem EVT e do membro do conjunto; nenhum existe no ONS
@@ -231,19 +231,20 @@ FICTICIAS: Dict[str, Dict[str, str]] = {
 }
 CONJUNTO = {"id_ons": "CJU_GOCJFI", "nome": "CONJ. HIDRAULICO FICTICIO"}
 MEMBRO = {"ceg": "CGH.PH.GO.000102-0.01", "id_ons": "GOCGMB", "nome": "CGH MEMBRO", "entrada": "2024-02-01"}
-# Fase D: a entrada da PCH no conjunto (depois do início da série dele) e a térmica que sai no meio do período
+# A entrada da PCH no conjunto (depois do início da série dele) e a térmica que sai no meio do período
 ENTRADA_PCH = "2024-01-10"
 MEMBRO_UTE = {"ceg": "UTE.BI.GO.000109-0.01", "id_ons": "GOUTMB", "nome": "UTE MEMBRO", "entrada": "2016-03-01",
               "saida": "2024-02-15", "unidades": (15.0, 15.0)}
 GERACAO_UTE_MEMBRO_MW = 10.0
-# Fase D (T150): a CGH com os Dados hidrológicos, sem EVT; um dia de cheia acima do engolimento máximo (2 × 10 m³/s)
+# A CGH com os Dados hidrológicos, sem EVT; um dia de cheia acima do engolimento máximo (2 × 10 m³/s)
 COD_USINA_CGH = 998
 ID_RESERVATORIO_CGH = "PNCGFI"
 PRODUTIVIDADE_CGH = 0.2  # turbinada de 15 m³/s de dia e 10 à noite: só a cheia passa do engolimento
 CHEIA_CGH = pd.Timestamp("2024-02-20")
 CODIGOS_PROGRAMACAO = {"GOCJFI-1": 6.0, "GOCJFI-2": 6.0, "GOUTFI": 100.0, "GOEOFI": 16.0, "GOCJUF-1": 12.0}
 DIAS_PROGRAMACAO = pd.date_range("2024-02-01", "2024-02-03", freq="D")
-INICIO_UFV = pd.Timestamp("2024-01-25")  # série curta (decisão R17): a restrição com detalhe da UFV começa aqui
+# série curta (plano das Análises, D19): a restrição com detalhe da UFV começa aqui
+INICIO_UFV = pd.Timestamp("2024-01-25")
 DISP_REDUZIDA_UTE = (pd.Timestamp("2024-01-15 00:00"), pd.Timestamp("2024-01-24 23:00"))  # 80 MW: regra R7
 PARADA_UTE = (pd.Timestamp("2024-02-05 00:00"), pd.Timestamp("2024-02-07 23:00"))  # indisponibilidade total
 PARADA_UTN = (pd.Timestamp("2024-02-10 00:00"), pd.Timestamp("2024-02-12 23:00"))
@@ -253,7 +254,7 @@ CODIGOS_UTE = {"antigo": 901, "gas": 902, "oleo": 903}
 CODIGO_UTN = 950
 CVU_UTE = {901: (150.0, 160.0), 902: (200.0, 210.0), 903: (900.0, 900.0)}  # (revisão 0, revisão 1)
 CMO_SE = {2023: 300.0, 2024: 100.0}
-# Eólicas e solares (fase C)
+# Eólicas e solares
 CONJUNTO_UFV = {"id_ons": "CJU_GOCJUF", "nome": "CONJ. SOLAR FICTICIO"}
 MEMBRO_UFV = {"ceg": "UFV.RS.GO.000108-0.01", "id_ons": "GOUFMB", "nome": "UFV MEMBRO", "entrada": "2023-01-01"}
 INICIO_RESTRICAO_EOL = pd.Timestamp("2024-01-15")
@@ -308,14 +309,14 @@ def geracao_ficticias() -> pd.DataFrame:
     conjunto dela, como a Seriemas 1)."""
     h = _horas_periodo()
     partes = [
-        _linhas_geracao("pch", h, np.full(len(h), np.nan)),  # linhas próprias sem valor (achado A3)
+        _linhas_geracao("pch", h, np.full(len(h), np.nan)),  # linhas próprias sem valor (plano da Coleta de dados, D21)
         _linhas_geracao("cgh", h, geracao_cgh(h)),
         _linhas_geracao("ute", h, geracao_ute(h)),
         _linhas_geracao("utn", h, np.where(_entre(h, PARADA_UTN), 0.0, 600.0)),
         _linhas_geracao("eol", h, geracao_eol(h)),
         pd.DataFrame({"din_instante": h, "id_subsistema": "SE", "id_estado": "GO", "nom_usina": CONJUNTO["nome"],
                       "id_ons": CONJUNTO["id_ons"], "ceg": "-", "val_geracao": geracao_conjunto(h),
-                      # como o Conj. Chapadão: publicado como térmico mesmo depois da saída da térmica (fase D)
+                      # como o Conj. Chapadão: publicado como térmico mesmo depois da saída da térmica
                       "cod_modalidadeoperacao": "Conjunto de Usinas", "nom_tipousina": "TÉRMICA",
                       "nom_tipocombustivel": "Biomassa"}),
         pd.DataFrame({"din_instante": h, "id_subsistema": "SE", "id_estado": "GO", "nom_usina": CONJUNTO_UFV["nome"],
@@ -463,7 +464,7 @@ def _cadastrais_ficticias(raw: Path) -> None:
                   "num_unidadegeradora": str(n), "nom_combustivel": combustivel[k], "dat_entradateste": "0001-01-01",
                   "dat_entradaoperacao": "2016-03-01", "dat_desativacao": "9999-12-31", "val_potenciaefetiva": p}
                  for k, u in FICTICIAS.items() for n, p in enumerate(unidades[k], start=1)]
-    # a térmica que saiu do conjunto (fase D); a CGH membro fica sem unidade cadastrada (potência "—")
+    # a térmica que saiu do conjunto; a CGH membro fica sem unidade cadastrada (potência "—")
     linhas_ug += [{**linhas_ug[0], "nom_modalidadeoperacao": "TIPO II-B", "nom_tipousina": "TÉRMICA",
                    "nom_usina": MEMBRO_UTE["nome"], "ceg": MEMBRO_UTE["ceg"], "nom_unidadegeradora": f"UG{n}",
                    "cod_equipamento": f"{MEMBRO_UTE['ceg']}-UG{n}", "num_unidadegeradora": str(n),
@@ -473,7 +474,7 @@ def _cadastrais_ficticias(raw: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Térmicas: 2023 da UTE, despacho, CVU e CMO (spec 006, fase B)
+# Térmicas: 2023 da UTE, despacho, CVU e CMO
 # ---------------------------------------------------------------------------
 
 
@@ -594,7 +595,7 @@ def _termicas(raw: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Eólicas e solares: fator de capacidade e restrições (spec 006, fase C)
+# Eólicas e solares: fator de capacidade e restrições
 # ---------------------------------------------------------------------------
 
 
@@ -710,7 +711,7 @@ def _renovaveis(raw: Path) -> None:
 
 
 def _hidrologia_cgh(raw: Path) -> None:
-    """Dados hidrológicos da CGH (fase D, T150), acrescentados aos arquivos da UHE fictícia, na convenção de fim de
+    """Dados hidrológicos da CGH, acrescentados aos arquivos da UHE fictícia, na convenção de fim de
     hora (a última hora do dia às 23:59), com a vazão turbinada proporcional à geração e um dia de cheia."""
     h = _horas_periodo()
     turbinada = geracao_cgh(h) / PRODUTIVIDADE_CGH

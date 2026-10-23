@@ -1,9 +1,9 @@
-"""Conteúdo do relatório das usinas sem EVT, comum ao PDF e ao Markdown (spec 006, decisões R14, R15 e R17;
-data-model 6.5).
+"""Conteúdo do relatório das usinas sem EVT, comum ao PDF e ao Markdown (spec da Geração do relatório, FR-041;
+plano, D15 e D16; data-model, seção 2.9).
 
 Capa, linhas das tabelas, textos, legendas descritivas, notas e os blocos de cada seção do caminho sem EVT, todos
 montados só a partir de ``ResultadosAnalise`` e do perfil. As hidrelétricas com EVT continuam com
-``src/relatorio/conteudo.py``, sem mudança (decisão R29).
+``src/relatorio/conteudo.py``, sem mudança (D17).
 """
 
 from __future__ import annotations
@@ -65,7 +65,7 @@ from src.relatorio import secoes_conjunto
 from src.relatorio.secoes_renovavel import SECOES_RENOVAVEL, pacote_variante, referencia_restricao
 
 ROTULO_NIVEL = {"usina": "usina", "conjunto": "conjunto", "agregado": "agregado"}
-COLUNA_CORTE = "Energia cortada (MWh, % est.)"  # o indicador de perda das eólicas e solares (decisão R6 da spec 007)
+COLUNA_CORTE = "Energia cortada (MWh, % est.)"  # o indicador de perda das eólicas e solares (D27)
 DESCRICAO_CONFERENCIAS = {c.id: c.descricao for c in CATALOGO_CONFERENCIAS}
 
 
@@ -91,7 +91,7 @@ class Bloco:
 
 
 # ---------------------------------------------------------------------------
-# Níveis (decisão R15)
+# Níveis (D16)
 # ---------------------------------------------------------------------------
 
 
@@ -114,13 +114,14 @@ def nome_conjunto(res: ResultadosAnalise) -> str:
 
 
 def pacote_referencia() -> str:
-    """Pacote do ONS da série de referência: a Geração por usina ou, na fase C, a restrição com detalhe."""
+    """Pacote do ONS da série de referência: a Geração por usina ou, na eólica ou solar com série própria, a
+    restrição com detalhe."""
     return pacote_variante("restricao_detalhe") if referencia_restricao() else CONJUNTO_GERACAO
 
 
 def serie_referencia_texto(res: ResultadosAnalise) -> str:
-    """"Geração por usina (id ONS X)" ou "Geração por usina (conjunto de usinas, id ONS CJU_...)"; na fase C,
-    "Restrição com detalhe (id ONS X; CEG Y)"."""
+    """"Geração por usina (id ONS X)" ou "Geração por usina (conjunto de usinas, id ONS CJU_...)"; na eólica ou solar
+    com série própria, "Restrição com detalhe (id ONS X; CEG Y)"."""
     if referencia_restricao():
         ident = perfil_ativo().identificacao
         return f"Restrição com detalhe (id ONS {ident.id_ons}; CEG {ident.ceg})"
@@ -203,7 +204,8 @@ def texto_agentes(res: ResultadosAnalise) -> str:
 
 
 def pares_parametros() -> List[Tuple[str, str]]:
-    """Bloco "Parâmetros técnicos da usina": os parâmetros do tipo (data-model 3.2), sem os hidráulicos."""
+    """Bloco "Parâmetros técnicos da usina": os parâmetros do tipo (data-model da Coleta de dados, seção 5.1), sem os
+    hidráulicos."""
     pr = perfil_ativo().parametros
     unidades = perfil_ativo().potencias_das_unidades_mw if pr.potencias_unidades_mw or pr.potencia_unitaria_mw else ()
     if unidades and len(set(unidades)) == 1:
@@ -229,7 +231,7 @@ def _do(res: ResultadosAnalise, nivel: str) -> str:
 
 
 def indicadores_capa(res: ResultadosAnalise) -> Tuple[List[Tuple[str, str, str]], str]:
-    """Indicadores da capa (data-model 6.5): geração média, fator de capacidade ou horas com geração até 1 MW,
+    """Indicadores da capa (data-model, seção 2.9.1): geração média, fator de capacidade ou horas com geração até 1 MW,
     disponibilidade média e DISPF/TEIFa, quando há; os do conjunto identificados como tal."""
     anuais = res.comum["anuais"]
     tiles: List[Tuple[str, str, str]] = []
@@ -242,11 +244,11 @@ def indicadores_capa(res: ResultadosAnalise) -> Tuple[List[Tuple[str, str, str]]
             pinst = perfil_ativo().parametros.potencia_instalada_mw
             tiles.append(("Fator de capacidade", fmt_pct(media / pinst * 100.0), "geração média ÷ potência instalada"))
             corte = ((getattr(res, "renovavel", None) or {}).get("restricao") or {}).get("resumo")
-            if corte:  # fase C (data-model 6.5)
+            if corte:  # eólicas e solares (data-model, seção 2.9.1)
                 tiles.append(("Energia cortada", fmt_pct(corte["pct_estimada"]),
                               f"{fmt_num(corte['energia_cortada_mwh'], 0)} MWh por restrição de operação, da energia "
                               "estimada nas semi-horas com a marca"))
-        elif getattr(res, "termica", None) and nivel == "usina":  # térmicas com o despacho (data-model 6.5)
+        elif getattr(res, "termica", None) and nivel == "usina":  # térmicas com o despacho (data-model, seção 2.9.1)
             t = res.termica
             tiles.append(("Horas com despacho", fmt_pct(t["horas_com_despacho"] / t["periodo"]["horas"] * 100.0
                                                         if t["periodo"]["horas"] else math.nan),
@@ -307,11 +309,11 @@ def _datas(res: ResultadosAnalise, pacote: str) -> str:
 
 
 def linhas_tabela_niveis(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
-    """Conjuntos do ONS usados no relatório, com o nível e o identificador de cada um (decisão R14, seção 1)."""
+    """Conjuntos do ONS usados no relatório, com o nível e o identificador de cada um (FR-041, seção 1)."""
     cabecalho = ["Conjunto do ONS", "Nível", "Identificador", "Obtenção"]
     ident = perfil_ativo().identificacao
     g = _g(res)
-    if referencia_restricao():  # fase C: a restrição com detalhe da usina; a geração, do conjunto
+    if referencia_restricao():  # eólica ou solar: a restrição com detalhe da usina; a geração, do conjunto
         linhas = [["Restrição com detalhe (série de referência)", "usina", f"id ONS {ident.id_ons}; CEG {ident.ceg}",
                    _datas(res, pacote_referencia())]]
         nivel_geracao = registro.nivel_coletado(perfil_ativo(), "geracao")
@@ -330,7 +332,7 @@ def linhas_tabela_niveis(res: ResultadosAnalise) -> Tuple[List[str], List[List[s
             linhas.append([nome, _nivel_texto(n["nivel"]), n["identificador"], _datas(res, pacote)])
     for chave, nome, pacote in (("fator_capacidade", "Fator de capacidade", CONJUNTO_FATOR_CAPACIDADE),
                                 ("restricao_razao", "Restrição com a razão", pacote_variante("restricao_razao"))):
-        n = res.niveis.get(chave)  # fase C
+        n = res.niveis.get(chave)  # eólicas e solares
         if n:
             linhas.append([nome, _nivel_texto(n["nivel"]), n["identificador"], _datas(res, pacote)])
     if not referencia_restricao() and registro.nivel_coletado(perfil_ativo(), "restricao_detalhe"):
@@ -344,10 +346,10 @@ def linhas_tabela_niveis(res: ResultadosAnalise) -> Tuple[List[str], List[List[s
     if getattr(ident, "id_conjunto", None):
         linhas.append(["Composição dos conjuntos de usinas", "conjunto", str(ident.id_conjunto),
                        _datas(res, "usina_conjunto")])
-    if (getattr(res, "conjunto", None) or {}).get("com_capacidade"):  # fase D: a potência das usinas do conjunto
+    if (getattr(res, "conjunto", None) or {}).get("com_capacidade"):  # a potência das usinas do conjunto
         linhas.append(["Capacidade de geração", "usinas do conjunto", f"CEG das usinas de {ident.id_conjunto}",
                        _datas(res, CONJUNTO_CAPACIDADE)])
-    if getattr(res, "hidrologia", None):  # fase D: hidrelétrica sem EVT, com os Dados hidrológicos (T150)
+    if getattr(res, "hidrologia", None):  # hidrelétrica sem EVT, com os Dados hidrológicos
         linhas.append(["Dados hidrológicos horários", "usina",
                        f"cod_usina {ident.cod_usina}, reservatório {ident.id_reservatorio}",
                        _datas(res, CONJUNTO_HIDROLOGIA)])
@@ -359,8 +361,8 @@ def _com_secao_conjunto(res: ResultadosAnalise) -> bool:
 
 
 def linhas_tabela_trechos(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
-    """Trechos do período (decisão R7) em que muda o nível ou a composição. Com a seção do conjunto (fase D), sem a
-    coluna dos CEGs: a composição, com os nomes das usinas, fica naquela seção."""
+    """Trechos do período (plano da Coleta de dados, D25) em que muda o nível ou a composição. Com a seção do conjunto,
+    sem a coluna dos CEGs: a composição, com os nomes das usinas, fica naquela seção."""
     com_ceg = not _com_secao_conjunto(res)
     cabecalho = ["Trecho", "Início", "Fim", "Modalidade", "Nível", *(["Composição (CEG)"] if com_ceg else []), "Tipos"]
     t = res.trechos
@@ -393,10 +395,10 @@ def linhas_tabela_anuais(res: ResultadosAnalise) -> Tuple[List[str], List[List[s
     if com_disp:
         cabecalho += ["Disp. média (MW)", "Disp. (% Pinst)"]
     sem_despacho = _sem_despacho_por_ano(res)
-    if sem_despacho is not None:  # o indicador de perda das térmicas (decisão R6 da spec 007)
+    if sem_despacho is not None:  # o indicador de perda das térmicas (D27)
         cabecalho.append("Disp. sem despacho (h)")
     corte = _corte_por_ano(res)
-    if corte is not None:  # o das eólicas e solares (fase C)
+    if corte is not None:  # o das eólicas e solares
         cabecalho.append(COLUNA_CORTE)
     linhas = []
     for r in a.itertuples():
@@ -582,7 +584,7 @@ def textos_tabelas(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
 
 
 def _textos_hidrologia(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
-    """A tabela anual da afluência na hidrelétrica sem EVT (fase D, T150), com as mesmas colunas da de hoje."""
+    """A tabela anual da afluência na hidrelétrica sem EVT, com as mesmas colunas da de hoje."""
     if not getattr(res, "hidrologia", None):
         return {}
     return {"tab_hidrologia_anual_comum": (
@@ -637,9 +639,9 @@ def legenda_figura(res: ResultadosAnalise, chave: str) -> str:
     if chave == "disponibilidade_comum":
         return ("Médias mensais da disponibilidade operacional e sincronizada publicadas pelo ONS e da geração da usina, "
                 f"nas horas com os dois dados. Linha tracejada: potência instalada ({pinst} MW).")
-    if chave == "conjunto_mensal":  # fase D
+    if chave == "conjunto_mensal":  # usina em conjunto
         return secoes_conjunto.legenda_figura(res, chave)
-    if chave == "hidrologia_mensal_comum":  # fase D, T150
+    if chave == "hidrologia_mensal_comum":  # hidrelétrica sem EVT
         return ("Médias mensais da vazão afluente, da turbinada e da vertida publicadas pelo ONS (Dados hidrológicos "
                 "horários), sem os valores sinalizados; a hora da série foi conferida pela geração da usina.")
     if getattr(res, "termica", None):
@@ -671,7 +673,7 @@ def notas(res: ResultadosAnalise) -> List[str]:
                                           "planilha, e " if c["horas_ausentes"] else "")
          + "as horas sinalizadas ficam na base e nos totais, com o código da regra."),
     ]
-    if com_conjunto(res) and referencia_restricao():  # fase C: a série de referência é da usina
+    if com_conjunto(res) and referencia_restricao():  # eólica ou solar: a série de referência é da usina
         ident = perfil_ativo().identificacao
         saida.append(
             f"Granularidade: o ONS publica a geração, o fator de capacidade e a razão da restrição do conjunto "
@@ -693,10 +695,10 @@ def notas(res: ResultadosAnalise) -> List[str]:
         texto = secoes_renovavel.nota(res)
         if texto:
             saida.append(texto)
-    texto = secoes_conjunto.nota(res)  # fase D: só com a seção do conjunto
+    texto = secoes_conjunto.nota(res)  # só com a seção do conjunto
     if texto:
         saida.append(texto)
-    if getattr(res, "hidrologia", None):  # fase D: hidrelétrica sem EVT (T150)
+    if getattr(res, "hidrologia", None):  # hidrelétrica sem EVT
         saida.append("Dados hidrológicos: informados pelos agentes e não consistidos pelo ONS; a série publicada marca o fim "
                      "da hora, e a série foi convertida para a hora de início, conferida pela correlação entre a vazão "
                      "turbinada e a geração da usina, e não pela EVT, que a usina não tem. Valores fora da faixa física "
@@ -772,7 +774,7 @@ def tabela_parametros(res: ResultadosAnalise) -> pd.DataFrame:
                            f"{ONS_PORTAL_DATASET_URL}{CONJUNTO_CMO}"))
     for chave, nome, pacote in (("fator_capacidade", "Fator de capacidade", CONJUNTO_FATOR_CAPACIDADE),
                                 ("restricao_razao", "Restrição com a razão", pacote_variante("restricao_razao"))):
-        n = res.niveis.get(chave)  # fase C
+        n = res.niveis.get(chave)  # eólicas e solares
         if n:
             linhas.append(("Fonte", nome, f"{_nivel_texto(n['nivel'])}: {n['identificador']}", "",
                            f"{ONS_PORTAL_DATASET_URL}{pacote}"))
@@ -889,7 +891,7 @@ def blocos_secao(res: ResultadosAnalise, chave: str) -> List[Bloco]:
         cab, linhas = linhas_tabela_programacao_eventos(res)
         if linhas:
             b.append(_tabela("tab_programacao_eventos_comum", (cab, linhas), [1.2, 1.2, 0.8, 1.0], range(2, 4)))
-        if getattr(res, "renovavel", None):  # aderência à programação das eólicas e solares (fase C)
+        if getattr(res, "renovavel", None):  # aderência à programação das eólicas e solares
             from src.relatorio import secoes_renovavel
 
             b.extend(secoes_renovavel.blocos_programacao(res))
@@ -910,7 +912,7 @@ def blocos_secao(res: ResultadosAnalise, chave: str) -> List[Bloco]:
         from src.relatorio import secoes_renovavel
 
         b.extend(secoes_renovavel.blocos(res, chave))
-    elif chave in secoes_conjunto.SECOES_CONJUNTO:  # fase D
+    elif chave in secoes_conjunto.SECOES_CONJUNTO:  # usina em conjunto
         b.extend(secoes_conjunto.blocos(res, chave))
     elif chave == "usina_no_conjunto":  # FR-048: a parte da usina
         b.extend(_blocos_usina_no_conjunto(res))
@@ -926,7 +928,7 @@ def blocos_secao(res: ResultadosAnalise, chave: str) -> List[Bloco]:
             if titulo:
                 b.append(Bloco("subtitulo", textos=[titulo]))
             b.extend(blocos_secao(res, secao))
-    elif chave == "hidrologia_comum":  # fase D, T150: a cobertura e o alinhamento estão na constatação
+    elif chave == "hidrologia_comum":  # a cobertura e o alinhamento estão na constatação
         if res.hidrologia.get("publicado"):
             cab, linhas = linhas_tabela_hidrologia_anual(res)
             b.append(_tabela("tab_hidrologia_anual_comum", (cab, linhas), [0.6] + [1.0] * (len(cab) - 1),

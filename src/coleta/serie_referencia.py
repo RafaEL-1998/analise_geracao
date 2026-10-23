@@ -1,15 +1,16 @@
-"""Série de referência, período e trechos da Coleta (spec 006, decisões R6 e R7; data-model, seções 5.1 e 5.2).
+"""Série de referência, período e trechos da Coleta (plano da Coleta de dados, D24 e D25; data-model da Coleta de
+dados, seções 7.1 e 7.2).
 
 A série de referência define o período da análise (princípio IV), pelo tipo e pela cobertura da usina:
 - hidrelétrica com Energia Vertida Turbinável: a EVT, pelo caminho de hoje, sem trechos;
 - usina com geração própria (``[cobertura] geracao = "proprio"``): a Geração por usina, pelo id ONS;
 - usina em conjunto sem série própria (``geracao = "conjunto"``): a Geração por usina do conjunto, pelo id do conjunto;
 - com a lista ``["proprio", "conjunto"]``: as duas séries; o período é a união, e cada hora vale pelo nível dela;
-- eólica ou solar em conjunto, com série própria na restrição com detalhe (fase C): a geração verificada da usina nessa
+- eólica ou solar em conjunto, com série própria na restrição com detalhe (FR-059): a geração verificada da usina nessa
   base, semi-horária, pelo id ONS; o complemento e os trechos ficam por hora.
 
 A série é varrida em todos os arquivos publicados, com o filtro do identificador na leitura do Parquet. O período vai
-da primeira à última hora com valor preenchido. Na usina em conjunto sem série própria (fase D; rascunho 001, FR-054),
+da primeira à última hora com valor preenchido. Na usina em conjunto sem série própria (FR-054),
 as horas do conjunto só contam enquanto a usina está na composição: antes da entrada dela, a geração do conjunto não a
 inclui.
 
@@ -33,7 +34,7 @@ INICIO_VARREDURA = pd.Timestamp("1990-01-01")  # antes do primeiro arquivo publi
 COLUNA_MODALIDADE = "cod_modalidadeoperacao"
 COLUNAS_TRECHOS = ["trecho", "inicio", "fim", "modalidade", "id_conjunto", "composicao", "tipos_composicao",
                    "codigos_planejamento", "nivel_geracao", "mostrar"]
-# Tipo e combustível que o ONS publica na série do conjunto (fase D; rascunho 001, FR-061)
+# Tipo e combustível que o ONS publica na série do conjunto (FR-061)
 COLUNAS_TIPO_PUBLICADO = ("nom_tipousina", "nom_tipocombustivel")
 COLUNAS_TABELA_TIPO_PUBLICADO = ["trecho", "inicio", "fim", "nom_tipousina", "nom_tipocombustivel", "horas"]
 FORMATO = "%Y-%m-%d %H:%M:%S"
@@ -52,7 +53,7 @@ COLUNA_MODALIDADE_RESTRICAO = "nom_modalidadeoperacao"
 
 @dataclass(frozen=True)
 class Escolha:
-    """A série de referência escolhida: o conjunto do registro, os níveis e a linha da decisão R6 que se aplicou."""
+    """A série de referência escolhida: o conjunto do registro, os níveis e a linha da FR-054 que se aplicou."""
 
     conjunto: str
     niveis: Tuple[str, ...]
@@ -60,7 +61,7 @@ class Escolha:
 
 
 def escolher(perfil: Any) -> Escolha:
-    """Série de referência pelo tipo e pela cobertura (decisão R6). Sem nenhuma, ``ValueError``."""
+    """Série de referência pelo tipo e pela cobertura (D24). Sem nenhuma, ``ValueError``."""
     chaves = [e.chave for e in registro.conjuntos_da_usina(perfil)]
     if "evt" in chaves:
         return Escolha("evt", ("usina",), MOTIVOS["evt"])
@@ -68,7 +69,7 @@ def escolher(perfil: Any) -> Escolha:
     valores = valor if isinstance(valor, (list, tuple)) else [valor]
     niveis = tuple(registro.NIVEL_DA_COBERTURA[v] for v in ("proprio", "conjunto") if v in valores)
     if ("usina" not in niveis and "restricao_detalhe" in chaves
-            and registro.nivel_coletado(perfil, "restricao_detalhe") == "usina"):  # linha da fase C da decisão R6
+            and registro.nivel_coletado(perfil, "restricao_detalhe") == "usina"):  # linha da FR-059 na tabela da FR-054
         return Escolha("restricao_detalhe", ("usina",), MOTIVOS["restricao_detalhe"])
     if "geracao" not in chaves or not niveis:
         raise ValueError(f"a usina '{perfil.usina.slug}' não tem série de referência: nem a Energia Vertida Turbinável "
@@ -78,13 +79,13 @@ def escolher(perfil: Any) -> Escolha:
 
 def descricoes_referencia(perfil: Any, escolha: Escolha) -> Dict[str, DescricaoConjunto]:
     """Descrições da série em cada nível, com a modalidade por hora (para os trechos): a Geração por usina ou, na linha
-    da fase C, a restrição com detalhe da usina."""
+    da FR-059, a restrição com detalhe da usina."""
     if escolha.conjunto == "restricao_detalhe":
         return {"usina": replace(registro.descricao_restricao_detalhe(perfil), chave="restricao_detalhe",
                                  nivel="usina", referencia=True, resolucao="semi_horaria")}
     if escolha.conjunto != "geracao":
         return {}
-    # no conjunto, também o tipo publicado, comparado depois com os tipos da composição (fase D)
+    # no conjunto, também o tipo publicado, comparado depois com os tipos da composição (FR-061)
     return {nivel: replace(registro.descricao_geracao(perfil, nivel), chave="geracao", nivel=nivel, referencia=True,
                            colunas_texto=(COLUNA_MODALIDADE, *(COLUNAS_TIPO_PUBLICADO if nivel == "conjunto" else ())))
             for nivel in escolha.niveis}
@@ -119,7 +120,7 @@ def periodo(series: Dict[str, pd.DataFrame], coluna: str = "val_geracao") -> Tup
 
 def complemento(series: Dict[str, pd.DataFrame], coluna: str = "val_geracao", semi_horaria: bool = False
                 ) -> pd.DataFrame:
-    """Modalidade e nível de cada hora: o da usina quando ela tem valor; senão, o do conjunto (decisão R7). Na série
+    """Modalidade e nível de cada hora: o da usina quando ela tem valor; senão, o do conjunto (D25). Na série
     semi-horária (restrição com detalhe), uma linha por hora cheia, a da primeira meia-hora com valor."""
     partes = []
     for ordem, nivel in enumerate(("usina", "conjunto")):
@@ -169,7 +170,7 @@ def recortar(serie: pd.DataFrame, inicio: Optional[pd.Timestamp], fim: Optional[
 
 def resumo(escolha: Escolha, perfil: Any, inicio: Optional[pd.Timestamp], fim: Optional[pd.Timestamp],
            auditoria: pd.DataFrame) -> Dict[str, Any]:
-    """Resumo da série de referência para o ``etapa.json`` da Coleta (data-model 5.1)."""
+    """Resumo da série de referência para o ``etapa.json`` da Coleta (data-model da Coleta de dados, seção 7.1)."""
     ident = perfil.identificacao
     if escolha.conjunto == "evt":
         identificador = f"cod_usina={ident.cod_usina}"
@@ -226,7 +227,8 @@ def _codigos_em(planejamento: Sequence[Any], t: pd.Timestamp) -> List[str]:
 
 def trechos(complemento_horario: pd.DataFrame, composicao: pd.DataFrame, planejamento: Sequence[Any],
             id_conjunto: str) -> pd.DataFrame:
-    """``trechos.csv``: um trecho por intervalo sem mudança de modalidade, nível, composição nem código (data-model 5.2).
+    """``trechos.csv``: um trecho por intervalo sem mudança de modalidade, nível, composição nem código (data-model da
+    Coleta de dados, seção 7.2).
 
     ``mostrar`` é verdadeiro no trecho cujo nível ou composição difere do anterior ou do seguinte.
     """
@@ -279,7 +281,7 @@ def trechos(complemento_horario: pd.DataFrame, composicao: pd.DataFrame, planeja
 
 
 # ---------------------------------------------------------------------------
-# Usina em conjunto (fase D; rascunho 001, FR-054 e FR-061)
+# Usina em conjunto (FR-054 e FR-061)
 # ---------------------------------------------------------------------------
 
 

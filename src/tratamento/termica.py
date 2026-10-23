@@ -1,4 +1,4 @@
-"""Térmicas no Tratamento de dados: despacho, CVU e CMO (spec 006, fase B; decisão R11; rascunho 002, FR-037 a FR-040).
+"""Térmicas no Tratamento de dados: despacho, CVU e CMO (FR-037 a FR-040; decisão D16).
 
 - **Despacho** (horário, hora de início do intervalo): uma linha por hora e unidade de planejamento, a do arquivo publicado
   por último (as repetições com valores diferentes são contadas na auditoria), recortada no período e, em cada código,
@@ -7,7 +7,7 @@
   nunca preenchidas.
 - **CVU** (semanal): um valor por unidade e semana operativa, o da revisão mais recente (``num_revisao``); entre arquivos
   com a mesma revisão, o publicado por último. ``sinal_cvu`` marca o CVU ausente, zero ou negativo, sem descarte
-  (FR-017; o zero, por decisão do usuário de 20/10/2026: o ONS publica 0,00 nas semanas sem CVU da unidade).
+  (FR-038; o zero, por decisão do usuário de 20/10/2026: o ONS publica 0,00 nas semanas sem CVU da unidade).
 - **CMO** (semanal, contexto do subsistema): um valor por semana operativa, o da publicação mais recente; as duplicatas
   são contadas. A data publicada fica ao lado da semana operativa (sábado a sexta) que a contém.
 - **Semanais em hora**: ``semanal_em_horas`` leva o CVU e o CMO à hora pelo intervalo da semana operativa, só para os
@@ -147,7 +147,7 @@ def somar_unidades(unidades: pd.DataFrame) -> pd.DataFrame:
 
 def montar_despacho(extraido: pd.DataFrame, auditoria_coleta: pd.DataFrame, planejamento: Iterable[Any],
                     inicio: pd.Timestamp, fim: pd.Timestamp) -> DespachoTratado:
-    """Despacho tratado a partir da extração da Coleta (decisão R11): ``planejamento`` são os códigos do perfil, com o
+    """Despacho tratado a partir da extração da Coleta (decisão D16): ``planejamento`` são os códigos do perfil, com o
     período de cada um."""
     ordem = _ordem_dos_arquivos(auditoria_coleta)
     if len(extraido):
@@ -332,7 +332,7 @@ def semanal_em_horas(semanal: pd.DataFrame, colunas: Sequence[str], chaves: Sequ
 
 def exportar_termica(pasta: Path, despacho: Optional[DespachoTratado] = None, cvu: Optional[SemanalTratado] = None,
                      cmo: Optional[SemanalTratado] = None) -> None:
-    """Grava os arquivos do despacho, do CVU e do CMO tratados (data-model 6.2)."""
+    """Grava os arquivos do despacho, do CVU e do CMO tratados (data-model do Tratamento de dados, seção 2.8)."""
     pasta = Path(pasta)
     arq = ARQUIVOS_TRATAMENTO
     if despacho is not None:

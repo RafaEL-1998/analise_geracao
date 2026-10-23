@@ -283,12 +283,12 @@ def test_analisar_preenche_a_conclusao(df_base: pd.DataFrame) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Catálogo da conclusão por tipo (spec 006, decisão R16; data-model 6.5; tarefas T051 e T066)
+# Catálogo da conclusão por tipo (plano das Análises, D18; data-model das Análises, seção 3.11)
 # ---------------------------------------------------------------------------
 
 REGRAS_COMUNS = {"C2", "C5", "C8", "C10"}
-REGRAS_TERMICAS = {"C12", "C13", "C14", "C15"}  # fase B (spec 006, decisão R16)
-REGRAS_RENOVAVEIS = {"C16", "C17", "C18", "C19"}  # fase C
+REGRAS_TERMICAS = {"C12", "C13", "C14", "C15"}  # térmicas (decisão D18)
+REGRAS_RENOVAVEIS = {"C16", "C17", "C18", "C19"}  # eólicas e solares
 
 
 def test_catalogo_declara_os_campos_de_cada_regra() -> None:
@@ -301,15 +301,15 @@ def test_catalogo_declara_os_campos_de_cada_regra() -> None:
         assert r.tipos and set(r.listas) <= set(LISTAS) and r.nivel_exigido == "usina", r.codigo
         assert (callable(r.funcao) or r.codigo in REGRAS_TERMICAS | REGRAS_RENOVAVEIS) and r.secoes, r.codigo
         assert all(hasattr(regras, nome) for nome in r.limiares), r.codigo
-        # C1 a C11 sem período mínimo novo (decisões R17 e R29); C18 só em anos completos
+        # C1 a C11 sem período mínimo novo (decisões D16 e D19); C18 só em anos completos
         assert r.periodo_minimo_meses == (12 if r.codigo == "C18" else None), r.codigo
     assert {r.codigo for r in CATALOGO_CONCLUSAO if r.funcao_comum is not None} == \
         REGRAS_COMUNS | REGRAS_TERMICAS | REGRAS_RENOVAVEIS
     assert all(r.tipos == TERMICAS and r.funcao is None for r in CATALOGO_CONCLUSAO if r.codigo in REGRAS_TERMICAS)
     assert all(r.tipos == RENOVAVEIS and r.funcao is None for r in CATALOGO_CONCLUSAO if r.codigo in REGRAS_RENOVAVEIS)
-    # as regras comuns da fase A não valem para eólicas e solares (achado A11)
+    # as regras comuns não valem para eólicas e solares
     assert not any(set(r.tipos) & set(RENOVAVEIS) for r in CATALOGO_CONCLUSAO if r.codigo in REGRAS_COMUNS)
-    assert len(REGRAS_CONCLUSAO) == 11  # o caminho da EVT continua com C1 a C11 (decisão R29)
+    assert len(REGRAS_CONCLUSAO) == 11  # o caminho da EVT continua com C1 a C11 (decisão D16)
 
 
 def test_itens_so_nas_listas_declaradas_e_na_ordem_de_hoje(df_base: pd.DataFrame) -> None:
@@ -409,7 +409,7 @@ def test_c10_das_usinas_sem_evt_agrupa_unidades_e_anos() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Regras das térmicas: C12 a C15 e as comuns numa térmica (spec 006, fase B; tarefa T082)
+# Regras das térmicas: C12 a C15 e as comuns numa térmica (spec das Análises, FR-057)
 # ---------------------------------------------------------------------------
 
 
@@ -488,7 +488,7 @@ def test_termica_sem_referencias_e_sem_despacho(tmp_path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Regras das eólicas e solares: C16 a C19 (spec 006, fase C; tarefa T103)
+# Regras das eólicas e solares: C16 a C19 (spec das Análises, FR-059)
 # ---------------------------------------------------------------------------
 
 

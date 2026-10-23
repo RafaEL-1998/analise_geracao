@@ -2,7 +2,7 @@
 
 A partir dos patamares de 30 minutos extraídos pela Coleta: média dos patamares de cada hora (convenção de hora de
 início), recorte no período da série de referência e lista dos dias do período sem arquivo publicado. Com mais de um
-código (usina ou conjunto programado por barra; spec 006), os códigos são somados em cada patamar antes da média.
+código (usina ou conjunto programado por barra; FR-026), os códigos são somados em cada patamar antes da média.
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ class ProgramacaoONS:
 def somar_codigos(patamares: pd.DataFrame) -> pd.DataFrame:
     """Soma dos códigos em cada patamar (``cod_exibicaousina`` presente só com mais de um código).
 
-    Cada código vale do primeiro ao último dia em que aparece na extração (spec 006, fase D: um conjunto pode trocar os
+    Cada código vale do primeiro ao último dia em que aparece na extração (FR-026: um conjunto pode trocar os
     códigos, como o Conj. Chapadão em 07/2025). O patamar só tem soma quando todos os códigos vigentes no dia têm valor
     nele; sem a linha ou sem o valor de algum deles, a soma fica ausente, nunca completada (princípio V).
     """

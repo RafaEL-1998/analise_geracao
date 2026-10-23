@@ -1,7 +1,8 @@
-# Usina fictícia do tipo UFV (spec 006, decisões R17 e R23), só para testes: num conjunto com um membro, com a geração,
-# o fator de capacidade, a razão da restrição e a programação só do conjunto; a restrição com detalhe da usina (série
-# de referência, linha da fase C da decisão R6) só nas últimas semanas do período (série curta). Unidades de potências
-# diferentes. Valores inventados; identificadores que não existem no ONS.
+# Usina fictícia do tipo UFV (plano da Coleta de dados, D30; plano das Análises, D19), só para testes: num conjunto
+# com um membro, com a geração, o fator de capacidade, a razão da restrição e a programação só do conjunto; a
+# restrição com detalhe da usina (série de referência, D24 do plano da Coleta de dados) só nas últimas semanas do
+# período (série curta). Unidades de potências diferentes. Valores inventados; identificadores que não existem no
+# ONS.
 
 [usina]
 slug = "ufv_ficticia"

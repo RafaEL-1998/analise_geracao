@@ -1,4 +1,4 @@
-"""Seções de eólica e solar do relatório (spec 006, fase C; rascunho 005, FR-045; decisão R19).
+"""Seções de eólica e solar do relatório (spec da Geração do relatório, FR-045; plano, D19).
 
 Nas EOL e UFV com as bases, em ordem fixa, depois do perfil horário (item 8 da FR-041):
 
@@ -37,7 +37,7 @@ _GENERO = {"vento": ("o", "válido", "inválido"), "irradiância": ("a", "válid
 
 
 def referencia_restricao() -> bool:
-    """A série de referência da usina ativa é a restrição com detalhe (linha da fase C da decisão R6)."""
+    """A série de referência da usina ativa é a restrição com detalhe (plano da Coleta de dados, D24)."""
     try:
         return escolher(perfil_ativo()).conjunto == "restricao_detalhe"
     except ValueError:

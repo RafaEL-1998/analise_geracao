@@ -1,11 +1,11 @@
-"""Conferências entre fontes: G3 e G4 das térmicas (spec 006, fase B; decisão R13; rascunho 003, FR-020 e FR-021) e
-G1, G2 e G5 das eólicas e solares (fase C; rascunho 003, FR-023 a FR-025).
+"""Conferências entre fontes: G3 e G4 das térmicas (FR-020 e FR-021; decisão D13) e G1, G2 e G5 das eólicas e
+solares (FR-023 a FR-025).
 
 - **G3** (``programacao_despacho``): a Programação diária (média horária dos patamares) × a geração programada do
   despacho (``val_proggeracao``), hora a hora, só com a programação no nível da usina.
 - **G4** (``verificada_despacho``): a geração verificada do despacho (``val_verifgeracao``) × a Geração por usina, hora a
   hora, no nível da usina. A G4 também mede a coincidência com uma hora de deslocamento: se ela melhorar, a convenção
-  de hora declarada está errada e vira correção, nunca ajuste automático (FR-037 do rascunho 002).
+  de hora declarada está errada e vira correção, nunca ajuste automático (spec do Tratamento de dados, FR-037).
 
 - **G1** (``geracao_fontes``): a geração da usina entre as fontes que a trazem (Geração por usina, Fator de capacidade e
   as duas restrições, estas em hora cheia), sempre duas a duas e no mesmo nível; par de níveis diferentes não é
@@ -15,7 +15,7 @@ G1, G2 e G5 das eólicas e solares (fase C; rascunho 003, FR-023 a FR-025).
 - **G5** (``programacao_renovaveis``): a Programação diária × a geração programada do Fator de capacidade, no mesmo
   nível (a aplicabilidade confere o nível).
 
-Todas usam a tolerância de hoje (0,01 MW) e só registram, sem meta (decisão R13).
+Todas usam a tolerância de hoje (0,01 MW) e só registram, sem meta (decisão D13).
 """
 
 from __future__ import annotations
@@ -111,7 +111,7 @@ def _periodo_comum(a: pd.DataFrame, b: pd.DataFrame) -> pd.Series:
 
 
 def conferencia_programacao_despacho(programacao: Any, despacho: Any) -> ResultadoConferencia:
-    """G3: Programação diária × geração programada do despacho (decisão R13)."""
+    """G3: Programação diária × geração programada do despacho (decisão D13)."""
     if programacao is None or not len(programacao.horaria) or despacho is None or not len(despacho.horario):
         return nao_aplicavel("programacao_despacho", BASES_G3, "horas",
                              "Programação diária ou despacho sem horas no período", tolerancia=TOLERANCIA_COINCIDENCIA_MW)
@@ -122,7 +122,7 @@ def conferencia_programacao_despacho(programacao: Any, despacho: Any) -> Resulta
 
 
 def conferencia_verificada_despacho(base: Optional[pd.DataFrame], despacho: Any) -> ResultadoConferencia:
-    """G4: geração verificada do despacho × Geração por usina, no nível da usina (decisão R13)."""
+    """G4: geração verificada do despacho × Geração por usina, no nível da usina (decisão D13)."""
     if base is None or base.empty or despacho is None or not len(despacho.horario):
         return nao_aplicavel("verificada_despacho", BASES_G4, "horas", "Geração por usina ou despacho sem horas no "
                                                                         "período", tolerancia=TOLERANCIA_COINCIDENCIA_MW)
@@ -141,7 +141,7 @@ def conferencia_verificada_despacho(base: Optional[pd.DataFrame], despacho: Any)
 
 
 # ---------------------------------------------------------------------------
-# Eólicas e solares (fase C)
+# Eólicas e solares
 # ---------------------------------------------------------------------------
 
 
@@ -233,7 +233,7 @@ def conferencia_soma_conjunto(soma: pd.DataFrame, horas_incompletas: int,
 
 def conferencia_programacao_renovaveis(programacao: Any, fator_capacidade: Optional[pd.DataFrame]
                                        ) -> ResultadoConferencia:
-    """G5: Programação diária × geração programada do Fator de capacidade (decisão R13)."""
+    """G5: Programação diária × geração programada do Fator de capacidade (decisão D13)."""
     if programacao is None or not len(programacao.horaria) or fator_capacidade is None or not len(fator_capacidade):
         return nao_aplicavel("programacao_renovaveis", BASES_G5, "horas",
                              "Programação diária ou Fator de capacidade sem horas no período",

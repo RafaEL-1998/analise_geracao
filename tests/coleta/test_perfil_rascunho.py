@@ -1,5 +1,5 @@
-"""Rascunho do perfil: ``python -m src perfil --ceg <CEG> [--slug <slug>]`` (spec 006, decisões R5 e R31;
-contracts/cli-perfil.md e perfil-multitipo.md).
+"""Rascunho do perfil: ``python -m src perfil --ceg <CEG> [--slug <slug>]`` (plano da Coleta de dados, D23 e D33;
+contratos cli-perfil e perfil-usina da Coleta de dados).
 
 O catálogo vem dos brutos sintéticos de ``tests/fixtures/brutos_catalogo.py``. O comando lê só ``data/catalogo/``:
 nos testes, ``data/raw/`` é apagada depois de montado o catálogo.
@@ -73,7 +73,7 @@ def test_rascunho_da_termica_com_dado_proprio(ambiente, caplog) -> None:
     assert (i["ceg"], i["id_ons"], i["codigos_programacao"]) == (bc.UTE["ceg"], bc.UTE["id_ons"], [bc.UTE["id_ons"]])
     assert c == {"indicadores": "proprio", "programacao": "proprio", "disponibilidade": "proprio", "geracao": "proprio",
                  "despacho": "proprio", "cvu": "proprio"}
-    # fase B: o subsistema (CMO) e os códigos de planejamento do despacho, com o período; o vigente sem fim
+    # o subsistema (CMO) e os códigos de planejamento do despacho, com o período; o vigente sem fim
     assert u["subsistema"] == "SE"
     assert i["planejamento"] == [{"codigo": 7, "inicio": "2018-01", "fim": "2018-08"},
                                  {"codigo": 70, "inicio": "2026-09", "fim": ""},
@@ -103,7 +103,7 @@ def test_rascunho_da_hidreletrica_traz_os_codigos_dos_reservatorios(ambiente) ->
     assert _perfil(ambiente, bc.UHE["ceg"], "uhe_ficticia")[0] == 0
     d = _toml(ambiente, "uhe_ficticia")
     i = d["identificacao"]
-    assert (i["cod_usina"], i["nome_ons"], i["id_reservatorio"]) == (999, "FICTICIO", "PNUHFI")  # decisão R31
+    assert (i["cod_usina"], i["nome_ons"], i["id_reservatorio"]) == (999, "FICTICIO", "PNUHFI")  # D33
     assert d["cobertura"]["evt"] == "proprio" and d["cobertura"]["hidrologia"] == "proprio"
     assert d["parametros"]["potencia_unitaria_mw"] == 30.0
     pendentes = d["usina"]["pendentes"]
@@ -116,7 +116,7 @@ def test_rascunho_da_pch_em_conjunto_com_os_membros_vigentes(ambiente) -> None:
     assert _perfil(ambiente, bc.PCH["ceg"])[0] == 0
     d = _toml(ambiente, "pch_alfa")
     i = d["identificacao"]
-    # fase D: também o código antigo do conjunto, com os períodos em comentário para o fiscal conferir
+    # também o código antigo do conjunto, com os períodos em comentário para o fiscal conferir
     assert (i["id_conjunto"], i["codigos_programacao"]) == (bc.PCH["conjunto"], ["GOCJA-100", "GOCJA-101", "GOCJA-102"])
     texto = (ambiente["usinas"] / "pch_alfa" / "perfil.toml").read_text(encoding="utf-8")
     assert ("#   períodos na Programação diária: GOCJA-100 de 17/10/2026 a 17/10/2026; GOCJA-101 desde 18/10/2026; "

@@ -1,4 +1,4 @@
-"""Relatório de carteira (spec 006, fase E, US5; decisão R21; rascunho 005, FR-049; contrato cli-carteira; T132).
+"""Relatório de carteira (spec da Geração do relatório, FR-049 e US10; plano, D22; contrato cli-carteira).
 
 Sobre um catálogo fictício de GO, com resultados gravados de usinas fictícias (``tests/fixtures/carteira_ficticia``):
 - recorte por estado, por tipo e pelos dois, com o nome da pasta; sem nenhuma das duas opções, código 2;
@@ -251,7 +251,7 @@ def _depois(linhas, i: int) -> str:
 
 
 def test_legenda_de_fonte_abaixo_de_cada_tabela_e_figura(projeto) -> None:
-    """T163 (princípio VII): a carteira segue a regra de legendas do relatório da usina."""
+    """Princípio VII: a carteira segue a regra de legendas do relatório da usina."""
     for nome in ("go", "brasil_ute"):
         linhas = _md(projeto, nome).splitlines()
         fins = [i for i, linha in enumerate(linhas) if linha.startswith("|") and not _depois(linhas, i).startswith("|")]
@@ -264,7 +264,7 @@ def test_legenda_de_fonte_abaixo_de_cada_tabela_e_figura(projeto) -> None:
 
 
 def test_aba_fontes_com_as_colunas_da_usina(projeto) -> None:
-    """T164 (R21): a aba FONTES da carteira tem as colunas da aba FONTES da usina, uma linha por aba."""
+    """D22: a aba FONTES da carteira tem as colunas da aba FONTES da usina, uma linha por aba."""
     from src.relatorio.fontes import COLUNAS_FONTES
 
     fontes = _aba(projeto, "go", "FONTES")

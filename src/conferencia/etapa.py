@@ -5,9 +5,9 @@ resultados em ``conferencias.pkl`` e um CSV por conferência, sem cópia ``.bak`
 vazões não atingem a meta de alinhamento (spec da Conferência).
 
 Para todas as usinas, ``nao_aplicaveis.csv`` lista as conferências do catálogo que não se aplicam, com o motivo
-(spec 006, decisão R13). Nas hidrelétricas com EVT, as seis de hoje continuam todas em ``conferencias.pkl``; nas
-usinas sem EVT, só as aplicadas, inclusive a G3 e a G4 das térmicas com o despacho (fase B) e a G1, a G2 e a G5 das
-eólicas e solares (fase C).
+(decisões D11 e D12). Nas hidrelétricas com EVT, as seis de hoje continuam todas em ``conferencias.pkl``; nas
+usinas sem EVT, só as aplicadas, inclusive a G3 e a G4 das térmicas com o despacho (FR-020 e FR-021) e a G1, a G2
+e a G5 das eólicas e solares (FR-023 a FR-025).
 """
 
 from __future__ import annotations
@@ -82,8 +82,8 @@ def _com_evt(perfil: Any) -> bool:
 
 
 def fontes_da_geracao(perfil: Any, tratamento: Path) -> Dict[str, Optional[pd.DataFrame]]:
-    """A geração da usina em cada fonte, em hora cheia, com o nível de cada hora (G1 e G2; fase C): a Geração por
-    usina (da base horária, quando é a série de referência), o Fator de capacidade e as duas restrições."""
+    """A geração da usina em cada fonte, em hora cheia, com o nível de cada hora (G1 e G2; FR-023 e FR-024): a
+    Geração por usina (da base horária, quando é a série de referência), o Fator de capacidade e as duas restrições."""
     renovavel = carregar_renovavel(tratamento)
     fontes: Dict[str, Optional[pd.DataFrame]] = {}
     if escolher(perfil).conjunto == "geracao":
@@ -126,7 +126,7 @@ def _soma_conjunto(perfil: Any, tratamento: Path) -> ResultadoConferencia:
 
 def conferir(perfil: Any) -> Dict[str, ResultadoConferencia]:
     """Resultados de conferência da usina, a partir dos dados tratados e da ficha do cadastro: nas hidrelétricas com
-    EVT, os seis de hoje; nas demais, só as conferências aplicáveis (decisão R13)."""
+    EVT, os seis de hoje; nas demais, só as conferências aplicáveis (decisão D12)."""
     slug = perfil.usina.slug
     tratamento = caminhos.pasta_etapa(slug, "tratamento")
     if _com_evt(perfil):
@@ -179,7 +179,7 @@ def executar_conferencia(perfil: Any) -> ResultadoEtapa:
     pasta.mkdir(parents=True, exist_ok=True)
     conferidos = conferir(perfil)
     nao_aplicaveis = tabela_nao_aplicaveis(perfil, conferidos)
-    # Nas usinas sem EVT, as não aplicáveis ficam só no arquivo (data-model 6.3)
+    # Nas usinas sem EVT, as não aplicáveis ficam só no arquivo (data-model da Conferência, seção 2.12)
     resultados = conferidos if _com_evt(perfil) else {i: r for i, r in conferidos.items() if r.aplicavel}
     with registrar_gravacoes() as gravacoes:
         salvar_conferencias(resultados, pasta / caminhos.ARQUIVOS_CONFERENCIA["resultados"])

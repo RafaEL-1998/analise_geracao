@@ -45,13 +45,14 @@ logger = setup_logger("coleta")
 
 FORMATO_DATA = "%Y-%m-%d %H:%M:%S"
 ARQ = caminhos.ARQUIVOS_COLETA
-# Datas de obtenção por conjunto, só com os arquivos do escopo da usina (spec 006, decisão R22)
+# Datas de obtenção por conjunto, só com os arquivos do escopo da usina (plano da Coleta de dados, D29)
 COLUNAS_DATAS_OBTENCAO = ["conjunto", "arquivos_registrados", "publicacao_mais_recente", "obtencao_mais_recente"]
-# Unidades geradoras da usina (Capacidade de geração; data-model 6.1), todas as do CEG, com as datas
+# Unidades geradoras da usina (Capacidade de geração; data-model da Coleta de dados, seção 2.2), todas as do CEG,
+# com as datas
 COLUNAS_CAPACIDADE_FICHA = ["cod_equipamento", "num_unidadegeradora", "nom_unidadegeradora", "val_potenciaefetiva",
                             "nom_combustivel", "dat_entradateste", "dat_entradaoperacao", "dat_desativacao",
                             "nom_agenteproprietario", "nom_agenteoperador"]
-# As unidades das usinas da composição do conjunto (fase D), com o CEG e o nome de cada usina
+# As unidades das usinas da composição do conjunto (FR-060), com o CEG e o nome de cada usina
 COLUNAS_CAPACIDADE_MEMBROS = ["ceg", "nom_usina", *COLUNAS_CAPACIDADE_FICHA]
 
 
@@ -173,19 +174,18 @@ class _Coleta:
         self.arquivos: List[Path] = []
         self.resumo: Dict[str, Any] = {"sem_portal": sem_portal, "forcar_download": self.forcar, "conjuntos": {}}
         self.datas: Dict[str, Dict[str, Any]] = {}
-        # Conjuntos do tipo e da cobertura da usina, na ordem do registro (spec 006, decisão R8; FR-015)
+        # Conjuntos do tipo e da cobertura da usina, na ordem do registro (plano da Coleta de dados, D26; FR-016)
         self.entradas = registro.conjuntos_da_usina(perfil)
         self.pacotes = registro.pacotes(self.entradas, registro.tipo_da_usina(perfil))  # só a variante do tipo
-        # Série de referência (decisão R6), complemento horário e composição do conjunto (para os trechos, R7)
+        # Série de referência (D24), complemento horário e composição do conjunto (para os trechos, D25)
         self.escolha: Optional[serie_referencia.Escolha] = None
         self.complemento: Optional[pd.DataFrame] = None
         self.composicao = pd.DataFrame(columns=["id_conjunto", "ceg", "tipo", "inicio", "fim"])
-        # Usina em conjunto (fase D): o tipo publicado na série do conjunto, para ``tipo_publicado.csv``
+        # Usina em conjunto (FR-061): o tipo publicado na série do conjunto, para ``tipo_publicado.csv``
         self.serie_conjunto: Optional[pd.DataFrame] = None
 
     def recorta_pela_composicao(self) -> bool:
-        """A série de referência é a do conjunto: as horas só contam com a usina na composição (rascunho 001,
-        FR-054)."""
+        """A série de referência é a do conjunto: as horas só contam com a usina na composição (FR-054)."""
         return (self.escolha is not None and self.escolha.conjunto == "geracao" and "conjunto" in self.escolha.niveis
                 and bool(getattr(self.perfil.identificacao, "id_conjunto", None)))
 
@@ -254,8 +254,8 @@ def _coletar_evt(c: _Coleta) -> Optional[ResultadoEtapa]:
 
 
 def _coletar_referencia(c: _Coleta) -> Optional[ResultadoEtapa]:
-    """Série de referência das usinas sem EVT (decisões R6 e R7): a Geração por usina, da usina ou do conjunto, ou, nas
-    eólicas e solares em conjunto com série própria, a restrição com detalhe da usina (fase C), varrida em todos os
+    """Série de referência das usinas sem EVT (D24 e D25): a Geração por usina, da usina ou do conjunto, ou, nas
+    eólicas e solares em conjunto com série própria, a restrição com detalhe da usina (FR-059), varrida em todos os
     arquivos publicados; o período vai da primeira à última hora (ou semi-hora) com valor."""
     perfil, escolha = c.perfil, c.escolha
     descricoes = serie_referencia.descricoes_referencia(perfil, escolha)
@@ -269,7 +269,7 @@ def _coletar_referencia(c: _Coleta) -> Optional[ResultadoEtapa]:
             conjuntos.sincronizar_conjunto(d, serie_referencia.INICIO_VARREDURA, fim_aberto, pasta, c.forcar))) or []
     series, auditoria = serie_referencia.extrair_referencia(perfil, escolha, c.raw, falhas)
     auditoria = auditoria.drop(columns=["nivel"], errors="ignore")
-    if c.recorta_pela_composicao() and "conjunto" in series:  # fase D: só as horas com a usina na composição
+    if c.recorta_pela_composicao() and "conjunto" in series:  # FR-054: só as horas com a usina na composição
         intervalos = serie_referencia.intervalos_da_usina(c.composicao, perfil.identificacao.ceg)
         if not intervalos:
             logger.error("A usina (CEG %s) não está na Composição dos conjuntos do conjunto %s declarado no perfil; a "
@@ -311,12 +311,12 @@ def _coletar_referencia(c: _Coleta) -> Optional[ResultadoEtapa]:
     c.resumo["periodo"] = {"inicio": inicio.strftime(FORMATO_DATA), "fim": fim.strftime(FORMATO_DATA)}
     c.resumo["serie_referencia"] = serie_referencia.resumo(escolha, perfil, inicio, fim, auditoria)
     if escolha.conjunto == "geracao" and "usina" not in escolha.niveis and perfil.identificacao.id_ons:
-        # linhas próprias sem valor (achado A3)
+        # linhas próprias sem valor (D21 e FR-048)
         proprias, _ = conjuntos.extrair_conjunto(registro.descricao_geracao(perfil, "usina"), pasta, inicio, fim)
         proprias = serie_referencia.recortar(proprias, inicio, fim)  # os arquivos mensais passam do período
         sem_valor = proprias.loc[proprias["val_geracao"].isna(), "din_instante"] if len(proprias) else pd.Series([])
         c.resumo["linhas_usina_sem_valor"] = int(len(sem_valor))
-        if len(sem_valor):  # desde quando o ONS publica a linha da usina vazia (fase D; FR-047 e FR-048)
+        if len(sem_valor):  # desde quando o ONS publica a linha da usina vazia (FR-047 e FR-048)
             instantes = pd.to_datetime(sem_valor)
             c.resumo["linhas_usina_sem_valor_periodo"] = {"inicio": instantes.min().strftime(FORMATO_DATA),
                                                           "fim": instantes.max().strftime(FORMATO_DATA)}
@@ -372,7 +372,7 @@ def _coletar_cadastral(c: _Coleta, chave: str) -> Optional[ResultadoEtapa]:
 
 
 def _gravar_capacidade_membros(c: _Coleta, capacidade: pd.DataFrame, linha_capacidade: Dict[str, Any]) -> None:
-    """``capacidade_membros.csv`` da usina em conjunto (fase D; rascunho 001, FR-060): as unidades geradoras de cada
+    """``capacidade_membros.csv`` da usina em conjunto (FR-060): as unidades geradoras de cada
     usina da composição no período, pelo CEG (identificador), conferidas pelo subsistema da linha da usina na
     composição (princípio IV). O estado não confere: o conjunto pode ter usinas cadastradas em outro estado (o Conj.
     Chapadão, de MS, teve duas UTE de GO). As linhas em que só o CEG confere vão para a auditoria
@@ -407,8 +407,8 @@ def _gravar_capacidade_membros(c: _Coleta, capacidade: pd.DataFrame, linha_capac
 
 
 def _gravar_trechos(c: _Coleta) -> None:
-    """``trechos.csv`` das usinas sem EVT (decisão R7), com a composição coletada e os códigos do perfil; na usina cuja
-    série de referência é a do conjunto, também ``tipo_publicado.csv`` (fase D; rascunho 001, FR-061)."""
+    """``trechos.csv`` das usinas sem EVT (D25), com a composição coletada e os códigos do perfil; na usina cuja
+    série de referência é a do conjunto, também ``tipo_publicado.csv`` (FR-061)."""
     if c.complemento is None:
         return
     ident = c.perfil.identificacao
@@ -458,7 +458,7 @@ def _coletar_horario(c: _Coleta, nome: str) -> Optional[ResultadoEtapa]:
     falhas = c.sincronizar(desc.pacote, lambda: conjuntos.sincronizar_conjunto(desc, c.inicio, c.fim, pasta,
                                                                                 c.forcar)) or []
     extraido, auditoria = conjuntos.extrair_conjunto(desc, pasta, c.inicio, c.fim, falhas)
-    if nome in ("fator_capacidade", "restricao_razao"):  # da usina ou do conjunto (data-model 6.1)
+    if nome in ("fator_capacidade", "restricao_razao"):  # da usina ou do conjunto (FR-057)
         extraido = extraido.assign(nivel=desc.nivel)
     c.gravar_parquet(extraido, nome)
     c.gravar_csv(auditoria, f"auditoria_{nome}")
@@ -469,7 +469,7 @@ def _coletar_horario(c: _Coleta, nome: str) -> Optional[ResultadoEtapa]:
 
 
 def _coletar_membros(c: _Coleta) -> None:
-    """Restrição com detalhe das outras usinas do conjunto (``[[identificacao.membros]]``), só para a G2 (fase C): pelo
+    """Restrição com detalhe das outras usinas do conjunto (``[[identificacao.membros]]``), só para a G2: pelo
     id ONS e pelo CEG de cada membro, no período, guardadas à parte como contexto identificado (princípio III)."""
     perfil = c.perfil
     proprio = registro.normalizar_texto(perfil.identificacao.id_ons or "")
@@ -520,7 +520,7 @@ def _coletar_dicionarios(c: _Coleta) -> None:
 
 
 def _gravar_formato_2(c: _Coleta) -> None:
-    """Arquivos que as etapas seguintes leem no lugar de ``data/raw/`` (spec 006, decisão R22).
+    """Arquivos que as etapas seguintes leem no lugar de ``data/raw/`` (plano da Coleta de dados, D29).
 
     ``datas_obtencao.csv``: uma linha por conjunto coletado, na ordem do registro. ``dicionario_evt.json``:
     a cópia do dicionário de dados da EVT, quando a usina tem EVT e o dicionário existe em ``data/raw/``.
@@ -540,8 +540,8 @@ def _gravar_formato_2(c: _Coleta) -> None:
 
 
 def _coletar(c: _Coleta, chave: str) -> Optional[ResultadoEtapa]:
-    """Coleta de um conjunto do registro (spec 006, decisão R8): o motor comum nos que têm descrição e os módulos
-    próprios nos demais."""
+    """Coleta de um conjunto do registro (plano da Coleta de dados, D26): o motor comum nos que têm descrição e os
+    módulos próprios nos demais."""
     if registro.entrada(chave).descricao is not None:
         return _coletar_horario(c, chave)
     proprios = {"evt": _coletar_evt, "indicadores": _coletar_indicadores, "programacao": _coletar_programacao,
@@ -574,7 +574,7 @@ def executar_coleta(perfil: Any, sem_portal: bool = False, forcar_download: bool
         logger.info("Coleta sem consulta ao portal (--sem-portal): só os arquivos locais de %s.", c.raw)
     etapas: List[Callable[[_Coleta], Optional[ResultadoEtapa]]] = []
     if c.escolha.conjunto != "evt":  # a série de referência vem antes: ela define o período
-        if c.recorta_pela_composicao() and "composicao" in chaves:  # fase D: a composição recorta o período
+        if c.recorta_pela_composicao() and "composicao" in chaves:  # FR-054: a composição recorta o período
             etapas.append(lambda c: _coletar(c, "composicao"))
             chaves = [k for k in chaves if k != "composicao"]
         etapas.append(_coletar_referencia)

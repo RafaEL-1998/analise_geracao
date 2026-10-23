@@ -12,10 +12,10 @@ Os textos são gerados a partir dos resultados da análise (``ResultadosAnalise`
 gravadas pela Coleta; nenhum resultado de conferência é fixo (FR-026). As conferências manuais com outras
 instituições ficam fora (decisão do usuário em 06/10/2026).
 
-Nas usinas sem EVT (spec 006, decisão R15), a legenda de um dado de conjunto cita o identificador dele com o nível
-escrito ("conjunto de usinas, id ONS CJU_..."); a da usina continua como hoje. O conjunto ``referencia`` é a série de
-referência da usina: a Geração por usina ou, nas eólicas e solares em conjunto com série própria, a restrição com
-detalhe (fase C); as restrições citam o pacote da variante do tipo.
+Nas usinas sem EVT (plano da Geração do relatório, D16), a legenda de um dado de conjunto cita o identificador dele
+com o nível escrito ("conjunto de usinas, id ONS CJU_..."); a da usina continua como hoje. O conjunto ``referencia``
+é a série de referência da usina: a Geração por usina ou, nas eólicas e solares em conjunto com série própria, a
+restrição com detalhe; as restrições citam o pacote da variante do tipo.
 """
 
 from __future__ import annotations
@@ -108,12 +108,12 @@ CONJUNTOS: Dict[str, Conjunto] = {
     # Fase D: as unidades das usinas da composição do conjunto (o mesmo conjunto do ONS, com outro identificador)
     "capacidade_membros": Conjunto("Capacidade de geração", "CEG das usinas do conjunto {id_conjunto}",
                                    CONJUNTO_CAPACIDADE),
-    # Térmicas (fase B)
+    # Térmicas
     "despacho": Conjunto("Geração térmica por motivo de despacho", "CEG {ceg}; códigos de planejamento {planejamento}",
                          CONJUNTO_DESPACHO),
     "cvu": Conjunto("CVU das usinas térmicas", "códigos de planejamento {planejamento}", CONJUNTO_CVU),
     "cmo": Conjunto("CMO semanal", "subsistema {subsistema}, agregado", CONJUNTO_CMO),
-    # Eólicas e solares (fase C): as restrições na variante do tipo (pacote em ``catalogo_do_conjunto``)
+    # Eólicas e solares: as restrições na variante do tipo (pacote em ``catalogo_do_conjunto``)
     "fator_capacidade": Conjunto("Fator de capacidade", "id ONS {id_ons}", CONJUNTO_FATOR_CAPACIDADE),
     "restricao_detalhe": Conjunto("Restrição com detalhe (constrained-off)", "id ONS {id_ons}; CEG {ceg}", "variante"),
     "restricao_razao": Conjunto("Restrição com a razão (constrained-off)", "id ONS {id_ons}", "variante"),
@@ -130,7 +130,7 @@ def catalogo_do_conjunto(cid: str) -> str:
 def _resolver(cid: str) -> str:
     """``referencia``: a série de referência da usina ativa (Geração por usina ou restrição com detalhe);
     ``geracao_programacao``: a geração comparada com a programação, a Geração por usina do conjunto quando a programação é
-    do conjunto e a referência é a restrição com detalhe da usina (T157)."""
+    do conjunto e a referência é a restrição com detalhe da usina."""
     if cid == "geracao_programacao":
         if referencia_restricao() and registro.nivel_coletado(perfil_ativo(), "programacao") == "conjunto":
             return "geracao"
@@ -153,11 +153,11 @@ def identificador_da_usina(cid: str) -> str:
 
 
 def identificador_com_nivel(res: Any, cid: str) -> Optional[str]:
-    """Identificador do dado com o nível escrito, nas usinas sem EVT (decisão R15); None no caminho de hoje."""
+    """Identificador do dado com o nível escrito, nas usinas sem EVT (D16); None no caminho de hoje."""
     if not sem_evt(res):
         return None
     niveis = getattr(res, "niveis", {}) or {}
-    if cid == "geracao" and referencia_restricao():  # fase C: a geração não é a série de referência
+    if cid == "geracao" and referencia_restricao():  # eólica ou solar: a geração não é a série de referência
         nivel = registro.nivel_coletado(perfil_ativo(), "geracao")
         i = perfil_ativo().identificacao
         return f"conjunto de usinas, id ONS {i.id_conjunto}" if nivel == "conjunto" else f"id ONS {i.id_ons}"
@@ -422,7 +422,7 @@ def _alinhamento_pela_geracao(res: Any) -> Optional[Any]:
 
 
 def _conf_alinhamento_hidrologia(res: Any) -> str:
-    """Fase D (rascunho 003, FR-026): a hora da hidrologia conferida pela geração da usina, sem a EVT."""
+    """Spec da Conferência, FR-026: a hora da hidrologia conferida pela geração da usina, sem a EVT."""
     a = _alinhamento_pela_geracao(res)
     if a is None:
         motivo = (getattr(res, "hidrologia", None) or {}).get("motivo_alinhamento") or "sem resultado"
@@ -458,7 +458,7 @@ CONFERENCIAS: Dict[str, Conferencia] = {
                                         _curto_programacao_despacho),
     "verificada_despacho": Conferencia("geração verificada do despacho", "despacho", _conf_verificada_despacho,
                                        _curto_verificada_despacho),
-    # Eólicas e solares (fase C)
+    # Eólicas e solares
     "geracao_fontes": Conferencia("geração da usina entre fontes", "geracao", _conf_geracao_fontes,
                                   _curto_geracao_fontes),
     "soma_conjunto": Conferencia("soma das usinas do conjunto", "restricao_detalhe", _conf_soma_conjunto,
@@ -480,18 +480,18 @@ CONFERENCIAS_RENOVAVEIS: Tuple[str, ...] = ("geracao_fontes", "soma_conjunto", "
 
 def conferencia_feita(res: Any, cid: str) -> bool:
     """A conferência tem base nesta execução: o conjunto da base carregado e, nas das eólicas e solares, aplicável à
-    usina (a não aplicável fica nas notas, com o motivo; decisão R13)."""
+    usina (a não aplicável fica nas notas, com o motivo; FR-026)."""
     if CONFERENCIAS[cid].base not in _carregados(res):
         return False
-    if cid == "alinhamento_hidrologia":  # fase D: só na hidrelétrica sem EVT (com a EVT, vale a das vazões)
+    if cid == "alinhamento_hidrologia":  # só na hidrelétrica sem EVT (com a EVT, vale a das vazões)
         return bool((getattr(res, "hidrologia", None) or {}).get("sem_evt"))
     return cid not in CONFERENCIAS_RENOVAVEIS or _conferencia_renovavel(res, cid) is not None
 
 
 CONFERENCIAS_SEM_EVT: Tuple[str, ...] = ("teifa_teip", "dispf_horas", "cadastro", "programacao_despacho",
-                                         "verificada_despacho",  # G3 e G4 só com o despacho (fase B)
-                                         "geracao_fontes", "soma_conjunto", "programacao_renovaveis",  # fase C
-                                         "alinhamento_hidrologia")  # fase D
+                                         "verificada_despacho",  # G3 e G4 só com o despacho
+                                         "geracao_fontes", "soma_conjunto", "programacao_renovaveis",  # eólica e solar
+                                         "alinhamento_hidrologia")  # hidrelétrica sem EVT
 _CONF_EVT = ("geracao", "disponibilidade")
 _CONF_EVT_VAZOES = ("geracao", "disponibilidade", "vazoes")
 
@@ -546,7 +546,7 @@ MAPA_FONTES: Dict[str, Entrada] = {
                                        calculado=True),
     "faixas_afluencia": _e(["hidrologia", "evt"], ["vazoes"], [AFLUENCIA, EVT], calculado=True),
     "perfil_hidrologico": _e(["hidrologia", "evt"], ["vazoes"], [AFLUENCIA_NIVEL], calculado=True),
-    # Usinas sem EVT (spec 006, decisões R14 e R15): a série de referência (Geração por usina) no lugar da EVT
+    # Usinas sem EVT (D15 e D16): a série de referência (Geração por usina) no lugar da EVT
     "bloco_identificacao_comum": _e(["cadastro", "referencia", "capacidade", "despacho"]),
     "tab_capa_indicadores_comum": _e(["referencia", "disponibilidade", "dispf_mensal", "teif_teip", "restricao_detalhe"],
                                      ["dispf_horas", "teifa_teip"], [GERACAO], calculado=True),
@@ -574,7 +574,7 @@ MAPA_FONTES: Dict[str, Entrada] = {
     "sazonalidade": _e(["referencia"], (), [GERACAO], calculado=True),
     "perfil_horario_comum": _e(["referencia"], (), [GERACAO], calculado=True),
     "disponibilidade_comum": _e(["disponibilidade", "referencia"], (), [SINCRONIZADA], calculado=True),
-    # Térmicas (fase B)
+    # Térmicas
     "tab_motivos_termica": _e(["despacho"], ["verificada_despacho"], [MOTIVOS_DESPACHO], calculado=True),
     "tab_despacho_anual": _e(["despacho"], ["programacao_despacho", "verificada_despacho"], calculado=True),
     "tab_atendimento_anual": _e(["despacho"], ["programacao_despacho", "verificada_despacho"], calculado=True),
@@ -585,7 +585,7 @@ MAPA_FONTES: Dict[str, Entrada] = {
     "inflexibilidade_mensal": _e(["despacho"], (), [MOTIVOS_DESPACHO], calculado=True),
     "desvios_despacho": _e(["despacho"], ["programacao_despacho", "verificada_despacho"], calculado=True),
     "cvu_cmo": _e(["cvu", "cmo"], (), [CVU_CMO], calculado=True),
-    # Eólicas e solares (fase C)
+    # Eólicas e solares
     "tab_fc_anual": _e(["fator_capacidade", "referencia", "projeto"], ["geracao_fontes", "programacao_renovaveis"],
                        calculado=True),
     "tab_corte_anual": _e(["restricao_detalhe"], ["geracao_fontes", "soma_conjunto"], [ESTIMADA], calculado=True),
@@ -598,7 +598,7 @@ MAPA_FONTES: Dict[str, Entrada] = {
                              calculado=True),
     "recurso_geracao": _e(["restricao_detalhe"], ["geracao_fontes"], [RECURSO], calculado=True),
     "desvio_programacao": _e(["programacao", "geracao_programacao"], ["programacao_renovaveis"], calculado=True),
-    # Usina em conjunto (fase D): a geração do conjunto (a série de referência ou, na eólica ou solar com série
+    # Usina em conjunto: a geração do conjunto (a série de referência ou, na eólica ou solar com série
     # própria, a Geração por usina do conjunto), a composição e as unidades das usinas
     "tab_conjunto_trechos": _e(["geracao", "composicao", "capacidade_membros"], ["soma_conjunto"], [GERACAO],
                                calculado=True),
@@ -606,7 +606,7 @@ MAPA_FONTES: Dict[str, Entrada] = {
     "tab_usina_peso_potencia": _e(["composicao", "capacidade_membros"], calculado=True),  # relatório em duas partes
     "conjunto_mensal": _e(["geracao", "composicao", "capacidade_membros"], ["soma_conjunto"], [GERACAO],
                           calculado=True),
-    # Hidrelétrica sem EVT (fase D, T150): a hora conferida pela geração da usina
+    # Hidrelétrica sem EVT: a hora conferida pela geração da usina
     "tab_hidrologia_anual_comum": _e(["hidrologia", "projeto"], ["alinhamento_hidrologia"], [AFLUENCIA_NIVEIS_VOLUME],
                                      calculado=True),
     "hidrologia_mensal_comum": _e(["hidrologia"], ["alinhamento_hidrologia"], [AFLUENCIA], calculado=True),
@@ -659,7 +659,7 @@ _ABAS_EXATAS: Dict[str, Entrada] = {
     "GER_AUDITORIA": _e(["geracao"]),
     "CAD_FICHA": MAPA_FONTES["bloco_cadastro"],
     "CAD_AUDITORIA": _e(["cadastro"]),
-    # Usinas sem EVT (spec 006)
+    # Usinas sem EVT
     "BASE_ANUAL": MAPA_FONTES["tab_anuais_comum"],
     "BASE_MENSAL": MAPA_FONTES["geracao_mensal"],
     "BASE_MES_DO_ANO": MAPA_FONTES["sazonalidade"],
@@ -669,7 +669,7 @@ _ABAS_EXATAS: Dict[str, Entrada] = {
     "OMITIDOS": MAPA_FONTES["tab_omitidos"],
     "CONF_NAO_APLICAVEIS": MAPA_FONTES["tab_nao_aplicaveis"],
     "DISP_EVENTOS_INDISP_TOTAL": MAPA_FONTES["tab_eventos_indisponibilidade_comum"],
-    # Térmicas (fase B)
+    # Térmicas
     "TERM_MOTIVOS_ANUAL": MAPA_FONTES["tab_motivos_termica"],
     "TERM_MOTIVOS_MENSAL": MAPA_FONTES["despacho_motivo_mensal"],
     "TERM_INFLEXIBILIDADE": MAPA_FONTES["inflexibilidade_mensal"],
@@ -683,7 +683,7 @@ _ABAS_EXATAS: Dict[str, Entrada] = {
     "CONF_G3_DIVERGENCIAS": _e(["programacao", "despacho"], ["programacao_despacho"]),
     "CONF_G4_MENSAL": _e(["despacho", "geracao"], ["verificada_despacho"]),
     "CONF_G4_DIVERGENCIAS": _e(["despacho", "geracao"], ["verificada_despacho"]),
-    # Eólicas e solares (fase C)
+    # Eólicas e solares
     "REN_FC_ANUAL": MAPA_FONTES["tab_fc_anual"],
     "REN_FC_MENSAL": MAPA_FONTES["fc_mensal"],
     "REN_CORTE_ANUAL": MAPA_FONTES["tab_corte_anual"],
@@ -699,7 +699,7 @@ _ABAS_EXATAS: Dict[str, Entrada] = {
     "CONF_G2_DIVERGENCIAS": _e(["restricao_detalhe", "geracao"], ["soma_conjunto"]),
     "CONF_G5_MENSAL": _e(["programacao", "fator_capacidade"], ["programacao_renovaveis"]),
     "CONF_G5_DIVERGENCIAS": _e(["programacao", "fator_capacidade"], ["programacao_renovaveis"]),
-    # Usina em conjunto (fase D)
+    # Usina em conjunto
     "CONJ_TRECHOS": MAPA_FONTES["tab_conjunto_trechos"],
     "CONJ_COMPOSICAO": MAPA_FONTES["tab_conjunto_composicao"],
     "CONJ_MENSAL": MAPA_FONTES["conjunto_mensal"],
@@ -714,7 +714,7 @@ _ABAS_SEM_EVT: Dict[str, Entrada] = {
     "DISP_ANUAL": MAPA_FONTES["tab_disponibilidade_anual_comum"],
     "ONS_DISP_ANUAL_USINA": MAPA_FONTES["tab_ons_disp_anual_comum"],
     "GER_AUSENCIAS": MAPA_FONTES["tab_ausencias"],  # as horas ausentes da série de referência
-    # Hidrelétrica sem EVT (fase D, T150): sem a EVT na origem
+    # Hidrelétrica sem EVT: sem a EVT na origem
     "HID_ANUAL": MAPA_FONTES["tab_hidrologia_anual_comum"],
     "HID_MENSAL": MAPA_FONTES["hidrologia_mensal_comum"],
     "HID_ALINHAMENTO": _e(["hidrologia", "geracao"], ["alinhamento_hidrologia"]),
@@ -747,9 +747,9 @@ def _carregados_sem_evt(res: Any) -> List[str]:
         carregados.append("composicao")
     if res.comum.get("agentes"):
         carregados.append("capacidade")
-    if (getattr(res, "conjunto", None) or {}).get("com_capacidade"):  # fase D
+    if (getattr(res, "conjunto", None) or {}).get("com_capacidade"):  # usina em conjunto
         carregados.append("capacidade_membros")
-    if getattr(res, "hidrologia", None):  # fase D: hidrelétrica sem EVT (T150)
+    if getattr(res, "hidrologia", None):  # hidrelétrica sem EVT
         carregados.append("hidrologia")
     t = getattr(res, "termica", None) or {}
     if t:
@@ -758,7 +758,7 @@ def _carregados_sem_evt(res: Any) -> List[str]:
             carregados.append("cvu")
         if t.get("cmo_coletado"):
             carregados.append("cmo")
-    for chave in ("fator_capacidade", "restricao_detalhe", "restricao_razao"):  # fase C
+    for chave in ("fator_capacidade", "restricao_detalhe", "restricao_razao"):  # eólicas e solares
         if registro.nivel_coletado(perfil_ativo(), chave):
             carregados.append(chave)
     return carregados
@@ -841,7 +841,7 @@ def fontes_resumo(res: Any) -> List[str]:
         if cid not in CONJUNTOS or not catalogo_do_conjunto(cid):
             continue
         data = str(obtencao.get(cid) or "")
-        # o identificador com o nível, como nas legendas (decisão R15): o dado do conjunto não leva o id da usina
+        # o identificador com o nível, como nas legendas (D16): o dado do conjunto não leva o id da usina
         identificador = identificador_com_nivel(res, cid) or identificador_da_usina(cid)
         grupos.setdefault((identificador, fmt_data(data) if data else ""), []).append(CONJUNTOS[cid].nome)
     textos = []
@@ -857,7 +857,7 @@ def _textos_entrada(res: Any, entrada: Entrada) -> Tuple[List[str], List[str]]:
     conjuntos = citados if entrada.todos else (
         [c for c in citados if c == "projeto" or c in carregados] or citados)
     conferencias = list(entrada.conferencias)
-    if sem_evt(res):  # sem a base, a conferência não se aplica e fica nas notas, não "não feita" (decisão R13)
+    if sem_evt(res):  # sem a base, a conferência não se aplica e fica nas notas, não "não feita" (FR-026)
         conferencias = [c for c in conferencias if conferencia_feita(res, c)]
     else:  # no caminho de hoje, as conferências das eólicas e solares nunca entram
         conferencias = [c for c in conferencias if c not in CONFERENCIAS_RENOVAVEIS]
@@ -903,12 +903,12 @@ def legenda_fonte(res: Any, chave: str) -> str:
 def _entrada_aba(res: Any, aba: str) -> Optional[Entrada]:
     if aba in ("CONSTATACOES", "CONCLUSAO"):
         carregados = _carregados(res)
-        # nas usinas sem EVT, só as conferências que não dependem da EVT (spec 006, decisão R13)
+        # nas usinas sem EVT, só as conferências que não dependem da EVT (FR-026)
         candidatas = CONFERENCIAS_SEM_EVT if sem_evt(res) else tuple(CONFERENCIAS)
         return _e(carregados, [c for c in candidatas if conferencia_feita(res, c)], calculado=True)
     if aba == "PARAMETROS":
         return _e(["projeto", *_carregados(res)])
-    if aba == "DICIONARIOS":  # só os conjuntos do tipo e da cobertura da usina (spec 006, decisão R8)
+    if aba == "DICIONARIOS":  # só os conjuntos do tipo e da cobertura da usina (plano da Coleta de dados, D26)
         da_usina = registro.pacotes(registro.conjuntos_da_usina(perfil_ativo()), registro.tipo_da_usina(perfil_ativo()))
         pacotes = {}
         for c in CONJUNTOS:  # cada pacote do ONS uma vez (a capacidade das usinas do conjunto é o da capacidade)

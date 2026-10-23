@@ -69,7 +69,7 @@ def conferencia_vazoes(serie: Optional[SerieConjunto], evt: pd.DataFrame) -> Res
 
 
 # ---------------------------------------------------------------------------
-# Hidrelétricas sem EVT (spec 006, fase D; rascunho 003, FR-026; tarefa T150)
+# Hidrelétricas sem EVT (FR-026)
 # ---------------------------------------------------------------------------
 
 BASES_ALINHAMENTO = ("Dados hidrológicos horários (val_vazaoturbinada)", "Geração por usina (geração da usina)")
@@ -100,7 +100,7 @@ def alinhar_com_geracao(hid: pd.DataFrame, base: pd.DataFrame) -> pd.DataFrame:
 def conferencia_alinhamento_hidrologia(serie: Optional[SerieConjunto], base: Optional[pd.DataFrame]
                                        ) -> ResultadoConferencia:
     """A hora da hidrologia conferida pela geração da usina, sem a EVT (FR-026): confirmada quando a maior correlação
-    é a do deslocamento 0. Sem meta (decisão R13): o resultado só é registrado; a convenção nunca é ajustada."""
+    é a do deslocamento 0. Sem meta (decisão D17): o resultado só é registrado; a convenção nunca é ajustada."""
     if serie is None or not len(serie.horaria):
         return nao_aplicavel("alinhamento_hidrologia", BASES_ALINHAMENTO, "horas",
                              "Dados hidrológicos horários sem dados da usina no período")

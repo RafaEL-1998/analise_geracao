@@ -115,7 +115,8 @@ def test_perfil_ausente_ou_ilegivel(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Perfil por tipo (spec 006, decisão R4; data-model 3.1 a 3.5; contrato perfil-multitipo.md; tarefa T038)
+# Perfil por tipo (plano da Coleta de dados, D22; data-model da Coleta de dados, seções 3.1 e 5.1;
+# contrato perfil-usina da Coleta de dados)
 # ---------------------------------------------------------------------------
 
 FONTES_FICTICIAS = '[parametros.fontes]\ngeral = "perfil fictício de teste"\n'
@@ -205,7 +206,7 @@ def _carregar(tmp_path: Path, texto: str, slug: str):
 
 
 def test_sao_domingos_com_tipo_e_modalidade_continua_valida_e_igual() -> None:
-    """FR-011: o perfil da São Domingos ganha só ``tipo`` e ``modalidade``; sem ``[cobertura]`` e conferido."""
+    """FR-006: o perfil da São Domingos ganha só ``tipo`` e ``modalidade``; sem ``[cobertura]`` e conferido."""
     p = carregar_perfil("sao_domingos")
     assert (p.usina.tipo, p.usina.modalidade, p.usina.situacao, p.usina.pendentes) == ("UHE", "TIPO II-A",
                                                                                        "conferido", ())
@@ -310,7 +311,7 @@ def test_cobertura_obrigatoria_fora_da_uhe(tmp_path: Path) -> None:
     ('despacho = "proprio"', "cobertura.despacho: conjunto do ONS desconhecido ou que não serve a UFV"),
     ('cvu = "proprio"', "cobertura.cvu: conjunto do ONS desconhecido ou que não serve a UFV"),
     ('fator_capacidade = "parcial"', 'cobertura.fator_capacidade: use proprio, conjunto, agregado, ausente ou a lista '
-                                     '["proprio", "conjunto"]'),  # chave da fase C: o valor é que está errado
+                                     '["proprio", "conjunto"]'),  # chave das renováveis: o valor é que está errado
     ('geracao = "parcial"', 'cobertura.geracao: use proprio, conjunto, agregado, ausente ou a lista ["proprio", '
                             '"conjunto"]'),
 ])

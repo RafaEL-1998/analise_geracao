@@ -1,4 +1,5 @@
-"""Catálogo de usinas: ``python -m src usinas`` (spec 006, decisões R1 a R3, R21 e R31; contracts/cli-usinas.md).
+"""Catálogo de usinas: ``python -m src usinas`` (plano da Coleta de dados, D19 a D21 e D33;
+contrato cli-usinas da Coleta de dados).
 
 Os brutos sintéticos de ``tests/fixtures/brutos_catalogo.py`` formam um pequeno Brasil fictício. Nenhum teste usa a
 rede: a sincronização com o portal é simulada por um catálogo CKAN falso que copia os arquivos de uma pasta.
@@ -72,7 +73,7 @@ def _cobertura(montado: Dict[str, Any], ceg: str) -> Dict[str, pd.Series]:
 
 
 # ---------------------------------------------------------------------------
-# Tipo pelo prefixo do CEG (decisão R1)
+# Tipo pelo prefixo do CEG (D19)
 # ---------------------------------------------------------------------------
 
 
@@ -87,7 +88,7 @@ def test_tipo_pelo_prefixo_do_ceg(ceg: str, tipo: str) -> None:
 def test_tipos_e_divergencias(montado) -> None:
     u = montado["usinas"]
     assert list(u.columns) == COLUNAS_USINAS
-    assert len(u) == len(bc.LINHAS_CADASTRO)  # uma linha por linha do cadastro, sem filtro (SC-002)
+    assert len(u) == len(bc.LINHAS_CADASTRO)  # uma linha por linha do cadastro, sem filtro (SC-015)
     assert dict(zip(u["nom_usina"], u["tipo"])) == {
         "UHE FICTICIA": "UHE", "PCH ALFA": "PCH", "UTE BETA": "UTE", "UFV GAMA": "UFV", "CGH DELTA": "CGH",
         "CONJUNTO ALFA": "conjunto", "USINA EPSILON": "outro", "EOL ZETA": "EOL", "UHE SEM DADOS": "UHE"}
@@ -131,7 +132,7 @@ def test_conjuntos_com_datas_e_tipo_pelo_ceg(montado) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Cobertura (decisões R3 e R31)
+# Cobertura (D21 e D33)
 # ---------------------------------------------------------------------------
 
 
@@ -157,8 +158,8 @@ def test_cobertura_do_conjunto_inclusive_com_linhas_proprias_sem_valor(montado) 
     ufv = _cobertura(montado, bc.UFV["ceg"])
     assert set(ufv) == {"programacao", "geracao", "fator_capacidade", "restricao_detalhe", "restricao_razao"}
     assert (ufv["geracao"]["nivel"], ufv["programacao"]["nivel"]) == ("conjunto", "conjunto")
-    # fase C: o fator de capacidade e a razão pelo conjunto; a restrição com detalhe só pelo id ONS da usina, que a UFV
-    # não tem no cadastro (achado A1)
+    # o fator de capacidade e a razão pelo conjunto; a restrição com detalhe só pelo id ONS da usina, que a UFV
+    # não tem no cadastro (D21)
     assert (ufv["fator_capacidade"]["nivel"], ufv["restricao_razao"]["nivel"]) == ("conjunto", "conjunto")
     assert ufv["restricao_detalhe"]["nivel"] == "ausente"
     eol = _cobertura(montado, bc.EOL["ceg"])
@@ -174,7 +175,7 @@ def test_cobertura_agregada_ausente_e_so_do_arquivo_mais_recente(montado) -> Non
     ute = _cobertura(montado, bc.UTE["ceg"])
     assert set(ute) == {"indicadores", "programacao", "disponibilidade", "geracao", "despacho", "cvu"}
     assert (ute["despacho"]["nivel"], ute["despacho"]["identificador"]) == ("proprio", f"ceg={bc.UTE['ceg']}")
-    # o CVU não tem CEG: pelos códigos vigentes no despacho (fase B, decisão R9); o 71 saiu em 09/2026
+    # o CVU não tem CEG: pelos códigos vigentes no despacho (D27); o 71 saiu em 09/2026
     assert (ute["cvu"]["nivel"], ute["cvu"]["identificador"], ute["cvu"]["linhas"]) == (
         "proprio", "cod_usinaplanejamento=70", "2")
     c = montado["cobertura"]
@@ -190,7 +191,7 @@ def test_cobertura_agregada_ausente_e_so_do_arquivo_mais_recente(montado) -> Non
 
 
 def test_codigos_de_programacao_ligados_pelo_id_ons_ou_pelo_conjunto(montado) -> None:
-    """Fase D (rascunho 001, FR-051): os códigos de todos os arquivos da Programação diária, com o primeiro e o último
+    """FR-051: os códigos de todos os arquivos da Programação diária, com o primeiro e o último
     dia; o conjunto que trocou de código fica com os dois."""
     p = montado["programacao"]
     assert list(p.columns) == ["codigo_exibicao", "id_usina_ou_conjunto", "modalidade", "estado", "arquivo",
@@ -211,7 +212,7 @@ def test_codigos_de_programacao_ligados_pelo_id_ons_ou_pelo_conjunto(montado) ->
 
 
 def test_planejamento_com_o_primeiro_e_o_ultimo_mes_de_cada_codigo(montado) -> None:
-    """Fase B (T078): todos os arquivos do despacho, o anual antigo e os mensais; código como número."""
+    """Todos os arquivos do despacho, o anual antigo e os mensais; código como número."""
     p = montado["planejamento"]
     assert list(p.columns) == ["ceg", "codigo", "primeiro_mes", "ultimo_mes", "nomes_publicados", "arquivos"]
     ute = p[p["ceg"] == bc.UTE["ceg"]]
@@ -387,7 +388,7 @@ def test_sincronizacao_baixa_os_cadastrais_o_mais_recente_de_cada_serie_e_12_mes
             "capacidade-geracao/CAPACIDADE_GERACAO.parquet", "reservatorio/RESERVATORIO.parquet"} <= baixados
     assert "energia-vertida-turbinavel/ENERGIA_VERTIDA_TURBINAVEL_2026_09.csv" in baixados
     assert "energia-vertida-turbinavel/ENERGIA_VERTIDA_TURBINAVEL_2026_08.csv" not in baixados
-    # todos os arquivos da Programação diária, para os códigos de todo o período (fase D), como o despacho (fase B)
+    # todos os arquivos da Programação diária, para os códigos de todo o período, como o despacho
     assert {"programacao_diaria/PROGRAMACAO_DIARIA_2026_10_18.parquet",
             "programacao_diaria/PROGRAMACAO_DIARIA_2026_10_17.parquet"} <= baixados
     geracao = sorted(b for b in baixados if b.startswith("geracao-usina-2/"))

@@ -1,6 +1,6 @@
-# Usina fictícia do tipo UTN (spec 006, decisões R23 e R28), só para testes: geração, disponibilidade e indicadores do
-# ONS próprios, com IP e TEIF de referência; na fase B, o despacho (toda a geração por inflexibilidade), o CVU e o
-# CMO. Valores inventados; identificadores que não existem no ONS.
+# Usina fictícia do tipo UTN (plano da Coleta de dados, D30 e D32), só para testes: geração, disponibilidade e
+# indicadores do ONS próprios, com IP e TEIF de referência; o despacho (toda a geração por inflexibilidade), o CVU
+# e o CMO. Valores inventados; identificadores que não existem no ONS.
 
 [usina]
 slug = "utn_ficticia"

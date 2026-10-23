@@ -1,4 +1,4 @@
-"""Duas usinas sem EVT sobre os brutos do catálogo (``brutos_catalogo``), para os testes das etapas (spec 006, fase A).
+"""Duas usinas sem EVT sobre os brutos do catálogo (``brutos_catalogo``), para os testes das etapas.
 
 - ``ute_beta``: térmica Tipo I com geração, disponibilidade e programação próprias (sem indicadores);
 - ``pch_alfa``: PCH em conjunto de usinas, com a geração e a programação do conjunto (dois códigos).

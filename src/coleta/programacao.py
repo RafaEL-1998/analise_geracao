@@ -46,7 +46,7 @@ _RE_DATA_ISO = re.compile(r"^(\d{4})-(\d{2})-(\d{2})")
 _RE_DATA_BR = re.compile(r"^(\d{2})/(\d{2})/(\d{4})")
 COLUNAS_LIDAS = ["din_programacaodia", "num_patamar", "cod_exibicaousina", "nom_usina", "id_estado", "val_geracaoprogramada"]
 COLUNAS_EXTRAIDAS = ["dia", "num_patamar", "geracao_programada_mw", "arquivo_origem"]
-COLUNA_CODIGO = "cod_exibicaousina"  # só com mais de um código (usina ou conjunto programado por barra; spec 006)
+COLUNA_CODIGO = "cod_exibicaousina"  # só com mais de um código (usina ou conjunto programado por barra; FR-043)
 DOWNLOADS_SIMULTANEOS = 8
 
 # Auditoria: uma linha por dia do período com arquivo publicado, lido ou não obtido

@@ -1,5 +1,5 @@
 """Tratamento das eólicas e solares: restrição semi-horária, energia cortada, razão, fator de capacidade e membros
-(spec 006, fase C; decisões R11 e R12; tarefa T100).
+(spec do Tratamento de dados, FR-041 a FR-044; decisões D16 e D17).
 
 - energia cortada só nas semi-horas restritas; a diferença fora delas é erro da estimativa;
 - semi-hora sem a marca de restrição contada e fora do total;

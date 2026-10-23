@@ -1,4 +1,4 @@
-"""As etapas 2 a 5 não leem ``data/raw/`` (constituição, princípio I; spec 006, achado B1 e decisão R22; tarefa T016).
+"""As etapas 2 a 5 não leem ``data/raw/`` (constituição, princípio I; plano da Coleta de dados, D29).
 
 Roda a Coleta da usina fictícia com os brutos e, depois, o Tratamento, a Conferência, as Análises e o Relatório com
 ``RAW_DATA_DIR`` apontando para uma pasta vazia. O relatório tem de sair igual ao do fluxo completo normal.

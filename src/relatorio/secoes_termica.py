@@ -1,4 +1,4 @@
-"""Seções de térmica do relatório (spec 006, fase B; rascunho 005, FR-044; decisão R18).
+"""Seções de térmica do relatório (spec da Geração do relatório, FR-044; plano, D18).
 
 Nas UTE e UTN com o despacho, em ordem fixa, entre o perfil horário e a programação diária:
 

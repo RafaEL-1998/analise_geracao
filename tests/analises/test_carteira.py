@@ -1,4 +1,4 @@
-"""Indicadores da carteira (spec 006, fase E; decisão R21; rascunho 004, FR-062; tarefa T131).
+"""Indicadores da carteira (spec das Análises, FR-062; plano das Análises, D24).
 
 - chaves fixas, cada indicador com valor, nível e unidade, do último ano completo (ou do ano parcial, marcado);
 - vazio (None), e não zero, quando não se aplica ao tipo ou falta a base;
@@ -77,7 +77,7 @@ def test_ano_parcial_quando_a_serie_nao_tem_ano_completo() -> None:
 
 
 def test_teifa_de_dezembro_no_ano_completo() -> None:
-    """T165: no ano completo, só a TEIFa de dezembro; sem dezembro publicado, vazia (e não a de outro mês)."""
+    """No ano completo, só a TEIFa de dezembro; sem dezembro publicado, vazia (e não a de outro mês)."""
     res = _sem_evt("UTE", [[2025, "usina", False, float("nan"), 20.0]], [2025], [2026],
                    ons={"taxas": _taxas(["2025-10-01", "2025-11-01", "2026-09-01"])})
     assert indicadores_carteira(res)["teifa"] is None

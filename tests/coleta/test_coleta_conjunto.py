@@ -1,4 +1,4 @@
-"""Coleta da usina em conjunto (spec 006, fase D; rascunho 001, FR-054 e FR-060; tarefas T159 e T161).
+"""Coleta da usina em conjunto (spec da Coleta de dados, FR-054 e FR-060).
 
 Sobre os brutos das usinas fictícias, com a PCH fictícia (em conjunto, sem série própria):
 - a usina fora da composição do conjunto declarado no perfil: a Coleta para com o código 2 e a mensagem;
@@ -36,7 +36,7 @@ def _projeto(raiz: Path, monkeypatch, ajustar) -> Path:
 
 
 def test_usina_fora_da_composicao_do_conjunto(tmp_path: Path, monkeypatch, caplog) -> None:
-    """T161: sem a linha da usina na Composição dos conjuntos, a série do conjunto não tem hora da usina."""
+    """Sem a linha da usina na Composição dos conjuntos, a série do conjunto não tem hora da usina."""
     def sem_a_pch(raw: Path) -> None:
         arquivo = raw / "usina_conjunto" / "USINA_CONJUNTO.parquet"
         tabela = pd.read_parquet(arquivo)
@@ -53,7 +53,7 @@ def test_usina_fora_da_composicao_do_conjunto(tmp_path: Path, monkeypatch, caplo
 
 
 def test_unidades_das_usinas_do_conjunto_conferidas_pelo_subsistema(tmp_path: Path, monkeypatch) -> None:
-    """T159: a unidade da térmica do conjunto cadastrada em outro subsistema fica fora e é contada na auditoria."""
+    """A unidade da térmica do conjunto cadastrada em outro subsistema fica fora e é contada na auditoria."""
     def outro_subsistema(raw: Path) -> None:
         arquivo = raw / "capacidade_geracao" / "CAPACIDADE_GERACAO.parquet"
         tabela = pd.read_parquet(arquivo)

@@ -17,7 +17,7 @@ def divergencias_cadastro(ficha: Dict[str, Any], perfil: Any) -> pd.DataFrame:
     """Campos conferidos da ficha: valor do cadastro, valor do perfil, situação e texto da divergência."""
     potencia = pd.to_numeric(pd.Series([ficha.get("val_potenciaautorizada", "")]), errors="coerce").iloc[0]
     esperada = perfil.potencia_autorizada_esperada_mw
-    # id ONS ausente no perfil (usinas em conjunto sem id próprio; spec 006): "não informado", nunca "None"
+    # id ONS ausente no perfil (usinas em conjunto sem id próprio; FR-017): "não informado", nunca "None"
     estado, id_ons = perfil.usina.estado, perfil.identificacao.id_ons or ""
     linhas_ceg = int(pd.to_numeric(pd.Series([ficha.get("linhas_ceg", 1)]), errors="coerce").fillna(1).iloc[0])
     estado_ficha = str(ficha.get("id_estado", "") or "")

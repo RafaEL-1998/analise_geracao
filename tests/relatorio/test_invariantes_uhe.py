@@ -1,4 +1,4 @@
-"""Invariantes do relatório da hidrelétrica com EVT (spec 006, decisão R29; tarefa T011).
+"""Invariantes do relatório da hidrelétrica com EVT (plano da Geração do relatório, D17).
 
 A usina fictícia (UHE com EVT) roda de ponta a ponta e cada parte da saída é comparada com a fotografia
 ``tests/fixtures/invariantes_uhe.json``, tirada com o código aprovado antes da ampliação. Um teste por invariante,
@@ -13,7 +13,8 @@ import pytest
 
 from tests.fixtures.execucao_ficticia import ARQUIVO_INVARIANTES, executar_usina_ficticia, extrair_invariantes
 
-# Arquivos que a Coleta da hidrelétrica com EVT pode ganhar na ampliação (formato 2; decisões R8 e R22)
+# Arquivos que a Coleta da hidrelétrica com EVT pode ganhar na ampliação (formato 2; plano da Coleta de dados,
+# D26 e D29)
 ARQUIVOS_NOVOS_PERMITIDOS = {"datas_obtencao.csv", "dicionario_evt.json"}
 
 
@@ -42,7 +43,7 @@ def test_legendas(atual, fotografia) -> None:
 
 
 def test_conferencias_citadas(atual, fotografia) -> None:
-    """As conferências de hoje, sem G1 a G5 nem não aplicáveis no relatório (decisão R13)."""
+    """As conferências de hoje, sem G1 a G5 nem não aplicáveis no relatório (spec da Geração do relatório, FR-026)."""
     def conferencias(md: str) -> list:
         return [linha for linha in md.splitlines() if "Conferência" in linha or "conferência" in linha]
 

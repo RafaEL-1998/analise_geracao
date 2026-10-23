@@ -1,7 +1,7 @@
-"""Brutos sintéticos para o catálogo de usinas (spec 006, decisões R1 a R3, R21 e R31), no formato do ONS.
+"""Brutos sintéticos para o catálogo de usinas (plano da Coleta de dados, D19 a D21 e D33), no formato do ONS.
 
 Um pequeno "Brasil" fictício, em GO e MT, que exercita os casos do catálogo:
-- UHE com EVT e dados hidrológicos, ligada pelos Reservatórios (R31);
+- UHE com EVT e dados hidrológicos, ligada pelos Reservatórios (D33);
 - PCH em conjunto de usinas, com linhas próprias sem valor na geração e um conjunto que teve uma térmica até 07/2025;
 - UTE Tipo I com duas unidades ativas e duas desativadas;
 - UFV em conjunto, sem id ONS no cadastro, com potência autorizada divergente da soma das unidades (vírgula decimal);
@@ -143,7 +143,7 @@ def gravar_series(raw: Path) -> None:
         return pd.DataFrame(linhas)
     codigos = [UHE["id_ons"], UTE["id_ons"], "GOCJA-101", "GOCJA-102", "GOCJB", "GOOUTRO", EOL["id_ons"]]
     _parquet(programacao(codigos, "2026-10-18"), raw / "programacao_diaria" / "PROGRAMACAO_DIARIA_2026_10_18.parquet")
-    # o dia anterior: um código que saiu e o código antigo do conjunto da PCH (fase D: o conjunto trocou de código)
+    # o dia anterior: um código que saiu e o código antigo do conjunto da PCH (o conjunto trocou de código)
     _parquet(programacao(["GOVELHO", "GOCJA-100"], "2026-10-17"),
              raw / "programacao_diaria" / "PROGRAMACAO_DIARIA_2026_10_17.parquet")
 
@@ -154,8 +154,9 @@ def gravar_series(raw: Path) -> None:
 
 
 def gravar_renovaveis(raw: Path) -> None:
-    """Fase C: o Fator de capacidade e as restrições (variantes eólica e fotovoltaica) do mês mais recente. A UFV não
-    tem id ONS no cadastro (achado A1): só o conjunto é achado pelo id; a EOL é achada pelo id dela."""
+    """Eólicas e solares: o Fator de capacidade e as restrições (variantes eólica e fotovoltaica) do mês mais
+    recente. A UFV não tem id ONS no cadastro (plano da Coleta de dados, D21): só o conjunto é achado pelo id; a EOL
+    é achada pelo id dela."""
     horas = _horas(pd.Period("2026-09", "M"))[:4]
     semi = pd.date_range(horas[0], periods=8, freq="30min")
     _parquet(pd.concat([
@@ -176,7 +177,7 @@ def gravar_renovaveis(raw: Path) -> None:
              raw / "restricao_coff_fotovoltaica" / "RESTRICAO_COFF_FOTOVOLTAICA_2026_09.parquet")
 
 
-# Fase B (spec 006): códigos de planejamento da UTE no despacho; o 71 sai em 09/2026, o 70 é vigente
+# Térmicas: códigos de planejamento da UTE no despacho; o 71 sai em 09/2026, o 70 é vigente
 PLANEJAMENTO_UTE = {7: ("2018-01", "2018-08"), 70: ("2026-09", "2026-10"), 71: ("2026-09", "2026-09")}
 
 

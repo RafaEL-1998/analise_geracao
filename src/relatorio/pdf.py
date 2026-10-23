@@ -4,8 +4,8 @@ O PDF não contém números nem conclusões fixos: textos, tabelas e legendas da
 são montados a partir de ``ResultadosAnalise``. A ordem das seções e o lugar de cada constatação
 vêm da estrutura do relatório (``src.relatorio.estrutura``), a mesma do Markdown.
 
-Nas usinas sem EVT (spec 006, decisão R14), a capa e as seções vêm de ``src.relatorio.comum``: cada seção é uma lista
-de blocos (tabela, figura, texto, notas), desenhados pelos mesmos componentes do caminho de hoje.
+Nas usinas sem EVT (plano da Geração do relatório, D15), a capa e as seções vêm de ``src.relatorio.comum``: cada
+seção é uma lista de blocos (tabela, figura, texto, notas), desenhados pelos mesmos componentes do caminho de hoje.
 """
 
 from __future__ import annotations
@@ -113,7 +113,7 @@ ALTURA_QUADRO = landscape(A4)[1] - MARGEM_SUPERIOR - MARGEM_INFERIOR - 12
 ALTURA_MAXIMA_FIGURA = 285
 # Figuras padronizadas (FR-036): mesma proporção do PNG e largura útil, fora do limite de altura
 FIGURAS_PADRONIZADAS = ("serie_temporal", "evt_mensal", "disponibilidade_sincronizada", "vazoes_defluentes")
-# As do caminho sem EVT (spec 006), também na largura útil
+# As do caminho sem EVT, também na largura útil
 FIGURAS_PADRONIZADAS_COMUM = ("serie_temporal_comum", "geracao_mensal", "sazonalidade", "perfil_horario_comum",
                               "disponibilidade_comum")
 LINHAS_TABELA_INTEIRA = 12
@@ -751,7 +751,7 @@ class PDFReportGenerator:
                                                                   escape(comum.legenda_figura(self.res, b.chave)))))
             elif b.tipo == "texto":
                 story += [self._p(escape(t), "corpo") for t in b.textos]
-            elif b.tipo == "subtitulo":  # subseção (a parte do conjunto, FR-048 do rascunho 005)
+            elif b.tipo == "subtitulo":  # subseção (a parte do conjunto, FR-048)
                 subtitulo = self._p(escape(b.textos[0]), "subsecao")
             elif b.tipo == "notas":
                 story += [self._p(f"• {escape(t)}", "nota") for t in b.textos]

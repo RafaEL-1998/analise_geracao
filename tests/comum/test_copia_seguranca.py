@@ -83,7 +83,7 @@ def test_copia_que_ja_existe_nao_e_sobrescrita(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Relatórios de referência (spec 006, decisão R22; tarefa T014)
+# Relatórios de referência (plano da Coleta de dados, D4)
 # ---------------------------------------------------------------------------
 
 

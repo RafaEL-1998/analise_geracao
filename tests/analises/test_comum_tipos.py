@@ -1,5 +1,5 @@
-"""Seções comuns das usinas sem EVT sobre a base horária comum (spec 006, decisões R14, R17 e R30; data-model 6.4;
-tarefas T049 e T063).
+"""Seções comuns das usinas sem EVT sobre a base horária comum (plano das Análises, D16 e D19; data-model das
+Análises, seções 3.2 e 3.12 a 3.19).
 
 Indicadores anuais, série diária, geração mensal, perfil horário e sazonalidade (só com 12 meses distintos), sem
 misturar níveis; ``ResultadosAnalise`` com os campos novos e os de EVT vazios; nas hidrelétricas com EVT, o caminho de
@@ -81,7 +81,7 @@ def test_serie_diaria_mensal_e_perfil_horario() -> None:
 
 
 def test_sazonalidade_so_com_12_meses_distintos() -> None:
-    curta = _base("2026-08-01", 24 * 45)  # cerca de 1,5 mês (decisão R17: série curta das UFV)
+    curta = _base("2026-08-01", 24 * 45)  # cerca de 1,5 mês (decisão D19: série curta das UFV)
     comum, omitidos = analisar_comum(curta, _perfil(), "UFV")
     assert comum["sazonalidade"].empty
     itens = [o for o in omitidos if o["item"] == TITULO_SAZONALIDADE]

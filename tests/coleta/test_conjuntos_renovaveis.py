@@ -1,4 +1,4 @@
-"""Conjuntos das eólicas e solares na Coleta (spec 006, fase C; decisões R6 e R9; tarefa T099).
+"""Conjuntos das eólicas e solares na Coleta (plano da Coleta de dados, D24 e D27).
 
 Com brutos sintéticos: o Fator de capacidade pela usina (CEG) ou pelo conjunto (estado, CEG "-"); a restrição com
 detalhe semi-horária, pelo id ONS e pelo CEG, com as colunas que faltam em parte dos arquivos aceitas e contadas, sem
@@ -45,7 +45,7 @@ def _detalhe(id_ons: str, ceg: str, recurso: str = "val_irradianciaverificado",
              invalido: str = "flg_dadoirradianciainvalido", completo: bool = True) -> pd.DataFrame:
     t = pd.DataFrame({"id_ons": id_ons, "ceg": ceg, "din_instante": SEMI, "nom_modalidadeoperacao": "TIPO II-C",
                       recurso: 500.0, invalido: 0, "val_geracaoestimada": 12.0, "val_geracaoverificada": 10.0})
-    if completo:  # as cinco colunas que a fotovoltaica de 05 a 12/2024 não trazia (achado A7)
+    if completo:  # as cinco colunas que a fotovoltaica de 05 a 12/2024 não trazia (FR-058)
         t = t.assign(id_ons_conjuntousina=CONJUNTO, flg_geracaorestrita=1, val_geracaoreferenciafinal=None,
                      nom_origemirradiancia="x", flg_dadoirradianciasupervisaoinvalido=0)
     return t
@@ -157,7 +157,7 @@ def test_restricao_com_a_razao_pela_usina_ou_pelo_conjunto(tmp_path: Path) -> No
 
 
 # ---------------------------------------------------------------------------
-# Série de referência (linha da fase C da decisão R6)
+# Série de referência (linha da FR-059 na tabela da FR-054)
 # ---------------------------------------------------------------------------
 
 

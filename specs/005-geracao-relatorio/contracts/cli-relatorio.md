@@ -2,13 +2,14 @@
 
 **Spec**: [spec.md](../spec.md)
 
-As regras comuns às cinco etapas (sintaxe geral, perfil da usina, `etapa.json`, pré-requisitos, comando `completo`, ferramenta `copia-seguranca` e tabela completa dos códigos de saída) estão no [contrato da Coleta](../../001-coleta-dados/contracts/cli-coleta.md).
+As regras comuns às cinco etapas (sintaxe geral, perfil da usina, `etapa.json`, pré-requisitos, comando `completo`, ferramenta `copia-seguranca` e tabela completa dos códigos de saída) estão no [contrato da Coleta](../../001-coleta-dados/contracts/cli-coleta.md). O resumo executivo, gerado pelo comando `relatorio`, está em [resumo-executivo.md](resumo-executivo.md); o relatório de carteira, em [cli-carteira.md](cli-carteira.md); o `referencia` e o `comparar --todas`, em [cli-referencias.md](cli-referencias.md).
 
 ## Sintaxe
 
 ```text
 python -m src relatorio --usina <slug> [--data-geracao "DD/MM/AAAA HH:MM"] [--log-level {DEBUG,INFO,WARNING,ERROR}]
 python -m src comparar  --usina <slug> --referencia <pasta> [--log-level {DEBUG,INFO,WARNING,ERROR}]
+python -m src comparar  --todas [--coleta] [--log-level {DEBUG,INFO,WARNING,ERROR}]
 ```
 
 O comando `completo` aceita `--data-geracao` e a repassa a esta etapa.
@@ -18,40 +19,45 @@ O comando `completo` aceita `--data-geracao` e a repassa a esta etapa.
 | Opção | Obrigatória | Valor | Efeito |
 |---|---|---|---|
 | `--usina` | sim | slug, o nome da pasta em `usinas/` | usina do relatório; o perfil é lido e validado antes da etapa |
-| `--data-geracao` | não | `"DD/MM/AAAA HH:MM"` | fixa a data e a hora de geração na capa do PDF, no cabeçalho do Markdown e no `resumo` do `etapa.json`, e monta o PDF no modo invariante, sem data de criação nem identificador variáveis. Sem a opção, vale a hora da execução, lida uma vez e igual nas três saídas, e o PDF sai sem o modo invariante |
+| `--data-geracao` | não | `"DD/MM/AAAA HH:MM"` | fixa a data e a hora de geração na capa do PDF, no cabeçalho do Markdown, no resumo executivo e no `resumo` do `etapa.json`, e monta os PDFs do relatório e do resumo no modo invariante, sem data de criação nem identificador variáveis. Sem a opção, vale a hora da execução, lida uma vez e igual em todas as saídas, e os PDFs saem sem o modo invariante |
 | `--log-level` | não | `DEBUG`, `INFO` (padrão), `WARNING` ou `ERROR` | nível de todos os módulos executados na chamada |
 
-- **Lê**: `data/usinas/<slug>/analises/etapa.json` e `resultados.pkl`, os `_manifesto_ons.json` de `data/raw/` e `usinas/<slug>/perfil.toml`. Não acessa a rede.
-- **Grava**, em `reports/<slug>/`: `relatorio_analise_estatistica.pdf`, `relatorio_analise_estatistica.md`, `perfil_estatistico_anual.xlsx`, `perfil_estatistico_anual.csv`, `figures/*.png` e `etapa.json`, sem `.bak` ([data-model](../data-model.md), seção 2). As saídas são geradas em `reports/<slug>/.gravando/`, conferidas e só então substituem as da execução anterior; a pasta `.gravando/` é apagada ao fim. Se a geração, a conferência ou a troca falharem, as saídas anteriores ficam como estavam; a que não puder voltar de uma troca interrompida fica em `reports/<slug>/.anteriores_<AAAAMMDDTHHMMSS>/`. Depois da troca, a figura opcional de uma execução anterior que não foi gerada agora é apagada de `figures/`.
-- **Pré-requisito**: Análises concluídas e no formato atual. Senão, o log registra `A etapa 'relatorio' precisa da etapa 'analises' concluída para a usina '<slug>'. Execute antes: python -m src analises --usina <slug>`, e o comando termina com código 5, sem gravar nada.
+- **Lê**: `data/usinas/<slug>/analises/etapa.json` e `resultados.pkl`, que trazem os resultados da Conferência e as datas de obtenção registradas pela Coleta, e `usinas/<slug>/perfil.toml`. Não lê `data/raw/` nem acessa a rede.
+- **Caminho**: a hidrelétrica com série própria na Energia Vertida Turbinável tem as 17 seções da FR-007; as demais usinas, as seções comuns e as do tipo ([spec](../spec.md), FR-007 e FR-041). O comando e as saídas são os mesmos nos dois caminhos.
+- **Grava**, em `reports/<slug>/`: `relatorio_analise_estatistica.pdf`, `relatorio_analise_estatistica.md`, `perfil_estatistico_anual.xlsx`, `perfil_estatistico_anual.csv`, `figures/*.png`, `resumo_executivo.pdf`, `resumo_executivo.md` e `etapa.json`, sem `.bak` ([data-model](../data-model.md), seção 2). As saídas são geradas em `reports/<slug>/.gravando/`, conferidas e só então substituem as da execução anterior; a pasta `.gravando/` é apagada ao fim. Se a geração, a conferência ou a troca falharem, as saídas anteriores ficam como estavam; a que não puder voltar de uma troca interrompida fica em `reports/<slug>/.anteriores_<AAAAMMDDTHHMMSS>/`. Depois da troca, a figura opcional de uma execução anterior que não foi gerada agora é apagada de `figures/`.
+- **Pré-requisito**: Análises concluídas e no formato atual (3). Senão, o log registra `A etapa 'relatorio' precisa da etapa 'analises' concluída para a usina '<slug>'. Execute antes: python -m src analises --usina <slug>`, e o comando termina com código 5, sem gravar nada.
 - **`--data-geracao` em formato inválido**: recusada pela linha de comando antes de qualquer execução, com o uso do comando e `argument --data-geracao: data de geração inválida: '<texto>' (use "DD/MM/AAAA HH:MM")`; código 2.
-- **Log**: as mensagens da etapa (figuras, planilha, CSV, Markdown e PDF gravados; figura de execução anterior removida) e, no fim, `Etapa 'relatorio' da usina '<slug>': <status> (código <n>). Resumo: {...}. Pasta: <pasta do relatório>`. Avisos sem falha: constatação sem seção, chave ou aba sem fonte mapeada, figura sem legenda, fonte TrueType ausente, legendas ou constatações do PDF em número diferente do esperado. Uma troca interrompida registra o erro "Troca das saídas do relatório interrompida; as da execução anterior foram mantidas." ou, se algum arquivo não voltou, a lista deles e a pasta `.anteriores_<AAAAMMDDTHHMMSS>/`.
+- **Log**: as mensagens da etapa (figuras, planilha, CSV, Markdown, PDF e resumo executivo gravados; figura de execução anterior removida; `Resumo executivo: <n> páginas, <p> palavras fora das tabelas[, sem a evolução anual].`) e, no fim, `Etapa 'relatorio' da usina '<slug>': <status> (código <n>). Resumo: {...}. Pasta: <pasta do relatório>`. Avisos sem falha: constatação sem seção, chave ou aba sem fonte mapeada, figura sem legenda, fonte TrueType ausente, legendas ou constatações do PDF em número diferente do esperado, `Resumo executivo com <n> páginas; gerado de novo sem a evolução anual.` e `Resumo executivo com <n> palavras fora das tabelas, acima de 1000.`. Uma troca interrompida registra o erro "Troca das saídas do relatório interrompida; as da execução anterior foram mantidas." ou, se algum arquivo não voltou, a lista deles e a pasta `.anteriores_<AAAAMMDDTHHMMSS>/`.
 
 ### Códigos de saída
 
 | Código | Quando |
 |---|---|
-| 0 | relatório gravado; `etapa.json` `concluida` |
-| 1 | erro ao montar, conferir ou trocar qualquer saída, inclusive o PDF, `resultados.pkl` em outra versão de formato ou interrupção pelo usuário (Ctrl+C); erro no log, `etapa.json` `falha` e saídas da execução anterior mantidas |
+| 0 | relatório e resumo executivo gravados; `etapa.json` `concluida` |
+| 1 | erro ao montar, conferir ou trocar qualquer saída, inclusive o PDF e o resumo executivo com mais de duas páginas mesmo sem a evolução anual, `resultados.pkl` em outra versão de formato ou interrupção pelo usuário (Ctrl+C); erro no log, `etapa.json` `falha` e saídas da execução anterior mantidas |
 | 2 | opção inválida, inclusive `--data-geracao` fora do formato; nada é executado |
 | 4 | perfil da usina inválido; nada é gravado |
 | 5 | Análises ausentes, com falha, desatualizadas ou em outro formato; nada é gravado |
 
 ## Ferramenta `comparar`
 
-Compara o relatório atual, `reports/<slug>/`, com o de uma pasta de referência de mesma estrutura, como a pasta `reports/<slug>/` de uma cópia de segurança do projeto. Não é etapa: não confere o `etapa.json` nem grava nada.
+Com `--usina` e `--referencia`, compara o relatório atual, `reports/<slug>/`, com o de uma pasta de referência de mesma estrutura, como a pasta `reports/<slug>/` de uma cópia de segurança do projeto. Não é etapa: não confere o `etapa.json` nem grava nada. Com `--todas`, refaz e compara cada relatório de `relatorios_referencia/` ([cli-referencias.md](cli-referencias.md)).
 
 | Opção | Obrigatória | Valor | Efeito |
 |---|---|---|---|
-| `--usina` | sim | slug | define a pasta atual; o perfil é lido e validado |
-| `--referencia` | sim | pasta | pasta com o relatório de referência |
-| `--log-level` | não | como acima | aceito; a comparação escreve só na saída padrão |
+| `--usina` | sem `--todas` | slug | define a pasta atual; o perfil é lido e validado |
+| `--referencia` | sem `--todas` | pasta | pasta com o relatório de referência |
+| `--todas` | não | — | refaz e compara cada relatório de referência; não aceita `--usina` nem `--referencia` |
+| `--coleta` | não | — | só com `--todas`: refaz e compara também a Coleta |
+| `--log-level` | não | como acima | aceito; a comparação escreve só na saída padrão e na de erro |
+
+Combinações inválidas saem com código 2, com `comparar: --todas não aceita --usina nem --referencia`, `comparar: use --usina com --referencia, ou --todas` ou `comparar: --coleta só vale com --todas`.
 
 **Regras**:
 - os arquivos das duas pastas são percorridos com as subpastas, inclusive as ocultas (uma `.anteriores_<AAAAMMDDTHHMMSS>/` deixada por uma troca interrompida aparece como arquivos só numa das pastas); todo arquivo chamado `etapa.json` fica fora;
-- arquivo presente só numa das pastas é diferença;
+- arquivo presente só numa das pastas é diferença (com `--referencia` numa pasta de `relatorios_referencia/`, o `referencia.json`, o `perfil.toml` e a `coleta/` aparecem como "só na referência");
 - `.xlsx`: comparada aba a aba, com as mesmas abas na mesma ordem (senão, uma diferença e nenhuma célula comparada), a mesma quantidade de linhas e cada célula; números iguais até a 12ª casa relativa (`rel_tol` 1e-12), NaN igual a NaN, texto e booleano por igualdade; até 20 células listadas por aba, mais uma linha com o total;
-- todos os demais arquivos (PDF, Markdown, CSV, figuras): byte a byte.
+- todos os demais arquivos (PDF, Markdown, CSV, figuras, resumo executivo): byte a byte.
 
 **Saída padrão**: uma linha por diferença, em ordem de arquivo, num destes formatos:
 
@@ -76,16 +82,19 @@ Qualquer erro na comparação, como pasta inexistente, arquivo ilegível ou plan
 | 0 | nenhuma diferença |
 | 6 | há diferenças, listadas na saída |
 | 1 | erro: pasta atual ou de referência inexistente, arquivo ilegível ou planilha que não abre |
-| 2 | opção inválida, como `--referencia` ausente |
+| 2 | opção inválida, como `--referencia` ausente ou uma combinação inválida com `--todas` |
 | 4 | perfil da usina inválido |
 
 ## Exemplos
 
 ```powershell
-# Gerar o relatório da São Domingos; a data de geração é a da execução
+# Gerar o relatório e o resumo executivo da São Domingos; a data de geração é a da execução
 python -m src relatorio --usina sao_domingos
 
 # Regerar com a data da versão de referência e conferir que o relatório não mudou
 python -m src relatorio --usina sao_domingos --data-geracao "07/10/2026 08:53"
 python -m src comparar --usina sao_domingos --referencia "_backup_AAAA-MM-DD_motivo\reports\sao_domingos"
+
+# Refazer todas as referências a partir da Coleta e do perfil congelados e comparar
+python -m src comparar --todas --coleta
 ```
