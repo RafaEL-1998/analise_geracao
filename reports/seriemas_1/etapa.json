@@ -2,13 +2,13 @@
  "etapa": "relatorio",
  "usina": "seriemas_1",
  "versao_formato": 1,
- "iniciada_em": "2026-10-22T15:52:15Z",
- "concluida_em": "2026-10-22T15:52:21Z",
+ "iniciada_em": "2026-10-22T17:32:00Z",
+ "concluida_em": "2026-10-22T17:32:06Z",
  "status": "concluida",
  "codigo_saida": 0,
  "etapa_anterior": {
   "etapa": "analises",
-  "concluida_em": "2026-10-22T15:52:15Z"
+  "concluida_em": "2026-10-22T17:31:59Z"
  },
  "arquivos": [
   {
@@ -23,8 +23,8 @@
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
-   "bytes": 38558,
-   "sha256": "8241823e9f075561e29f41b2c9eb2d4c1d9e3d925732d1e8d434a480e22e5ee9"
+   "bytes": 38557,
+   "sha256": "5641bd0bb1b1e939dbcc9f2d3d13191b488f16708faf03a2ed355ef8b0a1fe81"
   },
   {
    "nome": "perfil_estatistico_anual.csv",

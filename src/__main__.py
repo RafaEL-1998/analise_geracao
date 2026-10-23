@@ -6,6 +6,7 @@ Ferramentas: ``copia-seguranca --motivo <texto>``; ``comparar --usina <slug> --r
 ``referencia --usina <slug> --data-geracao <data> --aprovado-em <data>``, que registra o relatório aprovado.
 Catálogo: ``usinas [--estado <UF>] [--tipo <tipo>] [--modalidade <modalidade>] [--sem-portal] [--forcar-download]``.
 Rascunho do perfil: ``perfil --ceg <CEG> [--slug <slug>]``, só a partir do catálogo.
+Carteira: ``carteira [--estado <UF>] [--tipo <tipo>] [--data-geracao <data>]``, só com os resultados gravados.
 Códigos de saída: 0 sucesso; 1 erro; 2 dado não obtido ou opção inválida; 3 meta das vazões não atingida;
 4 perfil inválido; 5 etapa anterior sem resultado concluído; 6 o ``comparar`` encontrou diferenças.
 """
@@ -60,6 +61,15 @@ def ler_tipo(texto: str) -> str:
     raise argparse.ArgumentTypeError(f"tipo inválido: {texto!r} (use {', '.join(TIPOS_CATALOGO)})")
 
 
+def ler_tipo_usina(texto: str) -> str:
+    """``--tipo`` da carteira: um dos tipos de usina (a linha de conjunto do catálogo não é usina)."""
+    tipos = TIPOS_CATALOGO[:-1]
+    for tipo in tipos:
+        if texto.strip().upper() == tipo:
+            return tipo
+    raise argparse.ArgumentTypeError(f"tipo inválido: {texto!r} (use {', '.join(tipos)})")
+
+
 class _Parser(argparse.ArgumentParser):
     """Confere, depois da leitura, as combinações de opções do ``comparar`` (código 2, como as demais opções)."""
 
@@ -72,6 +82,8 @@ class _Parser(argparse.ArgumentParser):
                 self.error("comparar: use --usina com --referencia, ou --todas")
             if lidos.coleta and not lidos.todas:
                 self.error("comparar: --coleta só vale com --todas")
+        if getattr(lidos, "comando", None) == "carteira" and not (lidos.estado or lidos.tipo):
+            self.error("carteira: use --estado, --tipo ou os dois")
         return lidos
 
 
@@ -124,6 +136,12 @@ def construir_parser() -> argparse.ArgumentParser:
                             help="rascunho do perfil de uma usina a partir do catálogo (nunca sobrescreve)")
     perfil.add_argument("--ceg", required=True, help="CEG da usina, como no catálogo")
     perfil.add_argument("--slug", help="nome da pasta em usinas/ (padrão: derivado do nome da usina)")
+    carteira = sub.add_parser("carteira", parents=[comum],
+                              help="relatório de carteira de um estado, de um tipo ou dos dois, a partir dos "
+                                   "resultados gravados")
+    carteira.add_argument("--estado", type=ler_estado, help="sigla do estado (2 letras)")
+    carteira.add_argument("--tipo", type=ler_tipo_usina, help=f"tipo da usina: {', '.join(TIPOS_CATALOGO[:-1])}")
+    opcoes_relatorio(carteira)
     referencia = com_usina("referencia", "registra o relatório aprovado em relatorios_referencia/<slug>/")
     referencia.add_argument("--data-geracao", type=ler_data_geracao, required=True,
                             help='data de geração do relatório aprovado ("DD/MM/AAAA HH:MM")')
@@ -149,6 +167,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         from src.coleta.perfil_rascunho import executar_perfil
 
         return executar_perfil(args.ceg, args.slug)
+    if args.comando == "carteira":
+        from src.relatorio.carteira import executar_carteira
+
+        return executar_carteira(estado=args.estado, tipo=args.tipo, data_geracao=args.data_geracao)
     if args.comando == "comparar" and args.todas:
         from src.comum.comparacao import executar_comparacao_todas
 

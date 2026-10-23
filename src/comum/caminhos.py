@@ -178,6 +178,13 @@ ARQUIVOS_RELATORIO = {
     "resumo_pdf": "resumo_executivo.pdf",  # resumo executivo (spec da Geração do relatório)
     "resumo_md": "resumo_executivo.md",
 }
+# Relatório de carteira (spec 006, decisão R21; data-model, seção 7), em reports/carteiras/<nome>/, sem .bak
+ARQUIVOS_CARTEIRA = {
+    "pdf": "relatorio_carteira.pdf",
+    "md": "relatorio_carteira.md",
+    "xlsx": "carteira.xlsx",
+    "figuras": "figures",
+}
 
 
 def pasta_usina(slug: str) -> Path:
@@ -188,6 +195,11 @@ def pasta_usina(slug: str) -> Path:
 def pasta_relatorio(slug: str) -> Path:
     """``reports/<slug>/``: relatório da usina."""
     return REPORTS_DIR / slug
+
+
+def pasta_carteira(nome: str) -> Path:
+    """``reports/carteiras/<nome>/``: relatório de carteira (``<uf>``, ``<uf>_<tipo>`` ou ``brasil_<tipo>``)."""
+    return REPORTS_DIR / PASTA_CARTEIRAS / nome
 
 
 def pasta_etapa(slug: str, etapa: str) -> Path:

@@ -465,3 +465,43 @@ def test_ufv_em_conjunto_com_a_restricao_como_referencia(execucoes) -> None:
     assert "C19" in _manifesto(e, "analises")["omitidos"]
     # a programação conferida pela G5 não fica como "sem outra fonte"
     assert "programado do Fator de capacidade (G5)" in secao and "conferir: programação diária" not in secao
+
+
+def test_indicadores_da_carteira_gravados_em_cada_tipo(execucoes) -> None:
+    """Fase E (T133): as Análises gravam ``indicadores_carteira`` nos dois caminhos, vazio onde não se aplica."""
+    from src.analises.resultados import carregar_resultados
+
+    ind = {tipo: carregar_resultados(e["dados"] / "analises" / "resultados.pkl").indicadores_carteira
+           for tipo, e in execucoes.items()}
+    assert all(i and i["tipo"] == tipo.upper() for tipo, i in ind.items())
+    assert ind["uhe"]["fator_capacidade"] is not None and ind["uhe"]["conclusao"]["regras_avaliadas"] == 11
+    for tipo in ("ute", "utn", "pch", "cgh", "uhe"):
+        assert ind[tipo]["energia_cortada"] is None, tipo
+    for tipo in ("ute", "utn", "pch", "cgh"):
+        assert ind[tipo]["fator_capacidade"] is None, tipo  # só onde o relatório da usina o calcula
+    for tipo in ("uhe", "pch", "cgh", "eol", "ufv"):
+        assert ind[tipo]["atendimento_despacho"] is None, tipo
+    assert ind["pch"]["conclusao"]["regras_avaliadas"] == 0 and ind["pch"]["conclusao"]["pontos_atencao"] is None
+    # nenhum relatório depende do campo novo: o manifesto do relatório continua concluído
+    assert all(e["codigo"] == 0 for e in execucoes.values())
+
+
+def test_carteira_de_go_com_os_resultados_gravados_das_usinas_ficticias(execucoes) -> None:
+    """Fase E (T132): a carteira lê só o que as etapas gravaram, sem refazer nenhuma."""
+    from tests.fixtures import carteira_ficticia as cf
+
+    raiz = next(iter(execucoes.values()))["dados"].parents[2]
+    linhas = [cf.linha_usina(bf.CEG, "UHE FICTICIA", "UHE", "GO", "proprio", "TIPO II-A")]
+    linhas += [cf.linha_usina(u["ceg"], u["nome"], tipo.upper(), "GO", "conjunto" if tipo == "pch" else "proprio")
+               for tipo, u in bf.FICTICIAS.items()]
+    cf.gravar_catalogo(raiz, linhas, [])
+    etapas = {p: p.read_bytes() for p in (raiz / "data" / "usinas").rglob("etapa.json")}
+    with caminhos.espaco_isolado(raiz):
+        assert main(["carteira", "--estado", "GO", "--data-geracao", "19/10/2026 10:00"]) == 0
+    assert {p: p.read_bytes() for p in (raiz / "data" / "usinas").rglob("etapa.json")} == etapas
+    usinas = pd.read_excel(raiz / "reports" / "carteiras" / "go" / "carteira.xlsx", sheet_name="USINAS")
+    assert set(usinas["slug"]) == {e["slug"] for e in execucoes.values()}
+    md = (raiz / "reports" / "carteiras" / "go" / "relatorio_carteira.md").read_text(encoding="utf-8")
+    assert "7 usinas no recorte: 7 com resultado e 0 sem resultado." in md
+    assert "O ONS não publicou agregado para GO" in md
+    assert not re.search(r"satisfat|cumpre", md, re.IGNORECASE)

@@ -2,13 +2,13 @@
  "etapa": "relatorio",
  "usina": "bandeirante",
  "versao_formato": 1,
- "iniciada_em": "2026-10-22T16:00:19Z",
- "concluida_em": "2026-10-22T16:00:23Z",
+ "iniciada_em": "2026-10-22T17:32:08Z",
+ "concluida_em": "2026-10-22T17:32:13Z",
  "status": "concluida",
  "codigo_saida": 0,
  "etapa_anterior": {
   "etapa": "analises",
-  "concluida_em": "2026-10-22T16:00:19Z"
+  "concluida_em": "2026-10-22T17:32:07Z"
  },
  "arquivos": [
   {
@@ -23,8 +23,8 @@
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
-   "bytes": 35861,
-   "sha256": "7b8f169a2c12a238f161202598c666b01e19e2b49a6eb2fc5578343976c8e138"
+   "bytes": 35862,
+   "sha256": "0094cb9fffc403478b404afba79c4a07fdd85ca228ba09c08432bb8c2b4e9da2"
   },
   {
    "nome": "perfil_estatistico_anual.csv",

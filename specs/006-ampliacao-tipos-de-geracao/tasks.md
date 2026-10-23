@@ -688,19 +688,19 @@ python -m pytest tests -q -p no:cacheprovider
 
 ### Preparação da fase E
 
-- [ ] T128 [US5] Criar a cópia `python -m src copia-seguranca --motivo antes_fase_E` e conferir as referências na cópia nova. Registrar.
-- [ ] T129 [P] [US5] Acrescentar a fase E aos rascunhos:
+- [X] T128 [US5] Criar a cópia `python -m src copia-seguranca --motivo antes_fase_E` e conferir as referências na cópia nova. Registrar.
+- [X] T129 [P] [US5] Acrescentar a fase E aos rascunhos:
   - `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/004-analises.md`: `indicadores_carteira`;
   - `005-geracao-relatorio.md`: a carteira (decisão R21; contracts/cli-carteira.md).
-- [ ] T130 [US5] Levar ao usuário os rascunhos da fase E em `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/` e registrar a aprovação. Nenhum código da fase E antes disso.
+- [X] T130 [US5] Levar ao usuário os rascunhos da fase E em `specs/006-ampliacao-tipos-de-geracao/ajustes-specs/` e registrar a aprovação. Nenhum código da fase E antes disso.
 
 ### Tests for User Story 5
 
-- [ ] T131 [P] [US5] Escrever `tests/analises/test_carteira.py`:
+- [X] T131 [P] [US5] Escrever `tests/analises/test_carteira.py`:
   - `indicadores_carteira` com as chaves fixas da decisão R21, cada indicador com valor, nível e unidade;
   - vazio, e não zero, quando não se aplica;
   - contagem de todos os itens de cada lista da conclusão.
-- [ ] T132 [P] [US5] Escrever `tests/relatorio/test_carteira.py`, com resultados gravados de usinas fictícias:
+- [X] T132 [P] [US5] Escrever `tests/relatorio/test_carteira.py`, com resultados gravados de usinas fictícias:
   - **recorte**: por estado, por tipo e pelos dois; sem nenhuma das duas opções, código 2;
   - **nome da pasta**: `<uf>`, `<uf>_<tipo>` ou `brasil_<tipo>`;
   - **sem resultado**: os motivos "sem perfil", "perfil em rascunho", "perfil inválido", "Análises ausentes, com falha, desatualizadas ou em formato antigo" e "só agregado no ONS (ver o panorama)"; as linhas de conjunto não contam;
@@ -713,25 +713,25 @@ python -m pytest tests -q -p no:cacheprovider
 
 ### Implementation for User Story 5
 
-- [ ] T133 [US5] Criar `src/analises/carteira.py` (`indicadores_carteira`) e gravá-lo em `src/analises/etapa.py`. Nas hidrelétricas com EVT, só o campo novo muda; o relatório não (T011).
-- [ ] T134 [US5] Criar `src/relatorio/carteira.py`:
+- [X] T133 [US5] Criar `src/analises/carteira.py` (`indicadores_carteira`) e gravá-lo em `src/analises/etapa.py`. Nas hidrelétricas com EVT, só o campo novo muda; o relatório não (T011).
+- [X] T134 [US5] Criar `src/relatorio/carteira.py`:
   - recorte, leitura dos perfis pelo CEG e dos resultados;
   - PDF, Markdown e planilha com os construtores de hoje;
   - figuras em seaborn, com atenção à ordem de empilhamento do panorama;
   - gravação em pasta temporária com conferência e troca;
   - `--data-geracao`.
-- [ ] T135 [US5] Em `src/__main__.py`, o comando `carteira` com as opções e os códigos do contrato.
+- [X] T135 [US5] Em `src/__main__.py`, o comando `carteira` com as opções e os códigos do contrato.
 
 ### Validação real da User Story 5
 
-- [ ] T136 [US5] Rodar `python -m src carteira --estado MS --data-geracao "<data>"` e `python -m src carteira --tipo UTE` e conferir os itens do quickstart 7:
+- [X] T136 [US5] Rodar `python -m src carteira --estado MS --data-geracao "<data>"` e `python -m src carteira --tipo UTE` e conferir os itens do quickstart 7:
   - tempo de até 5 minutos;
   - as quatro pilotos com resultado;
   - motivos, ordenação, panorama e a busca de termos de parecer;
   - os `etapa.json` iguais.
   - Registrar.
-- [ ] T137 [US5] Levar ao usuário a carteira de MS em `reports/carteiras/ms/` e registrar a aprovação.
-- [ ] T138 [US5] Portão do fim da fase E: suíte; `pyflakes`; `/speckit-converge`; `comparar --todas --coleta` com código 0. Registrar.
+- [X] T137 [US5] Levar ao usuário a carteira de MS em `reports/carteiras/ms/` e registrar a aprovação.
+- [X] T138 [US5] Portão do fim da fase E: suíte; `pyflakes`; `/speckit-converge`; `comparar --todas --coleta` com código 0. Registrar.
 
 **Checkpoint**: carteira por estado e por tipo, sem parecer; nenhuma etapa refeita.
 
@@ -1411,4 +1411,57 @@ Cada fase termina com o portão. Nenhuma mudança num relatório aprovado sem a 
 
 - Catálogo de dados abertos da CCEE conferido (metadados, não os arquivos): `geracao_horaria_usina` (geração horária por parcela de usina desde 03/2024, com os componentes do despacho; sem CEG), `parcela_usina_montante_mensal` (por usina e mês desde 2024, **com o CEG**, geração, garantia física, capacidade e MRE), `pch_cgh_gf_definida`, `eolica_gf_definida`, `fotovoltaica_gf_definida` e os CVU (sem CEG). Nenhum conjunto de constrained-off. Ganho maior nas PCH e CGH em conjunto ou Tipo III e nas UFV sem série própria no ONS; menor nas UTE; pouco nas UHE.
 - Decisão: a avaliação da CCEE como fonte nova (`/speckit-assess-intake`; pede mudança do princípio IV da constituição) fica **para depois das fases E e F**, com a PCH Bandeirante como piloto e um mês de `geracao_horaria_usina` e de `parcela_usina_montante_mensal` baixado pelo usuário para confirmar a identificação.
+
+### 22/10/2026 — Fase E: cópia de segurança (T128) e rascunhos (T129)
+
+- **T128**: depois do commit da fase D pelo usuário, `python -m src copia-seguranca --motivo antes_fase_E` criou `_backup_2026-10-22_antes_fase_E` (524 arquivos), com o SHA-256 dos cinco `referencia.json` igual ao do projeto. A cópia `_backup_2026-10-20_antes_fase_C` foi apagada: ficam a `antes_fase_D` e a `antes_fase_E`.
+- **T129**: a fase E nos rascunhos, a partir dos resultados gravados das pilotos e do catálogo de 22/10/2026:
+  - `ajustes-specs/004-analises.md`: FR-062 (`indicadores_carteira`): chaves fixas; indicadores do último ano completo da série (sem ano completo, o ano parcial mais recente, marcado), cada um com valor, nível e unidade e vazio quando não se aplica; origem de cada um na tabela anual do relatório da usina; atendimento ao despacho como razão das horas dentro de 5 MW da programada; contagens de todos os itens de cada lista e das regras avaliadas, vazias quando nenhuma regra foi avaliada com dado da usina (Bandeirante); aplicabilidade por tipo;
+  - `ajustes-specs/005-geracao-relatorio.md`: FR-049 (carteira, decisão R21 e contrato): recorte, com e sem resultado, a ordem dos motivos (só agregado primeiro) com a cobertura do catálogo, o conteúdo em sete partes, as duas figuras em seaborn, a planilha, a gravação, o panorama pelo tipo do ONS na carteira por estado e tipo; aplicabilidade por recorte.
+- **Achado da preparação**: as etapas gravadas da São Domingos em `data/usinas/` são de 09/10/2026 (Análises no formato 2). Para entrar na carteira com resultado (quickstart 7), as etapas dela precisam ser refeitas antes da T136; a referência aprovada não muda.
+- **T130**: rascunhos da fase E aprovados pelo usuário ("aprovado"), com as escolhas apresentadas: indicadores do último ano completo da série; atendimento ao despacho pelas horas a até 5 MW da programada; contagens vazias, e não zero, quando nenhuma regra foi avaliada com dado da usina; fator de capacidade só onde o relatório da usina o calcula; "só agregado no ONS" como primeiro motivo, com a cobertura do catálogo; duas figuras; e as etapas da São Domingos refeitas com `--sem-portal` antes da T136.
+
+### 22 e 23/10/2026 — Fase E: código, testes e validação real (T131 a T136)
+
+- **T133**: `src/analises/carteira.py` (`indicadores_carteira`, FR-062 do rascunho 004), gravado nos dois caminhos de `src/analises/etapa.py` (no da EVT, depois do tipo e da modalidade). O formato dos resultados continua o 3: o campo já existia, vazio.
+- **T134**: `src/relatorio/carteira.py` (recorte, perfis pelo CEG, motivos, ordenação, panorama, documento em blocos, Markdown, planilha, gravação em pasta temporária com conferência e troca, sem `.bak`), `src/relatorio/carteira_pdf.py` (A4 retrato, estilos do resumo executivo, tabelas em 8 pt) e `src/relatorio/carteira_figuras.py` (as duas figuras em seaborn; paletas de 4 e de 7 cores da ordem categórica, validadas com o script da skill de visualização: todas as checagens aprovadas, contraste abaixo de 3:1 em algumas cores, compensado pela legenda e pela tabela). `caminhos.ARQUIVOS_CARTEIRA` e `caminhos.pasta_carteira`.
+- **T135**: comando `carteira` em `src/__main__.py`, com `--estado`, `--tipo` (só os sete tipos de usina) e `--data-geracao`; sem nenhuma das duas opções, código 2 pelo argparse; códigos 0, 1 e 5 e as mensagens do contrato.
+- **T131 e T132**: os testes foram escritos depois do código, na mesma sessão (desvio da ordem das tarefas, a registrar na fase F): `tests/analises/test_carteira.py` (6), `tests/relatorio/test_carteira.py` (13, sobre o catálogo e os resultados fictícios de `tests/fixtures/carteira_ficticia.py`) e dois testes em `tests/integracao/test_usinas_ficticias.py` (o campo nas sete usinas fictícias e a carteira de GO sobre os resultados gravados delas). Os testes acharam a frase "As 1 linhas de conjunto", corrigida.
+- **Ajustes vistos no PDF do ensaio**: cabeçalhos quebrados no meio da palavra (tabelas em 8 pt e larguras revistas), figuras largas demais para a página retrato (7,5 polegadas), rótulos de mês sobrepostos no panorama ("out/25", no centro da barra) e o grupo publicado sem valor, que aparecia como zero: no panorama, o mês de uma série sem nenhuma hora com valor sai como "sem valor", e as horas sem valor são listadas por grupo.
+- **Suíte**: 837 aprovados (816 + 21); pyflakes sem aviso.
+- **T136**:
+  - As Análises e o relatório da William Arjona, da Seriemas 1, da Bandeirante e da Praia Formosa refeitos com a data de geração de cada referência, para gravar o campo novo: PDF, Markdown, CSV e figuras iguais byte a byte aos de antes; na planilha, só a data de gravação muda; o `comparar` com cada referência não acha diferença nas saídas do relatório (só os arquivos que existem só na referência: Coleta congelada, perfil e `referencia.json`).
+  - São Domingos: `completo --sem-portal --data-geracao "07/10/2026 08:53"` (código 0, 3 min 16 s), como aprovado na T130. **Achado**: os brutos de hoje têm a série até 19/10/2026 (baixada pelas Coletas das outras pilotos), e a referência vai até 28/09/2026. Por isso o relatório em `reports/sao_domingos/` mudou além das republicações do ONS: 49 horas ausentes em vez de 1, disponibilidade média de 87,9 % em vez de 87,8 % e as figuras com outubro. A referência aprovada em `relatorios_referencia/` não mudou. A decisão entre manter o relatório atualizado ou voltar ao estado aprovado (Coleta congelada e etapas 2 a 5) fica com o usuário, na T137.
+  - `python -m src carteira --estado MS --data-geracao "22/10/2026 14:00"`: código 0 em 2,9 s; 149 usinas, as quatro pilotos com resultado e 145 sem resultado (46 só agregado no ONS e 99 sem perfil). `python -m src carteira --tipo UTE`: código 0 em 3,1 s; 617 usinas, só a William Arjona com resultado. Nenhum `etapa.json` mudou; a busca de termos de parecer não acha nada nas duas carteiras.
+  - Ordenação de MS: São Domingos (4 possíveis problemas e 5 pontos de atenção; 11 de 11 regras avaliadas), William Arjona (2 e 0; 7 de 8), Seriemas 1 (0 e 1; 2 de 4) e Bandeirante no fim, sem regra avaliada. Os 5 itens em três listas da São Domingos são todos os itens dela (a aba CONCLUSAO tem 5, 5, 5 e 4), e não o limite de exibição.
+  - Correções nos rascunhos aprovados: o atendimento da William Arjona é 6,25 %, exibido como 6,2 % pelo arredondamento do projeto (o rascunho 004 dizia 6,3 %); e as duas térmicas Tipo III publicadas uma a uma em MS têm zero de 10/2025 a 04/2026 e nenhum valor de 05/2026 a 09/2026 (o rascunho 005 dizia "zero em todos os meses").
+
+### 23/10/2026 — T137 (aprovação) e portão da fase E (T138)
+
+- **T137**: o usuário aprovou a carteira de MS em `reports/carteiras/ms/` ("aprovo a carteira de MS") e decidiu manter o relatório atualizado da São Domingos em `reports/sao_domingos/` ("manter atualizado São Domingos, aprovado tbm"), com a série até 19/10/2026. A referência em `relatorios_referencia/sao_domingos/` continua a de 07/10/2026.
+- **Achado sobre o relatório atualizado da São Domingos**: as 48 horas ausentes novas (29 e 30/09/2026) vêm da cópia local do arquivo de 09/2026 da EVT, baixada em 30/09/2026 (publicação do ONS de 30/09 15:05, até 28/09 23h) e nunca atualizada, porque as execuções seguintes da São Domingos foram com `--sem-portal`. A ONS já publica o mês completo (720 horas da usina 153, consulta ao dataset energia-vertida-turbinavel em 23/10/2026). Fechar a lacuna pede a Coleta da São Domingos com o portal; fica com o usuário.
+
+## Phase 13: Convergence
+
+- [X] T163 CRITICAL: Pôr, logo abaixo de cada tabela e de cada figura do relatório de carteira (PDF e Markdown, `src/relatorio/carteira.py`), a legenda com a fonte dos dados ("Fonte dos dados: …", com os conjuntos do ONS, o identificador e a data de obtenção, ou "Calculado neste relatório a partir de: …", com os resultados das Análises de cada usina), como no relatório da usina, per Constitution VII (missing)
+- [X] T164 Gravar a aba FONTES da carteira com as colunas da aba FONTES da usina (`aba`, `conjuntos_origem`, `conferencias`, `sem_outra_fonte`, `calculado_no_relatorio`) em `src/relatorio/carteira.py`, per R21 (partial)
+- [X] T165 Usar só a TEIFa de dezembro no ano completo, vazia sem dezembro, e a do último mês publicado só no ano parcial, em `src/analises/carteira.py`, per FR-062 do rascunho 004 (partial)
+- [X] T166 Levar a largura das figuras da carteira para `src/comum/regras.py`, ao lado de `TAMANHO_FIGURA_PADRONIZADA`, per plan: VII (partial)
+- [ ] T167 Registrar na fase F, com T153, T156, T158 e T162, os desvios da fase E: os módulos `carteira_pdf.py` e `carteira_figuras.py`, não nomeados na T134, e os testes T131 e T132 escritos depois do código, per tasks T131, T132 e T134 (unrequested)
+
+### 23/10/2026 — Convergência da fase E (T163 a T166)
+
+- **Portão, primeira rodada** (antes da convergência): `comparar --todas --coleta` com código 6, com exatamente as mesmas diferenças do portão final da fase D (os cinco relatórios iguais; na Coleta, só as republicações do ONS aceitas e o `auditoria_capacidade_membros.csv` da Seriemas 1).
+- **`/speckit-converge`** (fase E): 5 achados, na Phase 13 (T163 a T167): T163 CRITICAL (princípio VII: a carteira segue as regras de legenda do relatório da usina, e as tabelas e figuras dela só tinham as fontes no parágrafo das notas), T164 (aba FONTES com as colunas da usina, R21), T165 (TEIFa só de dezembro no ano completo, FR-062), T166 (largura das figuras em `regras.py`) e T167 (desvios da fase E a registrar na fase F).
+- **T163**: `origens()` em `src/relatorio/carteira.py` dá a origem de cada tabela, a mesma da aba FONTES; a legenda ("Fonte dos dados: …" ou "Calculado neste relatório a partir de: …") sai logo abaixo de cada tabela e de cada figura, no PDF e no Markdown. Com a publicação da Modalidade das usinas e a data do catálogo; os indicadores remetem à legenda da tabela anual do relatório de cada usina, que tem o identificador e a data de obtenção de cada conjunto.
+- **T164**: a aba FONTES com `aba`, `conjuntos_origem`, `conferencias`, `sem_outra_fonte` e `calculado_no_relatorio` (`COLUNAS_FONTES` da usina).
+- **T165**: no ano completo, a TEIFa de dezembro, vazia sem dezembro; no ano parcial, a do último mês publicado. Nas pilotos, nada muda (as que têm TEIFa têm dezembro de 2025).
+- **T166**: `LARGURA_FIGURA_CARTEIRA` em `src/comum/regras.py`.
+- Testes: 3 novos (legendas, FONTES e TEIFa de dezembro); suíte com 840 aprovados; pyflakes sem aviso. A carteira de MS e a `brasil_ute` refeitas com a data de 22/10/2026 14:00: 7 legendas na de MS (5 tabelas e 2 figuras), os `etapa.json` iguais e nenhum termo de parecer.
+
+### 23/10/2026 — T138: portão do fim da fase E
+
+- Suíte com 840 aprovados; pyflakes sem aviso; `/speckit-converge` feita (T163 a T166 resolvidas; T167 fica para a fase F).
+- `comparar --todas --coleta` refeito com o código final: código 6, com as mesmas diferenças do portão final da fase D, linha por linha. Os cinco relatórios de referência sem nenhuma diferença; na Coleta, só as republicações do ONS aceitas pelo usuário e o `auditoria_capacidade_membros.csv` da Seriemas 1.
+- **Fase E fechada.** Pendências: a Coleta da São Domingos com o portal, para fechar as 48 horas de 29 e 30/09/2026 do relatório atualizado (decisão do usuário); o commit da fase E pelo usuário; depois, a fase F (T139 a T148, com T153, T156, T158, T162 e T167 e a fusão da spec 007).
 

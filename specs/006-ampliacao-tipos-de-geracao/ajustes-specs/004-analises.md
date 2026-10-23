@@ -136,3 +136,43 @@ Já entregue na fase A, sem mudança: as seções comuns sobre a geração do co
 | Composição e geração do conjunto (FR-060) | com a geração do conjunto | — | não se aplica |
 | Afluência, vertimento e nível (FR-061) | — | com o alinhamento confirmado; sem ele, só a cobertura | hidrelétrica com EVT: como hoje; demais tipos: não se aplica |
 | Conclusão | PCH e CGH: sem itens, com a frase (fase A); EOL e UFV: C16 a C19 só com a usina | as regras comuns da fase A; C3 e C11 só com a EVT | sem mudança |
+
+## Fase E — carteira (rascunho para aprovação, tarefa T129)
+
+### Requisitos novos
+
+- **FR-062** (indicadores da carteira, decisão R21), no campo `indicadores_carteira` dos resultados, que existe desde o formato 3 e hoje fica vazio. As Análises o gravam nos dois caminhos, com e sem EVT; o formato dos resultados não muda de versão. O campo reúne números que as Análises já calculam para o relatório da usina; o único cálculo novo é a razão do atendimento ao despacho.
+  - **Chaves fixas**:
+    - `tipo`;
+    - `periodo`: início e fim da série de referência;
+    - `ano` e `ano_parcial`: o ano dos indicadores, que é o último ano completo da série; sem ano completo, o ano parcial mais recente, marcado como parcial;
+    - `fator_capacidade`, `disponibilidade`, `teifa`, `energia_cortada` e `atendimento_despacho`, cada um com `valor`, `nivel` (o do dado de origem: usina, conjunto ou agregado) e `unidade`. Quando o indicador não se aplica ao tipo ou falta a base, fica vazio, e nunca zero;
+    - `conclusao`: a quantidade de todos os itens de cada lista (possíveis problemas, pontos de atenção, confirmar com o agente, verificar em campo), contados como na aba CONCLUSAO, e não só os 5 exibidos; e as regras avaliadas e as não avaliadas.
+  - **Origem**: cada indicador é o número da tabela anual do relatório da usina, no ano escolhido.
+
+    | Indicador | Origem | Aplica-se a |
+    |---|---|---|
+    | Fator de capacidade (%) | geração média ÷ potência instalada, dos indicadores anuais | UHE com EVT; EOL e UFV com série da usina (como no relatório, decisão R14) |
+    | Disponibilidade (%) | disponibilidade operacional média ÷ potência instalada, dos indicadores anuais | usinas com a disponibilidade no nível da usina |
+    | TEIFa (%) | taxa publicada pelo ONS para dezembro do ano (janela de 60 meses); no ano parcial, a do último mês publicado | usinas com os indicadores oficiais do ONS |
+    | Energia cortada (%) | energia cortada ÷ energia estimada nas semi-horas com a marca de restrição, da tabela anual da restrição | EOL e UFV com a restrição |
+    | Atendimento ao despacho (%) | horas com programação (acima de 1 MW) em que a geração ficou a até 5 MW da programada ÷ horas com programação, da tabela anual do atendimento | UTE e UTN com o despacho; vazio no ano sem hora com programação |
+
+  - **Conclusão sem regra avaliada**: quando nenhuma regra foi avaliada com dado da usina (todas em `omitidos`, como na usina em conjunto sem série própria), as contagens ficam vazias, e não zero. Aí a falta de itens não quer dizer falta de indício (FR-054).
+  - **Hidrelétricas com EVT**: só o campo novo muda; o relatório não (T011).
+  - **Nas pilotos de MS**, com os resultados gravados hoje:
+    - William Arjona (UTE, 2025): disponibilidade 20,9 %, TEIFa 30,5 % (12/2025) e atendimento ao despacho 6,25 %, exibido como 6,2 % pelo arredondamento do projeto (2 de 32 horas com programação); fator de capacidade e energia cortada vazios; 2 possíveis problemas, 0 pontos de atenção, 4 itens a confirmar com o agente e 1 a verificar em campo.
+    - Seriemas 1 (UFV, 2026 parcial, de 22/08 a 19/10/2026): fator de capacidade 17,2 % e energia cortada 16,3 %; disponibilidade, TEIFa e atendimento vazios; 0, 1, 0 e 1 itens.
+    - Bandeirante (PCH em conjunto sem série própria): indicadores e contagens vazios.
+    - São Domingos (UHE com EVT): fator de capacidade, disponibilidade e TEIFa de 2025, depois de refeitas as etapas. As Análises gravadas dela são de 09/10/2026, no formato 2.
+
+### Aplicabilidade por tipo (fase E, acréscimo)
+
+| Indicador | UHE com EVT | UHE, PCH, CGH sem EVT | UTE, UTN | EOL, UFV | Usina em conjunto sem série própria |
+|---|---|---|---|---|---|
+| Fator de capacidade | sim | vazio | vazio | sim | vazio |
+| Disponibilidade | sim | com a disponibilidade da usina | com a disponibilidade da usina | com a disponibilidade da usina | vazio |
+| TEIFa | com os indicadores oficiais | com os indicadores oficiais | com os indicadores oficiais | com os indicadores oficiais | vazio |
+| Energia cortada | vazio | vazio | vazio | com a restrição | vazio |
+| Atendimento ao despacho | vazio | vazio | com o despacho | vazio | vazio |
+| Contagens da conclusão | sim | sim | sim | sim | vazias |

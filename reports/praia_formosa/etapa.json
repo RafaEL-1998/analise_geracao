@@ -2,13 +2,13 @@
  "etapa": "relatorio",
  "usina": "praia_formosa",
  "versao_formato": 1,
- "iniciada_em": "2026-10-21T15:59:52Z",
- "concluida_em": "2026-10-21T15:59:59Z",
+ "iniciada_em": "2026-10-22T17:32:17Z",
+ "concluida_em": "2026-10-22T17:32:24Z",
  "status": "concluida",
  "codigo_saida": 0,
  "etapa_anterior": {
   "etapa": "analises",
-  "concluida_em": "2026-10-21T15:59:52Z"
+  "concluida_em": "2026-10-22T17:32:16Z"
  },
  "arquivos": [
   {
@@ -23,8 +23,8 @@
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
-   "bytes": 166223,
-   "sha256": "6e340cfdcc8ef207a64146d08698e72cf1ac96908ae4cacb9f2486efc2d682b4"
+   "bytes": 166222,
+   "sha256": "01dd4df7f93f50c6ed6e156123e5fdac6c57f5b795d23553d000a154cfeba293"
   },
   {
    "nome": "perfil_estatistico_anual.csv",

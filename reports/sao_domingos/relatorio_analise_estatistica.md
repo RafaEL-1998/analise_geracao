@@ -1,6 +1,6 @@
 # UHE São Domingos — energia vertida turbinável e desempenho operacional (dados ONS)
 
-**Período**: 28/08/2018 00h a 28/09/2026 23h (70.895 registros horários)
+**Período**: 28/08/2018 00h a 19/10/2026 23h (71.351 registros horários)
 **Gerado em**: 07/10/2026 08:53
 
 ### Identificação nos dados do ONS
@@ -11,9 +11,9 @@
 | Reservatório | SAO DOMINGOS |
 | Rio / bacia | VERDE / PARANA |
 | Subsistema | SUDESTE (SE) |
-| Agente | CGT ELETROSUL (28/08/2018 a 28/02/2026); AXIA SUL (01/03/2026 a 28/09/2026) |
+| Agente | CGT ELETROSUL (28/08/2018 a 28/02/2026); AXIA SUL (01/03/2026 a 19/10/2026) |
 
-Fonte dos dados: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026.
+Fonte dos dados: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026.
 
 ### Cadastro no ONS
 
@@ -27,7 +27,7 @@ Fonte dos dados: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/20
 | Estado · situação na ANEEL | MS · A |
 | Homônimos excluídos pelo CEG | 20 |
 
-Fonte dos dados: Modalidade das usinas (CEG UHE.PH.MS.028761-0.01), obtido em 05/10/2026. Conferência: potência autorizada e estado conferidos com os parâmetros do projeto: sem divergência.
+Fonte dos dados: Modalidade das usinas (CEG UHE.PH.MS.028761-0.01), obtido em 22/10/2026. Conferência: potência autorizada e estado conferidos com os parâmetros do projeto: sem divergência.
 
 ### Parâmetros técnicos da usina
 
@@ -45,15 +45,15 @@ Fonte dos dados: parâmetros do projeto (origem na tabela de parâmetros).
 
 | Indicador | Valor | Detalhe |
 | --- | --- | --- |
-| Disponibilidade média declarada | 87,8% | da potência instalada; referência da garantia física: 91,0% |
-| Disponibilidade apurada pelo ONS (DISPF) | 91,1% | média das unidades; TEIFa 4,11% e TEIP 4,79% em ago/2026 |
-| Fator de capacidade | 56,4% | geração média de 27,1 MWmed, 74,4% da garantia física |
-| Energia vertida turbinável | 147,7 GWh | 7,1% de geração + EVT; presente em 86,1% das horas |
-| EVT com a usina parada | 41,9 GWh | 28,4% da EVT, em 2.141 h com geração até 1 MW |
+| Disponibilidade média declarada | 87,9% | da potência instalada; referência da garantia física: 91,0% |
+| Disponibilidade apurada pelo ONS (DISPF) | 91,1% | média das unidades; TEIFa 4,11% e TEIP 4,74% em set/2026 |
+| Fator de capacidade | 56,4% | geração média de 27,0 MWmed, 74,3% da garantia física |
+| Energia vertida turbinável | 152,4 GWh | 7,3% de geração + EVT; presente em 86,1% das horas |
+| EVT com a usina parada | 45,3 GWh | 29,7% da EVT, em 2.262 h com geração até 1 MW |
 
 A disponibilidade declarada e o fator de capacidade são calculados a partir do conjunto de EVT; o DISPF, a TEIFa e a TEIP são os indicadores apurados pelo ONS (seção de indicadores oficiais). O FID não é publicado pelo ONS. Ver notas metodológicas.
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026; Indicadores de disponibilidade por unidade geradora, base mensal (CEG UHE.PH.MS.028761-0.01), obtido em 02/10/2026; Taxas TEIFa e TEIP (CEG UHE.PH.MS.028761-0.01), obtido em 02/10/2026. Conferência: geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%); disponibilidade declarada conferida com Disponibilidade por usina (operacional): 70.895 de 70.895 horas coincidentes (100,0%); DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 4 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS; TEIFa e TEIP recalculadas conferidas com as publicadas em Taxas TEIFa e TEIP: 21 de 21 meses reproduzidos (diferença máxima de 0,000 p.p.). Sem outra fonte para conferir: energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026; Indicadores de disponibilidade por unidade geradora, base mensal (CEG UHE.PH.MS.028761-0.01), obtido em 21/10/2026; Taxas TEIFa e TEIP (CEG UHE.PH.MS.028761-0.01), obtido em 20/10/2026. Conferência: geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; disponibilidade declarada conferida com Disponibilidade por usina (operacional): 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 5 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS; TEIFa e TEIP recalculadas conferidas com as publicadas em Taxas TEIFa e TEIP: 22 de 22 meses reproduzidos (diferença máxima de 0,000 p.p.). Sem outra fonte para conferir: energia vertida turbinável (EVT).
 
 ## Sumário
 
@@ -77,24 +77,24 @@ Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 1
 
 ## 1. Fonte e cobertura dos dados
 
-**Cobertura dos dados.** A série do ONS para a usina (cod_usina 153) vai de 28/08/2018 00h a 28/09/2026 23h: 70.895 registros horários, com 1 hora ausente (04/11/2018 00h). Os arquivos de 2015, 2016 e 2017 não contêm registros da usina. Como a operação comercial começou em 2013, o período anterior a 28/08/2018 não é coberto por esta fonte. Os anos 2018 (34,5% das horas do ano) e 2026 (74,2% das horas do ano) são parciais; as comparações entre anos usam apenas anos completos.
+**Cobertura dos dados.** A série do ONS para a usina (cod_usina 153) vai de 28/08/2018 00h a 19/10/2026 23h: 71.351 registros horários, com 49 horas ausentes (04/11/2018 00h, 29/09/2026 00h, 29/09/2026 01h, 29/09/2026 02h e 29/09/2026 03h…). Os arquivos de 2015, 2016 e 2017 não contêm registros da usina. Como a operação comercial começou em 2013, o período anterior a 28/08/2018 não é coberto por esta fonte. Os anos 2018 (34,5% das horas do ano) e 2026 (79,5% das horas do ano) são parciais; as comparações entre anos usam apenas anos completos.
 
 | Item | Valor |
 | --- | --- |
 | Conjunto de dados | Energia Vertida Turbinável — ONS (https://dados.ons.org.br/dataset/energia-vertida-turbinavel) |
 | Critério de extração | cod_usina = 153 e nome do reservatório conferido |
-| Arquivos lidos | 42 arquivos CSV; 39 com registros da usina; sem registros: 2015, 2016 e 2017; falhas de leitura: nenhuma; linhas com código ou nome divergentes: 0 |
-| Versão dos arquivos | 42 arquivos registrados no manifesto; publicação mais recente no portal: 30/09/2026 15:06 UTC |
-| Período | 28/08/2018 00h a 28/09/2026 23h |
-| Registros | 70.895 de 70.896 horas esperadas; horas ausentes: 04/11/2018 00h; horários duplicados: 0 |
-| Anos parciais | 2018 (34,5% das horas) e 2026 (74,2% das horas) |
+| Arquivos lidos | 43 arquivos CSV; 40 com registros da usina; sem registros: 2015, 2016 e 2017; falhas de leitura: nenhuma; linhas com código ou nome divergentes: 0 |
+| Versão dos arquivos | 43 arquivos registrados no manifesto; publicação mais recente no portal: 20/10/2026 22:04 UTC |
+| Período | 28/08/2018 00h a 19/10/2026 23h |
+| Registros | 71.351 de 71.400 horas esperadas; horas ausentes: 04/11/2018 00h, 29/09/2026 00h, 29/09/2026 01h, 29/09/2026 02h, 29/09/2026 03h, 29/09/2026 04h, 29/09/2026 05h, 29/09/2026 06h, 29/09/2026 07h e 29/09/2026 08h; horários duplicados: 0 |
+| Anos parciais | 2018 (34,5% das horas) e 2026 (79,5% das horas) |
 
-Fonte dos dados: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026.
+Fonte dos dados: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026.
 
 
 ## 2. Indicadores anuais
 
-**Disponibilidade.** A disponibilidade média declarada foi de 42,1 MW (87,8% da potência instalada), 3,2 p.p. abaixo da disponibilidade de referência da garantia física (91,0%). Entre os anos completos, ficaram abaixo da referência: 2019 (71,4%), 2020 (90,9%), 2022 (81,8%) e 2023 (90,5%).
+**Disponibilidade.** A disponibilidade média declarada foi de 42,2 MW (87,9% da potência instalada), 3,1 p.p. abaixo da disponibilidade de referência da garantia física (91,0%). Entre os anos completos, ficaram abaixo da referência: 2019 (71,4%), 2020 (90,9%), 2022 (81,8%) e 2023 (90,5%).
 
 | Ano | Cobertura | Disp. média (% Pinst) | Δ vs ref. GF | Fator de capacidade | Geração / GF | EVT (MWh) | EVT no vert. mínimo | Índice EVT | Horas c/ EVT | Horas parada c/ EVT | Horas indisp. total |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -106,24 +106,24 @@ Fonte dos dados: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/20
 | 2023 | 100,0% | 90,5% | −0,5 p.p. | 63,1% | 83,2% | 13.078 | 12,6% | 4,7% | 7.547 | 110 | 107 |
 | 2024 | 100,0% | 91,2% | +0,3 p.p. | 57,6% | 76,0% | 8.940 | 11,7% | 3,5% | 5.769 | 44 | 87 |
 | 2025 | 100,0% | 91,2% | +0,3 p.p. | 49,2% | 64,9% | 30.690 | 4,9% | 12,9% | 7.305 | 920 | 330 |
-| 2026* | 74,2% | 90,0% | −1,0 p.p. | 44,9% | 59,2% | 25.972 | 4,3% | 15,6% | 5.686 | 1.007 | 76 |
+| 2026* | 79,5% | 90,4% | −0,6 p.p. | 45,0% | 59,4% | 30.677 | 3,8% | 16,9% | 6.084 | 1.128 | 76 |
 
 \* Ano parcial. Disp. média = disponibilidade média declarada ÷ potência instalada; Δ vs ref. GF = diferença para a disponibilidade de referência da garantia física (90,97%); fator de capacidade = geração média ÷ potência instalada; Geração / GF = geração média ÷ garantia física; EVT no vert. mínimo = parcela da EVT ocorrida em horas com vertimento de até 6 m³/s; índice EVT = EVT ÷ (geração + EVT); horas parada c/ EVT = horas com geração até 1 MW e EVT positiva; horas indisp. total = horas com disponibilidade zero.
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026; parâmetros do projeto (origem na tabela de parâmetros). Conferência: geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%); disponibilidade declarada conferida com Disponibilidade por usina (operacional): 70.895 de 70.895 horas coincidentes (100,0%). Sem outra fonte para conferir: energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026; parâmetros do projeto (origem na tabela de parâmetros). Conferência: geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; disponibilidade declarada conferida com Disponibilidade por usina (operacional): 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes. Sem outra fonte para conferir: energia vertida turbinável (EVT).
 
 
 ## 3. Disponibilidade e geração por ano
 
 **Indisponibilidades.** Houve 3 períodos de indisponibilidade total (disponibilidade zero) com pelo menos 24 h, somando 2.483 h. O mais longo foi de 25/09/2019 10h a 24/12/2019 23h (2.174 h, cerca de 91 dias). Em 5.908 h a disponibilidade ficou acima de zero e igual ou inferior à metade da potência instalada (24 MW); o ano com mais horas nessa condição foi 2022 (2.189 h).
 
-**Geração e garantia física.** A geração média foi de 27,1 MWmed (fator de capacidade de 56,4%), o equivalente a 74,4% da garantia física (36,4 MWmed). Nos anos completos, a razão entre geração média e garantia física variou de 64,9% (2025) a 83,2% (2023). Em 2026 (parcial), foi de 59,2%.
+**Geração e garantia física.** A geração média foi de 27,0 MWmed (fator de capacidade de 56,4%), o equivalente a 74,3% da garantia física (36,4 MWmed). Nos anos completos, a razão entre geração média e garantia física variou de 64,9% (2025) a 83,2% (2023). Em 2026 (parcial), foi de 59,4%.
 
 ![Disponibilidade e geração por ano](figures/04_disponibilidade_geracao_anual.png)
 
 Barras: disponibilidade média declarada e geração média, em % da potência instalada. Linha tracejada: disponibilidade de referência da garantia física (91,0%); linha pontilhada: garantia física (75,8% da potência instalada).
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026; parâmetros do projeto (origem na tabela de parâmetros). Conferência: geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%); disponibilidade declarada conferida com Disponibilidade por usina (operacional): 70.895 de 70.895 horas coincidentes (100,0%).
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026; parâmetros do projeto (origem na tabela de parâmetros). Conferência: geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; disponibilidade declarada conferida com Disponibilidade por usina (operacional): 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes.
 
 ### Períodos de indisponibilidade total (disponibilidade zero) com pelo menos 24 h
 
@@ -135,14 +135,14 @@ Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 1
 
 Total de eventos com disponibilidade zero (qualquer duração): 138. A lista completa está na aba EVENTOS_INDISP_TOTAL da planilha.
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: disponibilidade declarada conferida com Disponibilidade por usina (operacional): 70.895 de 70.895 horas coincidentes (100,0%); vazões turbinada e vertida conferidas com Dados hidrológicos horários: 70.731 de 70.731 horas coincidentes (100,0%).
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: disponibilidade declarada conferida com Disponibilidade por usina (operacional): 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; vazões turbinada e vertida conferidas com Dados hidrológicos horários: 71.187 de 71.187 horas coincidentes (100,0%).
 
 
 ## 4. Indicadores oficiais do ONS por unidade geradora
 
-**Indicadores oficiais de disponibilidade (ONS).** Pelo indicador de disponibilidade das unidades geradoras apurado pelo ONS (DISPF, Submódulo 9.2 dos Procedimentos de Rede), a disponibilidade média das 2 unidades de ago/2018 a set/2026 foi de 91,1% (indisponibilidade programada de 8,4% e forçada de 0,5%), 0,1 p.p. acima da disponibilidade de referência da garantia física (91,0%); a disponibilidade declarada no conjunto de EVT foi de 87,8%. As duas medidas são diferentes: o DISPF conta o tempo em que cada unidade esteve disponível, sem descontar a operação com potência limitada; a disponibilidade declarada é a potência que a usina informou poder gerar a cada hora. Pelo DISPF, ficaram abaixo da referência os anos completos 2019 (73,5%) e 2022 (86,5%). A TEIFa apurada pelo ONS para ago/2026 (janela de 60 meses) é de 4,11%, acima da TEIF de referência (2,333%), e a TEIP, de 4,79%, abaixo do IP de referência (6,861%). Com as taxas apuradas, (1 − TEIFa) × (1 − TEIP) = 91,30%, contra 90,97% de referência.
+**Indicadores oficiais de disponibilidade (ONS).** Pelo indicador de disponibilidade das unidades geradoras apurado pelo ONS (DISPF, Submódulo 9.2 dos Procedimentos de Rede), a disponibilidade média das 2 unidades de ago/2018 a set/2026 foi de 91,1% (indisponibilidade programada de 8,4% e forçada de 0,5%), 0,1 p.p. acima da disponibilidade de referência da garantia física (91,0%); a disponibilidade declarada no conjunto de EVT foi de 87,9%. As duas medidas são diferentes: o DISPF conta o tempo em que cada unidade esteve disponível, sem descontar a operação com potência limitada; a disponibilidade declarada é a potência que a usina informou poder gerar a cada hora. Pelo DISPF, ficaram abaixo da referência os anos completos 2019 (73,5%) e 2022 (86,5%). A TEIFa apurada pelo ONS para set/2026 (janela de 60 meses) é de 4,11%, acima da TEIF de referência (2,333%), e a TEIP, de 4,74%, abaixo do IP de referência (6,861%). Com as taxas apuradas, (1 − TEIFa) × (1 − TEIP) = 91,34%, contra 90,97% de referência.
 
-**Estados operativos das unidades geradoras (ONS).** O ONS publica as horas mensais de cada unidade por estado operativo (jan/2020 a ago/2026 no período da base). Com a fórmula das notas metodológicas, essas horas reproduzem a TEIFa e a TEIP publicadas nos 21 meses com janela de 60 meses completa (diferença máxima inferior a 0,0001 p.p.). Da TEIFa de 4,11% em ago/2026, 3,59 p.p. (87%) vêm de operação com limitação forçada de potência da UG2; sem essa parcela, a TEIFa seria de 0,52%. A UG2 registrou limitação forçada de potência em 78 dos 80 meses, somando 3.824 horas equivalentes (UG1: 51 h). Horas em reserva desligada (unidade disponível, parada), por ano: UG1 — 2020: 421 h; 2021: 127 h; 2022: 196 h; 2023: 207 h; 2024: 146 h; 2025: 1.685 h; 2026 (parcial): 1.449 h | UG2 — 2020: 2.657 h; 2021: 3.597 h; 2022: 2.258 h; 2023: 1.889 h; 2024: 3.238 h; 2025: 3.260 h; 2026 (parcial): 2.565 h. Desligamentos por causa externa: UG1: 12,6 h e UG2: 13,1 h. Em 4 meses-unidade, os dois conjuntos do ONS classificam o tempo parado de forma diferente (mar/2024 UG2: 367 h programadas pelo DISPF e 0 h pelo TEIP; abr/2025 UG1: 273 h programadas pelo DISPF e 3 h pelo TEIP; ago/2025 UG2: 250 h programadas pelo DISPF e 5 h pelo TEIP; ago/2026 UG1: 352 h programadas pelo DISPF e 0 h pelo TEIP); a diferença está contida nas horas que o conjunto do TEIP registra como reserva desligada. Os conjuntos informam a duração de cada estado, não a causa nem os eventos individuais de desligamento.
+**Estados operativos das unidades geradoras (ONS).** O ONS publica as horas mensais de cada unidade por estado operativo (jan/2020 a set/2026 no período da base). Com a fórmula das notas metodológicas, essas horas reproduzem a TEIFa e a TEIP publicadas nos 22 meses com janela de 60 meses completa (diferença máxima inferior a 0,0001 p.p.). Da TEIFa de 4,11% em set/2026, 3,58 p.p. (87%) vêm de operação com limitação forçada de potência da UG2; sem essa parcela, a TEIFa seria de 0,53%. A UG2 registrou limitação forçada de potência em 79 dos 81 meses, somando 3.861 horas equivalentes (UG1: 58 h). Horas em reserva desligada (unidade disponível, parada), por ano: UG1 — 2020: 421 h; 2021: 127 h; 2022: 196 h; 2023: 207 h; 2024: 146 h; 2025: 1.685 h; 2026 (parcial): 1.999 h | UG2 — 2020: 2.657 h; 2021: 3.597 h; 2022: 2.258 h; 2023: 1.889 h; 2024: 3.238 h; 2025: 3.260 h; 2026 (parcial): 2.976 h. Desligamentos por causa externa: UG1: 12,6 h e UG2: 13,1 h. Em 5 meses-unidade, os dois conjuntos do ONS classificam o tempo parado de forma diferente (mar/2024 UG2: 367 h programadas pelo DISPF e 0 h pelo TEIP; abr/2025 UG1: 273 h programadas pelo DISPF e 3 h pelo TEIP; ago/2025 UG2: 250 h programadas pelo DISPF e 5 h pelo TEIP; ago/2026 UG1: 352 h programadas pelo DISPF e 0 h pelo TEIP; set/2026 UG1: 379 h programadas pelo DISPF e 0 h pelo TEIP); a diferença está contida nas horas que o conjunto do TEIP registra como reserva desligada. Os conjuntos informam a duração de cada estado, não a causa nem os eventos individuais de desligamento.
 
 ### Disponibilidade da usina por ano: declarada no conjunto de EVT e DISPF apurado pelo ONS
 
@@ -156,30 +156,30 @@ Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 1
 | 2023 | 90,5% | 93,9% | 5,9% | 0,2% | +2,9 p.p. |
 | 2024 | 91,2% | 95,7% | 3,2% | 1,1% | +4,7 p.p. |
 | 2025 | 91,2% | 94,3% | 5,5% | 0,3% | +3,3 p.p. |
-| 2026* | 90,0% | 93,3% | 6,5% | 0,2% | +2,4 p.p. |
+| 2026* | 90,4% | 93,3% | 6,5% | 0,2% | +2,4 p.p. |
 
 \* Ano parcial. DISPF da usina = média das unidades ponderada pela potência e pelas horas da base de EVT em cada mês; Δ = diferença para a disponibilidade de referência da garantia física (90,97%).
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026; Indicadores de disponibilidade por unidade geradora, base mensal (CEG UHE.PH.MS.028761-0.01), obtido em 02/10/2026. Conferência: disponibilidade declarada conferida com Disponibilidade por usina (operacional): 70.895 de 70.895 horas coincidentes (100,0%); DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 4 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026; Indicadores de disponibilidade por unidade geradora, base mensal (CEG UHE.PH.MS.028761-0.01), obtido em 21/10/2026. Conferência: disponibilidade declarada conferida com Disponibilidade por usina (operacional): 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 5 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
 
 ### TEIFa e TEIP mais recentes: contribuição de cada unidade e parcela de horas
 
-TEIFa e TEIP apuradas pelo ONS em ago/2026 (janela de 60 meses): TEIFa 4,109% (referência TEIF 2,333%); TEIP 4,790% (referência IP 6,861%); (1 − TEIFa) × (1 − TEIP) = 91,30% (referência 90,97%).
+TEIFa e TEIP apuradas pelo ONS em set/2026 (janela de 60 meses): TEIFa 4,113% (referência TEIF 2,333%); TEIP 4,737% (referência IP 6,861%); (1 − TEIFa) × (1 − TEIP) = 91,34% (referência 90,97%).
 
 | Taxa | UG | Parcela | Horas na janela | Contribuição (p.p.) | Participação na taxa |
 | --- | --- | --- | --- | --- | --- |
-| TEIFa | UG1 | HDF (desligamentos forçados) | 256,1 | 0,307 | 7,5% |
-| TEIFa | UG1 | HEDF (operação com limitação forçada de potência) | 46,7 | 0,056 | 1,4% |
-| TEIFa | UG2 | HDF (desligamentos forçados) | 134,3 | 0,161 | 3,9% |
-| TEIFa | UG2 | HEDF (operação com limitação forçada de potência) | 2.991,7 | 3,585 | 87,3% |
-| TEIP | UG1 | HDP (desligamentos programados) | 1.296,7 | 1,479 | 30,9% |
+| TEIFa | UG1 | HDF (desligamentos forçados) | 256,5 | 0,307 | 7,5% |
+| TEIFa | UG1 | HEDF (operação com limitação forçada de potência) | 54,0 | 0,065 | 1,6% |
+| TEIFa | UG2 | HDF (desligamentos forçados) | 134,6 | 0,161 | 3,9% |
+| TEIFa | UG2 | HEDF (operação com limitação forçada de potência) | 2.989,5 | 3,580 | 87,0% |
+| TEIP | UG1 | HDP (desligamentos programados) | 1.250,2 | 1,426 | 30,1% |
 | TEIP | UG1 | HEDP (operação com limitação programada de potência) | 4,3 | 0,005 | 0,1% |
-| TEIP | UG2 | HDP (desligamentos programados) | 2.892,7 | 3,300 | 68,9% |
+| TEIP | UG2 | HDP (desligamentos programados) | 2.892,7 | 3,300 | 69,7% |
 | TEIP | UG2 | HEDP (operação com limitação programada de potência) | 4,3 | 0,005 | 0,1% |
 
 Contribuição = horas da parcela na janela de 60 meses (ponderadas pela potência) ÷ denominador da taxa; as contribuições somam a taxa publicada.
 
-Calculado neste relatório a partir de: Parâmetros das taxas TEIFa e TEIP (CEG UHE.PH.MS.028761-0.01), obtido em 02/10/2026; Taxas TEIFa e TEIP (CEG UHE.PH.MS.028761-0.01), obtido em 02/10/2026. Conferência: TEIFa e TEIP recalculadas conferidas com as publicadas em Taxas TEIFa e TEIP: 21 de 21 meses reproduzidos (diferença máxima de 0,000 p.p.).
+Calculado neste relatório a partir de: Parâmetros das taxas TEIFa e TEIP (CEG UHE.PH.MS.028761-0.01), obtido em 20/10/2026; Taxas TEIFa e TEIP (CEG UHE.PH.MS.028761-0.01), obtido em 20/10/2026. Conferência: TEIFa e TEIP recalculadas conferidas com as publicadas em Taxas TEIFa e TEIP: 22 de 22 meses reproduzidos (diferença máxima de 0,000 p.p.).
 
 ### Indicadores anuais por unidade geradora (base anual do ONS)
 
@@ -206,7 +206,7 @@ Calculado neste relatório a partir de: Parâmetros das taxas TEIFa e TEIP (CEG 
 
 \* Ano parcial. DISPF, INDISPPF e INDISPFF em % do tempo; DMDFF = duração média dos desligamentos forçados (h). Não descontam a operação com potência limitada.
 
-Fonte dos dados: Indicadores de disponibilidade por unidade geradora, base anual (CEG UHE.PH.MS.028761-0.01), obtido em 02/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 4 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
+Fonte dos dados: Indicadores de disponibilidade por unidade geradora, base anual (CEG UHE.PH.MS.028761-0.01), obtido em 20/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 5 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
 
 ### Horas por estado operativo, por ano e unidade geradora
 
@@ -224,12 +224,12 @@ Fonte dos dados: Indicadores de disponibilidade por unidade geradora, base anual
 | 2024 | UG2 | 12 | 8.784 | 4.812 | 3.238 | 79 | 32 | 0 | 4 | 619 |
 | 2025 | UG1 | 12 | 8.760 | 6.970 | 1.685 | 74 | 29 | 0 | 0 | 2 |
 | 2025 | UG2 | 12 | 8.760 | 4.583 | 3.260 | 368 | 18 | 0 | 0 | 531 |
-| 2026* | UG1 | 8 | 5.832 | 4.303 | 1.449 | 52 | 15 | 12 | 0 | 2 |
-| 2026* | UG2 | 8 | 5.832 | 2.840 | 2.565 | 84 | 11 | 12 | 0 | 321 |
+| 2026* | UG1 | 9 | 6.552 | 4.464 | 1.999 | 52 | 16 | 12 | 0 | 9 |
+| 2026* | UG2 | 9 | 6.552 | 3.111 | 2.976 | 84 | 11 | 12 | 0 | 358 |
 
 \* Ano parcial. HP = horas do período; HS = horas em serviço; HRD = horas em reserva desligada (unidade disponível, parada); HDP = horas de desligamento programado; HDF = horas de desligamento forçado; HDCE = horas de desligamento por causa externa; HEDP = horas equivalentes de desligamento programado (limitação de potência); HEDF = horas equivalentes de desligamento forçado (limitação de potência). HP = HS + HRD + HDP + HDF + HDCE + HEDP + HEDF.
 
-Fonte dos dados: Parâmetros das taxas TEIFa e TEIP (CEG UHE.PH.MS.028761-0.01), obtido em 02/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 4 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
+Fonte dos dados: Parâmetros das taxas TEIFa e TEIP (CEG UHE.PH.MS.028761-0.01), obtido em 20/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 5 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
 
 ### Meses em que o indicador DISPF e as horas do TEIP divergem
 
@@ -239,24 +239,25 @@ Fonte dos dados: Parâmetros das taxas TEIFa e TEIP (CEG UHE.PH.MS.028761-0.01),
 | abr/2025 | UG1 | 416,2 | 289,8 | 3,1 | 273,2 | 10,4 | 10,4 |
 | ago/2025 | UG2 | 20,5 | 683,7 | 5,5 | 250,4 | 0,2 | 0,2 |
 | ago/2026 | UG1 | 240,8 | 503,1 | 0,0 | 351,7 | 0,0 | 0,0 |
+| set/2026 | UG1 | 160,9 | 550,6 | 0,0 | 379,0 | 1,1 | 1,1 |
 
 Diferença superior a 1 h entre as horas de indisponibilidade programada ou forçada do DISPF (percentual × horas do período) e as horas HDP ou HDF do conjunto do TEIP.
 
-Fonte dos dados: Indicadores de disponibilidade por unidade geradora, base mensal (CEG UHE.PH.MS.028761-0.01), obtido em 02/10/2026; Parâmetros das taxas TEIFa e TEIP (CEG UHE.PH.MS.028761-0.01), obtido em 02/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 4 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
+Fonte dos dados: Indicadores de disponibilidade por unidade geradora, base mensal (CEG UHE.PH.MS.028761-0.01), obtido em 21/10/2026; Parâmetros das taxas TEIFa e TEIP (CEG UHE.PH.MS.028761-0.01), obtido em 20/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 5 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
 
 
 ## 5. Série temporal de disponibilidade, geração e EVT
 
 ![Série temporal de disponibilidade, geração e EVT](figures/01_serie_temporal_disponibilidade_geracao_evt.png)
 
-Médias diárias de 28/08/2018 a 28/09/2026. Faixas cinza: indisponibilidade total com pelo menos 24 h (3 períodos). Linha tracejada: potência instalada (48 MW); linha pontilhada: garantia física (36,4 MWmed).
+Médias diárias de 28/08/2018 a 19/10/2026. Faixas cinza: indisponibilidade total com pelo menos 24 h (3 períodos). Linha tracejada: potência instalada (48 MW); linha pontilhada: garantia física (36,4 MWmed).
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%); disponibilidade declarada conferida com Disponibilidade por usina (operacional): 70.895 de 70.895 horas coincidentes (100,0%). Sem outra fonte para conferir: energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; disponibilidade declarada conferida com Disponibilidade por usina (operacional): 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes. Sem outra fonte para conferir: energia vertida turbinável (EVT).
 
 
 ## 6. Energia vertida turbinável mensal
 
-**Energia vertida turbinável.** A energia vertida turbinável (EVT) somou 147,7 GWh, o equivalente a 7,1% da soma entre geração e EVT, e ocorreu em 86,1% das horas. Nas horas com EVT, a folga média de geração (disponibilidade menos geração) foi de 15,7 MW. Por ano: 2018: 5,4 GWh (parcial); 2019: 11,5 GWh; 2020: 19,0 GWh; 2021: 17,7 GWh; 2022: 15,4 GWh; 2023: 13,1 GWh; 2024: 8,9 GWh; 2025: 30,7 GWh; 2026: 26,0 GWh (parcial).
+**Energia vertida turbinável.** A energia vertida turbinável (EVT) somou 152,4 GWh, o equivalente a 7,3% da soma entre geração e EVT, e ocorreu em 86,1% das horas. Nas horas com EVT, a folga média de geração (disponibilidade menos geração) foi de 15,7 MW. Por ano: 2018: 5,4 GWh (parcial); 2019: 11,5 GWh; 2020: 19,0 GWh; 2021: 17,7 GWh; 2022: 15,4 GWh; 2023: 13,1 GWh; 2024: 8,9 GWh; 2025: 30,7 GWh; 2026: 30,7 GWh (parcial).
 
 **Distribuição ao longo do ano.** Nos anos completos (2019 a 2025), os meses de maio a outubro concentraram 59,4% da EVT e os de janeiro a abril, 23,0%. Os meses com maior EVT foram agosto, outubro e julho.
 
@@ -266,18 +267,18 @@ Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 1
 
 EVT mensal em MWh. Cinza: parcela ocorrida em horas com vertimento de até 6 m³/s (patamar contínuo); laranja: demais horas. Linha vertical: dez/2022, mês a partir do qual parte do vertimento contínuo passa a ser registrada como não turbinável. Maior EVT mensal: 6.134 MWh em out/2025.
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Sem outra fonte para conferir: energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Sem outra fonte para conferir: energia vertida turbinável (EVT).
 
 
 ## 7. Perfil horário da geração e da EVT
 
-**Concentração diurna.** Razão entre a EVT média das 9h às 15h e a das 20h às 5h, por ano (* parcial): 2018: 0,94*; 2019: 0,95; 2020: 1,02; 2021: 1,00; 2022: 1,02; 2023: 1,65; 2024: 1,66; 2025: 5,52; 2026: 5,39*. Em 2025 e 2026, a EVT se concentrou no período diurno e a geração diurna ficou em 71% e 55% da noturna, respectivamente; nos demais anos, a geração diurna ficou entre 84% e 98% da noturna.
+**Concentração diurna.** Razão entre a EVT média das 9h às 15h e a das 20h às 5h, por ano (* parcial): 2018: 0,94*; 2019: 0,95; 2020: 1,02; 2021: 1,00; 2022: 1,02; 2023: 1,65; 2024: 1,66; 2025: 5,52; 2026: 6,13*. Em 2025 e 2026, a EVT se concentrou no período diurno e a geração diurna ficou em 71% e 52% da noturna, respectivamente; nos demais anos, a geração diurna ficou entre 84% e 98% da noturna.
 
 ![Perfil horário da geração e da EVT](figures/03_perfil_horario_geracao_evt.png)
 
 Média por ano e hora do dia: à esquerda, geração (MW); à direita, EVT (MWmed). A tabela compara a janela diurna (9h às 15h) com a noturna (20h às 5h).
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%). Sem outra fonte para conferir: energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes. Sem outra fonte para conferir: energia vertida turbinável (EVT).
 
 | Ano | EVT diurna (MWmed) | EVT noturna (MWmed) | Razão EVT diurna/noturna | Geração diurna (MW) | Geração noturna (MW) | Geração diurna ÷ noturna |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -289,30 +290,30 @@ Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 1
 | 2023 | 1,91 | 1,16 | 1,65 | 29,2 | 31,0 | 94% |
 | 2024 | 1,32 | 0,79 | 1,66 | 27,0 | 28,1 | 96% |
 | 2025 | 6,98 | 1,26 | 5,52 | 18,8 | 26,4 | 71% |
-| 2026* | 8,30 | 1,54 | 5,39 | 14,2 | 26,0 | 55% |
+| 2026* | 9,25 | 1,51 | 6,13 | 13,8 | 26,4 | 52% |
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%). Sem outra fonte para conferir: energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes. Sem outra fonte para conferir: energia vertida turbinável (EVT).
 
 
 ## 8. EVT por nível de geração e eventos de usina parada
 
-**EVT e nível de geração.** Somente 4,6% da EVT ocorreu com a usina próxima da plena carga (geração igual ou superior a 43,2 MW). Em todas as horas, a EVT não ultrapassa a folga de geração: quando a usina gera tudo o que declarou disponível, a EVT é nula. Já 28,4% da EVT (41,9 GWh, em 2.141 h) ocorreu com a usina parada (geração até 1 MW) e disponibilidade média de 42,9 MW.
+**EVT e nível de geração.** Somente 4,5% da EVT ocorreu com a usina próxima da plena carga (geração igual ou superior a 43,2 MW). Em todas as horas, a EVT não ultrapassa a folga de geração: quando a usina gera tudo o que declarou disponível, a EVT é nula. Já 29,7% da EVT (45,3 GWh, em 2.262 h) ocorreu com a usina parada (geração até 1 MW) e disponibilidade média de 43,1 MW.
 
-**EVT com a usina parada.** Horas com a usina parada e EVT, por ano: 2018: 0 h (parcial); 2019: 9 h; 2020: 12 h; 2021: 23 h; 2022: 16 h; 2023: 110 h; 2024: 44 h; 2025: 920 h; 2026: 1.007 h (parcial). O maior volume foi em 2025, com 18,8 GWh de EVT nessas horas. A lista completa de eventos está na aba EVENTOS_PARADA_COM_EVT da planilha.
+**EVT com a usina parada.** Horas com a usina parada e EVT, por ano: 2018: 0 h (parcial); 2019: 9 h; 2020: 12 h; 2021: 23 h; 2022: 16 h; 2023: 110 h; 2024: 44 h; 2025: 920 h; 2026: 1.128 h (parcial). O maior volume foi em 2026, com 21,1 GWh de EVT nessas horas. A lista completa de eventos está na aba EVENTOS_PARADA_COM_EVT da planilha.
 
 ### Distribuição das horas com EVT pelo nível de geração no mesmo horário
 
 | Geração na hora | Horas | EVT (MWh) | Participação na EVT | Geração média (MW) | Disponibilidade média (MW) |
 | --- | --- | --- | --- | --- | --- |
-| até 1 MW (usina parada) | 2.141 | 41.930,5 | 28,4% | 0,0 | 42,9 |
-| de 1 a 10 MW | 409 | 5.070,2 | 3,4% | 6,1 | 36,0 |
-| de 10 a 20 MW | 2.081 | 8.834,2 | 6,0% | 16,8 | 41,3 |
-| de 20 a 30 MW | 25.175 | 53.512,6 | 36,2% | 24,1 | 42,1 |
-| de 30 a 40 MW | 23.251 | 27.657,4 | 18,7% | 32,6 | 46,5 |
-| de 40 a 43,2 MW | 3.076 | 3.834,6 | 2,6% | 41,9 | 46,5 |
-| 43,2 MW ou mais (plena carga) | 4.934 | 6.811,5 | 4,6% | 44,5 | 46,6 |
+| até 1 MW (usina parada) | 2.262 | 45.324,1 | 29,7% | 0,0 | 43,1 |
+| de 1 a 10 MW | 426 | 5.476,3 | 3,6% | 6,1 | 36,4 |
+| de 10 a 20 MW | 2.090 | 9.003,4 | 5,9% | 16,8 | 41,3 |
+| de 20 a 30 MW | 25.229 | 53.951,2 | 35,4% | 24,1 | 42,1 |
+| de 30 a 40 MW | 23.350 | 27.888,1 | 18,3% | 32,6 | 46,5 |
+| de 40 a 43,2 MW | 3.096 | 3.850,4 | 2,5% | 41,9 | 46,5 |
+| 43,2 MW ou mais (plena carga) | 5.012 | 6.861,7 | 4,5% | 44,5 | 46,6 |
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%); disponibilidade declarada conferida com Disponibilidade por usina (operacional): 70.895 de 70.895 horas coincidentes (100,0%). Sem outra fonte para conferir: energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; disponibilidade declarada conferida com Disponibilidade por usina (operacional): 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes. Sem outra fonte para conferir: energia vertida turbinável (EVT).
 
 ### Maiores eventos de usina parada (geração até 1 MW) com EVT — 15 maiores por EVT
 
@@ -331,17 +332,17 @@ Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 1
 | 03/08/2025 02h | 03/08/2025 15h | 14 | 46,8 | 77,5 | 311,7 |
 | 01/11/2025 02h | 01/11/2025 14h | 13 | 46,3 | 82,6 | 309,9 |
 | 07/06/2026 03h | 07/06/2026 15h | 13 | 46,8 | 81,6 | 305,9 |
+| 12/10/2026 07h | 12/10/2026 15h | 9 | 46,3 | 106,0 | 283,7 |
 | 08/06/2023 05h | 08/06/2023 13h | 9 | 46,5 | 106,8 | 281,3 |
-| 29/03/2024 07h | 29/03/2024 15h | 9 | 45,1 | 107,0 | 276,5 |
 
-Total: 345 eventos (2019: 4; 2020: 6; 2021: 8; 2022: 4; 2023: 18; 2024: 9; 2025: 139; 2026: 157). A lista completa está na aba EVENTOS_PARADA_COM_EVT da planilha. O conjunto de dados não informa a causa das paradas.
+Total: 363 eventos (2019: 4; 2020: 6; 2021: 8; 2022: 4; 2023: 18; 2024: 9; 2025: 139; 2026: 175). A lista completa está na aba EVENTOS_PARADA_COM_EVT da planilha. O conjunto de dados não informa a causa das paradas.
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%); disponibilidade declarada conferida com Disponibilidade por usina (operacional): 70.895 de 70.895 horas coincidentes (100,0%); vazões turbinada e vertida conferidas com Dados hidrológicos horários: 70.731 de 70.731 horas coincidentes (100,0%). Sem outra fonte para conferir: energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; disponibilidade declarada conferida com Disponibilidade por usina (operacional): 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; vazões turbinada e vertida conferidas com Dados hidrológicos horários: 71.187 de 71.187 horas coincidentes (100,0%). Sem outra fonte para conferir: energia vertida turbinável (EVT).
 
 
 ## 9. Operação verificada e programação diária do ONS
 
-**Programação diária do ONS.** A programação diária do ONS para a usina cobre de 01/10/2024 a 28/09/2026 no período da base (708 dias com arquivo; 20 dias sem arquivo no portal, cujas 480 horas ficam fora do cruzamento). Nas 16.992 horas comuns, a usina ficou parada com EVT em 1.908 h; em 1.739 delas (91,1%) a programação do ONS era de até 1 MW, com disponibilidade declarada média de 43,1 MW. Essas horas somam 32,6 GWh de EVT (57,3% da EVT das horas comuns), e 77,3% delas ocorreram na janela das 9h às 15h. Em 182 h a usina ficou parada com programação acima de 5 MW (68 eventos; o mais longo, de 01/05/2026 21h a 02/05/2026 09h, durou 13 h com programação média de 21,2 MW). Em 691 h a usina gerou acima de 1 MW com programação de até 1 MW. A correlação horária entre a geração verificada e a programada foi de 0,83. A programação diária não registra reprogramações em tempo real nem, para usinas hidráulicas, o motivo da programação.
+**Programação diária do ONS.** A programação diária do ONS para a usina cobre de 01/10/2024 a 19/10/2026 no período da base (729 dias com arquivo; 20 dias sem arquivo no portal, cujas 480 horas ficam fora do cruzamento). Nas 17.448 horas comuns, a usina ficou parada com EVT em 2.029 h; em 1.858 delas (91,6%) a programação do ONS era de até 1 MW, com disponibilidade declarada média de 43,3 MW. Essas horas somam 36,0 GWh de EVT (58,3% da EVT das horas comuns), e 77,1% delas ocorreram na janela das 9h às 15h. Em 184 h a usina ficou parada com programação acima de 5 MW (70 eventos; o mais longo, de 01/05/2026 21h a 02/05/2026 09h, durou 13 h com programação média de 21,2 MW). Em 708 h a usina gerou acima de 1 MW com programação de até 1 MW. A correlação horária entre a geração verificada e a programada foi de 0,84. A programação diária não registra reprogramações em tempo real nem, para usinas hidráulicas, o motivo da programação.
 
 ### Horas paradas com EVT por mês e programação do ONS
 
@@ -371,20 +372,21 @@ Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 1
 | jul/2026 | 744 | 232 | 222 | 4.174 | 73,9% | 10 | 18 |
 | ago/2026 | 744 | 198 | 197 | 3.031 | 77,3% | 5 | 26 |
 | set/2026 | 672 | 206 | 200 | 3.322 | 74,5% | 6 | 38 |
+| out/2026 | 456 | 121 | 119 | 3.344 | 71,1% | 2 | 17 |
 
 Horas comuns à base de EVT e à programação. Usina parada = geração até 1 MW; programação ≤ 1 MW = o ONS não programou geração; > 5 MW = a usina parou com geração programada. Classificação hora a hora na aba PROG_HORAS_CLASSIFICADAS da planilha.
 
-Calculado neste relatório a partir de: Programação diária (PRUHSD), obtido em 05/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%). Sem outra fonte para conferir: programação diária, energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Programação diária (PRUHSD), obtido em 20/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes. Sem outra fonte para conferir: programação diária, energia vertida turbinável (EVT).
 
 ### Horas paradas com EVT e programação de até 1 MW, por hora do dia
 
 | Hora | 0h | 1h | 2h | 3h | 4h | 5h | 6h | 7h | 8h | 9h | 10h | 11h | 12h | 13h | 14h | 15h | 16h | 17h | 18h | 19h | 20h | 21h | 22h | 23h |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Horas | 3 | 9 | 12 | 19 | 25 | 19 | 34 | 98 | 158 | 198 | 223 | 231 | 238 | 218 | 152 | 85 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Horas | 3 | 9 | 12 | 19 | 26 | 20 | 35 | 111 | 174 | 214 | 239 | 247 | 252 | 229 | 161 | 90 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 
-Calculado neste relatório a partir de: Programação diária (PRUHSD), obtido em 05/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%). Sem outra fonte para conferir: programação diária, energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Programação diária (PRUHSD), obtido em 20/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes. Sem outra fonte para conferir: programação diária, energia vertida turbinável (EVT).
 
-### Maiores eventos de usina parada com programação acima de 5 MW (68 eventos, 182 h no total)
+### Maiores eventos de usina parada com programação acima de 5 MW (70 eventos, 184 h no total)
 
 | Início | Fim | Duração (h) | Programação média (MW) | Disponibilidade média (MW) | EVT (MWh) |
 | --- | --- | --- | --- | --- | --- |
@@ -406,14 +408,14 @@ Calculado neste relatório a partir de: Programação diária (PRUHSD), obtido e
 
 Ordenados por duração. Lista completa na aba PROG_EVENTOS_DESVIO da planilha.
 
-Calculado neste relatório a partir de: Programação diária (PRUHSD), obtido em 05/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%). Sem outra fonte para conferir: programação diária, energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Programação diária (PRUHSD), obtido em 20/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes. Sem outra fonte para conferir: programação diária, energia vertida turbinável (EVT).
 
 Dias sem arquivo de programação no portal do ONS: 26/03/2025, 01/06/2025, 13/08/2025, 01/11/2025, 02/11/2025, 29/11/2025, 09/01/2026, 28/01/2026, 05/02/2026, 09/02/2026, 10/02/2026, 12/02/2026, 15/02/2026, 16/02/2026, 01/03/2026, 06/03/2026, 21/04/2026, 28/05/2026, 19/06/2026 e 22/06/2026.
 
 
 ## 10. Disponibilidade operacional e sincronizada (ONS)
 
-**Disponibilidade sincronizada.** A disponibilidade horária publicada pelo ONS para a usina cobre de 28/08/2018 a 28/09/2026 (70.895 horas). A disponibilidade operacional coincide com a disponibilidade declarada da base de EVT em 70.895 das 70.895 horas comuns (100,0%; diferença de até 0,01 MW). Nas 5.443 horas comuns com a usina parada, nenhuma unidade estava sincronizada à rede em 5.415 (99,5%); nas outras 28 havia unidade sincronizada sem gerar acima de 1 MW. Das 2.141 horas paradas com EVT, 2.113 foram com as unidades desligadas da rede; no período da programação diária, 1.723 das 1.739 horas paradas com EVT e programação de até 1 MW tinham as unidades desligadas. Nos anos completos, a disponibilidade sincronizada média variou de 31,7 MW (2025) a 37,7 MW (2023), com a operacional entre 34,3 e 45,0 MW; em 2026*, a sincronizada média foi de 27,7 MW. A capacidade disponível não sincronizada coincide com a reserva desligada apurada nos parâmetros TEIFa/TEIP (horas em reserva desligada × potência) em 4 dos 7 anos com as duas apurações (diferença de até 0,1 GWh); diverge em 2024 (−11,7 GWh), 2025 (−12,4 GWh) e 2026* (+4,1 GWh) (diferença = não sincronizada − reserva desligada); a causa da diferença não está nos dados abertos. A sincronização mostra se as unidades estavam ligadas à rede, mas não o motivo da parada.
+**Disponibilidade sincronizada.** A disponibilidade horária publicada pelo ONS para a usina cobre de 28/08/2018 a 19/10/2026 (71.399 horas). A disponibilidade operacional coincide com a disponibilidade declarada da base de EVT em 71.351 das 71.351 horas comuns (100,0%; diferença de até 0,01 MW). Nas 5.566 horas comuns com a usina parada, nenhuma unidade estava sincronizada à rede em 5.527 (99,3%); nas outras 39 havia unidade sincronizada sem gerar acima de 1 MW. Das 2.262 horas paradas com EVT, 2.223 foram com as unidades desligadas da rede; no período da programação diária, 1.831 das 1.858 horas paradas com EVT e programação de até 1 MW tinham as unidades desligadas. Nos anos completos, a disponibilidade sincronizada média variou de 31,7 MW (2025) a 37,7 MW (2023), com a operacional entre 34,3 e 45,0 MW; em 2026*, a sincronizada média foi de 27,7 MW. A capacidade disponível não sincronizada coincide com a reserva desligada apurada nos parâmetros TEIFa/TEIP (horas em reserva desligada × potência) em 4 dos 7 anos com as duas apurações (diferença de até 0,1 GWh); diverge em 2024 (−11,7 GWh), 2025 (−12,4 GWh) e 2026* (−10,6 GWh) (diferença = não sincronizada − reserva desligada); a causa da diferença não está nos dados abertos. A sincronização mostra se as unidades estavam ligadas à rede, mas não o motivo da parada.
 
 ### Disponibilidade média por ano
 
@@ -427,34 +429,34 @@ Dias sem arquivo de programação no portal do ONS: 26/03/2025, 01/06/2025, 13/0
 | 2023 | 8.760 | 43,4 | 43,4 | 37,7 | 30,3 | 50,3 | 50,3 |
 | 2024 | 8.784 | 43,8 | 43,8 | 35,9 | 27,7 | 69,5 | 81,2 |
 | 2025 | 8.760 | 43,8 | 43,8 | 31,7 | 23,6 | 106,3 | 118,7 |
-| 2026* | 6.504 | 43,2 | 43,2 | 27,7 | 21,5 | 100,4 | 96,3 |
+| 2026* | 6.960 | 43,4 | 43,4 | 27,7 | 21,6 | 108,8 | 119,4 |
 
 Médias nas horas comuns à base de EVT e à disponibilidade do ONS. \* ano parcial; – = sem apuração TEIFa/TEIP no ano.
 
-Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUHSD), obtido em 05/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026; Parâmetros das taxas TEIFa e TEIP (CEG UHE.PH.MS.028761-0.01), obtido em 02/10/2026. Conferência: disponibilidade declarada conferida com Disponibilidade por usina (operacional): 70.895 de 70.895 horas coincidentes (100,0%); geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%). Sem outra fonte para conferir: disponibilidade sincronizada.
+Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUHSD), obtido em 21/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026; Parâmetros das taxas TEIFa e TEIP (CEG UHE.PH.MS.028761-0.01), obtido em 20/10/2026. Conferência: disponibilidade declarada conferida com Disponibilidade por usina (operacional): 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes. Sem outra fonte para conferir: disponibilidade sincronizada.
 
 ![Disponibilidade operacional e sincronizada (ONS)](figures/06_disponibilidade_operacional_sincronizada_mensal.png)
 
 Médias mensais da disponibilidade operacional e sincronizada publicadas pelo ONS e da geração. A operacional coincide com a disponibilidade declarada da base de EVT; a sincronizada mostra a capacidade das unidades ligadas à rede. Linha tracejada: potência instalada (48 MW).
 
-Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUHSD), obtido em 05/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: disponibilidade declarada conferida com Disponibilidade por usina (operacional): 70.895 de 70.895 horas coincidentes (100,0%); geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%). Sem outra fonte para conferir: disponibilidade sincronizada.
+Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUHSD), obtido em 21/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: disponibilidade declarada conferida com Disponibilidade por usina (operacional): 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes. Sem outra fonte para conferir: disponibilidade sincronizada.
 
 ### Horas com a usina parada, por sincronização, EVT e programação do ONS
 
 | Sincronização | EVT | Programação do ONS | Horas | EVT (MWh) |
 | --- | --- | --- | --- | --- |
-| nenhuma unidade sincronizada | com EVT | usina parada com EVT e programação de até 1 MW | 1.723 | 32.369,3 |
+| nenhuma unidade sincronizada | com EVT | usina parada com EVT e programação de até 1 MW | 1.831 | 35.423,5 |
 | nenhuma unidade sincronizada | com EVT | sem programação: fora do período ou sem valor programado | 224 | 5.528,8 |
-| nenhuma unidade sincronizada | com EVT | usina parada com EVT e programação acima de 1 MW | 166 | 3.588,1 |
+| nenhuma unidade sincronizada | com EVT | usina parada com EVT e programação acima de 1 MW | 168 | 3.637,6 |
 | nenhuma unidade sincronizada | sem EVT | sem programação: fora do período ou sem valor programado | 2.883 | 0,0 |
-| nenhuma unidade sincronizada | sem EVT | usina parada sem EVT | 419 | 0,0 |
-| alguma unidade sincronizada | com EVT | usina parada com EVT e programação de até 1 MW | 16 | 249,8 |
+| nenhuma unidade sincronizada | sem EVT | usina parada sem EVT | 421 | 0,0 |
+| alguma unidade sincronizada | com EVT | usina parada com EVT e programação de até 1 MW | 27 | 539,9 |
 | alguma unidade sincronizada | com EVT | sem programação: fora do período ou sem valor programado | 9 | 165,8 |
 | alguma unidade sincronizada | com EVT | usina parada com EVT e programação acima de 1 MW | 3 | 28,6 |
 
 Classificação hora a hora na aba DISP_HORAS_PARADAS da planilha.
 
-Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUHSD), obtido em 05/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026; Programação diária (PRUHSD), obtido em 05/10/2026. Conferência: disponibilidade declarada conferida com Disponibilidade por usina (operacional): 70.895 de 70.895 horas coincidentes (100,0%); geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%). Sem outra fonte para conferir: disponibilidade sincronizada, energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUHSD), obtido em 21/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026; Programação diária (PRUHSD), obtido em 20/10/2026. Conferência: disponibilidade declarada conferida com Disponibilidade por usina (operacional): 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes. Sem outra fonte para conferir: disponibilidade sincronizada, energia vertida turbinável (EVT).
 
 - A disponibilidade operacional é a mesma informação da disponibilidade declarada da base de EVT; a sincronizada indica a capacidade das unidades ligadas à rede.
 - Usina parada = geração até 1 MW; unidade sincronizada = disponibilidade sincronizada acima de 1 MW. Não sincronizada = operacional − sincronizada; reserva desligada = horas em reserva desligada (HRD) das unidades × potência (parâmetros TEIFa/TEIP), apuração diferente e por isso só comparada, sem meta.
@@ -463,7 +465,7 @@ Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUHSD
 
 ## 11. Afluência, vertimento e nível do reservatório (ONS)
 
-**Afluência e vertimento.** Os dados hidrológicos horários do ONS para a usina cobrem de 28/08/2018 a 28/09/2026 (70.760 horas, convertidas da hora de fim para a hora de início); as vazões turbinada e vertida coincidiram com a base de EVT em 100,0% das 70.731 horas comuns (diferença de até 0,5 m³/s; meta de 99%). Nas 61.067 horas com EVT, a afluência estava até o engolimento de uma unidade (81,5 m³/s) em 14.633 (24,0%), entre uma e duas unidades em 42.091 (68,9%) e acima do engolimento máximo da usina (163,0 m³/s) em 4.010 (6,6%); 333 sem dado hidrológico. Em 92,9% das horas com EVT, portanto, a água que chegou ao reservatório cabia nas turbinas da usina. Nos 335 dias com ao menos uma hora de parada com EVT, o nível de montante médio ficou em 344,279 m (amplitude de 0,9 cm ao longo do dia; 344,281 m entre 6h e 8h e 344,277 m na janela das 9h às 15h, quando a vazão vertida é maior), contra 344,321 m nos demais dias (amplitude de 0,3 cm). Os dados hidrológicos são informados pelos agentes e não são consistidos pelo ONS. A afluência e o nível mostram a água disponível e o comportamento do reservatório, mas não o motivo das paradas, que depende de informação do agente.
+**Afluência e vertimento.** Os dados hidrológicos horários do ONS para a usina cobrem de 28/08/2018 a 19/10/2026 (71.264 horas, convertidas da hora de fim para a hora de início); as vazões turbinada e vertida coincidiram com a base de EVT em 100,0% das 71.187 horas comuns (diferença de até 0,5 m³/s; meta de 99%). Nas 61.465 horas com EVT, a afluência estava até o engolimento de uma unidade (81,5 m³/s) em 14.680 (23,9%), entre uma e duas unidades em 42.369 (68,9%) e acima do engolimento máximo da usina (163,0 m³/s) em 4.080 (6,6%); 336 sem dado hidrológico. Em 92,8% das horas com EVT, portanto, a água que chegou ao reservatório cabia nas turbinas da usina. Nos 351 dias com ao menos uma hora de parada com EVT, o nível de montante médio ficou em 344,288 m (amplitude de 0,8 cm ao longo do dia; 344,291 m entre 6h e 8h e 344,288 m na janela das 9h às 15h, quando a vazão vertida é maior), contra 344,320 m nos demais dias (amplitude de 0,3 cm). Os dados hidrológicos são informados pelos agentes e não são consistidos pelo ONS. A afluência e o nível mostram a água disponível e o comportamento do reservatório, mas não o motivo das paradas, que depende de informação do agente.
 
 ### Horas com EVT por faixa de afluência
 
@@ -477,11 +479,11 @@ Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUHSD
 | 2023 | 680 | 6.225 | 591 | 51 | 7.547 | 91,5% |
 | 2024 | 721 | 4.660 | 359 | 29 | 5.769 | 93,3% |
 | 2025 | 1.989 | 5.055 | 201 | 60 | 7.305 | 96,4% |
-| 2026* | 2.864 | 2.392 | 344 | 86 | 5.686 | 92,4% |
+| 2026* | 2.911 | 2.670 | 414 | 89 | 6.084 | 91,7% |
 
 Cabia nas turbinas = afluência até o engolimento máximo da usina. \* ano parcial. Classificação hora a hora na aba HID_HORAS_EVT da planilha.
 
-Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina 153, reservatório PNUHSD), obtido em 05/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: vazões turbinada e vertida conferidas com Dados hidrológicos horários: 70.731 de 70.731 horas coincidentes (100,0%). Sem outra fonte para conferir: afluência, energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina 153, reservatório PNUHSD), obtido em 21/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: vazões turbinada e vertida conferidas com Dados hidrológicos horários: 71.187 de 71.187 horas coincidentes (100,0%). Sem outra fonte para conferir: afluência, energia vertida turbinável (EVT).
 
 ### EVT por faixa de afluência (MWh)
 
@@ -495,17 +497,17 @@ Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina
 | 2023 | 1.571 | 10.540 | 675 | 292 | 13.078 | 92,6% |
 | 2024 | 1.190 | 6.904 | 825 | 21 | 8.940 | 90,5% |
 | 2025 | 15.950 | 13.290 | 707 | 743 | 30.690 | 95,3% |
-| 2026* | 16.189 | 8.349 | 771 | 664 | 25.972 | 94,5% |
+| 2026* | 16.890 | 11.749 | 1.348 | 690 | 30.677 | 93,4% |
 
 Energia vertida turbinável das horas de cada faixa. Cabia nas turbinas = parcela da EVT com afluência até o engolimento máximo da usina. \* ano parcial. Por mês na aba HID_FAIXAS_AFLUENCIA e por ano na aba HID_FAIXAS_ANUAL da planilha.
 
-Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina 153, reservatório PNUHSD), obtido em 05/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: vazões turbinada e vertida conferidas com Dados hidrológicos horários: 70.731 de 70.731 horas coincidentes (100,0%). Sem outra fonte para conferir: afluência, energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina 153, reservatório PNUHSD), obtido em 21/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: vazões turbinada e vertida conferidas com Dados hidrológicos horários: 71.187 de 71.187 horas coincidentes (100,0%). Sem outra fonte para conferir: afluência, energia vertida turbinável (EVT).
 
 ![Afluência, vertimento e nível do reservatório (ONS)](figures/07_evt_por_faixa_de_afluencia.png)
 
 Horas com energia vertida turbinável por faixa de afluência ao reservatório. Tons de laranja mais escuros indicam afluência maior; cinza, horas sem dado hidrológico. Número no topo: total de horas com EVT no ano.
 
-Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina 153, reservatório PNUHSD), obtido em 05/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: vazões turbinada e vertida conferidas com Dados hidrológicos horários: 70.731 de 70.731 horas coincidentes (100,0%). Sem outra fonte para conferir: afluência, energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina 153, reservatório PNUHSD), obtido em 21/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: vazões turbinada e vertida conferidas com Dados hidrológicos horários: 71.187 de 71.187 horas coincidentes (100,0%). Sem outra fonte para conferir: afluência, energia vertida turbinável (EVT).
 
 ### Afluência, vazões, nível e volume útil por ano
 
@@ -519,47 +521,47 @@ Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina
 | 2023 | 8.697 | 113,1 | 419 | 99,6 | 13,2 | 344,02–345,00 | – | 610 |
 | 2024 | 8.760 | 102,5 | 438 | 90,9 | 11,7 | 344,00–344,98 | 17,0 | 383 |
 | 2025 | 8.756 | 98,3 | 338 | 77,4 | 20,3 | 344,04–344,96 | 35,6 | 217 |
-| 2026* | 6.504 | 90,8 | 630 | 70,2 | 19,1 | 344,08–344,92 | 36,6 | 349 |
+| 2026* | 7.008 | 92,7 | 630 | 70,3 | 20,6 | 344,08–344,92 | 36,9 | 419 |
 
 Médias sem os valores sinalizados, que saem só do campo afetado (a hora continua nos demais campos). \* ano parcial.
 
-Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina 153, reservatório PNUHSD), obtido em 05/10/2026. Conferência: vazões turbinada e vertida conferidas com Dados hidrológicos horários: 70.731 de 70.731 horas coincidentes (100,0%). Sem outra fonte para conferir: afluência, níveis e volume útil.
+Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina 153, reservatório PNUHSD), obtido em 21/10/2026. Conferência: vazões turbinada e vertida conferidas com Dados hidrológicos horários: 71.187 de 71.187 horas coincidentes (100,0%). Sem outra fonte para conferir: afluência, níveis e volume útil.
 
 ### Vazões e nível de montante médios por hora do dia
 
 | Hora | Turbinada c/ parada (m³/s) | Vertida c/ parada (m³/s) | Nível c/ parada (m) | Turbinada demais (m³/s) | Vertida demais (m³/s) | Nível demais (m) |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0h | 77,9 | 10,3 | 344,28 | 95,1 | 13,8 | 344,32 |
-| 3h | 71,3 | 17,5 | 344,28 | 95,2 | 13,8 | 344,32 |
-| 6h | 61,8 | 24,6 | 344,28 | 95,0 | 13,7 | 344,32 |
-| 9h | 14,9 | 61,3 | 344,28 | 92,4 | 15,4 | 344,32 |
-| 12h | 8,1 | 64,6 | 344,28 | 90,5 | 17,0 | 344,32 |
-| 15h | 34,8 | 49,4 | 344,27 | 90,6 | 17,0 | 344,32 |
-| 18h | 74,3 | 16,5 | 344,27 | 93,8 | 15,4 | 344,32 |
-| 21h | 79,9 | 8,6 | 344,28 | 95,3 | 14,2 | 344,32 |
+| 0h | 79,3 | 10,2 | 344,29 | 95,1 | 13,8 | 344,32 |
+| 3h | 72,9 | 17,1 | 344,29 | 95,2 | 13,8 | 344,32 |
+| 6h | 60,9 | 25,9 | 344,29 | 95,0 | 13,7 | 344,32 |
+| 9h | 14,3 | 62,9 | 344,29 | 92,4 | 15,4 | 344,32 |
+| 12h | 7,8 | 65,9 | 344,29 | 90,4 | 17,1 | 344,32 |
+| 15h | 35,2 | 50,8 | 344,28 | 90,6 | 17,0 | 344,32 |
+| 18h | 75,7 | 17,0 | 344,28 | 93,8 | 15,4 | 344,32 |
+| 21h | 81,4 | 8,6 | 344,29 | 95,3 | 14,1 | 344,32 |
 
 "c/ parada" = dias com ao menos uma hora de parada com EVT; "demais" = outros dias. Perfil completo na aba HID_PERFIL_HORA_DO_DIA.
 
-Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina 153, reservatório PNUHSD), obtido em 05/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: vazões turbinada e vertida conferidas com Dados hidrológicos horários: 70.731 de 70.731 horas coincidentes (100,0%). Sem outra fonte para conferir: afluência e nível do reservatório.
+Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina 153, reservatório PNUHSD), obtido em 21/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: vazões turbinada e vertida conferidas com Dados hidrológicos horários: 71.187 de 71.187 horas coincidentes (100,0%). Sem outra fonte para conferir: afluência e nível do reservatório.
 
 ![Afluência, vertimento e nível do reservatório (ONS)](figures/08_perfil_horario_nivel_vazoes.png)
 
 Médias por hora do dia nos dias com ao menos uma hora de parada com EVT (linhas cheias) e nos demais dias (tracejadas). Faixa cinza: janela diurna usada no relatório. Valores na aba HID_PERFIL_HORA_DO_DIA.
 
-Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina 153, reservatório PNUHSD), obtido em 05/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: vazões turbinada e vertida conferidas com Dados hidrológicos horários: 70.731 de 70.731 horas coincidentes (100,0%). Sem outra fonte para conferir: afluência e nível do reservatório.
+Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina 153, reservatório PNUHSD), obtido em 21/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: vazões turbinada e vertida conferidas com Dados hidrológicos horários: 71.187 de 71.187 horas coincidentes (100,0%). Sem outra fonte para conferir: afluência e nível do reservatório.
 
 - Os dados são informados pelos agentes e não são consistidos pelo ONS; valores fora da faixa física (vazão negativa, volume útil fora de 0 a 100%) são sinalizados e excluídos só no campo afetado, sem correção, e campos vazios não são tratados como zero.
-- O conjunto marca o fim da hora (a última hora do dia aparece às 23:59); a série foi convertida para a hora de início, como a base de EVT, e as vazões turbinada e vertida coincidiram com a base de EVT em 100,0% das 70.731 horas comuns (diferença de até 0,5 m³/s; meta de 99%).
+- O conjunto marca o fim da hora (a última hora do dia aparece às 23:59); a série foi convertida para a hora de início, como a base de EVT, e as vazões turbinada e vertida coincidiram com a base de EVT em 100,0% das 71.187 horas comuns (diferença de até 0,5 m³/s; meta de 99%).
 - Faixas: até 81,5 m³/s, a afluência cabia em uma unidade; até 163,0 m³/s, nas duas; acima disso, parte do vertimento era inevitável. A EVT de cada hora é a parcela turbinável informada na base de EVT.
 - O volume útil é apresentado como informado; ele varia entre os anos sem variação correspondente do nível de montante, por isso o comportamento do reservatório é descrito pelo nível.
-- Sinalizações (coluna qualidade da série horária tratada): H1 (vazão negativa) em 216 horas (2018: 2 h, 2019: 6 h, 2020: 14 h, 2021: 28 h, 2022: 16 h, 2023: 7 h, 2024: 5 h, 2025: 49 h e 2026: 89 h); H2 (volume útil fora de 0 a 100%) em 2.321 horas (2019: 2.319 h e 2020: 2 h); H4 (nível de montante ou de jusante muito afastado da mediana da série) em 13 horas (2019: 1 h, 2023: 1 h, 2025: 10 h e 2026: 1 h).
+- Sinalizações (coluna qualidade da série horária tratada): H1 (vazão negativa) em 219 horas (2018: 2 h, 2019: 6 h, 2020: 14 h, 2021: 28 h, 2022: 16 h, 2023: 7 h, 2024: 5 h, 2025: 49 h e 2026: 92 h); H2 (volume útil fora de 0 a 100%) em 2.321 horas (2019: 2.319 h e 2020: 2 h); H4 (nível de montante ou de jusante muito afastado da mediana da série) em 13 horas (2019: 1 h, 2023: 1 h, 2025: 10 h e 2026: 1 h).
 - A afluência horária tem picos isolados: a maior, 2.270 m³/s em 20/11/2020 02h, ocorreu com defluência de 106 m³/s. Picos assim e as afluências negativas são típicos de afluência calculada por balanço hídrico com oscilações do nível; a afluência máxima anual pode refletir esses picos. A classificação por faixa usa o valor de cada hora.
 - Meses sem a usina no conjunto: nenhum; horas ausentes em meses com dados: 136 (aba HID_AUSENCIAS). Nada foi interpolado.
 
 
 ## 12. Horas com geração zero por mês
 
-**Horas com geração zero.** A geração foi exatamente zero em 5.359 h: 3.290 h com disponibilidade zero (indisponibilidade total) e 2.069 h com a usina declarada disponível. Por ano: 2018: 29 h (parcial); 2019: 2.199 h; 2020: 354 h; 2021: 83 h; 2022: 87 h; 2023: 212 h; 2024: 128 h; 2025: 1.223 h; 2026: 1.044 h (parcial). Essa contagem difere das horas de usina parada com EVT: das 5.359 h com geração zero, 2.060 h tiveram EVT positiva, e as horas de usina parada com EVT incluem ainda 81 h com geração entre 0 e 1 MW. A distribuição mensal está na aba HORAS_GERACAO_ZERO_MES da planilha.
+**Horas com geração zero.** A geração foi exatamente zero em 5.475 h: 3.290 h com disponibilidade zero (indisponibilidade total) e 2.185 h com a usina declarada disponível. Por ano: 2018: 29 h (parcial); 2019: 2.199 h; 2020: 354 h; 2021: 83 h; 2022: 87 h; 2023: 212 h; 2024: 128 h; 2025: 1.223 h; 2026: 1.160 h (parcial). Essa contagem difere das horas de usina parada com EVT: das 5.475 h com geração zero, 2.174 h tiveram EVT positiva, e as horas de usina parada com EVT incluem ainda 88 h com geração entre 0 e 1 MW. A distribuição mensal está na aba HORAS_GERACAO_ZERO_MES da planilha.
 
 | Ano | Jan | Fev | Mar | Abr | Mai | Jun | Jul | Ago | Set | Out | Nov | Dez | Total | Com disp. zero | Com usina disponível |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -571,11 +573,11 @@ Calculado neste relatório a partir de: Dados hidrológicos horários (cod_usina
 | 2023 | 0 | 36 | 0 | 5 | 37 | 53 | 5 | 16 | 0 | 37 | 17 | 6 | 212 | 103 | 109 |
 | 2024 | 2 | 0 | 42 | 0 | 0 | 0 | 38 | 0 | 0 | 13 | 9 | 24 | 128 | 86 | 42 |
 | 2025 | 0 | 0 | 0 | 290 | 24 | 20 | 50 | 104 | 163 | 228 | 195 | 149 | 1.223 | 330 | 893 |
-| 2026* | 39 | 15 | 24 | 77 | 129 | 111 | 228 | 222 | 199 | – | – | – | 1.044 | 75 | 969 |
+| 2026* | 39 | 15 | 24 | 77 | 129 | 111 | 228 | 222 | 199 | 116 | – | – | 1.160 | 75 | 1.085 |
 
 Horas em que val_geracao é exatamente zero. \* ano parcial; – = mês sem dados na série. Com disp. zero = horas com disponibilidade declarada zero (indisponibilidade total); com usina disponível = demais horas com geração zero.
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%); disponibilidade declarada conferida com Disponibilidade por usina (operacional): 70.895 de 70.895 horas coincidentes (100,0%).
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; disponibilidade declarada conferida com Disponibilidade por usina (operacional): 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes.
 
 
 ## 13. Vazões defluentes por ano
@@ -584,12 +586,12 @@ Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 1
 
 Médias anuais das vazões defluentes (turbinada, vertida turbinável e vertida não turbinável). Linha tracejada: engolimento máximo (2 × 81,5 m³/s). A parcela não turbinável contínua aparece a partir de dez/2022, quando muda a classificação do vertimento contínuo.
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: vazões turbinada e vertida conferidas com Dados hidrológicos horários: 70.731 de 70.731 horas coincidentes (100,0%).
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: vazões turbinada e vertida conferidas com Dados hidrológicos horários: 71.187 de 71.187 horas coincidentes (100,0%).
 
 
 ## 14. Conferência da geração com a série oficial (ONS)
 
-A geração horária da base de EVT coincide com a série oficial de geração por usina do ONS (id ONS MSUHSD) em todas as 70.895 horas comuns, de 28/08/2018 a 28/09/2026 (diferença de até 0,01 MW); a energia do período é de 1.919,577 GWh na base de EVT e de 1.919,577 GWh na série oficial.
+**Conferência da geração.** A geração horária da base de EVT difere da série oficial de geração por usina do ONS (id ONS MSUHSD) em 0 das 71.351 horas comuns, de 28/08/2018 a 19/10/2026 (diferença acima de 0,01 MW); 48 horas constam só da série oficial e 0 só da base de EVT; a energia do período é de 1.929,924 GWh na base de EVT e de 1.930,675 GWh na série oficial. Lista completa nas abas GER_DIVERGENCIAS e GER_MENSAL.
 
 | Ano | Base de EVT (GWh) | Geração por usina (GWh) | Diferença (MWh) | Horas só na base de EVT | Horas só na série oficial |
 | --- | --- | --- | --- | --- | --- |
@@ -601,16 +603,16 @@ A geração horária da base de EVT coincide com a série oficial de geração p
 | 2023 | 265,201 | 265,201 | 0,0 | 0 | 0 |
 | 2024 | 243,028 | 243,028 | 0,0 | 0 | 0 |
 | 2025 | 206,857 | 206,857 | 0,0 | 0 | 0 |
-| 2026* | 140,102 | 140,102 | 0,0 | 0 | 0 |
+| 2026* | 150,449 | 151,199 | 750,4 | 0 | 48 |
 
 \* ano parcial. Diferença = série oficial − base de EVT. Coincidência = diferença de até 0,01 MW na mesma hora.
 
-Calculado neste relatório a partir de: Geração por usina (id ONS MSUHSD), obtido em 05/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%).
+Calculado neste relatório a partir de: Geração por usina (id ONS MSUHSD), obtido em 22/10/2026; Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes.
 
 
 ## 15. Qualidade dos dados
 
-**Qualidade dos dados.** 526 registros (0,74%) violam ao menos uma regra de plausibilidade física (R6, valor acima do limite físico da usina: 1 h; R7, geração acima da disponibilidade declarada: 293 h; R8, produtividade fora da faixa física: 185 h; R9, geração com vazão turbinada nula: 63 h). O maior valor de geração registrado, 68,7 MW em 15/05/2019 14h, supera a potência instalada. Esses registros foram mantidos nos totais (a EVT neles soma 1.937,3 MWh, 1,31% do total), sinalizados na coluna qualidade_registro e excluídos da tabela de extremos.
+**Qualidade dos dados.** 535 registros (0,75%) violam ao menos uma regra de plausibilidade física (R6, valor acima do limite físico da usina: 1 h; R7, geração acima da disponibilidade declarada: 293 h; R8, produtividade fora da faixa física: 191 h; R9, geração com vazão turbinada nula: 66 h). O maior valor de geração registrado, 68,7 MW em 15/05/2019 14h, supera a potência instalada. Esses registros foram mantidos nos totais (a EVT neles soma 2.132,8 MWh, 1,40% do total), sinalizados na coluna qualidade_registro e excluídos da tabela de extremos.
 
 ### Regras de validação (R1 a R5: consistência interna; R6 a R9: plausibilidade física)
 
@@ -622,11 +624,11 @@ Calculado neste relatório a partir de: Geração por usina (id ONS MSUHSD), obt
 | R4 | Consistência interna ONS | Energia vertida turbinável = vazão x produtividade | 0 | 0,000% | CONFORME |
 | R5 | Consistência interna ONS | Folga de geração = disponibilidade - geração | 0 | 0,000% | CONFORME |
 | R6 | Plausibilidade física | Valor acima do limite físico da usina | 1 | 0,001% | VIOLADA |
-| R7 | Plausibilidade física | Geração acima da disponibilidade declarada | 293 | 0,413% | VIOLADA |
-| R8 | Plausibilidade física | Produtividade fora da faixa física | 185 | 0,261% | VIOLADA |
-| R9 | Plausibilidade física | Geração com vazão turbinada nula | 63 | 0,089% | VIOLADA |
+| R7 | Plausibilidade física | Geração acima da disponibilidade declarada | 293 | 0,411% | VIOLADA |
+| R8 | Plausibilidade física | Produtividade fora da faixa física | 191 | 0,268% | VIOLADA |
+| R9 | Plausibilidade física | Geração com vazão turbinada nula | 66 | 0,093% | VIOLADA |
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026.
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026.
 
 ### Registros sinalizados (plausibilidade física)
 
@@ -634,10 +636,10 @@ Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 1
 | --- | --- | --- | --- | --- |
 | R6 | Valor acima do limite físico da usina | 1 | 15/05/2019 14h | 15/05/2019 14h |
 | R7 | Geração acima da disponibilidade declarada | 293 | 05/03/2019 17h | 12/09/2026 17h |
-| R8 | Produtividade fora da faixa física | 185 | 01/11/2018 23h | 27/09/2026 06h |
-| R9 | Geração com vazão turbinada nula | 63 | 28/01/2020 10h | 24/09/2026 15h |
+| R8 | Produtividade fora da faixa física | 191 | 01/11/2018 23h | 19/10/2026 14h |
+| R9 | Geração com vazão turbinada nula | 66 | 28/01/2020 10h | 07/10/2026 13h |
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026.
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026.
 
 ### Extremos do período, excluídos os registros sinalizados
 
@@ -654,7 +656,7 @@ Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 1
 | val_vazaovertidaturbinavel | m³/s | 152,309 | 16/07/2026 09h | 0,000 | 10/10/2018 15h |
 | val_energiavertidaturbinavel | MWmed | 46,774 | 16/07/2026 09h | 0,000 | 10/10/2018 15h |
 
-Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 30/09/2026. Conferência: geração conferida com Geração por usina: 70.895 de 70.895 horas coincidentes (100,0%); disponibilidade declarada conferida com Disponibilidade por usina (operacional): 70.895 de 70.895 horas coincidentes (100,0%); vazões turbinada e vertida conferidas com Dados hidrológicos horários: 70.731 de 70.731 horas coincidentes (100,0%). Sem outra fonte para conferir: energia vertida turbinável (EVT).
+Calculado neste relatório a partir de: Energia Vertida Turbinável (cod_usina 153), obtido em 21/10/2026. Conferência: geração conferida com Geração por usina: 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; disponibilidade declarada conferida com Disponibilidade por usina (operacional): 71.351 de 71.351 horas coincidentes (100,0%), 48 horas só numa das fontes; vazões turbinada e vertida conferidas com Dados hidrológicos horários: 71.187 de 71.187 horas coincidentes (100,0%). Sem outra fonte para conferir: energia vertida turbinável (EVT).
 
 
 ## 16. Conclusão
@@ -663,24 +665,24 @@ Indícios a confirmar, gerados pelas regras descritas nas notas metodológicas a
 
 ### Pontos de atenção
 
-- 41,9 GWh de EVT (28,4% do total) ocorreram com a usina parada, em 2.141 h, sobretudo em 2025 e 2026; no período com programação diária, 91,1% dessas horas tinham programação do ONS de até 1 MW (seções 8 e 9).
-- Em 92,9% das horas com EVT, a afluência cabia nas turbinas da usina, cujo engolimento máximo é de 163,0 m³/s (seção 11).
-- Em 2025 e 2026 (parcial), a EVT concentrou-se na janela das 9h às 15h, com a geração diurna em 71% e 55% da noturna (seção 7).
-- Disponibilidade declarada média de 87,8%, 3,2 p.p. abaixo da referência da garantia física, de 91,0%; TEIFa de 4,11% em ago/2026, acima da TEIF de referência de 2,333% (seções 2 e 4).
-- Geração média de 74,4% da garantia física (36,4 MWmed); a EVT de 2025 (30,7 GWh) foi a maior dos anos completos (seção 2).
+- 45,3 GWh de EVT (29,7% do total) ocorreram com a usina parada, em 2.262 h, sobretudo em 2025 e 2026; no período com programação diária, 91,6% dessas horas tinham programação do ONS de até 1 MW (seções 8 e 9).
+- Em 92,8% das horas com EVT, a afluência cabia nas turbinas da usina, cujo engolimento máximo é de 163,0 m³/s (seção 11).
+- Em 2025 e 2026 (parcial), a EVT concentrou-se na janela das 9h às 15h, com a geração diurna em 71% e 52% da noturna (seção 7).
+- Disponibilidade declarada média de 87,9%, 3,1 p.p. abaixo da referência da garantia física, de 91,0%; TEIFa de 4,11% em set/2026, acima da TEIF de referência de 2,333% (seções 2 e 4).
+- Geração média de 74,3% da garantia física (36,4 MWmed); a EVT de 2025 (30,7 GWh) foi a maior dos anos completos (seção 2).
 
 ### Possíveis problemas
 
-- UG2: indício de problema na unidade, com limitação forçada de potência em 78 dos 80 meses (3.824 h equivalentes; UG1: 51 h); responde por 91% da TEIFa de ago/2026, que ficou em 4,11%, acima da referência de 2,333% (seção 4).
-- 182 h em 68 eventos com a usina parada e programação do ONS acima de 5 MW; o mais longo, de 01/05/2026 21h a 02/05/2026 09h, durou 13 h (seção 9).
-- Capacidade não sincronizada diferente da reserva desligada informada ao ONS em 2024 (−11,7 GWh) e 2025 (−12,4 GWh); 4 meses-unidade em que o DISPF e as horas por estado operativo classificam o tempo parado de forma diferente (seções 4 e 10).
+- UG2: indício de problema na unidade, com limitação forçada de potência em 79 dos 81 meses (3.861 h equivalentes; UG1: 58 h); responde por 91% da TEIFa de set/2026, que ficou em 4,11%, acima da referência de 2,333% (seção 4).
+- 184 h em 70 eventos com a usina parada e programação do ONS acima de 5 MW; o mais longo, de 01/05/2026 21h a 02/05/2026 09h, durou 13 h (seção 9).
+- Capacidade não sincronizada diferente da reserva desligada informada ao ONS em 2024 (−11,7 GWh), 2025 (−12,4 GWh) e 2026* (−10,6 GWh); 5 meses-unidade em que o DISPF e as horas por estado operativo classificam o tempo parado de forma diferente (seções 4 e 10).
 - Geração acima da disponibilidade declarada em 293 h, segundo a regra R7 (seção 15).
 
 ### A confirmar com o agente
 
 - Motivo das paradas com vertimento turbinável e programação de até 1 MW (ordens do ONS, restrições elétricas ou energéticas), com os registros dos maiores eventos (seções 8 e 9).
 - Causa, histórico e situação atual da limitação forçada de potência da UG2: ocorrências, ordens de serviço e correção prevista (seção 4).
-- Ocorrências nos 68 eventos de parada com programação acima de 5 MW, listados na aba PROG_EVENTOS_DESVIO da planilha (seção 9).
+- Ocorrências nos 70 eventos de parada com programação acima de 5 MW, listados na aba PROG_EVENTOS_DESVIO da planilha (seção 9).
 - Classificação dos estados das unidades (reserva desligada e desligamento programado) e declarações de disponibilidade informadas ao ONS, inclusive as 293 h com geração acima da disponibilidade declarada (seções 4, 10 e 15).
 - Causa e documentação da indisponibilidade total de 25/09/2019 a 24/12/2019, com 2.174 h, e das paradas programadas longas da UG1 e da UG2 em 2019 e da UG2 em 2022 (seções 3 e 4).
 
@@ -690,7 +692,7 @@ Indícios a confirmar, gerados pelas regras descritas nas notas metodológicas a
 - UG2: potência máxima que a unidade alcança hoje e registros de limitação no supervisório e no livro de operação (seção 4).
 - Registros de ocorrência no livro de operação nos eventos de parada com programação acima de 5 MW (seção 9).
 - Plano e registros de manutenção preventiva e corretiva das unidades geradoras, em especial de 2019 e 2022 (seções 3 e 4).
-- Instrumentação de nível e de vazão (réguas e sensores) que gera os dados hidrológicos informados ao ONS; medição da vazão turbinada, dado que houve geração com vazão turbinada nula em 63 h (seções 11 e 15).
+- Instrumentação de nível e de vazão (réguas e sensores) que gera os dados hidrológicos informados ao ONS; medição da vazão turbinada, dado que houve geração com vazão turbinada nula em 66 h (seções 11 e 15).
 
 
 ## 17. Notas metodológicas e limitações
@@ -712,10 +714,10 @@ Indícios a confirmar, gerados pelas regras descritas nas notas metodológicas a
 - Programação diária: conjunto Dados dos Valores da Programação Diária (https://dados.ons.org.br/dataset/programacao_diaria), um arquivo por dia desde 01/10/2024, usina PRUHSD (conferida pelo nome e pelo estado). A data de cada dia vem do nome do arquivo; os 48 patamares de 30 minutos são convertidos em horas pela média dos dois patamares de cada hora (hora de início, como na base de EVT).
 - Classificação das horas comuns: usina parada = geração ≤ 1 MW; programação zero = programação ≤ 1 MW; desvio = usina parada com programação acima de 5 MW. Dias sem arquivo no portal não são interpolados.
 - A programação diária é o planejamento do dia e não registra reprogramações nem ordens em tempo real. Para usinas hidráulicas, os campos de motivo (ordem de mérito, inflexibilidade, razão elétrica) vêm vazios e a disponibilidade programada vem zerada; o conjunto mostra se a usina seguiu a programação, não por que o ONS a programou.
-- Disponibilidade por usina: conjunto Disponibilidade por usina do ONS (https://dados.ons.org.br/dataset/disponibilidade_usina), usina MSUHSD (conferida pelo CEG UHE.PH.MS.028761-0.01 e pelo estado MS), de 28/08/2018 a 28/09/2026, obtido em 05/10/2026.
-- Dados hidrológicos: conjunto Dados hidrológicos horários do ONS (https://dados.ons.org.br/dataset/dados_hidrologicos_ho), cod_usina 153 (conferido pelo nome e pelo código PNUHSD do reservatório), de 28/08/2018 a 28/09/2026, obtido em 05/10/2026; dados informados pelos agentes e não consistidos pelo ONS.
-- Geração por usina: conjunto Geração por usina do ONS (https://dados.ons.org.br/dataset/geracao-usina-2), usina MSUHSD (conferida pelo CEG e pelo estado MS), de 28/08/2018 a 28/09/2026, obtido em 05/10/2026.
-- Cadastro: conjunto Modalidade das usinas do ONS (https://dados.ons.org.br/dataset/modalidade-usina), CEG UHE.PH.MS.028761-0.01 (conferido pelo id ONS MSUHSD e pelo estado MS), cadastro sem série histórica, obtido em 05/10/2026.
+- Disponibilidade por usina: conjunto Disponibilidade por usina do ONS (https://dados.ons.org.br/dataset/disponibilidade_usina), usina MSUHSD (conferida pelo CEG UHE.PH.MS.028761-0.01 e pelo estado MS), de 28/08/2018 a 19/10/2026, obtido em 21/10/2026.
+- Dados hidrológicos: conjunto Dados hidrológicos horários do ONS (https://dados.ons.org.br/dataset/dados_hidrologicos_ho), cod_usina 153 (conferido pelo nome e pelo código PNUHSD do reservatório), de 28/08/2018 a 19/10/2026, obtido em 21/10/2026; dados informados pelos agentes e não consistidos pelo ONS.
+- Geração por usina: conjunto Geração por usina do ONS (https://dados.ons.org.br/dataset/geracao-usina-2), usina MSUHSD (conferida pelo CEG e pelo estado MS), de 28/08/2018 a 19/10/2026, obtido em 22/10/2026.
+- Cadastro: conjunto Modalidade das usinas do ONS (https://dados.ons.org.br/dataset/modalidade-usina), CEG UHE.PH.MS.028761-0.01 (conferido pelo id ONS MSUHSD e pelo estado MS), cadastro sem série histórica, obtido em 22/10/2026.
 - Conclusão: indícios gerados por regras fixas, iguais para qualquer usina, a partir dos resultados das seções: C1 EVT com a usina parada ≥ 10% da EVT (a programação de até 1 MW é citada se ocorrer em ≥ 50% dessas horas); C2 unidade com ≥ 2/3 da TEIFa, acima da referência, ou com limitação forçada de potência em ≥ 50% dos meses; C3 afluência até o engolimento máximo em ≥ 80% das horas com EVT; C4 razão diurna/noturna da EVT ≥ 2 num dos dois últimos anos; C5 disponibilidade ou taxas piores que as referências; C6 usina parada com programação acima de 5 MW; C7 diferença anual ≥ 5 GWh entre capacidade não sincronizada e reserva desligada, ou DISPF e horas por estado operativo divergentes; C8 geração acima da disponibilidade declarada em ≥ 100 h; C9 geração abaixo da garantia física, ou EVT do último ano completo como a maior; C10 indisponibilidade total ≥ 30 dias, ou programada ≥ 20% numa unidade num ano completo; C11 dados hidrológicos sinalizados, ou geração com vazão turbinada nula em ≥ 24 h. O relatório mostra até 5 itens por lista, na ordem das regras; todos estão na aba CONCLUSAO da planilha.
 
 ### Parâmetros utilizados
@@ -755,14 +757,14 @@ Indícios a confirmar, gerados pelas regras descritas nas notas metodológicas a
 | Fonte | Conjunto de dados | Dados dos Valores da Programação Diária (ONS), usina PRUHSD |  | https://dados.ons.org.br/dataset/programacao_diaria |
 | Análise | Programação zero | programação ≤ 1,0 | MW | Parâmetro de análise: mesmo limiar de usina parada |
 | Análise | Desvio da programação | usina parada com programação > 5,0 | MW | Parâmetro de análise |
-| Fonte | Conjunto de dados | Disponibilidade por usina (ONS), id ONS MSUHSD · CEG UHE.PH.MS.028761-0.01; 28/08/2018 a 28/09/2026; obtido em 05/10/2026 |  | https://dados.ons.org.br/dataset/disponibilidade_usina |
+| Fonte | Conjunto de dados | Disponibilidade por usina (ONS), id ONS MSUHSD · CEG UHE.PH.MS.028761-0.01; 28/08/2018 a 19/10/2026; obtido em 21/10/2026 |  | https://dados.ons.org.br/dataset/disponibilidade_usina |
 | Análise | Unidade sincronizada | disponibilidade sincronizada > 1,0 | MW | Parâmetro de análise |
 | Validação | Coincidência entre fontes | diferença ≤ 0,01 | MW | Parâmetro de análise |
-| Fonte | Conjunto de dados | Dados hidrológicos horários (ONS), cod_usina 153 · reservatório PNUHSD; 28/08/2018 a 28/09/2026; obtido em 05/10/2026 |  | https://dados.ons.org.br/dataset/dados_hidrologicos_ho |
+| Fonte | Conjunto de dados | Dados hidrológicos horários (ONS), cod_usina 153 · reservatório PNUHSD; 28/08/2018 a 19/10/2026; obtido em 21/10/2026 |  | https://dados.ons.org.br/dataset/dados_hidrologicos_ho |
 | Análise | Faixas de afluência nas horas com EVT | até 81,5 / até 163,0 / acima | m³/s | Parâmetro de análise: engolimento de uma unidade e da usina |
 | Validação | Alinhamento com a base de EVT (vazões turbinada e vertida) | coincidência ≥ 99% com diferença ≤ 0,5 m³/s |  | Parâmetro de análise |
-| Fonte | Conjunto de dados | Geração por usina (ONS), id ONS MSUHSD · CEG UHE.PH.MS.028761-0.01; 28/08/2018 a 28/09/2026; obtido em 05/10/2026 |  | https://dados.ons.org.br/dataset/geracao-usina-2 |
-| Fonte | Conjunto de dados | Modalidade das usinas (ONS), CEG UHE.PH.MS.028761-0.01; cadastro sem série histórica; obtido em 05/10/2026 |  | https://dados.ons.org.br/dataset/modalidade-usina |
+| Fonte | Conjunto de dados | Geração por usina (ONS), id ONS MSUHSD · CEG UHE.PH.MS.028761-0.01; 28/08/2018 a 19/10/2026; obtido em 22/10/2026 |  | https://dados.ons.org.br/dataset/geracao-usina-2 |
+| Fonte | Conjunto de dados | Modalidade das usinas (ONS), CEG UHE.PH.MS.028761-0.01; cadastro sem série histórica; obtido em 22/10/2026 |  | https://dados.ons.org.br/dataset/modalidade-usina |
 
 Fonte dos dados: parâmetros do projeto (origem na tabela de parâmetros).
 

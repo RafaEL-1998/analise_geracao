@@ -2,13 +2,13 @@
  "etapa": "relatorio",
  "usina": "william_arjona",
  "versao_formato": 1,
- "iniciada_em": "2026-10-20T12:20:26Z",
- "concluida_em": "2026-10-20T12:20:33Z",
+ "iniciada_em": "2026-10-22T17:31:50Z",
+ "concluida_em": "2026-10-22T17:31:58Z",
  "status": "concluida",
  "codigo_saida": 0,
  "etapa_anterior": {
   "etapa": "analises",
-  "concluida_em": "2026-10-20T12:20:26Z"
+  "concluida_em": "2026-10-22T17:31:49Z"
  },
  "arquivos": [
   {
@@ -23,8 +23,8 @@
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
-   "bytes": 126109,
-   "sha256": "fd03cb5c8c13c700b3b6f73bd5f9a3e7d5ff0ebb3de7b0793fc5bad8b6ffac77"
+   "bytes": 126111,
+   "sha256": "644f4033b926c6400320351e21d20f773d151b1217b15fd8bf6f2bb7e6002941"
   },
   {
    "nome": "perfil_estatistico_anual.csv",

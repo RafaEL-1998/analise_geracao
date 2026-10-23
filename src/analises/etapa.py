@@ -19,6 +19,7 @@ import json
 import pandas as pd
 
 from src.analises.cadastro import analisar_cadastro
+from src.analises.carteira import indicadores_carteira
 from src.analises.comum_tipos import agentes_atuais, analisar_comum, base_programacao_conjunto, cobertura_comum
 from src.analises.conjunto import analisar_conjunto
 from src.analises.cobertura import analisar_cobertura
@@ -322,6 +323,7 @@ def analisar_sem_evt(
     res.achados = montar_achados_comum(res)
     res.conclusao = montar_conclusao(res)
     res.omitidos = res.omitidos + regras_omitidas(res)
+    res.indicadores_carteira = indicadores_carteira(res)  # fase E, decisão R21
     return res
 
 
@@ -484,6 +486,7 @@ def executar_analises(perfil: Any) -> ResultadoEtapa:
     res = analisar(**entradas)
     res.tipo = registro.tipo_da_usina(perfil)
     res.modalidade = str(getattr(perfil.usina, "modalidade", "") or "")
+    res.indicadores_carteira = indicadores_carteira(res)  # fase E, decisão R21: só o campo novo muda
     with registrar_gravacoes() as gravacoes:
         salvar_resultados(res, pasta / caminhos.ARQUIVOS_ANALISES["resultados"])
     cobertura = res.cobertura

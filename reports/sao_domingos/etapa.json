@@ -2,96 +2,96 @@
  "etapa": "relatorio",
  "usina": "sao_domingos",
  "versao_formato": 1,
- "iniciada_em": "2026-10-19T11:59:16Z",
- "concluida_em": "2026-10-19T11:59:45Z",
+ "iniciada_em": "2026-10-22T17:35:26Z",
+ "concluida_em": "2026-10-22T17:35:45Z",
  "status": "concluida",
  "codigo_saida": 0,
  "etapa_anterior": {
   "etapa": "analises",
-  "concluida_em": "2026-10-09T17:21:51Z"
+  "concluida_em": "2026-10-22T17:35:26Z"
  },
  "arquivos": [
   {
    "nome": "relatorio_analise_estatistica.pdf",
-   "bytes": 2339635,
-   "sha256": "2a3edcb99392ac15d1cc29e3697d3cd20d95341544a99e031798ceec5c4c7d3d"
+   "bytes": 2369609,
+   "sha256": "43f912de03a01b2464c24f10d17482710c19ec7f9071d1aa84ecf034eafa8abe"
   },
   {
    "nome": "relatorio_analise_estatistica.md",
-   "bytes": 77143,
-   "sha256": "1b65ca1cb987a93623a4bf5319c290c61329e219786671ebd3f172690395d75a"
+   "bytes": 78614,
+   "sha256": "0eb4dfde7dba4f9b328ad2e94accd402bdbf4585f8c38af873387241421158ed"
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
-   "bytes": 2926158,
-   "sha256": "3d5f19875a18471d0f8b32a2858e2299c331a10437e282f9b95aca84b88f8618"
+   "bytes": 2962401,
+   "sha256": "60c0c55865331ee8247a50dc20019b9e7cdcefd1f0ace7340335c17c2cef8533"
   },
   {
    "nome": "perfil_estatistico_anual.csv",
-   "bytes": 4281,
-   "sha256": "ebcf2db6dd66e1e6c51cca172b658dfc92422c9dbd0d8a62c40ba9691a962f00"
+   "bytes": 4280,
+   "sha256": "e6cf023454317a8dcf3b6293805a73bde0f467d9ee87037bef71106f93f03e07"
   },
   {
    "nome": "resumo_executivo.pdf",
-   "bytes": 83886,
-   "sha256": "f39df404b5bcdf47f3e9887fdc13d97e970d632acc6b2e40dc14fcae3c62ba66"
+   "bytes": 83880,
+   "sha256": "6af06f6eeb0a2d8a79c5ce669790253175eb25a95f27ff378ebb0a7a7a031365"
   },
   {
    "nome": "resumo_executivo.md",
-   "bytes": 7329,
-   "sha256": "1d8805ed3a6af6a031c22e1e1b3c02c109d0a73bf46e6c18584e173f4c5dba5b"
+   "bytes": 7436,
+   "sha256": "28e3c40dee95e4548e353145f1bb1c81f66635a27d5ce53b8cd288aed5f3814d"
   },
   {
    "nome": "figures/01_serie_temporal_disponibilidade_geracao_evt.png",
-   "bytes": 504111,
-   "sha256": "bbebd29dc1cd32895fe3168a23e489af5fdfee7dbe09d2415807f1d71b05551f"
+   "bytes": 505842,
+   "sha256": "0502e94d4b33fe824969df39ae84f596549c0efcf0d88dcba0b9d24709fbc1d3"
   },
   {
    "nome": "figures/02_evt_mensal.png",
-   "bytes": 104215,
-   "sha256": "35889e9ad91bc29a6c3253fef092a8b31db21f35d580f3e1ca0b4118c7028298"
+   "bytes": 104070,
+   "sha256": "ab79cd3b317980060a7bf3fd0a5b16f8207c2f3b56fc95166b1e2059090fd4c9"
   },
   {
    "nome": "figures/03_perfil_horario_geracao_evt.png",
-   "bytes": 126533,
-   "sha256": "c7e627bf8a15c470dee2ee1cd7bf968976641d7026ed020e951f97a8e52d52d9"
+   "bytes": 127303,
+   "sha256": "c0bd712d3c63aba4a8719a52efc5ddf20241f18c48c13671e0cdc155f8176620"
   },
   {
    "nome": "figures/04_disponibilidade_geracao_anual.png",
-   "bytes": 112771,
-   "sha256": "0956b20eb0d6dbf42e0b9ad856000fa319db2ed7e0cd08aa5d0695ee409528ec"
+   "bytes": 112751,
+   "sha256": "6572685095e224e9d3b9a7544af5460a0049d335b3169f83d90cb6ac1d19d9f2"
   },
   {
    "nome": "figures/05_vazoes_defluentes_anuais.png",
-   "bytes": 105239,
-   "sha256": "065a008cefc01244b524a14b592399f244ecd2c61ff6cac14c45046b479851b9"
+   "bytes": 105238,
+   "sha256": "a1cb98611063b98a42c7911c726fab657c6602e777411d99e01e4da46d6282a7"
   },
   {
    "nome": "figures/06_disponibilidade_operacional_sincronizada_mensal.png",
-   "bytes": 342235,
-   "sha256": "e7504f0808c0ea1bf45559042b7f382b47082850d870ce70ae4a00d2ef7ae1d6"
+   "bytes": 362536,
+   "sha256": "083b3eb27d8a6b356d9f6ff9c52fce5678166d2b12a4b6e8ce1fef2e55a23d6c"
   },
   {
    "nome": "figures/07_evt_por_faixa_de_afluencia.png",
-   "bytes": 122869,
-   "sha256": "f5e336924fd8135a81d6ad0090ee57bf28d61a3b909ed9250cf9806b2de9f537"
+   "bytes": 123427,
+   "sha256": "4b0577b1888d88f8060c5cf53cd65002baea9c74988f9174ba690e5a592d1d5f"
   },
   {
    "nome": "figures/08_perfil_horario_nivel_vazoes.png",
-   "bytes": 222116,
-   "sha256": "a000b0bfb69fb6f6cdf8cceffb62dc7fd5288b5ae354ae296c48c155c5a1bd87"
+   "bytes": 232061,
+   "sha256": "583bd5f633b335d20090a79a9c5a2bf90d646d11a7023f12d16798e868ca5e69"
   }
  ],
  "resumo": {
   "data_geracao": "07/10/2026 08:53",
   "secoes": 17,
-  "paginas_pdf": 30,
+  "paginas_pdf": 31,
   "figuras": 8,
   "abas_planilha": 58,
   "resumo_executivo": {
    "paginas": 2,
    "evolucao_anual": true,
-   "palavras": 933
+   "palavras": 946
   }
  }
 }

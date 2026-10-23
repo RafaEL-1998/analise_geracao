@@ -161,6 +161,7 @@ DATAS_SENTINELA: Tuple[str, ...] = ("9999-12-31", "2999-12-31", "0001-01-01", "3
 
 DEFAULT_PLOT_DPI: int = 300
 TAMANHO_FIGURA_PADRONIZADA: Tuple[float, float] = (11, 4.3)  # figuras 01, 02, 05 e 06, em polegadas
+LARGURA_FIGURA_CARTEIRA: float = 7.5  # figuras do relatório de carteira (A4 retrato), em polegadas
 
 # ---------------------------------------------------------------------------
 # Conclusão do relatório: limiares do catálogo de regras C1 a C11

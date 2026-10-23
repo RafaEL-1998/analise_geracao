@@ -152,3 +152,48 @@ Já entregue na fase A, sem mudança: a capa com os indicadores do conjunto iden
 | Seção do conjunto (FR-046) | com a geração do conjunto | — | não se aplica |
 | Seção de afluência sem EVT (FR-047) | — | sim | hidrelétrica com EVT: a seção de hoje; demais tipos: não se aplica |
 | Tabela de trechos da seção 1 | sem a coluna de composição | como hoje | como hoje |
+
+## Fase E — relatório de carteira (rascunho para aprovação, tarefa T129)
+
+### Requisitos novos
+
+- **FR-049** (relatório de carteira; decisão R21 e contrato [cli-carteira.md](../contracts/cli-carteira.md)): o comando `python -m src carteira [--estado <UF>] [--tipo <tipo>] [--data-geracao ...]` gera o relatório em `reports/carteiras/<nome>/` só com o que já está gravado: o catálogo, os perfis e os resultados das Análises. Nenhuma etapa é executada e o portal não é consultado.
+  - **Recorte**: as linhas do catálogo (`usinas.csv`) do estado, do tipo ou dos dois. As linhas de conjunto não contam como usina.
+  - **Com resultado**: a usina com perfil achado pelo CEG, conferido e válido, e com as Análises `concluida` no formato atual, com `indicadores_carteira` (FR-062 das Análises).
+  - **Sem resultado**: um motivo por usina, o primeiro desta ordem:
+    1. só agregado no ONS (ver o panorama): cobertura `agregado` no catálogo;
+    2. sem perfil;
+    3. perfil em rascunho;
+    4. perfil inválido, inclusive dois perfis com o mesmo CEG (com os dois slugs);
+    5. Análises ausentes, com falha, desatualizadas ou em formato antigo, com o caso da usina.
+    - A lista traz também a cobertura do catálogo (própria, conjunto, agregado, ausente), que mostra quais usinas têm série no ONS para um perfil.
+  - **Conteúdo**, na ordem do contrato:
+    1. **capa**: recorte, data do catálogo e quantidade de usinas com e sem resultado;
+    2. **quadro das usinas com resultado**: nome, tipo, modalidade, potência, cobertura, nível da geração e período da série;
+    3. **indicadores** (FR-062 das Análises): uma linha por usina, com o ano dos indicadores. Entram só as colunas que se aplicam a algum tipo do recorte, com "—" onde não se aplica; o valor de conjunto ou de agregado vem identificado como tal;
+    4. **ordenação**: possíveis problemas (decrescente), pontos de atenção (decrescente) e nome, com as quatro contagens e as regras avaliadas de cada usina. As usinas sem regra avaliada vêm no fim, com a frase de que a conclusão delas não tem base no nível da usina;
+    5. **usinas sem resultado**: o motivo e a cobertura de cada uma, com a quantidade por motivo;
+    6. **panorama** (só com `--estado`): os agregados do estado (`agregados.csv`) dos 12 últimos meses completos, por modalidade, tipo e mês, com energia (MWh), horas com valor e horas ausentes. Vêm identificados como agregado, com os valores das usinas Tipo III marcados como previsão do ONS, e não são atribuídos a nenhuma usina (princípio VIII). Com `--estado` e `--tipo`, só o tipo do ONS correspondente: hidrelétrica (UHE, PCH e CGH, que o agregado não separa), térmica (UTE e UTN), fotovoltaica ou eólica. Na carteira só por tipo, o panorama é omitido, com o motivo nas notas;
+    7. **notas**: fontes (o catálogo e a data das Análises de cada usina), níveis dos dados e a frase de que a carteira não atribui nota nem parecer: a ordenação só conta os itens da conclusão de cada usina, que dependem das regras avaliadas e do período de cada uma.
+  - **Figuras em seaborn**:
+    - itens da conclusão por usina, na ordem da ordenação: barras horizontais empilhadas pelas quatro listas, na ordem da conclusão, com legenda;
+    - panorama: energia mensal dos agregados em barras empilhadas por modalidade e tipo, com a previsão Tipo III identificada na legenda.
+  - **Planilha** `carteira.xlsx`: abas `USINAS`, `INDICADORES` (valor, nível e unidade de cada indicador), `ORDENACAO`, `SEM_RESULTADO`, `PANORAMA` (na carteira só por tipo, só com o motivo) e `FONTES`.
+  - **Gravação**: pasta temporária, conferência e troca, como no relatório da usina, sem `.bak`. Com `--data-geracao`, o PDF é reproduzível byte a byte.
+  - **Textos**: nenhum termo de parecer (SC-007), conferido por teste.
+  - **Códigos e mensagens**: os do contrato (0, 1, 2 e 5).
+- **Efeito nas referências**: nenhum. A carteira é uma saída nova, fora de `relatorios_referencia/`, e nenhum relatório de usina muda.
+- **Na prática** (catálogo de 22/10/2026):
+  - **MS**: 149 usinas, sem as 22 linhas de conjunto.
+    - Com resultado: as quatro pilotos. A São Domingos entra depois de refeitas as etapas; hoje sairia como "Análises em formato antigo".
+    - Sem resultado: 46 só agregado no ONS e 99 sem perfil, das quais 71 sem série no ONS (cobertura ausente).
+    - Panorama de 10/2025 a 09/2026: MMGD fotovoltaica (2,91 TWh) e pequenas usinas Tipo III hidrelétricas (1,16 TWh) e térmicas (0,22 TWh), estas como previsão; e duas térmicas Tipo III publicadas uma a uma, com zero de 10/2025 a 04/2026 e sem nenhum valor de 05/2026 a 09/2026 (depois da troca do nome pelo ONS). O mês de uma série sem nenhuma hora com valor aparece como "sem valor", e não como zero.
+  - **`brasil_ute`**: 617 usinas; só a William Arjona com resultado.
+
+### Aplicabilidade por recorte (fase E, acréscimo)
+
+| Elemento | `--estado` | `--estado` e `--tipo` | `--tipo` |
+|---|---|---|---|
+| Pasta | `<uf>` | `<uf>_<tipo>` | `brasil_<tipo>` |
+| Quadro, indicadores, ordenação e sem resultado | todas as usinas do estado | as usinas do tipo no estado | as usinas do tipo no Brasil |
+| Panorama | todos os tipos do ONS | o tipo do ONS correspondente | omitido, com o motivo nas notas |
