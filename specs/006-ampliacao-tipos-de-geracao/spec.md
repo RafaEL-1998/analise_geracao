@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-09
 
-**Status**: Aprovada pelo usuário em 2026-10-09, com os ajustes do plano
+**Status**: Aprovada pelo usuário em 2026-10-09, com os ajustes do plano. **Concluída e incorporada em 2026-10-23** às specs das cinco etapas (`specs/001-coleta-dados` a `specs/005-geracao-relatorio`), que passam a valer. Esta pasta fica como histórico, por decisão do usuário de 2026-10-23 (não excluída).
 
 **Input**: User description: "meu sonho é que esse projeto possa virar uma ferramenta que acessa (download) dos dados da ONS e conseguirmos ter esses relatórios estatísticos de térmicas, UHE, PCH, CGH, Eólicas, GD, todas as frentes de geração que tenham nos dados, VAMOS ELEVAR O NÍVEL. [...] faça a nova constitution que aborde todos esses temas, e depois o plano para implantação conforme agentes speckit"
 

@@ -1,6 +1,6 @@
-# Usina fictícia do tipo PCH (spec 006, decisão R23), só para testes: em conjunto de usinas, sem série própria (o ONS
-# publica as linhas da usina sem valor), com a composição do conjunto mudando no período e a programação por dois
-# códigos. Valores inventados; identificadores que não existem no ONS.
+# Usina fictícia do tipo PCH (plano da Coleta de dados, D30), só para testes: em conjunto de usinas, sem série
+# própria (o ONS publica as linhas da usina sem valor), com a composição do conjunto mudando no período e a
+# programação por dois códigos. Valores inventados; identificadores que não existem no ONS.
 
 [usina]
 slug = "pch_ficticia"

@@ -55,7 +55,7 @@ def _abas_sem_evt(res: ResultadosAnalise) -> Dict[str, pd.DataFrame]:
     p = c.get("programacao") or {}
     abas.update({"PROG_RESUMO_MENSAL": p.get("mensal"), "PROG_EVENTOS_DESVIO": p.get("eventos")})
     t = getattr(res, "termica", None) or {}
-    if t:  # seções de térmica (fase B): as tabelas completas
+    if t:  # seções de térmica: as tabelas completas
         a = t.get("atendimento") or {}
         d = t.get("disponivel_sem_despacho") or {}
         cv = t.get("cvu_cmo") or {}
@@ -68,7 +68,7 @@ def _abas_sem_evt(res: ResultadosAnalise) -> Dict[str, pd.DataFrame]:
             conf = (t.get("conferencias") or {}).get(cid) or {}
             abas.update({f"CONF_{sigla}_MENSAL": conf.get("mensal"), f"CONF_{sigla}_DIVERGENCIAS": conf.get("divergencias")})
     r = getattr(res, "renovavel", None) or {}
-    if r:  # seções de eólica e solar (fase C): as tabelas completas
+    if r:  # seções de eólica e solar: as tabelas completas
         fc, corte, rec, prog = (r.get(k) or {} for k in ("fator_capacidade", "restricao", "recurso", "programacao"))
         abas.update({"REN_FC_ANUAL": fc.get("anual"), "REN_FC_MENSAL": fc.get("mensal"),
                      "REN_CORTE_ANUAL": corte.get("anual"), "REN_CORTE_MENSAL": corte.get("mensal"),
@@ -80,12 +80,12 @@ def _abas_sem_evt(res: ResultadosAnalise) -> Dict[str, pd.DataFrame]:
             conf = conferencias.get(cid) or {}
             abas.update({f"CONF_{sigla}_MENSAL": conf.get("mensal"), f"CONF_{sigla}_DIVERGENCIAS": conf.get("divergencias")})
     cj = getattr(res, "conjunto", None) or {}
-    if cj:  # seção do conjunto (fase D): as tabelas completas, com a composição de cada trecho
+    if cj:  # seção do conjunto: as tabelas completas, com a composição de cada trecho
         abas.update({"CONJ_TRECHOS": cj.get("trechos"), "CONJ_COMPOSICAO": cj.get("composicao"),
                      "CONJ_MENSAL": cj.get("mensal"), "CONJ_TIPO_PUBLICADO": cj.get("tipo_publicado"),
                      "CONJ_PESO_USINA": cj.get("peso_usina") if em_duas_partes(res) else None})
     h = res.hidrologia or {}
-    if h:  # afluência da hidrelétrica sem EVT (fase D, T150)
+    if h:  # afluência da hidrelétrica sem EVT
         abas.update({"HID_ALINHAMENTO": h.get("alinhamento"), "HID_MENSAL": h.get("mensal"), "HID_ANUAL": h.get("anual"),
                      "HID_AUSENCIAS": h.get("ausencias"), "HID_AUDITORIA": h.get("auditoria")})
     return {nome: t for nome, t in abas.items()

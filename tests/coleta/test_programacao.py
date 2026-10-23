@@ -129,8 +129,9 @@ def test_identificacao_parcial_e_avisada_no_log(tmp_path: Path, caplog) -> None:
 
 
 def test_varios_codigos_conferidos_pelo_estado_sem_nome(tmp_path: Path) -> None:
-    """Spec 006 (decisão R5; data-model 4): conjunto programado em mais de um código, conferido só pelo estado; a
-    extração traz o código de cada linha, e a soma por patamar fica com o Tratamento."""
+    """Spec da Coleta de dados (FR-043; data-model da Coleta de dados, seção 6): conjunto programado em mais de um
+    código, conferido só pelo estado; a extração traz o código de cada linha, e a soma por patamar fica com o
+    Tratamento."""
     extras = [{"din_programacaodia": "2026-07-01", "num_patamar": p, "cod_exibicaousina": codigo,
                "nom_usina": f"CONJ {codigo}", "id_estado": estado, "val_geracaoprogramada": "3.00"}
               for p in range(1, 49) for codigo, estado in (("GOCJA-101", "GO"), ("GOCJA-102", "GO"))]

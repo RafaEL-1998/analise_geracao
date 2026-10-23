@@ -12,8 +12,9 @@ nesta ordem:
 O PDF (``src.relatorio.resumo_pdf``) e o Markdown saem do mesmo objeto, com o mesmo conteúdo e na mesma ordem. Se o PDF
 passar de duas páginas, a evolução anual sai; se ainda passar, é erro, e a etapa não troca nenhuma saída.
 
-Vale para os dois caminhos da spec 006: nas usinas sem EVT, os indicadores, a tabela anual e os textos vêm de
-``src.relatorio.comum``, e os números do conjunto aparecem como do conjunto, como no relatório completo.
+Vale para os dois caminhos do relatório (plano da Geração do relatório, D15): nas usinas sem EVT, os indicadores, a
+tabela anual e os textos vêm de ``src.relatorio.comum``, e os números do conjunto aparecem como do conjunto, como no
+relatório completo.
 """
 
 from __future__ import annotations
@@ -57,11 +58,11 @@ from src.relatorio.resumo_pdf import gerar_resumo_pdf, paginas_do_pdf
 logger = setup_logger("relatorio")
 
 CAMINHO_EVT = "evt"  # hidrelétrica com série própria na Energia Vertida Turbinável
-CAMINHO_SEM_EVT = "sem_evt"  # demais usinas, sobre a base horária comum (spec 006, decisão R30)
+CAMINHO_SEM_EVT = "sem_evt"  # demais usinas, sobre a base horária comum (plano do Tratamento de dados, D15)
 # Colunas da tabela anual do relatório que entram no resumo, por caminho (no máximo seis). No caminho sem EVT, as que a
-# tabela da usina tem, nesta ordem (decisão R6 da spec 007): o nível do número, a geração, a energia, o fator de
+# tabela da usina tem, nesta ordem (plano, D27): o nível do número, a geração, a energia, o fator de
 # capacidade (eólicas e solares), a disponibilidade (quando o ONS a publica) e o indicador de perda do tipo (nas
-# térmicas, as horas disponíveis sem despacho, fase B da 006; nas eólicas e solares, a energia cortada, fase C).
+# térmicas, as horas disponíveis sem despacho; nas eólicas e solares, a energia cortada).
 COLUNAS_RESUMO_ANUAL: Dict[str, List[str]] = {
     CAMINHO_EVT: ["Ano", "Disp. média (% Pinst)", "Fator de capacidade", "Geração / GF", "EVT (MWh)",
                   "Horas parada c/ EVT"],
@@ -91,7 +92,7 @@ class Tabela:
 
 @dataclass
 class ResumoExecutivo:
-    """Conteúdo do resumo executivo, na ordem do documento (data-model da spec 007, seção 1)."""
+    """Conteúdo do resumo executivo, na ordem do documento (data-model da Geração do relatório, seção 2.10.1)."""
 
     nome_usina: str
     titulo: str
@@ -162,7 +163,7 @@ def palavras_fora_das_tabelas(markdown: str) -> int:
 
 
 def _caminho(res: ResultadosAnalise) -> str:
-    """Caminho da usina, pelo mesmo critério do relatório completo (spec 006, decisão R14)."""
+    """Caminho da usina, pelo mesmo critério do relatório completo (plano da Geração do relatório, D15)."""
     return CAMINHO_SEM_EVT if sem_evt(res) else CAMINHO_EVT
 
 
@@ -222,7 +223,7 @@ def _dados_sem_evt(res: ResultadosAnalise) -> str:
 
 
 def _sobre_os_dados(res: ResultadosAnalise) -> List[str]:
-    """Três parágrafos: dados (cobertura e sinalizações), conferências e limites, fontes (data-model 1.2)."""
+    """Três parágrafos: dados (cobertura e sinalizações), conferências e limites, fontes (data-model, seção 2.10.4)."""
     if sem_evt(res):
         feitas = [texto_conferencia_curto(res, cid) for cid in CONFERENCIAS_SEM_EVT if conferencia_feita(res, cid)]
         conferencias = (f"Conferências: {'; '.join(feitas)}. " if feitas else "") + FRASE_LIMITES
@@ -261,7 +262,7 @@ def montar_resumo(res: ResultadosAnalise, paginas_relatorio: int, data_geracao: 
     listas = listas_conclusao(res)
     sem = sem_evt(res)
     tiles, _ = comum.indicadores_capa(res) if sem else indicadores_capa(res)
-    # no relatório em duas partes (FR-048 do rascunho 005), a tabela anual fica na parte do conjunto
+    # no relatório em duas partes (FR-048), a tabela anual fica na parte do conjunto
     secao_anual = (numeros.get("anuais_comum") or numeros.get("parte_conjunto")) if sem else numeros.get(
         "indicadores_anuais")
     evolucao, remissao = _evolucao_anual(res, secao_anual, com_evolucao_anual)
@@ -334,7 +335,7 @@ def gerar_resumo_md(resumo: ResumoExecutivo, caminho: Path) -> Path:
 
 def gerar_resumo(res: ResultadosAnalise, caminho_pdf: Path, caminho_md: Path, data_geracao: datetime,
                  invariante: bool, paginas_relatorio: int) -> Tuple[Path, Path, Dict[str, Any]]:
-    """Gera o PDF e o Markdown do resumo (FR-006 da spec 007; decisão R10).
+    """Gera o PDF e o Markdown do resumo (FR-055; plano, D31).
 
     Passando de duas páginas, gera de novo sem a evolução anual; se ainda passar, levanta ``RuntimeError`` antes de
     gravar o Markdown. Devolve os dois caminhos e o resumo do ``etapa.json``: páginas, presença da evolução anual e

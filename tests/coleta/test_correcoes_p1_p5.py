@@ -1,4 +1,4 @@
-"""Correções P1 a P5 da Coleta de dados (spec 006, decisão R10; tarefa T027), com catálogo e arquivos sintéticos.
+"""Correções P1 a P5 da Coleta de dados (plano da Coleta de dados, D28), com catálogo e arquivos sintéticos.
 
 - P1: EVT, indicadores e programação escolhem um recurso entre os repetidos no catálogo; o arquivo temporário do
   download leva o id do recurso.

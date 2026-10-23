@@ -1,4 +1,4 @@
-"""Catálogo e resultados gravados fictícios para os testes da carteira (spec 006, fase E; tarefas T131 e T132).
+"""Catálogo e resultados gravados fictícios para os testes da carteira (spec da Geração do relatório, FR-049).
 
 - ``gravar_catalogo``: ``data/catalogo/`` com as linhas dadas de ``usinas.csv`` e de ``agregados.csv`` (as demais
   tabelas só com o cabeçalho), no formato que ``ler_catalogo`` aceita;

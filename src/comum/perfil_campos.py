@@ -1,4 +1,5 @@
-"""Campos do perfil por tipo de usina (spec 006, decisão R4; data-model, seção 3.2; contrato perfil-multitipo.md).
+"""Campos do perfil por tipo de usina (plano da Coleta de dados, D22; data-model da Coleta de dados, seção 5.1;
+contrato perfil-usina da Coleta de dados).
 
 Para cada campo e grupo de tipos, a exigência:
 
@@ -8,8 +9,8 @@ Para cada campo e grupo de tipos, a exigência:
 - ``opcional``;
 - ``—``: não se aplica, e a presença é recusada.
 
-Os campos comuns a todos os tipos (data-model 3.1) são conferidos diretamente em ``src.comum.perfil``. Na UHE, os
-campos e as regras de hoje continuam iguais.
+Os campos comuns a todos os tipos (data-model da Coleta de dados, seção 5.1) são conferidos diretamente em
+``src.comum.perfil``. Na UHE, os campos e as regras de hoje continuam iguais.
 """
 
 from __future__ import annotations
@@ -50,7 +51,7 @@ HIDRAULICOS: Tuple[str, ...] = ("tipo_turbina", "engolimento_nominal_ug_m3s", "q
 _EVT_OU_HIDROLOGIA = _c("evt", "hidrologia")
 _ID_CONJUNTO = _c("geracao", "fator_capacidade", "restricao_razao", coberturas=("conjunto",))
 
-# Campo -> {grupo de tipos: exigência} (data-model, seção 3.2)
+# Campo -> {grupo de tipos: exigência} (data-model da Coleta de dados, seção 5.1)
 CAMPOS: Dict[str, Dict[str, Exigencia]] = {
     "identificacao.id_ons": {"UHE": O, "PCH_CGH": _c("geracao", "disponibilidade", coberturas=("proprio",)),
                              "UTE_UTN": O,

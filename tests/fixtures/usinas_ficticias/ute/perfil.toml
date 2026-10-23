@@ -1,6 +1,6 @@
-# Usina fictícia do tipo UTE (spec 006, decisão R23), só para testes: geração, disponibilidade e programação próprias,
-# sem os indicadores do ONS; na fase B, o despacho, o CVU e o CMO, com o código 901 em 2023 trocado pelas unidades 902
-# (gás) e 903 (óleo) em 2024. Valores inventados; identificadores que não existem no ONS.
+# Usina fictícia do tipo UTE (plano da Coleta de dados, D30), só para testes: geração, disponibilidade e programação
+# próprias, sem os indicadores do ONS; o despacho, o CVU e o CMO, com o código 901 em 2023 trocado pelas unidades
+# 902 (gás) e 903 (óleo) em 2024. Valores inventados; identificadores que não existem no ONS.
 
 [usina]
 slug = "ute_ficticia"

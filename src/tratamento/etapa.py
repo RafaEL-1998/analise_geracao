@@ -4,9 +4,9 @@ Lê só a pasta da Coleta da usina (e o dicionário de dados da EVT) e grava ``d
 base de EVT tratada e validação física; indicadores e taxas; programação horária; séries horárias de disponibilidade,
 hidrologia e geração, com ausências e auditoria completa (spec do Tratamento de dados). O cadastro não tem tratamento.
 
-Nas usinas sem EVT (spec 006, decisão R30), o período vem da série de referência da Coleta, só os conjuntos coletados
+Nas usinas sem EVT (decisão D15), o período vem da série de referência da Coleta, só os conjuntos coletados
 são tratados e a base horária comum (``base_horaria.csv``) fica no lugar da base de EVT. Nas eólicas e solares em
-conjunto com série própria (fase C), a base horária vem da restrição com detalhe da usina, pela média das duas
+conjunto com série própria (decisão D19), a base horária vem da restrição com detalhe da usina, pela média das duas
 meias-horas, com a disponibilidade e a programação só quando estão no nível da usina.
 """
 
@@ -111,7 +111,7 @@ def _ler_opcional(caminho: Path, leitor: Any) -> pd.DataFrame:
 
 
 def _tratar_sem_evt(perfil: Any, coleta: Path, pasta: Path, resumo: Dict[str, Any]) -> None:
-    """Usinas sem EVT (decisão R30): o período da série de referência, os conjuntos coletados e a base horária."""
+    """Usinas sem EVT (decisão D15): o período da série de referência, os conjuntos coletados e a base horária."""
     periodo = json.loads((coleta / caminhos.MANIFESTO_ETAPA).read_text(encoding="utf-8"))["resumo"]["periodo"]
     inicio, fim = pd.Timestamp(periodo["inicio"]), pd.Timestamp(periodo["fim"])
     resumo["periodo"] = {"inicio": inicio.strftime(FORMATO_DATA), "fim": fim.strftime(FORMATO_DATA)}
@@ -149,7 +149,7 @@ def _tratar_sem_evt(perfil: Any, coleta: Path, pasta: Path, resumo: Dict[str, An
 
 def _tratar_termica(perfil: Any, chaves: set, coleta: Path, pasta: Path, inicio: pd.Timestamp, fim: pd.Timestamp,
                     resumo: Dict[str, Any]) -> None:
-    """Despacho, CVU e CMO das térmicas, quando coletados (spec 006, fase B; decisão R11)."""
+    """Despacho, CVU e CMO das térmicas, quando coletados (FR-037 a FR-040; decisão D16)."""
     arq = caminhos.ARQUIVOS_COLETA
     planejamento = getattr(perfil.identificacao, "planejamento", ()) or ()
 
@@ -178,7 +178,7 @@ def _tratar_termica(perfil: Any, chaves: set, coleta: Path, pasta: Path, inicio:
 def _tratar_renovavel(perfil: Any, chaves: set, coleta: Path, pasta: Path, inicio: pd.Timestamp, fim: pd.Timestamp,
                       resumo: Dict[str, Any]) -> Any:
     """Fator de capacidade, restrição com a razão e com detalhe e os membros do conjunto das eólicas e solares, quando
-    coletados (spec 006, fase C; decisões R11 e R12). Devolve a restrição com detalhe tratada (ou None)."""
+    coletados (FR-041 a FR-044; decisões D16 e D17). Devolve a restrição com detalhe tratada (ou None)."""
     arq = caminhos.ARQUIVOS_COLETA
 
     def entrada(nome: str):

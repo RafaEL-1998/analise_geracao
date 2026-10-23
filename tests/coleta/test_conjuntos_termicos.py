@@ -1,4 +1,4 @@
-"""Conjuntos das térmicas na Coleta (spec 006, fase B; decisão R9; tarefa T078).
+"""Conjuntos das térmicas na Coleta (plano da Coleta de dados, D27).
 
 Com brutos sintéticos: o despacho pelo CEG, com o código de planejamento conferido como número e só no período de cada
 código; o CVU pelos códigos do perfil, conferido pelo subsistema; o CMO pelo subsistema, como agregado; e o

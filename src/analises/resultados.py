@@ -12,8 +12,9 @@ import pandas as pd
 from src.comum.persistencia import ResultadoGravacao, gravar_bytes
 
 # Muda quando os campos mudam; a Geração do relatório recusa um formato diferente.
-# 2: datas de obtenção da Coleta em ``datas_obtencao`` (spec 006, decisão R22).
-# 3: tipo, modalidade, níveis, trechos, seções comuns e omissões das usinas sem EVT (spec 006, data-model 6.4).
+# 2: datas de obtenção da Coleta em ``datas_obtencao`` (plano das Análises, D25).
+# 3: tipo, modalidade, níveis, trechos, seções comuns e omissões das usinas sem EVT (data-model das Análises,
+#    seções 3.2 e 3.12 a 3.19).
 VERSAO_FORMATO = 3
 
 
@@ -61,25 +62,27 @@ class ResultadosAnalise:
     # Dados das figuras 01 (médias diárias) e 05 (vazões médias anuais), para a Geração do relatório só desenhar
     serie_diaria: pd.DataFrame = field(default_factory=pd.DataFrame)
     vazoes_anuais: pd.DataFrame = field(default_factory=pd.DataFrame)
-    # Spec 006 (data-model 6.4). Nas hidrelétricas com EVT, só ``tipo``, ``modalidade`` e ``indicadores_carteira``
-    # são preenchidos; os campos de EVT acima ficam vazios nas usinas sem EVT.
+    # Todos os tipos de usina (data-model das Análises, seções 3.2 e 3.12 a 3.19). Nas hidrelétricas com EVT, só
+    # ``tipo``, ``modalidade`` e ``indicadores_carteira`` são preenchidos; os campos de EVT acima ficam vazios nas
+    # usinas sem EVT.
     tipo: str = ""
     modalidade: str = ""
     # Chave da tabela ou da figura (ou do conjunto) -> {"nivel": usina | conjunto | agregado, "identificador": ...}
     niveis: Dict[str, Dict[str, str]] = field(default_factory=dict)
-    trechos: pd.DataFrame = field(default_factory=pd.DataFrame)  # trechos.csv da Coleta (data-model 5.2)
-    # Seções comuns sobre a base horária comum (decisão R30); vazio nas hidrelétricas com EVT, o que define o caminho
+    # trechos.csv da Coleta (data-model da Coleta de dados, seção 7.2)
+    trechos: pd.DataFrame = field(default_factory=pd.DataFrame)
+    # Seções comuns sobre a base horária comum (decisão D16); vazio nas hidrelétricas com EVT, o que define o caminho
     comum: Dict[str, Any] = field(default_factory=dict)
-    termica: Dict[str, Any] = field(default_factory=dict)  # decisão R18 (fase B)
-    renovavel: Dict[str, Any] = field(default_factory=dict)  # decisão R19 (fase C)
-    conjunto: Dict[str, Any] = field(default_factory=dict)  # decisão R20 (fase D)
-    indicadores_carteira: Dict[str, Any] = field(default_factory=dict)  # decisão R21 (fase E)
-    # Seções e regras não avaliadas: {"item", "tipo" (secao | regra), "motivo"} (decisões R16 e R17, FR-024)
+    termica: Dict[str, Any] = field(default_factory=dict)  # decisão D20 (térmicas)
+    renovavel: Dict[str, Any] = field(default_factory=dict)  # decisão D21 (eólicas e solares)
+    conjunto: Dict[str, Any] = field(default_factory=dict)  # decisão D22 (usina em conjunto)
+    indicadores_carteira: Dict[str, Any] = field(default_factory=dict)  # decisão D24 (carteira)
+    # Seções e regras não avaliadas: {"item", "tipo" (secao | regra), "motivo"} (decisões D18 e D19, FR-005)
     omitidos: List[Dict[str, str]] = field(default_factory=list)
 
 
 def sem_evt(res: ResultadosAnalise) -> bool:
-    """Caminho do relatório (decisão R14): as usinas sem EVT têm as seções comuns; as hidrelétricas com EVT, não."""
+    """Caminho do relatório (decisão D16): as usinas sem EVT têm as seções comuns; as hidrelétricas com EVT, não."""
     return bool(getattr(res, "comum", None))
 
 

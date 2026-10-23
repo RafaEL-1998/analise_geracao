@@ -1,4 +1,5 @@
-"""Catálogo de usinas: ``python -m src usinas`` (spec 006, decisões R1 a R3, R21 e R31; contracts/cli-usinas.md).
+"""Catálogo de usinas: ``python -m src usinas`` (plano da Coleta de dados, D19 a D21 e D33;
+contrato cli-usinas da Coleta de dados).
 
 Comando da Coleta, o único além de ``coleta`` e ``completo`` que acessa o portal do ONS (princípio I). Sem
 ``--sem-portal``, sincroniza, com o catálogo CKAN, o cache e as versões de hoje:
@@ -6,15 +7,15 @@ Comando da Coleta, o único além de ``coleta`` e ``completo`` que acessa o port
 - o arquivo mais recente de cada conjunto de série já implementado (nos indicadores, o DISPF mensal);
 - a Geração por usina dos últimos 12 meses completos, para o panorama dos agregados;
 - todos os arquivos da Geração térmica por motivo de despacho, para os códigos de planejamento (``planejamento.csv``);
-- todos os arquivos da Programação diária, para os códigos de exibição de todo o período (``programacao.csv``; fase D:
+- todos os arquivos da Programação diária, para os códigos de exibição de todo o período (``programacao.csv``:
   um conjunto pode trocar os códigos, como o Conj. Chapadão em 07/2025);
 - os dicionários de dados desses conjuntos (princípio IV).
 
 Depois monta e grava ``data/catalogo/`` por inteiro, sem ``.bak``, numa pasta temporária conferida antes da troca, e
-lista na tela as usinas do filtro, sempre a partir dos arquivos gravados. O tipo vem do prefixo do CEG (R1); a linha do
+lista na tela as usinas do filtro, sempre a partir dos arquivos gravados. O tipo vem do prefixo do CEG (D19); a linha do
 cadastro sem CEG é de conjunto de usinas. A cobertura de cada conjunto de série é verificada no arquivo mais recente
-(R3), sempre pelos códigos, nunca pelo nome: o id ONS, o CEG, o id do conjunto, na EVT e nos dados hidrológicos o
-``cod_usina`` dos Reservatórios (R31) e, no CVU, os códigos de planejamento vigentes do despacho (fase B).
+(D21), sempre pelos códigos, nunca pelo nome: o id ONS, o CEG, o id do conjunto, na EVT e nos dados hidrológicos o
+``cod_usina`` dos Reservatórios (D33) e, no CVU, os códigos de planejamento vigentes do despacho.
 
 Códigos: 0 catálogo montado e listado; 1 catálogo do ONS inacessível, falha de gravação ou erro inesperado; 2 cadastral
 não obtido (download sem sucesso ou, com ``--sem-portal``, arquivo local ausente).
@@ -136,7 +137,7 @@ VARIANTES: Dict[str, Dict[str, Tuple[str, str]]] = {"restricao_detalhe": registr
 @dataclass(frozen=True)
 class Serie:
     """Conjunto de série verificado na cobertura: chave do registro, pacote, pasta, formatos e prefixo do arquivo; nas
-    restrições, uma série por variante (eólica e fotovoltaica), com o tipo em ``variante`` (fase C)."""
+    restrições, uma série por variante (eólica e fotovoltaica), com o tipo em ``variante``."""
 
     chave: str
     formatos: Tuple[str, ...]
@@ -189,7 +190,7 @@ CHAVES_SERIES: Tuple[str, ...] = tuple(dict.fromkeys(s.chave for s in SERIES))  
 
 
 def tipo_do_ceg(ceg: Any) -> str:
-    """Tipo pelas três primeiras letras do CEG (R1); sem CEG, linha de conjunto; prefixo fora da lista, "outro"."""
+    """Tipo pelas três primeiras letras do CEG (D19); sem CEG, linha de conjunto; prefixo fora da lista, "outro"."""
     texto = normalizar_texto(ceg)
     if not texto or texto == "-":
         return "conjunto"
@@ -359,7 +360,7 @@ def ler_cadastral(chave: str, raiz_raw: Path) -> Tuple[pd.DataFrame, Path]:
 
 
 def sincronizar_catalogo(raiz_raw: Path, hoje: date, force: bool = False) -> None:
-    """Sincroniza os arquivos do catálogo (R2). Cadastral sem sucesso levanta ``CadastralNaoObtido``."""
+    """Sincroniza os arquivos do catálogo (D20). Cadastral sem sucesso levanta ``CadastralNaoObtido``."""
     for chave in CADASTRAIS:
         sincronizar_cadastral(chave, raiz_raw, force)
     meses = {(m.year, m.month) for m in _meses_completos(hoje)}
@@ -369,7 +370,7 @@ def sincronizar_catalogo(raiz_raw: Path, hoje: date, force: bool = False) -> Non
             logger.warning("Catálogo de usinas: nenhum arquivo publicado de %s.", serie.pacote)
             continue
         escolhidos = {max(por_periodo): por_periodo[max(por_periodo)]}
-        if serie.chave == "geracao":  # panorama dos agregados: os últimos meses completos (R21)
+        if serie.chave == "geracao":  # panorama dos agregados: os últimos meses completos (D20)
             escolhidos.update({c: r for c, r in por_periodo.items() if (c[0], c[1]) in meses})
         if serie.chave in ("despacho", "programacao"):  # todos os arquivos: os códigos de cada usina no tempo
             escolhidos = dict(por_periodo)
@@ -397,7 +398,7 @@ class Leituras:
     arquivos_cadastrais: Dict[str, Tuple[Path, str]]  # chave -> (arquivo, publicação)
     series: Dict[str, Tuple[Path, str, pd.DataFrame]]  # chave -> (arquivo, publicação, tabela)
     planejamento: pd.DataFrame = None  # type: ignore[assignment]  # planejamento.csv, de todos os arquivos do despacho
-    # Códigos de exibição de todos os arquivos da Programação diária, com o primeiro e o último dia (fase D)
+    # Códigos de exibição de todos os arquivos da Programação diária, com o primeiro e o último dia (FR-051)
     codigos_programacao: pd.DataFrame = None  # type: ignore[assignment]
 
 
@@ -447,9 +448,9 @@ def _um_por_periodo(arquivos: Iterable[Path], formatos: Sequence[str]) -> List[P
 
 
 def montar_planejamento(pasta: Path) -> pd.DataFrame:
-    """``planejamento.csv`` (data-model 2.5): os códigos de planejamento de cada CEG em todos os arquivos locais do
-    despacho, com o primeiro e o último mês em que aparecem. O código é comparado como número (achado A4); o nome
-    publicado só é exibido."""
+    """``planejamento.csv`` (data-model da Coleta de dados, seção 2.5): os códigos de planejamento de cada CEG em todos
+    os arquivos locais do despacho, com o primeiro e o último mês em que aparecem. O código é comparado como número
+    (FR-055); o nome publicado só é exibido."""
     partes = []
     for arquivo in _um_por_periodo(_arquivos_locais(pasta, ("PARQUET", "CSV")), ("PARQUET", "CSV")):
         try:
@@ -482,7 +483,7 @@ def montar_planejamento(pasta: Path) -> pd.DataFrame:
 
 def montar_codigos_programacao(pasta: Path) -> pd.DataFrame:
     """Códigos de exibição de todos os arquivos locais da Programação diária (um por dia), com o primeiro e o último dia
-    em que aparecem, e a modalidade, o estado e o arquivo do último dia (fase D; rascunho 001, FR-051). O dia vem do nome
+    em que aparecem, e a modalidade, o estado e o arquivo do último dia (FR-051). O dia vem do nome
     do arquivo, como na Coleta."""
     colunas = ["codigo_exibicao", "modalidade", "estado", "arquivo", "primeiro_dia", "ultimo_dia"]
     partes = []
@@ -576,7 +577,7 @@ def _unidades_ativas(capacidade: pd.DataFrame, hoje: date) -> pd.DataFrame:
 
 def _programacao(leituras: Leituras, cadastro: pd.DataFrame, conjuntos_ids: Sequence[str]) -> pd.DataFrame:
     """``programacao.csv``: os códigos de todos os arquivos da Programação diária, com o primeiro e o último dia,
-    ligados pelo id ONS ou pelo id do conjunto (R5; fase D)."""
+    ligados pelo id ONS ou pelo id do conjunto (D23; FR-051)."""
     codigos = leituras.codigos_programacao
     if codigos is None or codigos.empty:
         return pd.DataFrame(columns=COLUNAS_PROGRAMACAO)
@@ -597,7 +598,7 @@ def _codigos_de(programacao: pd.DataFrame, valor: str) -> List[str]:
 def _nivel_cobertura(serie: Any, u: Dict[str, Any], leituras: Leituras,
                      lookups: Dict[str, Dict[str, Tuple[int, int]]], programacao: pd.DataFrame,
                      vigentes: Optional[Dict[str, List[str]]] = None) -> Dict[str, Any]:
-    """Nível, identificador e contagens de um conjunto de série para uma usina (R3, R31); ``serie`` é a série do
+    """Nível, identificador e contagens de um conjunto de série para uma usina (D21, D33); ``serie`` é a série do
     catálogo (na variante do tipo, nas restrições) ou só a chave do registro."""
     chave, sid = (serie.chave, serie.id) if isinstance(serie, Serie) else (serie, serie)
     linha = {"ceg": u["ceg"], "conjunto_ons": chave, "nivel": "ausente", "identificador": "", "linhas": 0,
@@ -623,7 +624,7 @@ def _nivel_cobertura(serie: Any, u: Dict[str, Any], leituras: Leituras,
         avaliar("cod_usina", u["cod_usina"], "proprio")
     elif chave in ("indicadores", "despacho"):
         avaliar("ceg", u["ceg"], "proprio")
-    elif chave == "cvu":  # o CVU não tem CEG: pelos códigos de planejamento vigentes no despacho (decisão R9)
+    elif chave == "cvu":  # o CVU não tem CEG: pelos códigos de planejamento vigentes no despacho (D27)
         codigos = (vigentes or {}).get(normalizar_texto(u["ceg"]), [])
         linhas = sum(contagens.get(c, (0, 0))[0] for c in codigos)
         com_valor = sum(contagens.get(c, (0, 0))[1] for c in codigos)
@@ -635,9 +636,9 @@ def _nivel_cobertura(serie: Any, u: Dict[str, Any], leituras: Leituras,
     elif chave in ("geracao", "fator_capacidade", "restricao_razao"):
         if not avaliar("id_ons", u["id_ons"], "proprio"):
             avaliar("id_ons", u["id_conjunto"], "conjunto")
-    elif chave == "restricao_detalhe":  # só a usina: o id do conjunto não identifica (achado A7)
+    elif chave == "restricao_detalhe":  # só a usina: o id do conjunto não identifica (FR-057)
         avaliar("id_ons", u["id_ons"], "proprio")
-    elif chave == "programacao":  # a verificação é no arquivo mais recente (R3): só os códigos presentes nele
+    elif chave == "programacao":  # a verificação é no arquivo mais recente (D21): só os códigos presentes nele
         for valor, nivel in ((u["id_ons"], "proprio"), (u["id_conjunto"], "conjunto")):
             codigos = [c for c in _codigos_de(programacao, valor) if normalizar_texto(c) in contagens]
             if not codigos:
@@ -651,7 +652,7 @@ def _nivel_cobertura(serie: Any, u: Dict[str, Any], leituras: Leituras,
 
 
 def montar_usinas(leituras: Leituras, hoje: date) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """``usinas.csv``, ``cobertura.csv`` e ``programacao.csv``, uma linha por linha do cadastro (SC-002)."""
+    """``usinas.csv``, ``cobertura.csv`` e ``programacao.csv``, uma linha por linha do cadastro (SC-015)."""
     cadastro = leituras.cadastro
     vigente = _composicao_vigente(leituras.composicao, hoje)
     conjunto_da_usina = {normalizar_texto(r["ceg"]): (r["id_ons_conjunto"], r["nom_conjunto"], r.get("id_subsistema", ""))
@@ -736,7 +737,7 @@ def montar_usinas(leituras: Leituras, hoje: date) -> Tuple[pd.DataFrame, pd.Data
 
 
 def montar_agregados(raiz_raw: Path, hoje: date) -> Tuple[pd.DataFrame, List[str], List[str]]:
-    """``agregados.csv``: Tipo III e MMGD por estado e mês, escolhidos pela modalidade, nunca pelo nome ou pelo id (R21).
+    """``agregados.csv``: Tipo III e MMGD por estado e mês, escolhidos pela modalidade, nunca pelo nome ou pelo id (D20).
 
     Um valor por hora em cada grupo (o último publicado, como no Tratamento) e as horas sem registro contadas. Devolve
     a tabela, os arquivos usados e os meses sem arquivo local.
@@ -795,7 +796,7 @@ class Catalogo:
 
 
 def montar_catalogo(raiz_raw: Path, hoje: date, sem_portal: bool) -> Catalogo:
-    """Monta o catálogo a partir dos arquivos locais (R2, R3, R21, R31)."""
+    """Monta o catálogo a partir dos arquivos locais (D20, D21 e D33)."""
     leituras = ler_arquivos(raiz_raw)
     usinas, cobertura, programacao = montar_usinas(leituras, hoje)
     agregados, arquivos_agregados, meses_ausentes = montar_agregados(raiz_raw, hoje)

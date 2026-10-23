@@ -1,4 +1,4 @@
-"""Seções de eólica e solar das Análises (spec 006, fase C; decisão R19; tarefa T102).
+"""Seções de eólica e solar das Análises (spec das Análises, FR-058; plano das Análises, D21).
 
 - fator de capacidade publicado, com o nível, por mês e por ano;
 - energia cortada só nas semi-horas restritas, por mês e por razão (a razão do conjunto, a energia da usina), com as
@@ -166,7 +166,7 @@ def test_recurso_acima_do_limite_fisico_fora_das_faixas() -> None:
 
 
 def test_programacao_comparada_no_nivel_do_conjunto() -> None:
-    """T157: com a base horária da usina, a programação do conjunto é comparada com a geração do conjunto."""
+    """Com a base horária da usina, a programação do conjunto é comparada com a geração do conjunto."""
     horas = pd.date_range("2024-02-01", periods=3, freq="h")
     geracao = pd.DataFrame({"din_instante": horas, "val_geracao": [10.0, 20.0, 30.0]})
     programada = pd.DataFrame({"din_instante": horas[1:], "geracao_programada_mw": [18.0, 30.0]})

@@ -1,5 +1,5 @@
-# Usina fictícia do tipo CGH (spec 006, decisão R23), só para testes: geração própria, sem EVT; com os Dados
-# hidrológicos desde a fase D (tarefa T150: a afluência da hidrelétrica sem EVT, com a hora conferida pela geração).
+# Usina fictícia do tipo CGH (plano da Coleta de dados, D30), só para testes: geração própria, sem EVT; com os Dados
+# hidrológicos (a afluência da hidrelétrica sem EVT, com a hora conferida pela geração).
 # Valores inventados; identificadores que não existem no ONS.
 
 [usina]

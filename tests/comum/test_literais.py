@@ -8,7 +8,7 @@ import pytest
 
 RAIZ = Path(__file__).resolve().parents[2]
 PROIBIDOS = ("Domingos", "DOMINGOS", "MSUHSD", "PRUHSD", "PNUHSD", "028761", "Kaplan", "AGEPAN",
-             # usinas piloto da spec 006: identificadores do ONS e CEGs ficam nos perfis
+             # usinas piloto (plano da Coleta de dados, D30): identificadores do ONS e CEGs ficam nos perfis
              "MSUTWI", "MSSRI1", "CJU_MS4FINO", "CEUFM", "MSBDT", "CJU_MSCAO", "UTE.GN.MS.027075-0.01",
              "PCH.PH.MS.032163-0.01", "UFV.RS.MS.052257-0.01", "EOL.CV.CE.028631-1.01")
 FONTES = sorted(p for p in (RAIZ / "src").rglob("*.py") if "__pycache__" not in p.parts)

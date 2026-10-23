@@ -129,7 +129,8 @@ def sincronizar_dicionarios(conjuntos: Iterable[str], raiz_raw: Path = RAW_DATA_
 def montar_registro(raiz_raw: Path = RAW_DATA_DIR, conjuntos: Optional[Iterable[str]] = None) -> pd.DataFrame:
     """Registro dos dicionários, montado a partir dos manifestos (uma linha por conjunto e formato).
 
-    ``conjuntos``: os pacotes da usina, na ordem do registro (spec 006, decisão R8); por padrão, todos os registrados.
+    ``conjuntos``: os pacotes da usina, na ordem do registro (plano da Coleta de dados, D26); por padrão, todos os
+    registrados.
     """
     linhas = []
     for conjunto in (CONJUNTOS_PIPELINE if conjuntos is None else conjuntos):

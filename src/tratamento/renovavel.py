@@ -1,4 +1,4 @@
-"""Eólicas e solares no Tratamento de dados (spec 006, fase C; decisões R11 e R12; rascunho 002, FR-041 a FR-044).
+"""Eólicas e solares no Tratamento de dados (FR-041 a FR-044; decisões D16 e D17).
 
 - **Restrição com detalhe** (semi-horária): uma linha por semi-hora, a do arquivo publicado por último, com o recurso
   (vento ou irradiância), a marca de restrição e a energia cortada = máx(estimada − verificada, 0) × 0,5 h só nas
@@ -9,9 +9,9 @@
   estimativa que o ONS não calculou; vira ``sinal_estimada_ausente``, fica fora das médias e, na semi-hora restrita, o
   corte não é calculado (vazio).
 - **Hora cheia**: a média das duas meias-horas, só para os cruzamentos com as séries horárias; a hora com uma só
-  meia-hora fica ausente e é contada (FR-016).
+  meia-hora fica ausente e é contada (FR-041).
 - **Fator de capacidade** (horário): com o nível e as sinalizações ``sinal_fc_fora_0_1`` e ``sinal_acima_capacidade``.
-- Sinalização não descarta (FR-017): o recurso marcado como inválido pelo ONS vira ``sinal_recurso_invalido``.
+- Sinalização não descarta (FR-041 e FR-044): o recurso marcado como inválido pelo ONS vira ``sinal_recurso_invalido``.
 """
 
 from __future__ import annotations
@@ -105,7 +105,7 @@ class RestricaoTratada:
 
 def montar_restricao(extraido: pd.DataFrame, auditoria_coleta: pd.DataFrame, tipo: str, inicio: pd.Timestamp,
                      fim: pd.Timestamp, razao: Optional[pd.DataFrame] = None) -> RestricaoTratada:
-    """Restrição com detalhe tratada (decisão R12), com a razão da semi-hora quando há a restrição com a razão."""
+    """Restrição com detalhe tratada (decisão D17), com a razão da semi-hora quando há a restrição com a razão."""
     recurso, invalido = COLUNAS_RECURSO[tipo]
     ordem = _ordem_dos_arquivos(auditoria_coleta)
     if extraido is not None and len(extraido):
@@ -168,7 +168,7 @@ def montar_restricao(extraido: pd.DataFrame, auditoria_coleta: pd.DataFrame, tip
 
 
 def serie_da_referencia(restricao: RestricaoTratada) -> SerieConjunto:
-    """A restrição com detalhe como série de referência da base horária comum (linha da fase C da decisão R6): a
+    """A restrição com detalhe como série de referência da base horária comum (decisão D19): a
     geração verificada da usina em hora cheia, com as horas ausentes."""
     h = restricao.horaria
     horaria = pd.DataFrame({COLUNA_INSTANTE: h[COLUNA_INSTANTE], "val_geracao": h["val_geracaoverificada"],

@@ -71,7 +71,7 @@ def analisar_indicadores_ons(
     """
     try:
         referencia = perfil_ativo().disponibilidade_referencia * 100.0
-    except ValueError:  # perfil sem IP e TEIF de referência (usinas sem EVT; spec 006, decisão R16)
+    except ValueError:  # perfil sem IP e TEIF de referência (usinas sem EVT; plano das Análises, D18)
         referencia = math.nan
     parciais = set(cobertura["anos_parciais"])
     resultado: Dict[str, Any] = {}

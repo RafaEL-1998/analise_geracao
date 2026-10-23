@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-13
 
-**Status**: Aprovada pelo usuário em 2026-10-13, com a emenda 3.1.0 da constituição
+**Status**: Aprovada pelo usuário em 2026-10-13, com a emenda 3.1.0 da constituição. **Concluída e incorporada em 2026-10-23** à spec da Geração do relatório (`specs/005-geracao-relatorio`: FR-n desta spec → FR-(n+49) de lá), que passa a valer. Esta pasta fica como histórico, por decisão do usuário de 2026-10-23 (não excluída).
 
 **Input**: User description: "baseado nesse documento, crie uma spec para gerar um resumo executivo de no máximo 2 páginas apresentando os principais pontos de forma resumida com os insights, análises estatísticas importantes e as hipóteses do que pode estar causando problemas. A ideia é conseguir montar um documento em que um diretor/executivo consiga ler de forma resumida tudo que foi descoberto no relatório de 30 pág gerado. Nesse resumo executivo, não precisa de gráficos, no máximo usar tabelas desde que não ultrapasse 2 páginas."
 

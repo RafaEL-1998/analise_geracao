@@ -1,4 +1,4 @@
-"""Uma usina fictícia por tipo, de ponta a ponta (spec 006, decisão R23, SC-005; tarefas T052, T053, T067, T083 e T104).
+"""Uma usina fictícia por tipo, de ponta a ponta (plano da Coleta de dados, D30; spec da Geração do relatório, SC-010).
 
 As sete usinas (UHE, PCH, CGH, UTE, UTN, EOL e UFV) rodam ``completo --sem-portal`` sobre os mesmos arquivos brutos
 sintéticos, sem rede, cada uma só com o seu perfil. Cada relatório tem as seções comuns do seu caminho, e nenhuma saída
@@ -29,7 +29,8 @@ IDENTIFICADORES: Dict[str, tuple] = {
 }
 SECOES_COMUNS = ("Fonte e cobertura dos dados", "Indicadores anuais", "Geração mensal e sazonalidade",
                  "Perfil horário da geração", "Qualidade dos dados", "Conclusão", "Notas metodológicas e limitações")
-SERIE_TEMPORAL = {"eol": "Série temporal da geração", "ufv": "Série temporal da geração"}  # título por tipo (R14)
+# título por tipo (plano da Geração do relatório, D15)
+SERIE_TEMPORAL = {"eol": "Série temporal da geração", "ufv": "Série temporal da geração"}
 
 
 @pytest.fixture(scope="module")
@@ -112,7 +113,7 @@ def test_pch_em_conjunto_com_trechos_e_linhas_sem_valor(execucoes) -> None:
     md = e["md"]
     assert "Geração média do conjunto CONJ. HIDRAULICO FICTICIO" in md
     trechos = pd.read_csv(e["dados"] / "coleta" / "trechos.csv", sep=";", dtype=str, keep_default_na=False)
-    # fase D: o período começa na entrada da PCH (10/01); o membro entra em 02/2024 e a térmica sai em 15/02
+    # o período começa na entrada da PCH (10/01); o membro entra em 02/2024 e a térmica sai em 15/02
     assert list(trechos["inicio"]) == ["2024-01-10 00:00:00", "2024-02-01 00:00:00", "2024-02-15 00:00:00"]
     assert list(trechos["tipos_composicao"]) == ["PCH;UTE", "CGH;PCH;UTE", "CGH;PCH"]
     assert list(trechos["mostrar"]) == ["True", "True", "True"]
@@ -128,7 +129,7 @@ def test_pch_em_conjunto_com_trechos_e_linhas_sem_valor(execucoes) -> None:
 
 
 # ---------------------------------------------------------------------------
-# PCH e CGH (spec 006, fase D; tarefas T121 e T150)
+# PCH e CGH (spec da Geração do relatório, FR-046 a FR-048)
 # ---------------------------------------------------------------------------
 
 SECAO_CONJUNTO = "Composição e geração do conjunto"
@@ -141,8 +142,9 @@ def _secao(md: str, titulo: str) -> str:
 
 
 def test_pch_em_duas_partes_a_usina_e_o_conjunto(execucoes) -> None:
-    """Decisões do usuário de 22/10/2026 (rascunho 005, FR-048): primeiro a usina, com o peso dela na potência do
-    conjunto; depois, logo antes da conclusão, a parte do conjunto, com as análises do conjunto em subseções."""
+    """Decisões do usuário de 22/10/2026 (spec da Geração do relatório, FR-048): primeiro a usina, com o peso dela na
+    potência do conjunto; depois, logo antes da conclusão, a parte do conjunto, com as análises do conjunto em
+    subseções."""
     md = execucoes["pch"]["md"]
     assert _secoes(md) == ["Fonte e cobertura dos dados", "A usina no conjunto", "Qualidade dos dados", PARTE_CONJUNTO,
                            "Conclusão", "Notas metodológicas e limitações"]
@@ -171,7 +173,7 @@ def test_pch_com_a_secao_do_conjunto_por_trecho(execucoes) -> None:
             "31/01/2024, 2 usinas (PCH e UTE), geração média do conjunto de 22,0 MWmed;") in secao
     divergencia = ("O ONS publica a série do conjunto como TÉRMICA (Biomassa) de 15/02/2024 a 29/02/2024, quando a "
                    "composição tem só CGH e PCH; o tipo das usinas vem do CEG.")
-    assert divergencia not in secao and divergencia in _secao(md, "Qualidade dos dados")  # T160
+    assert divergencia not in secao and divergencia in _secao(md, "Qualidade dos dados")
     # potência somada: PCH 16 + térmica 30 enquanto ela está no conjunto; a CGH membro sem unidade ("—")
     assert "| 1 | 10/01/2024 00h | 31/01/2024 23h | 2 | PCH, UTE | 528 | 11.616 | 22,0 | 22,0 | 46,0 |" in secao
     assert "| 3 | 15/02/2024 00h | 29/02/2024 23h | 2 | CGH, PCH | 360 | 5.400 | 15,0 | 15,0 | 16,0 |" in secao
@@ -232,7 +234,8 @@ def test_secao_do_conjunto_tambem_na_solar_com_serie_propria(execucoes) -> None:
     assert SECAO_CONJUNTO in _secoes(md)
     assert "O conjunto CONJ. SOLAR FICTICIO (CJU_GOCJUF) teve 1 composição no período" in md
     assert "O período começa na entrada da usina no conjunto" not in md
-    # as fontes do resumo com o nível, como nas legendas: o dado do conjunto não leva o id ONS da usina (decisão R15)
+    # as fontes do resumo com o nível, como nas legendas: o dado do conjunto não leva o id ONS da usina (plano da
+    # Geração do relatório, D16)
     fontes = next(linha for linha in _resumo(execucoes, "ufv").splitlines() if linha.startswith("Fontes:"))
     assert re.search(r"Fator de capacidade[^;]*\(conjunto de usinas, id ONS CJU_GOCJUF\)", fontes), fontes
     assert not re.search(r"Fator de capacidade[^;]*\(id ONS GOUFFI\)", fontes), fontes
@@ -257,11 +260,11 @@ def test_utn_com_indicadores_do_onS(execucoes) -> None:
 def test_ufv_com_serie_curta(execucoes) -> None:
     md = execucoes["ufv"]["md"]
     assert "Sazonalidade omitida" in md and "| Fator de capacidade |" in md
-    assert "25/01/2024 00h" in md  # o período começa na primeira semi-hora da série da usina (fase C)
+    assert "25/01/2024 00h" in md  # o período começa na primeira semi-hora da série da usina
 
 
 # ---------------------------------------------------------------------------
-# Resumo executivo de cada tipo (spec 007, US3; tarefas T027 a T030 da 007 e T149 da 006)
+# Resumo executivo de cada tipo (spec da Geração do relatório, US11, cenários 9 e 10)
 # ---------------------------------------------------------------------------
 
 
@@ -298,7 +301,8 @@ def test_resumo_executivo_de_cada_tipo(execucoes, tipo: str) -> None:
     assert palavras(sobre) <= RESUMO_MAXIMO_PALAVRAS_DADOS
     if tipo != "uhe":
         assert "EVT" not in md and "energia vertida" not in md.lower(), tipo
-    # todo número do resumo está no relatório completo (FR-014 e SC-003 da 007); exceção: as páginas do relatório
+    # todo número do resumo está no relatório completo (spec da Geração do relatório, FR-063 e SC-017); exceção: as
+    # páginas do relatório
     for linha in md.splitlines():
         if not linha.startswith("Resume o relatório completo"):
             for numero in re.findall(r"\d[\d.]*(?:,\d+)?", linha):
@@ -306,7 +310,7 @@ def test_resumo_executivo_de_cada_tipo(execucoes, tipo: str) -> None:
 
 
 def test_agente_atual_da_capacidade_de_geracao(execucoes) -> None:
-    """Decisão do usuário de 19/10/2026 (T043 da 007): nas usinas sem EVT, o agente atual das unidades, da Capacidade
+    """Decisão do usuário de 19/10/2026: nas usinas sem EVT, o agente atual das unidades, da Capacidade
     de geração, na capa e no resumo, identificado como tal."""
     capa = execucoes["ute"]["md"].split("\n## 1. ")[0]
     assert "| Agente atual | AGENTE FICTICIO (proprietário e operador) |" in capa
@@ -333,7 +337,7 @@ def test_resumo_da_termica_com_a_conclusao_do_relatorio(execucoes) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Térmicas: despacho, CVU e CMO (spec 006, fase B; tarefa T083)
+# Térmicas: despacho, CVU e CMO (spec da Geração do relatório, FR-044)
 # ---------------------------------------------------------------------------
 
 SECOES_TERMICA = ("Geração por motivo de despacho e inflexibilidade", "Atendimento ao despacho",
@@ -387,7 +391,7 @@ def test_utn_com_a_g3_nao_aplicavel_sem_a_programacao(execucoes) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Eólicas e solares: fator de capacidade e restrições (spec 006, fase C; tarefa T104)
+# Eólicas e solares: fator de capacidade e restrições (spec da Geração do relatório, FR-045)
 # ---------------------------------------------------------------------------
 
 SECOES_RENOVAVEL = ("Fator de capacidade", "Energia cortada por restrição de operação (constrained-off)",
@@ -457,7 +461,7 @@ def test_ufv_em_conjunto_com_a_restricao_como_referencia(execucoes) -> None:
     for nome in ("fator_capacidade_extraido.parquet", "restricao_razao_extraido.parquet"):
         assert set(pd.read_parquet(e["dados"] / "coleta" / nome)["nivel"]) == {"conjunto"}, nome
     assert "A série do conjunto" not in md  # a base horária é da usina
-    # T157: a programação do conjunto comparada com a geração do conjunto, identificada; a C19 não é avaliada
+    # a programação do conjunto comparada com a geração do conjunto, identificada; a C19 não é avaliada
     secao = md.split("Programação diária × geração verificada\n", 1)[1].split("\n## ", 1)[0]
     assert "Programação diária do ONS (conjunto) × geração verificada" in secao
     assert "Geração por usina (conjunto de usinas, id ONS CJU_GOCJUF)" in secao and "MSSRI" not in secao
@@ -468,7 +472,8 @@ def test_ufv_em_conjunto_com_a_restricao_como_referencia(execucoes) -> None:
 
 
 def test_indicadores_da_carteira_gravados_em_cada_tipo(execucoes) -> None:
-    """Fase E (T133): as Análises gravam ``indicadores_carteira`` nos dois caminhos, vazio onde não se aplica."""
+    """Spec das Análises, FR-062: as Análises gravam ``indicadores_carteira`` nos dois caminhos, vazio onde não se
+    aplica."""
     from src.analises.resultados import carregar_resultados
 
     ind = {tipo: carregar_resultados(e["dados"] / "analises" / "resultados.pkl").indicadores_carteira
@@ -487,7 +492,7 @@ def test_indicadores_da_carteira_gravados_em_cada_tipo(execucoes) -> None:
 
 
 def test_carteira_de_go_com_os_resultados_gravados_das_usinas_ficticias(execucoes) -> None:
-    """Fase E (T132): a carteira lê só o que as etapas gravaram, sem refazer nenhuma."""
+    """Spec da Geração do relatório, FR-049: a carteira lê só o que as etapas gravaram, sem refazer nenhuma."""
     from tests.fixtures import carteira_ficticia as cf
 
     raiz = next(iter(execucoes.values()))["dados"].parents[2]

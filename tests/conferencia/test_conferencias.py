@@ -333,7 +333,7 @@ def test_mes_unidade_incompleto_nao_entra_nas_divergencias() -> None:
 
 
 def test_cadastro_com_perfil_sem_id_ons() -> None:
-    """Usina em conjunto sem id ONS próprio (spec 006): sem divergência quando os dois não informam, e o texto
+    """Usina em conjunto sem id ONS próprio (FR-017): sem divergência quando os dois não informam, e o texto
     nunca traz "None"."""
     from dataclasses import replace
 
@@ -347,7 +347,7 @@ def test_cadastro_com_perfil_sem_id_ons() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Hidrelétrica sem EVT: a hora da hidrologia conferida pela geração (spec 006, fase D; rascunho 003, FR-026)
+# Hidrelétrica sem EVT: a hora da hidrologia conferida pela geração (FR-026)
 # ---------------------------------------------------------------------------
 
 
@@ -371,7 +371,7 @@ def test_alinhamento_da_hidrologia_pela_geracao_confirmado() -> None:
     assert r.aplicavel and bool(a["confirmado"]) and (r.comparados, r.coincidentes) == (72, 72)
     assert a["correlacao_0h"] == pytest.approx(1.0) and a["correlacao_0h"] > a["correlacao_mais_1h"]
     assert list(r.tabelas["deslocamentos"]["deslocamento_h"]) == [-1, 0, 1]
-    assert r.meta is None  # sem meta (decisão R13)
+    assert r.meta is None  # sem meta (decisão D17)
 
 
 def test_alinhamento_da_hidrologia_com_uma_hora_de_deslocamento_nao_e_confirmado() -> None:

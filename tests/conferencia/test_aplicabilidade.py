@@ -1,8 +1,8 @@
-"""Conferências do catálogo que não se aplicam à usina (spec 006, decisão R13; data-model 6.3; tarefas T048 e T062).
+"""Conferências do catálogo que não se aplicam à usina (plano da Conferência, D11; data-model, seções 2.12 e 3.7).
 
 ``nao_aplicaveis.csv`` registra, com o motivo, todas as conferências do catálogo que não se aplicam à usina, inclusive
 na UHE. O relatório e a planilha das hidrelétricas com EVT não o leem e continuam com as seis conferências de hoje
-(decisão R29); nas usinas sem EVT, ``conferencias.pkl`` traz só as conferências aplicadas.
+(decisão D12); nas usinas sem EVT, ``conferencias.pkl`` traz só as conferências aplicadas.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from tests.fixtures.sem_evt import projeto_sem_evt
 PERFIL_UHE = carregar_perfil("sao_domingos")
 SEIS_DE_HOJE = ["geracao", "disponibilidade", "vazoes", "dispf_horas", "teifa_teip", "cadastro"]
 NOVAS = ["geracao_fontes", "soma_conjunto", "programacao_despacho", "verificada_despacho", "programacao_renovaveis"]
-# fase D (rascunho 003, FR-026): só nas hidrelétricas; nos demais tipos, sem linha em nao_aplicaveis.csv
+# FR-026: só nas hidrelétricas; nos demais tipos, sem linha em nao_aplicaveis.csv
 HIDRO = ["alinhamento_hidrologia"]
 
 
@@ -124,7 +124,7 @@ def test_etapa_da_uhe_grava_o_arquivo_sem_mudar_as_seis(tmp_path: Path, monkeypa
 
 
 def test_relatorio_nao_le_o_arquivo() -> None:
-    """O relatório só lê os resultados das Análises; o arquivo não aparece no código do relatório (decisão R29)."""
+    """O relatório só lê os resultados das Análises; o arquivo não aparece no código do relatório (decisão D12)."""
     pasta = Path(__file__).resolve().parents[2] / "src" / "relatorio"
     for arquivo in pasta.glob("*.py"):
         texto = arquivo.read_text(encoding="utf-8")

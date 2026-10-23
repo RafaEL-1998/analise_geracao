@@ -197,8 +197,8 @@ def analisar_hidrologia_sem_evt(
     cobertura: Dict[str, Any],
     obtido_em: str = "",
 ) -> Dict[str, Any]:
-    """Afluência, vertimento e nível do reservatório na hidrelétrica sem EVT (spec 006, fase D; rascunho 004, FR-061;
-    tarefa T150): sem os cruzamentos com a EVT (faixas de afluência, dias com parada com EVT).
+    """Afluência, vertimento e nível do reservatório na hidrelétrica sem EVT (spec das Análises, FR-061; plano das
+    Análises, D23): sem os cruzamentos com a EVT (faixas de afluência, dias com parada com EVT).
 
     A hora vem conferida pela geração da usina (FR-026 da Conferência, ``conferencia``); sem a confirmação, só a
     cobertura e o resultado da conferência são devolvidos, como na FR-034. Vazio sem a série no período.

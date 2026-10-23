@@ -28,7 +28,7 @@ def _patamares(dia: str, codigos: dict) -> pd.DataFrame:
 
 
 def test_soma_dos_codigos_vigentes_no_dia_quando_o_conjunto_troca_os_codigos() -> None:
-    """Spec 006, fase D (o Conj. Chapadão trocou os quatro códigos em 07/2025): cada código vale do primeiro ao último
+    """FR-026 (o Conj. Chapadão trocou os quatro códigos em 07/2025): cada código vale do primeiro ao último
     dia em que aparece; o patamar soma os códigos vigentes no dia, e o código vigente sem valor deixa a soma ausente."""
     from src.tratamento.programacao import somar_codigos
 

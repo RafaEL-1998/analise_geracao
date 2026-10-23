@@ -1,4 +1,5 @@
-"""Execução de ponta a ponta da usina fictícia e extração dos invariantes do relatório (decisão R29, spec 006).
+"""Execução de ponta a ponta da usina fictícia e extração dos invariantes do relatório (plano da Geração do
+relatório, D17).
 
 Usado pelo gerador da fotografia (``tests/fixtures/gerar_invariantes_uhe.py``) e pelos testes de invariantes
 (``tests/relatorio/test_invariantes_uhe.py``). Roda sem rede, numa raiz temporária, com os brutos sintéticos de
@@ -99,7 +100,8 @@ def _planilha(caminho: Path) -> Dict[str, Any]:
 
 
 def extrair_invariantes(execucao: Dict[str, Any]) -> Dict[str, Any]:
-    """Os invariantes da decisão R29 a partir de uma execução de ``executar_usina_ficticia``."""
+    """Os invariantes da D17 do plano da Geração do relatório a partir de uma execução de
+    ``executar_usina_ficticia``."""
     from src.relatorio.conteudo import nota_conclusao
 
     relatorio, dados = execucao["relatorio"], execucao["dados"]

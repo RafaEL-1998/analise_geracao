@@ -1,5 +1,5 @@
-"""Coleta no formato 2: datas de obtenção do escopo da usina e cópia do dicionário da EVT (spec 006, decisão R22;
-tarefa T015)."""
+"""Coleta no formato 2: datas de obtenção do escopo da usina e cópia do dicionário da EVT (plano da Coleta de dados,
+D29)."""
 
 from __future__ import annotations
 

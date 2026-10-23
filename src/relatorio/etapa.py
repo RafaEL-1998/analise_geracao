@@ -48,7 +48,7 @@ PASTA_TEMPORARIA = ".gravando"
 
 def completar_resultados(res: ResultadosAnalise) -> ResultadosAnalise:
     """Tabela de parâmetros e origem dos dados, montadas no relatório (spec das Análises, FR-042)."""
-    if sem_evt(res):  # usinas sem EVT (spec 006): parâmetros do tipo, sem os hidráulicos
+    if sem_evt(res):  # usinas sem EVT: parâmetros do tipo, sem os hidráulicos
         res.parametros = comum.tabela_parametros(res)
         res.fontes = origem_dos_dados(res)
         return res

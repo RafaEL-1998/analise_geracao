@@ -43,7 +43,7 @@ TOLERANCIA_POTENCIA_CADASTRO_MW: float = 0.001  # conferência do cadastro: pot�
 TOLERANCIA_IDENTIDADE_HORAS: float = 0.1  # horas por estado operativo: HP = soma das parcelas
 
 # ---------------------------------------------------------------------------
-# Tipos de usina e perfil (spec 006, data-model, seção 1)
+# Tipos de usina e perfil (data-model da Coleta de dados, seção 5.3)
 # ---------------------------------------------------------------------------
 
 TIPOS_USINA: Tuple[str, ...] = ("UHE", "PCH", "CGH", "UTE", "UTN", "EOL", "UFV")
@@ -51,8 +51,10 @@ MODALIDADES_COM_PERFIL: Tuple[str, ...] = ("TIPO I", "TIPO II-A", "TIPO II-B", "
 MODALIDADES_TIPO_III: Tuple[str, ...] = ("TIPO III", "TIPO III (EM DIT)")  # só o agregado: sem perfil
 SUBSISTEMAS: Tuple[str, ...] = ("SE", "S", "NE", "N")
 COBERTURAS: Tuple[str, ...] = ("proprio", "conjunto", "agregado", "ausente")
-TIPOS_COM_FATOR_CAPACIDADE: Tuple[str, ...] = ("EOL", "UFV")  # fator de capacidade nos indicadores anuais (R14)
-PERIODO_MINIMO_SAZONALIDADE_MESES: int = 12  # sazonalidade: meses distintos na série de referência (decisão R17)
+# Fator de capacidade nos indicadores anuais (plano das Análises, D21)
+TIPOS_COM_FATOR_CAPACIDADE: Tuple[str, ...] = ("EOL", "UFV")
+# Sazonalidade: meses distintos na série de referência (plano das Análises, D19)
+PERIODO_MINIMO_SAZONALIDADE_MESES: int = 12
 
 # ---------------------------------------------------------------------------
 # Conjuntos do ONS e leitura
@@ -69,15 +71,15 @@ CONJUNTO_DISPONIBILIDADE: str = "disponibilidade_usina"
 CONJUNTO_HIDROLOGIA: str = "dados_hidrologicos_ho"
 CONJUNTO_GERACAO: str = "geracao-usina-2"
 CONJUNTO_CADASTRO: str = "modalidade-usina"
-# Cadastrais do catálogo de usinas (spec 006, decisões R2 e R31)
+# Cadastrais do catálogo de usinas (plano da Coleta de dados, D20 e D33)
 CONJUNTO_COMPOSICAO: str = "usina_conjunto"
 CONJUNTO_CAPACIDADE: str = "capacidade-geracao"
 CONJUNTO_RESERVATORIO: str = "reservatorio"
-# Térmicas (spec 006, fase B; decisão R9)
+# Térmicas (plano da Coleta de dados, D27)
 CONJUNTO_DESPACHO: str = "geracao-termica-despacho-2"
 CONJUNTO_CVU: str = "cvu-usitermica"
 CONJUNTO_CMO: str = "cmo-semanal"
-# Eólicas e solares (spec 006, fase C; decisão R9): a restrição tem uma variante por tipo
+# Eólicas e solares (plano da Coleta de dados, D27): a restrição tem uma variante por tipo
 CONJUNTO_FATOR_CAPACIDADE: str = "fator-capacidade-2"
 CONJUNTO_RESTRICAO_EOLICA_DETALHE: str = "restricao_coff_eolica_detail"
 CONJUNTO_RESTRICAO_FOTOVOLTAICA_DETALHE: str = "restricao_coff_fotovoltaica_detail"
@@ -138,15 +140,15 @@ RETRY_BACKOFF_FACTOR: float = 2.0
 MAXIMO_VERSOES_ANTERIORES: int = 2
 
 # ---------------------------------------------------------------------------
-# Catálogo de usinas (spec 006, decisões R1 a R3 e R21)
+# Catálogo de usinas (plano da Coleta de dados, D19 a D21)
 # ---------------------------------------------------------------------------
 
 MESES_AGREGADOS_CATALOGO: int = 12  # meses completos de geração no panorama dos agregados
 # Modalidades da Geração por usina: grupos agregados do estado (Tipo III e MMGD) e linhas de conjunto de usinas
 MODALIDADES_AGREGADAS_GERACAO: Tuple[str, ...] = ("PEQUENAS USINAS (TIPO III)", "PEQUENAS USINAS (MMGD)", "TIPO III")
-MODALIDADES_PREVISAO_GERACAO: Tuple[str, ...] = ("PEQUENAS USINAS (TIPO III)", "TIPO III")  # valor previsto (A3)
+MODALIDADES_PREVISAO_GERACAO: Tuple[str, ...] = ("PEQUENAS USINAS (TIPO III)", "TIPO III")  # valor previsto (FR-051)
 PREFIXO_CONJUNTO: str = "CJU_"  # id ONS dos conjuntos de usinas
-# Tipo publicado pelo ONS (sem acento, maiúsculas) -> tipos pelo prefixo do CEG que ele admite (decisão R1)
+# Tipo publicado pelo ONS (sem acento, maiúsculas) -> tipos pelo prefixo do CEG que ele admite (D19)
 TIPOS_ONS: Dict[str, Tuple[str, ...]] = {
     "HIDROELETRICA": ("UHE", "PCH", "CGH"), "TERMICA": ("UTE",), "NUCLEAR": ("UTN",), "EOLIELETRICA": ("EOL",),
     "FOTOVOLTAICA": ("UFV",), "UHE": ("UHE", "PCH", "CGH"), "UTE": ("UTE",), "UEE": ("EOL",), "UFV": ("UFV",),
@@ -179,23 +181,23 @@ LIMIAR_CONCLUSAO_PROGRAMADA_UG_PCT: float = 20.0  # C10: indisponibilidade progr
 LIMIAR_CONCLUSAO_R9_HORAS: int = 24  # C11: geração com vazão turbinada nula
 MAXIMO_ITENS_CONCLUSAO: int = 5  # itens por lista no PDF e no Markdown (a planilha traz todos)
 
-# Térmicas (spec 006, fase B; decisões R16 e R18): limiares calibrados na UTE William Arjona e aprovados pelo usuário
-# em 20/10/2026 (tarefa T094)
+# Térmicas (plano das Análises, D18 e D20): limiares calibrados na UTE William Arjona e aprovados pelo usuário em
+# 20/10/2026
 LIMIAR_DESVIO_DESPACHO_MW: float = 5.0  # atendimento ao despacho: |verificada − programada| acima disso
 LIMIAR_CONCLUSAO_DESPACHO_ABAIXO_HORAS: int = 24  # C12: horas com a geração abaixo da programada
 LIMIAR_CONCLUSAO_DISPONIVEL_CVU_HORAS: int = 168  # C13: horas disponíveis sem despacho com o CVU abaixo do CMO
 LIMIAR_CONCLUSAO_INFLEXIBILIDADE_PCT: float = 5.0  # C14: inflexibilidade não verificada, em % da programada
 LIMIAR_CONCLUSAO_SEM_PROGRAMACAO_HORAS: int = 24  # C15: horas com geração acima da programada, sem programação
 
-# Eólicas e solares (spec 006, fase C; decisões R12, R16 e R19): limiares iniciais, calibrados na Seriemas 1 e na Praia
-# Formosa e aprovados pelo usuário no fim da fase (tarefa T115)
+# Eólicas e solares (plano das Análises, D18 e D21): limiares iniciais, calibrados na Seriemas 1 e na Praia Formosa
+# e aprovados pelo usuário em 21/10/2026
 LIMIAR_CONCLUSAO_ENERGIA_CORTADA_PCT: float = 5.0  # C16: energia cortada, em % da energia estimada
 LIMIAR_CONCLUSAO_RECURSO_INVALIDO_PCT: float = 10.0  # C17: semi-horas com o recurso inválido, em % das semi-horas
-# C19: desvio médio absoluto, em % da potência instalada; 15 % aprovado pelo usuário em 21/10/2026 (tarefa T115), pois
+# C19: desvio médio absoluto, em % da potência instalada; 15 % aprovado pelo usuário em 21/10/2026, pois
 # os 10 % iniciais apontavam desvios usuais da previsão de vento (10,4 % na EOL Praia Formosa)
 LIMIAR_CONCLUSAO_DESVIO_PROGRAMACAO_PCT: float = 15.0
-DURACAO_SEMI_HORA_H: float = 0.5  # energia de uma semi-hora: potência média × 0,5 h (decisão R12)
-FAIXA_VENTO_MS: float = 2.0  # largura das faixas de vento (m/s) do recurso × geração (decisão R19)
+DURACAO_SEMI_HORA_H: float = 0.5  # energia de uma semi-hora: potência média × 0,5 h (plano do Tratamento de dados, D17)
+FAIXA_VENTO_MS: float = 2.0  # largura das faixas de vento (m/s) do recurso × geração (plano das Análises, D21)
 FAIXA_IRRADIANCIA_WM2: float = 100.0  # largura das faixas de irradiância (W/m²)
 # Limite físico do recurso (decisão do usuário de 21/10/2026): acima dele, falha de medição não marcada pelo ONS (a EOL
 # Praia Formosa tem semi-horas com vento de até 246 m/s), fora das faixas do recurso × geração e contada
@@ -223,10 +225,10 @@ GLOSSARIO_RESUMO: Dict[str, str] = {
     "GF": "garantia física",
     "Pinst": "potência instalada",
     "MWmed": "megawatt médio, a energia dividida pelas horas do período",
-    # Térmicas (fase B; rascunho 005): texto aprovado pelo usuário em 20/10/2026 (tarefa T094)
+    # Térmicas (spec da Geração do relatório, FR-066): texto aprovado pelo usuário em 20/10/2026
     "CVU": "custo variável unitário da usina térmica, publicado pelo ONS por semana operativa",
     "CMO": "custo marginal de operação do subsistema, calculado pelo ONS por semana operativa",
-    # Eólicas e solares (fase C; rascunho 005): texto aprovado pelo usuário em 21/10/2026 (tarefa T115)
+    # Eólicas e solares (spec da Geração do relatório, FR-066): texto aprovado pelo usuário em 21/10/2026
     "constrained-off": "redução da geração da usina por comando do ONS, por razão externa a ela (indisponibilidade "
                        "externa, confiabilidade elétrica ou razão energética)",
 }

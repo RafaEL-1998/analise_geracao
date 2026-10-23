@@ -1,4 +1,4 @@
-"""Resumo executivo (spec da Geração do relatório; spec 007): até duas páginas, gerado com o relatório completo, com a
+"""Resumo executivo (spec da Geração do relatório, US11): até duas páginas, gerado com o relatório completo, com a
 conclusão copiada igual, os indicadores da capa, as colunas principais da tabela anual e "Sobre os dados"."""
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ from tests.analises.test_conclusao import _neutro, _tudo
 from tests.analises.test_indicadores import _conferencias, _indicadores_sinteticos
 
 DATA = datetime(2026, 10, 7, 8, 53)
-PAGINAS_RELATORIO = 27  # número de páginas do relatório completo citado no cabeçalho (única exceção da FR-014)
+PAGINAS_RELATORIO = 27  # número de páginas do relatório completo citado no cabeçalho (única exceção da FR-063)
 TERMOS_PROIBIDOS = ("satisfatório", "insatisfatório", "cumpre", "descumpre")
 NUMERO = re.compile(r"\d[\d.]*(?:,\d+)?")
 
@@ -112,7 +112,7 @@ def _tabelas(md: str) -> int:
 
 
 # ---------------------------------------------------------------------------
-# US1: o documento
+# US11, cenários 1 a 4: o documento
 # ---------------------------------------------------------------------------
 
 
@@ -125,7 +125,7 @@ def test_resumo_gerado_com_a_data_do_relatorio(gerado) -> None:
 
 def test_blocos_na_ordem_fixa(gerado) -> None:
     assert gerado["md"].startswith("# ") and " — resumo executivo" in gerado["md"].splitlines()[0]
-    # revisão 1 (13/10/2026): a conclusão fecha o resumo
+    # FR-056: a conclusão fecha o resumo
     assert _titulos(gerado["md"]) == ["Indicadores-chave", "Evolução anual", "Sobre os dados", "Conclusão"]
 
 
@@ -200,7 +200,7 @@ def test_pdf_e_markdown_com_os_mesmos_blocos(gerado, tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# US1: a regra das duas páginas (FR-006)
+# US11, cenários 1 a 4: a regra das duas páginas (FR-055)
 # ---------------------------------------------------------------------------
 
 
@@ -231,7 +231,7 @@ def test_conclusao_longa_de_verdade_e_erro(res_completo, tmp_path: Path, monkeyp
 
 
 # ---------------------------------------------------------------------------
-# US2: conclusão igual à do relatório completo
+# US11, cenários 5 a 8: conclusão igual à do relatório completo
 # ---------------------------------------------------------------------------
 
 

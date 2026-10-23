@@ -233,11 +233,11 @@ description: "Tarefas da spec 007: resumo executivo do relatório de desempenho"
 - [X] T034 Com a aprovação da T033 (princípio IX): `python -m src referencia --usina sao_domingos --data-geracao "07/10/2026 08:53" --aprovado-em "<data da aprovação>"`. Conferir em `relatorios_referencia/sao_domingos/referencia.json` os dois arquivos do resumo, depois `python -m src comparar --todas --coleta` com código 0. Registrar.
 - [X] T035 [P] Em `README.md`, na árvore de pastas (linha de `reports/<slug>/`) e onde as saídas são citadas, acrescentar `resumo_executivo.pdf` e `.md`, com uma frase sobre o resumo.
 - [X] T036 Portão final: suíte sem rede; `pyflakes` de fora do `venv` em `src/` e `tests/` (`pip install --target <pasta temporária> pyflakes`, usado com `PYTHONPATH`); `/speckit-converge`. Registrar.
-- [ ] T037 Incorporar a mudança à spec da etapa (Governança 2):
+- [X] T037 Incorporar a mudança à spec da etapa (Governança 2):
   - em `specs/005-geracao-relatorio/spec.md`: objetivo, entradas e saídas, a história do resumo, as FR-001 a FR-021 desta spec (com A1 e A2), os casos de borda e os critérios de sucesso, renumerados no padrão da 005;
   - no `plan.md`, no `data-model.md` e nos `contracts/` da 005, o que vier do plano, do data-model e do contrato desta spec;
   - levar ao usuário e registrar a aprovação.
-- [ ] T038 Com a aprovação da T037:
+- [X] T038 Com a aprovação da T037:
   - excluir `specs/007-resumo-executivo/`;
   - apontar `.specify/feature.json` para a spec ativa seguinte (a 006, se ainda aberta, ou `specs/005-geracao-relatorio`);
   - atualizar no `README.md` qualquer citação à pasta excluída.
@@ -364,3 +364,9 @@ Task: "T019 gerar_resumo_pdf em src/relatorio/resumo_pdf.py"
 | T043 | 19/10/2026 | — | Em aberto: decisão do usuário sobre os agentes do cabeçalho nas usinas sem EVT. |
 | T043 | 19/10/2026 | decisão do usuário ("Mostrar agente atual"); `src/coleta/etapa.py`, `src/analises/comum_tipos.py`, `src/analises/etapa.py`, `src/relatorio/comum.py`, `src/relatorio/fontes.py` e `src/relatorio/resumo.py` | A Coleta grava o agente proprietário e o operador de cada unidade em `capacidade_ficha.csv`; as Análises tiram os das unidades ativas no fim do período (`comum["agentes"]`); a capa ("Agente atual") e o resumo ("Agente atual (Capacidade de geração do ONS)") os mostram, com a Capacidade de geração na legenda de fonte da identificação. Teste em `tests/integracao/test_usinas_ficticias.py`; FR-008 e decisões da spec registradas. |
 | T037 e T038 | 19/10/2026 | decisão do usuário ("faça o item 3 como achar melhor") | Ficam para o fechamento da spec 006 (fase F), junto com os ajustes da 006 na spec 005, para editar a spec 005 uma vez só. |
+
+### 23/10/2026 — T037 e T038 (no fechamento da spec 006)
+
+- **T037**: a spec foi incorporada à spec da Geração do relatório (`specs/005-geracao-relatorio/`): a história do resumo como US11, as FR-001 a FR-021 como FR-050 a FR-070 (FR-n → FR-(n+49)), os critérios SC-001 a SC-006 como SC-015 a SC-020, as decisões R2 a R12 e R14 como D23 a D33 e D34 do plano, o data-model na seção 2.10 e o contrato `resumo-executivo.md`. Aprovada pelo usuário com o fechamento da 006.
+- **T038**: por decisão do usuário de 23/10/2026, a pasta não é excluída e fica como histórico (o cabeçalho do `spec.md` diz que ela foi incorporada); `.specify/feature.json` não muda; o README não cita esta pasta.
+

@@ -1,11 +1,11 @@
 """Conclusão do relatório: regras C1 a C19, que apontam indícios sem afirmar causa (spec das Análises, FR-045).
 
-As regras formam um catálogo declarado (spec 006, decisão R16): cada uma diz os tipos de usina, as listas em que pode
+As regras formam um catálogo declarado (plano das Análises, D18): cada uma diz os tipos de usina, as listas em que pode
 gerar itens, o nível exigido (só dado da usina), os limiares, o período mínimo e as seções de origem. Nas hidrelétricas
-com EVT, C1 a C11 continuam como antes, com a mesma ordem, texto, limiares e listas (decisão R29). Nas usinas sem EVT,
+com EVT, C1 a C11 continuam como antes, com a mesma ordem, texto, limiares e listas (decisão D16). Nas usinas sem EVT,
 as regras comuns (C2, C5, C8 e C10) são avaliadas sobre a base horária comum, só com dados da usina; nas térmicas, também
-C12 a C15, sobre o despacho, o CVU e o CMO (fase B, decisão R16); nas eólicas e solares, só C16 a C19, sobre a
-restrição de operação, o recurso, o fator de capacidade e a programação da usina (fase C). O que não é avaliado vai para
+C12 a C15, sobre o despacho, o CVU e o CMO (decisão D18); nas eólicas e solares, só C16 a C19, sobre a
+restrição de operação, o recurso, o fator de capacidade e a programação da usina. O que não é avaliado vai para
 ``omitidos``, com o motivo.
 """
 
@@ -125,7 +125,7 @@ def _regra_c2(res: ResultadosAnalise) -> List[Dict[str, Any]]:
     if horas is None or not len(horas):
         return []
     t = o.get("taxa_ultima") or {}
-    teif = perfil_ativo().parametros.teif_referencia  # sem a TEIF de referência, só a limitação recorrente (R16)
+    teif = perfil_ativo().parametros.teif_referencia  # sem a TEIF de referência, só a limitação recorrente (D18)
     teifa_acima = bool(t) and teif is not None and t["teifa_pct"] > teif * 100.0
     participacao: Dict[int, float] = {}
     parcela_dominante: Dict[int, str] = {}
@@ -411,10 +411,10 @@ def _regra_c11(res: ResultadosAnalise) -> List[Dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
-# Regras comuns sobre a base horária comum (usinas sem EVT; spec 006, decisões R16 e R30)
+# Regras comuns sobre a base horária comum (usinas sem EVT; plano das Análises, D16 e D18)
 # ---------------------------------------------------------------------------
 
-# Seção de origem no caminho sem EVT (decisão R14), para os itens das regras comuns
+# Seção de origem no caminho sem EVT (decisão D16), para os itens das regras comuns
 SECOES_SEM_EVT: Dict[str, str] = {
     "indicadores_ons": "indicadores_ons_comum", "qualidade": "qualidade_comum",
     "disponibilidade_geracao": "disponibilidade_geracao_comum", "indicadores_anuais": "anuais_comum",
@@ -484,7 +484,7 @@ def _regra_c10_comum(res: ResultadosAnalise) -> List[Dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
-# Regras das térmicas (spec 006, fase B; decisão R16): só com o despacho, o CVU e o CMO da usina
+# Regras das térmicas (plano das Análises, D18): só com o despacho, o CVU e o CMO da usina
 # ---------------------------------------------------------------------------
 
 
@@ -537,7 +537,7 @@ def _regra_c15(res: ResultadosAnalise) -> List[Dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
-# Regras das eólicas e solares (spec 006, fase C; decisão R16): só com dados da usina
+# Regras das eólicas e solares (plano das Análises, D18): só com dados da usina
 # ---------------------------------------------------------------------------
 
 
@@ -601,7 +601,7 @@ def _regra_c19(res: ResultadosAnalise) -> List[Dict[str, Any]]:
 
 @dataclass(frozen=True)
 class RegraConclusao:
-    """Regra do catálogo da conclusão (data-model 6.5; decisão R16).
+    """Regra do catálogo da conclusão (data-model das Análises, seção 3.11; plano das Análises, D18).
 
     ``funcao`` é a regra de hoje, sobre a base de EVT (None nas regras só das usinas sem EVT, C12 em diante);
     ``funcao_comum``, quando há, a regra sobre a base horária comum e as bases do tipo das usinas sem EVT, avaliada só com alguma das ``bases_comuns`` no nível da usina (e com o IP e a TEIF de
@@ -662,7 +662,7 @@ CATALOGO_CONCLUSAO: Tuple[RegraConclusao, ...] = (
                                       "unidade num ano completo")),
     RegraConclusao("C11", HIDRELETRICAS, ("verificar_campo",), _regra_c11, ("hidrologia", "qualidade"),
                    ("LIMIAR_CONCLUSAO_R9_HORAS",)),
-    # Fase B (spec 006): térmicas; limiares iniciais em regras.py, calibrados na UTE William Arjona
+    # Térmicas: limiares iniciais em regras.py, calibrados na UTE William Arjona
     RegraConclusao("C12", TERMICAS, ("possiveis_problemas", "confirmar_agente"), None, ("atendimento_despacho",),
                    ("LIMIAR_DESVIO_DESPACHO_MW", "LIMIAR_CONCLUSAO_DESPACHO_ABAIXO_HORAS"), funcao_comum=_regra_c12,
                    bases_comuns=("despacho",),
@@ -682,7 +682,7 @@ CATALOGO_CONCLUSAO: Tuple[RegraConclusao, ...] = (
                    descricao=lambda: (f"C15 geração mais de {fmt_num(LIMIAR_DESVIO_DESPACHO_MW, 0)} MW acima da "
                                       f"programada, sem programação, em ≥ "
                                       f"{fmt_int(LIMIAR_CONCLUSAO_SEM_PROGRAMACAO_HORAS)} h")),
-    # Fase C (spec 006): eólicas e solares; limiares iniciais em regras.py, calibrados na Seriemas 1 e na Praia Formosa
+    # Eólicas e solares: limiares iniciais em regras.py, calibrados na Seriemas 1 e na Praia Formosa
     RegraConclusao("C16", RENOVAVEIS, ("pontos_atencao",), None, ("energia_cortada",),
                    ("LIMIAR_CONCLUSAO_ENERGIA_CORTADA_PCT",), funcao_comum=_regra_c16, bases_comuns=("restricao",),
                    descricao=lambda: (f"C16 energia cortada por restrição de operação ≥ "
@@ -719,7 +719,7 @@ def _bases_da_usina(res: ResultadosAnalise) -> Dict[str, bool]:
     fc = r.get("fator_capacidade") or {}
     return {"disponibilidade": bool(res.comum.get("disponibilidade")), "indicadores": bool(res.ons),
             "despacho": bool(t), "cvu_cmo": bool(t.get("cvu_cmo")) and bool(t.get("disponivel_sem_despacho")),
-            # fase C: a restrição com detalhe é sempre da usina; o fator de capacidade e a programação, só no nível dela
+            # a restrição com detalhe é sempre da usina; o fator de capacidade e a programação, só no nível dela
             "restricao": bool(r.get("restricao")), "recurso": bool(r.get("recurso")),
             "fator_capacidade": fc.get("nivel") == "usina",
             "programacao": (r.get("programacao") or {}).get("nivel") == "usina"}
@@ -767,7 +767,7 @@ def _avaliar(res: ResultadosAnalise) -> List[Dict[str, Any]]:
 
 
 def frase_sem_itens(res: ResultadosAnalise) -> str:
-    """Frase da conclusão sem itens: a de hoje nas hidrelétricas com EVT; nas usinas sem EVT, o motivo (R16, R20)."""
+    """Frase da conclusão sem itens: a de hoje nas hidrelétricas com EVT; nas usinas sem EVT, o motivo (D18, D22)."""
     if not sem_evt(res):
         return FRASE_CONCLUSAO_VAZIA
     regras = regras_do_tipo(res)

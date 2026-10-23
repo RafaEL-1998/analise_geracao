@@ -1,4 +1,4 @@
-"""Seções de térmica das Análises (spec 006, fase B; decisão R18; rascunho 004, FR-056).
+"""Seções de térmica das Análises (spec das Análises, FR-056; plano das Análises, D20).
 
 A partir do despacho tratado (soma das unidades de planejamento por hora e o detalhe por unidade), da base horária
 comum (disponibilidade da usina) e do CVU e do CMO semanais, monta o campo ``termica`` de ``ResultadosAnalise``:
@@ -210,8 +210,9 @@ def cvu_cmo(cvu: Optional[pd.DataFrame], cmo: Optional[pd.DataFrame], unidades: 
             horas: pd.DataFrame) -> Dict[str, Any]:
     """Por semana operativa e unidade: o CVU, o CMO médio semanal do subsistema e a relação entre eles, com a geração
     verificada da unidade na semana; e as horas disponíveis sem despacho nas semanas com algum CVU abaixo do CMO (base
-    da C13). A relação semanal é levada à hora pelo intervalo da semana operativa (``semanal_em_horas``, FR-040) para os
-    cruzamentos com o despacho e a disponibilidade. Sem julgamento do despacho (US2-3)."""
+    da C13). A relação semanal é levada à hora pelo intervalo da semana operativa (``semanal_em_horas``, FR-040 da spec
+    do Tratamento de dados) para os cruzamentos com o despacho e a disponibilidade. Sem julgamento do despacho (US8,
+    cenário 3)."""
     if cvu is None or cvu.empty or cmo is None or cmo.empty:
         return {}
     c = cvu[["codigo", "semana_inicio", "semana_fim", "val_cvu", "sinal_cvu"]].copy()
@@ -270,7 +271,7 @@ def cvu_cmo(cvu: Optional[pd.DataFrame], cmo: Optional[pd.DataFrame], unidades: 
 
 
 def analisar_termica(despacho: Any, base: pd.DataFrame, cvu: Any = None, cmo: Any = None) -> Dict[str, Any]:
-    """Campo ``termica`` dos resultados (decisão R18); vazio sem o despacho ou sem horas dele no período."""
+    """Campo ``termica`` dos resultados (decisão D20); vazio sem o despacho ou sem horas dele no período."""
     if despacho is None or despacho.horario is None or despacho.horario.empty:
         return {}
     horario = despacho.horario
@@ -328,7 +329,7 @@ def achados_termica(termica: Dict[str, Any]) -> List[Tuple[str, str]]:
     p = termica["periodo"]
     achados: List[Tuple[str, str]] = []
     d = termica.get("disponivel_sem_despacho") or {}
-    if termica["sem_geracao"]:  # US2-5: usina sem geração no período
+    if termica["sem_geracao"]:  # US8, cenário 4: usina sem geração no período
         texto = (f"A usina não gerou de {fmt_data(p['inicio'])} a {fmt_data(p['fim'])}: geração verificada do despacho "
                  f"até {fmt_num(LIMIAR_GERACAO_PARADA_MW, 0)} MW nas {fmt_int(p['horas'])} horas.")
         if d:

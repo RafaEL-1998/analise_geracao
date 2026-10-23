@@ -1,5 +1,5 @@
-"""Relatórios de referência: comando ``referencia`` e ``comparar --todas [--coleta]`` (spec 006, decisão R22;
-contrato cli-referencias.md; tarefas T012 e T013).
+"""Relatórios de referência: comando ``referencia`` e ``comparar --todas [--coleta]`` (plano da Geração do relatório,
+D21; contrato cli-referencias da Geração do relatório).
 
 A usina fictícia roda uma vez por módulo; cada teste trabalha numa cópia dessa raiz, com as pastas do fluxo
 redirecionadas, sem rede.
@@ -60,7 +60,7 @@ def _estado(raiz: Path) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# referencia (T012)
+# referencia
 # ---------------------------------------------------------------------------
 
 
@@ -125,7 +125,7 @@ def test_referencia_pela_linha_de_comando_com_perfil_invalido(projeto: Path) -> 
 
 
 # ---------------------------------------------------------------------------
-# comparar --todas [--coleta] (T013)
+# comparar --todas [--coleta]
 # ---------------------------------------------------------------------------
 
 

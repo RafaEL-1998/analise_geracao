@@ -1,4 +1,4 @@
-"""Indicadores da carteira (spec 006, decisão R21; rascunho 004 das Análises, FR-062).
+"""Indicadores da carteira (spec das Análises, FR-062; plano das Análises, D24).
 
 Reúne, para o relatório de carteira, números que as Análises já calculam para o relatório da usina, no último ano
 completo da série (sem ano completo, no ano parcial mais recente, marcado como parcial):
@@ -101,7 +101,7 @@ def contagens_conclusao(res: ResultadosAnalise) -> Dict[str, Optional[int]]:
 
 
 def indicadores_carteira(res: ResultadosAnalise) -> Dict[str, Any]:
-    """Campo ``indicadores_carteira`` dos resultados, com as chaves fixas da decisão R21."""
+    """Campo ``indicadores_carteira`` dos resultados, com as chaves fixas da decisão D24."""
     cobertura = res.cobertura or {}
     ano, parcial = ano_dos_indicadores(cobertura)
     if sem_evt(res):

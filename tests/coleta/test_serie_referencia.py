@@ -1,4 +1,5 @@
-"""Série de referência, período e trechos da Coleta (spec 006, decisões R6 e R7; data-model, seções 5.1 e 5.2).
+"""Série de referência, período e trechos da Coleta (plano da Coleta de dados, D24 e D25; data-model da Coleta de
+dados, seções 7.1 e 7.2).
 
 A série de referência define o período: a EVT nas hidrelétricas com EVT (caminho de hoje, sem trechos); a Geração por
 usina pelo id ONS na usina com geração própria; a Geração por usina do conjunto, pelo id do conjunto, na usina em
@@ -28,7 +29,7 @@ def _perfil(tipo: str, cobertura: Dict[str, Any], id_ons: str = "GOUSIN", id_con
 
 
 # ---------------------------------------------------------------------------
-# Escolha da série (decisão R6, linhas da fase A)
+# Escolha da série (D24; FR-054)
 # ---------------------------------------------------------------------------
 
 
@@ -56,7 +57,7 @@ def test_geracao_por_usina_pelo_id_ons_ou_pelo_conjunto(tipo: str, cobertura: Di
         assert descricoes["conjunto"].identificador.valor == "CJU_GOCONJ"
     if "usina" in descricoes:
         assert descricoes["usina"].identificador.valor == "GOUSIN"
-    # no conjunto, também o tipo publicado (fase D; rascunho 001, FR-061)
+    # no conjunto, também o tipo publicado (FR-061)
     assert all(d.colunas_texto == ("cod_modalidadeoperacao",) + (("nom_tipousina", "nom_tipocombustivel")
                                                                    if nivel == "conjunto" else ())
                for nivel, d in descricoes.items())
@@ -120,7 +121,7 @@ def test_periodo_vazio_sem_nenhuma_hora_com_valor() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Trechos (decisão R7; data-model 5.2)
+# Trechos (D25; data-model da Coleta de dados, seção 7.2)
 # ---------------------------------------------------------------------------
 
 
@@ -183,7 +184,7 @@ def test_um_so_trecho_nao_e_mostrado() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Usina em conjunto (fase D; rascunho 001, FR-054, FR-060 e FR-061)
+# Usina em conjunto (FR-054, FR-060 e FR-061)
 # ---------------------------------------------------------------------------
 
 COMPOSICAO_D = pd.DataFrame([

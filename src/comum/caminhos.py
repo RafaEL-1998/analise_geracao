@@ -1,11 +1,12 @@
 """Pastas e nomes de arquivo do fluxo (constituição, Requisito Técnico 6; spec da Coleta de dados, FR-010).
 
 - ``data/raw/``: dados brutos do ONS, compartilhados por todas as usinas e gravados só pela Coleta de dados.
-- ``data/catalogo/``: catálogo de usinas, montado pela Coleta (spec 006).
+- ``data/catalogo/``: catálogo de usinas, montado pela Coleta (spec da Coleta de dados, FR-051).
 - ``data/usinas/<slug>/<etapa>/``: resultados de cada etapa, separados por usina.
 - ``reports/<slug>/``: relatório da usina; ``reports/carteiras/<nome>/``: relatórios de carteira.
 - ``usinas/<slug>/``: perfil da usina e, fora do controle de versões, os documentos de referência dela.
-- ``relatorios_referencia/<slug>/``: relatórios aprovados, com a Coleta e o perfil congelados (spec 006, decisão R22).
+- ``relatorios_referencia/<slug>/``: relatórios aprovados, com a Coleta e o perfil congelados (plano da Geração do
+  relatório, D21).
 """
 
 from __future__ import annotations
@@ -63,28 +64,28 @@ ARQUIVOS_COLETA = {
     "auditoria_geracao": "auditoria_geracao.csv",
     "auditoria_cadastro": "auditoria_cadastro.csv",
     "dicionarios": "dicionarios.csv",
-    # Formato 2 (spec 006, decisão R22): as etapas seguintes leem estes arquivos, nunca data/raw/
+    # Formato 2 (plano da Coleta de dados, D29): as etapas seguintes leem estes arquivos, nunca data/raw/
     "datas_obtencao": "datas_obtencao.csv",
     "dicionario_evt": "dicionario_evt.json",
-    # Usinas sem EVT (spec 006, data-model 6.1): série de referência, trechos e cadastrais da usina
+    # Usinas sem EVT (data-model da Coleta de dados, seção 2.2): série de referência, trechos e cadastrais da usina
     "geracao_complemento": "geracao_complemento.parquet",
     "trechos": "trechos.csv",
     "composicao": "composicao_conjunto.csv",
     "capacidade": "capacidade_ficha.csv",
     "auditoria_composicao": "auditoria_composicao.csv",
     "auditoria_capacidade": "auditoria_capacidade.csv",
-    # Usinas em conjunto (spec 006, fase D; rascunho 001, FR-060 e FR-061)
+    # Usinas em conjunto (spec da Coleta de dados, FR-060 e FR-061)
     "capacidade_membros": "capacidade_membros.csv",  # as unidades de cada usina da composição do conjunto
     "auditoria_capacidade_membros": "auditoria_capacidade_membros.csv",
     "tipo_publicado": "tipo_publicado.csv",  # o tipo que o ONS publica na série do conjunto, por trecho
-    # Térmicas (spec 006, fase B; data-model 6.1)
+    # Térmicas (data-model da Coleta de dados, seção 2.2)
     "despacho": "despacho_extraido.parquet",
     "cvu": "cvu_extraido.parquet",
     "cmo": "cmo_extraido.parquet",
     "auditoria_despacho": "auditoria_despacho.csv",
     "auditoria_cvu": "auditoria_cvu.csv",
     "auditoria_cmo": "auditoria_cmo.csv",
-    # Eólicas e solares (spec 006, fase C; data-model 6.1)
+    # Eólicas e solares (data-model da Coleta de dados, seção 2.2)
     "fator_capacidade": "fator_capacidade_extraido.parquet",
     "restricao_detalhe": "restricao_detalhe_extraido.parquet",
     "restricao_razao": "restricao_razao_extraido.parquet",
@@ -116,8 +117,8 @@ ARQUIVOS_TRATAMENTO = {
     "geracao_horaria": "geracao_horaria.csv",
     "geracao_ausencias": "geracao_ausencias.csv",
     "auditoria_geracao": "auditoria_geracao.csv",
-    "base_horaria": "base_horaria.csv",  # só nas usinas sem EVT (spec 006, decisão R30)
-    # Térmicas (spec 006, fase B; data-model 6.2)
+    "base_horaria": "base_horaria.csv",  # só nas usinas sem EVT (plano do Tratamento de dados, D15)
+    # Térmicas (data-model do Tratamento de dados, seção 2.8)
     "despacho_horario": "despacho_horario.csv",
     "despacho_unidades_horario": "despacho_unidades_horario.csv",
     "despacho_ausencias": "despacho_ausencias.csv",
@@ -128,7 +129,7 @@ ARQUIVOS_TRATAMENTO = {
     "cmo_semanal": "cmo_semanal.csv",
     "cmo_ausencias": "cmo_ausencias.csv",
     "auditoria_cmo": "auditoria_cmo.csv",
-    # Eólicas e solares (spec 006, fase C; data-model 6.2)
+    # Eólicas e solares (data-model do Tratamento de dados, seção 2.9)
     "fator_capacidade_horario": "fator_capacidade_horario.csv",
     "fator_capacidade_ausencias": "fator_capacidade_ausencias.csv",
     "auditoria_fator_capacidade": "auditoria_fator_capacidade.csv",
@@ -150,16 +151,16 @@ ARQUIVOS_CONFERENCIA = {
     "dispf_horas": "dispf_horas.csv",
     "teifa_teip": "teifa_teip.csv",
     "cadastro": "cadastro.csv",
-    "nao_aplicaveis": "nao_aplicaveis.csv",  # conferências do catálogo que não se aplicam (spec 006, decisão R13)
-    "programacao_despacho": "programacao_despacho.csv",  # G3 (spec 006, fase B)
-    "verificada_despacho": "verificada_despacho.csv",  # G4 (spec 006, fase B)
-    "geracao_fontes": "geracao_fontes.csv",  # G1 (spec 006, fase C)
+    "nao_aplicaveis": "nao_aplicaveis.csv",  # conferências do catálogo que não se aplicam (plano da Conferência, D11)
+    "programacao_despacho": "programacao_despacho.csv",  # G3 (spec da Conferência, FR-020)
+    "verificada_despacho": "verificada_despacho.csv",  # G4 (spec da Conferência, FR-021)
+    "geracao_fontes": "geracao_fontes.csv",  # G1 (spec da Conferência, FR-023)
     "soma_conjunto": "soma_conjunto.csv",  # G2
     "programacao_renovaveis": "programacao_renovaveis.csv",  # G5
-    "alinhamento_hidrologia": "alinhamento_hidrologia.csv",  # hidrelétricas sem EVT (spec 006, fase D; FR-026)
+    "alinhamento_hidrologia": "alinhamento_hidrologia.csv",  # hidrelétricas sem EVT (spec da Conferência, FR-026)
 }
 ARQUIVOS_ANALISES = {"resultados": "resultados.pkl"}
-# Catálogo de usinas (spec 006, data-model, seção 2), em data/catalogo/, sem .bak
+# Catálogo de usinas (data-model da Coleta de dados, seção 2.5), em data/catalogo/, sem .bak
 ARQUIVOS_CATALOGO = {
     "catalogo": "catalogo.json",
     "usinas": "usinas.csv",
@@ -178,7 +179,8 @@ ARQUIVOS_RELATORIO = {
     "resumo_pdf": "resumo_executivo.pdf",  # resumo executivo (spec da Geração do relatório)
     "resumo_md": "resumo_executivo.md",
 }
-# Relatório de carteira (spec 006, decisão R21; data-model, seção 7), em reports/carteiras/<nome>/, sem .bak
+# Relatório de carteira (plano da Geração do relatório, D22; data-model da Geração do relatório, seção 6), em
+# reports/carteiras/<nome>/, sem .bak
 ARQUIVOS_CARTEIRA = {
     "pdf": "relatorio_carteira.pdf",
     "md": "relatorio_carteira.md",
@@ -217,7 +219,7 @@ def dicionario_evt() -> Path:
 
 
 def pasta_catalogo() -> Path:
-    """``data/catalogo/``: catálogo de usinas, gravado pela Coleta (spec 006)."""
+    """``data/catalogo/``: catálogo de usinas, gravado pela Coleta (spec da Coleta de dados, FR-051)."""
     return DATA_DIR / PASTA_CATALOGO
 
 
@@ -231,7 +233,8 @@ def espaco_isolado(raiz: Path, raw: Optional[Path] = None) -> Iterator[Path]:
     """Durante o bloco, as pastas do fluxo e o perfil passam a ficar em ``raiz``.
 
     ``data/``, ``reports/`` e ``usinas/`` ficam em ``raiz``; os brutos, em ``raw`` (por padrão, ``raiz/data/raw``).
-    Usado pelo ``comparar --todas`` para refazer as etapas sem tocar nas pastas do projeto (spec 006, decisão R22).
+    Usado pelo ``comparar --todas`` para refazer as etapas sem tocar nas pastas do projeto (plano da Geração do
+    relatório, D21).
     """
     global DATA_DIR, RAW_DATA_DIR, REPORTS_DIR, USINAS_DIR
     from src.comum import perfil as modulo_perfil

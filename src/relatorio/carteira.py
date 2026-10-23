@@ -1,4 +1,4 @@
-"""Relatório de carteira (spec 006, decisão R21; rascunho 005 da Geração do relatório, FR-049; contrato
+"""Relatório de carteira (spec da Geração do relatório, FR-049; plano, D22; contrato
 ``contracts/cli-carteira.md``).
 
 ``python -m src carteira [--estado <UF>] [--tipo <tipo>] [--data-geracao ...]`` monta o relatório de uma carteira de
@@ -9,7 +9,7 @@ pelo CEG em ``usinas/*/perfil.toml`` e o ``etapa.json`` e o ``resultados.pkl`` d
 O ``Documento`` é a lista de blocos na ordem do contrato: capa, usinas com resultado, indicadores, ordenação, usinas sem
 resultado, panorama (só com estado) e notas. O Markdown (aqui) e o PDF (``src.relatorio.carteira_pdf``) saem dele, com o
 mesmo conteúdo e na mesma ordem (princípio VII). As saídas são geradas numa pasta temporária, conferidas e trocadas como
-as do relatório da usina, sem ``.bak``. Nenhum texto atribui nota nem parecer (SC-007).
+as do relatório da usina, sem ``.bak``. Nenhum texto atribui nota nem parecer (FR-049 e US10, cenário 3).
 """
 
 from __future__ import annotations
@@ -76,13 +76,13 @@ ORDEM_MOTIVOS: Tuple[str, ...] = (MOTIVO_AGREGADO, MOTIVO_SEM_PERFIL, MOTIVO_RAS
                                   MOTIVO_ANALISES_DESATUALIZADAS)
 
 NOMES_COBERTURA = {"proprio": "própria", "conjunto": "conjunto", "agregado": "agregado", "ausente": "ausente"}
-# Listas da conclusão na tabela da ordenação: as duas que ordenam primeiro (FR-027)
+# Listas da conclusão na tabela da ordenação: as duas que ordenam primeiro (FR-049)
 LISTAS_ORDENACAO: Tuple[str, ...] = ("possiveis_problemas", "pontos_atencao", "confirmar_agente", "verificar_campo")
 TITULOS_INDICADORES: Dict[str, str] = {
     "fator_capacidade": "Fator de capacidade", "disponibilidade": "Disponibilidade", "teifa": "TEIFa",
     "energia_cortada": "Energia cortada", "atendimento_despacho": "Atendimento ao despacho",
 }
-# Tipos a que cada indicador se aplica (rascunho 004, FR-062); a coluna entra quando algum tipo do recorte é um deles
+# Tipos a que cada indicador se aplica (FR-062 das Análises); a coluna entra quando algum tipo do recorte é um deles
 TIPOS_DO_INDICADOR: Dict[str, Tuple[str, ...]] = {
     "fator_capacidade": HIDRELETRICAS + RENOVAVEIS,
     "disponibilidade": HIDRELETRICAS + TERMICAS + RENOVAVEIS,
@@ -677,7 +677,7 @@ def _detalhe_indicador(chave: str, indicador: Optional[Dict[str, Any]]) -> str:
 
 
 def abas_planilha(carteira: Carteira) -> Dict[str, pd.DataFrame]:
-    """Abas USINAS, INDICADORES, ORDENACAO, SEM_RESULTADO, PANORAMA e FONTES (data-model, seção 7)."""
+    """Abas USINAS, INDICADORES, ORDENACAO, SEM_RESULTADO, PANORAMA e FONTES (data-model, seção 6.5)."""
     listas = [chave for chave, _ in LISTAS_CONCLUSAO]
     usinas, indicadores, ordenacao = [], [], []
     for posicao, u in enumerate(carteira.com_resultado, start=1):
@@ -718,7 +718,7 @@ def abas_planilha(carteira: Carteira) -> Dict[str, pd.DataFrame]:
     else:
         panorama = pd.DataFrame({"motivo": ["Panorama omitido: o ONS publica os agregados por área do estado, e a "
                                             "carteira só por tipo não tem estado."]})
-    # FONTES com as colunas da aba da usina (R21): a origem é a mesma da legenda de cada tabela
+    # FONTES com as colunas da aba da usina (D22): a origem é a mesma da legenda de cada tabela
     fontes = pd.DataFrame([{"aba": aba, "conjuntos_origem": texto or SEM_VALOR, "conferencias": SEM_VALOR,
                             "sem_outra_fonte": SEM_VALOR, "calculado_no_relatorio": "sim" if calculado else "não"}
                            for aba, (texto, calculado) in origens(carteira).items()], columns=COLUNAS_FONTES)

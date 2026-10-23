@@ -1,4 +1,4 @@
-"""Figuras do relatório de carteira, em seaborn (spec 006, decisão R21; rascunho 005 da Geração do relatório, FR-049).
+"""Figuras do relatório de carteira, em seaborn (spec da Geração do relatório, FR-049; plano, D22).
 
 - ``ordenacao``: itens da conclusão por usina, na ordem da ordenação, em barras horizontais empilhadas pelas quatro
   listas, na ordem da conclusão;

@@ -1,4 +1,4 @@
-"""Tratamento das térmicas: despacho, CVU e CMO (spec 006, fase B; decisão R11; tarefa T079).
+"""Tratamento das térmicas: despacho, CVU e CMO (spec do Tratamento de dados, FR-037 a FR-040; decisão D16).
 
 - ``despacho_horario.csv``: a soma das unidades por hora, por motivo, programado e verificado;
 - ``despacho_unidades_horario.csv``: o mesmo, por unidade;

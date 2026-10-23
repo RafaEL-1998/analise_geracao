@@ -1,4 +1,4 @@
-"""Relatórios de referência (spec 006, decisão R22; contrato cli-referencias.md).
+"""Relatórios de referência (plano da Geração do relatório, D21; contrato cli-referencias da Geração do relatório).
 
 ``python -m src referencia --usina <slug> --data-geracao "DD/MM/AAAA HH:MM" --aprovado-em "DD/MM/AAAA"`` registra em
 ``relatorios_referencia/<slug>/`` o relatório da usina aprovado pelo usuário, com:
@@ -164,7 +164,7 @@ def _trocar(temporaria: Path, pasta: Path) -> None:
 
 def registrar_referencia(slug: str, data_geracao: datetime, aprovado_em: date,
                          referencia_commitada: Callable[[Path], bool] = referencia_commitada) -> int:
-    """Registra o relatório aprovado de ``slug`` como referência. Códigos: 0, 1 e 5 (contrato cli-referencias.md)."""
+    """Registra o relatório aprovado de ``slug`` como referência. Códigos: 0, 1 e 5 (contrato cli-referencias)."""
     data = data_geracao.strftime(FORMATO_DATA_GERACAO)
     aprovado = aprovado_em.strftime(FORMATO_DATA_APROVACAO)
     relatorio = _manifesto_concluido(slug, "relatorio")

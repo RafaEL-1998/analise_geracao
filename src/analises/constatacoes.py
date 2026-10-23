@@ -687,12 +687,12 @@ def montar_achados(res: ResultadosAnalise) -> List[Tuple[str, str]]:
 
 
 # ---------------------------------------------------------------------------
-# Usinas sem EVT (spec 006, decisões R14, R15 e R30): constatações sobre a base horária comum
+# Usinas sem EVT (plano das Análises, D16 e D17): constatações sobre a base horária comum
 # ---------------------------------------------------------------------------
 
 
 def do_nivel(res: ResultadosAnalise, nivel: str) -> str:
-    """" do conjunto <nome>" quando o número é do conjunto (decisão R15); vazio quando é da usina."""
+    """" do conjunto <nome>" quando o número é do conjunto (decisão D17); vazio quando é da usina."""
     if nivel != "conjunto":
         return ""
     g = res.niveis.get("geracao", {})
@@ -700,7 +700,7 @@ def do_nivel(res: ResultadosAnalise, nivel: str) -> str:
 
 
 def _serie_referencia_texto(res: ResultadosAnalise) -> str:
-    """"Geração por usina (id ONS X)" ou "Geração por usina do conjunto <nome> (id ONS CJU_...)"; na fase C,
+    """"Geração por usina (id ONS X)" ou "Geração por usina do conjunto <nome> (id ONS CJU_...)"; nas eólicas e solares,
     "Restrição com detalhe (id ONS X; CEG Y)"."""
     g = res.niveis.get("geracao", {})
     if g.get("fonte") == "restricao_detalhe":
@@ -803,7 +803,7 @@ def _achado_qualidade_comum(res: ResultadosAnalise) -> Tuple[str, str]:
                  if periodo.get("inicio") else " no período")
         texto += (f" A Geração por usina traz {fmt_int(q['linhas_usina_sem_valor'])} linhas próprias da usina sem "
                   f"valor{desde}; a série usada é a do conjunto.")
-    from src.analises.conjunto import frases_tipo_publicado  # fase D: o tipo publicado divergente da composição
+    from src.analises.conjunto import frases_tipo_publicado  # o tipo publicado divergente da composição
 
     for frase in frases_tipo_publicado(getattr(res, "conjunto", None) or {}):
         texto += f" {frase}"
@@ -811,7 +811,7 @@ def _achado_qualidade_comum(res: ResultadosAnalise) -> Tuple[str, str]:
 
 
 def _achado_afluencia_comum(res: ResultadosAnalise) -> Optional[Tuple[str, str]]:
-    """Afluência e vertimento na hidrelétrica sem EVT (spec 006, fase D; tarefa T150): a cobertura, a hora conferida
+    """Afluência e vertimento na hidrelétrica sem EVT (FR-061; decisão D23): a cobertura, a hora conferida
     pela geração da usina e, com ela confirmada, as médias do período, sem os cruzamentos com a EVT."""
     h = res.hidrologia
     if not h or not h.get("sem_evt"):
@@ -842,10 +842,10 @@ def _achado_afluencia_comum(res: ResultadosAnalise) -> Optional[Tuple[str, str]]
 
 
 def montar_achados_comum(res: ResultadosAnalise) -> List[Tuple[str, str]]:
-    """Constatações das usinas sem EVT, a partir das seções comuns (decisão R30) e das seções do tipo."""
-    from src.analises.conjunto import achado_usina_no_conjunto, achados_conjunto, em_duas_partes  # fase D
-    from src.analises.renovavel import achados_renovavel  # seções de eólica e solar (fase C)
-    from src.analises.termica import achados_termica  # seções de térmica (fase B)
+    """Constatações das usinas sem EVT, a partir das seções comuns (decisão D16) e das seções do tipo."""
+    from src.analises.conjunto import achado_usina_no_conjunto, achados_conjunto, em_duas_partes  # usina em conjunto
+    from src.analises.renovavel import achados_renovavel  # seções de eólica e solar
+    from src.analises.termica import achados_termica  # seções de térmica
 
     usina_no_conjunto = ([achado_usina_no_conjunto(res.conjunto, perfil_ativo().usina.nome,
                                                    perfil_ativo().parametros.potencia_instalada_mw)]

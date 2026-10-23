@@ -1,13 +1,13 @@
-"""Registro dos conjuntos do ONS (spec 006, decisão R8; data-model, seção 4).
+"""Registro dos conjuntos do ONS (plano da Coleta de dados, D26; data-model da Coleta de dados, seção 6).
 
 Um só lugar diz o que se coleta para cada tipo de usina. Cada entrada declara o pacote no portal e a pasta em
 ``data/raw/``, os tipos de usina, os níveis do dado (usina, conjunto ou agregado), a resolução e se o conjunto pode ser a
 série de referência. Os conjuntos horários (disponibilidade, hidrologia e geração) trazem também a descrição usada pelo
 motor comum de ``src.coleta.conjuntos``, montada com a identificação do perfil; nas térmicas, também o despacho, o CVU e
-o CMO (fase B). A EVT, os indicadores, a programação e o cadastro mantêm os módulos próprios, mas ficam registrados para
+o CMO. A EVT, os indicadores, a programação e o cadastro mantêm os módulos próprios, mas ficam registrados para
 o filtro por tipo e os dicionários.
 
-A Coleta, os dicionários e as fontes do relatório usam só os conjuntos do tipo e da cobertura da usina (FR-015). Na UHE
+A Coleta, os dicionários e as fontes do relatório usam só os conjuntos do tipo e da cobertura da usina (FR-016). Na UHE
 sem ``[cobertura]``, são os dez conjuntos de hoje, na mesma ordem.
 """
 
@@ -56,7 +56,7 @@ from src.comum.regras import (
     TIPOS_USINA,
 )
 
-# Enumerações (data-model, seção 1)
+# Enumerações (data-model da Coleta de dados, seção 5.3)
 HIDRELETRICAS: Tuple[str, ...] = ("UHE", "PCH", "CGH")
 TERMICAS: Tuple[str, ...] = ("UTE", "UTN")
 RENOVAVEIS: Tuple[str, ...] = ("EOL", "UFV")
@@ -70,7 +70,8 @@ NIVEL_DA_COBERTURA: Dict[str, str] = {"proprio": "usina", "conjunto": "conjunto"
 VAZOES = ("val_vazaoafluente", "val_vazaodefluente", "val_vazaoturbinada", "val_vazaovertida",
           "val_vazaovertidanaoturbinavel", "val_vazaooutrasestruturas")
 COLUNA_INSTANTE = "din_instante"
-# Geração térmica por motivo de despacho (data-model 6.1): 17 colunas programadas e 15 verificadas, como publicadas
+# Geração térmica por motivo de despacho (data-model da Coleta de dados, seção 2.2): 17 colunas programadas e 15
+# verificadas, como publicadas
 COLUNAS_DESPACHO_PROGRAMADO: Tuple[str, ...] = (
     "val_proggeracao", "val_progordemmerito", "val_progordemdemeritoref", "val_progordemdemeritoacimadainflex",
     "val_proginflexibilidade", "val_proginflexembutmerito", "val_proginflexpura", "val_prograzaoeletrica",
@@ -83,7 +84,8 @@ COLUNAS_DESPACHO_VERIFICADO: Tuple[str, ...] = (
     "val_verifgfom", "val_verifreposicaoperdas", "val_verifexportacao", "val_verifreservapotencia", "val_verifgsub",
     "val_verifunitcommitment", "val_verifconstrainedoff")
 COLUNAS_CMO: Tuple[str, ...] = ("val_cmomediasemanal", "val_cmoleve", "val_cmomedia", "val_cmopesada")
-# Eólicas e solares (data-model 6.1): fator de capacidade, restrição com detalhe (o recurso muda com o tipo) e com a razão
+# Eólicas e solares (data-model da Coleta de dados, seção 2.2): fator de capacidade, restrição com detalhe (o recurso
+# muda com o tipo) e com a razão
 COLUNAS_FATOR_CAPACIDADE: Tuple[str, ...] = ("val_geracaoprogramada", "val_geracaoverificada",
                                              "val_capacidadeinstalada", "val_fatorcapacidade")
 COLUNAS_RECURSO: Dict[str, Tuple[str, str]] = {"EOL": ("val_ventoverificado", "flg_dadoventoinvalido"),
@@ -91,7 +93,7 @@ COLUNAS_RECURSO: Dict[str, Tuple[str, str]] = {"EOL": ("val_ventoverificado", "f
 COLUNAS_RESTRICAO_RAZAO: Tuple[str, ...] = ("val_geracao", "val_geracaolimitada", "val_disponibilidade",
                                             "val_geracaoreferencia", "num_minutos_rel", "num_minutos_cnf",
                                             "num_minutos_ene")
-# (pacote, pasta) de cada variante por tipo (data-model 4, coluna "variantes")
+# (pacote, pasta) de cada variante por tipo (data-model da Coleta de dados, seção 6)
 VARIANTES_RESTRICAO_DETALHE: Dict[str, Tuple[str, str]] = {
     "EOL": (CONJUNTO_RESTRICAO_EOLICA_DETALHE, PASTA_RESTRICAO_EOLICA_DETALHE_RAW),
     "UFV": (CONJUNTO_RESTRICAO_FOTOVOLTAICA_DETALHE, PASTA_RESTRICAO_FOTOVOLTAICA_DETALHE_RAW)}
@@ -132,7 +134,7 @@ class DescricaoConjunto:
     formatos_preferidos: Tuple[str, ...] = ("PARQUET", "CSV")
     # Filtro empurrado à leitura do Parquet (DNF do pyarrow), útil nos arquivos grandes com todas as usinas
     filtro_parquet: Optional[Tuple[Tuple[Tuple[str, str, Any], ...], ...]] = None
-    # Registro (spec 006, decisão R8)
+    # Registro (D26)
     chave: str = ""
     tipos: Tuple[str, ...] = TIPOS_USINA
     nivel: str = "usina"
@@ -140,11 +142,11 @@ class DescricaoConjunto:
     referencia: bool = False
     variantes: Tuple[Tuple[str, str], ...] = ()  # (tipo, pacote) quando o pacote muda com o tipo
     # Colunas mantidas como texto na extração (a modalidade por hora da série de referência, para os trechos); vazias
-    # nos conjuntos de hoje, cujos arquivos extraídos não mudam (decisão R8)
+    # nos conjuntos de hoje, cujos arquivos extraídos não mudam (D26)
     colunas_texto: Tuple[str, ...] = ()
     # Coluna da data publicada, gravada como ``din_instante`` na extração (o CVU traz o início da semana operativa)
     coluna_instante: str = COLUNA_INSTANTE
-    # Colunas de valor que podem faltar em parte dos arquivos (fase C, FR-058): a ausência vai para a mensagem da auditoria
+    # Colunas de valor que podem faltar em parte dos arquivos (FR-058): a ausência vai para a mensagem da auditoria
     avisar_colunas_ausentes: bool = False
 
     @property
@@ -188,7 +190,7 @@ def _hidrologia(perfil: Any) -> DescricaoConjunto:
 
 
 def descricao_geracao(perfil: Any, nivel: str = "usina") -> DescricaoConjunto:
-    """Geração por usina no nível pedido (decisão R9).
+    """Geração por usina no nível pedido (D27).
 
     Da usina: pelo id ONS, conferida pelo CEG e pelo estado. Do conjunto: pelo id do conjunto (``CJU_...``), conferida
     pelo estado, porque o ONS publica o CEG "-" nas linhas de conjunto desde 05/2026.
@@ -219,7 +221,7 @@ def codigos_planejamento(perfil: Any) -> Tuple[Tuple[float, str, str], ...]:
 
 def _despacho(perfil: Any) -> DescricaoConjunto:
     """Despacho térmico pelo CEG, conferido pelo código de planejamento do perfil no período de cada um, comparado
-    como número (decisão R9; achado A4)."""
+    como número (D27 e FR-055)."""
     ident = perfil.identificacao
     codigos = codigos_planejamento(perfil)
     return DescricaoConjunto(
@@ -236,7 +238,7 @@ def _despacho(perfil: Any) -> DescricaoConjunto:
 
 def _cvu(perfil: Any) -> DescricaoConjunto:
     """CVU pelos códigos de planejamento do perfil (o CVU não tem CEG), conferido pelo subsistema; todas as revisões
-    (decisão R9; achado A5)."""
+    (D27 e FR-055)."""
     return DescricaoConjunto(
         pacote=CONJUNTO_CVU, pasta=PASTA_CVU_RAW,
         identificador=Regra("cod_usinaplanejamento", tuple(sorted({c for c, _, _ in codigos_planejamento(perfil)})),
@@ -249,7 +251,7 @@ def _cvu(perfil: Any) -> DescricaoConjunto:
 
 
 def _cmo(perfil: Any) -> DescricaoConjunto:
-    """CMO semanal pelo subsistema do perfil, sem conferência: contexto do subsistema, nível agregado (decisão R9)."""
+    """CMO semanal pelo subsistema do perfil, sem conferência: contexto do subsistema, nível agregado (D27)."""
     return DescricaoConjunto(
         pacote=CONJUNTO_CMO, pasta=PASTA_CMO_RAW,
         identificador=Regra("id_subsistema", perfil.usina.subsistema),
@@ -261,7 +263,7 @@ def _cmo(perfil: Any) -> DescricaoConjunto:
 
 def _por_nivel(perfil: Any, chave: str) -> Tuple[str, Regra, Tuple[Regra, ...], Any]:
     """Nível do conjunto na cobertura e a identificação nele: da usina, pelo id ONS e o CEG; do conjunto, pelo id do
-    conjunto e o estado (o CEG das linhas de conjunto é "-"; decisão R9)."""
+    conjunto e o estado (o CEG das linhas de conjunto é "-"; D27)."""
     ident, estado = perfil.identificacao, perfil.usina.estado
     nivel = _nivel(entrada(chave), cobertura_da_usina(perfil))
     if nivel == "conjunto":
@@ -272,7 +274,7 @@ def _por_nivel(perfil: Any, chave: str) -> Tuple[str, Regra, Tuple[Regra, ...], 
 
 
 def _fator_capacidade(perfil: Any) -> DescricaoConjunto:
-    """Fator de capacidade, da usina ou do conjunto (decisão R9)."""
+    """Fator de capacidade, da usina ou do conjunto (D27)."""
     nivel, identificador, conferencias, filtro = _por_nivel(perfil, "fator_capacidade")
     return DescricaoConjunto(
         pacote=CONJUNTO_FATOR_CAPACIDADE, pasta=PASTA_FATOR_CAPACIDADE_RAW, identificador=identificador,
@@ -284,7 +286,7 @@ def _fator_capacidade(perfil: Any) -> DescricaoConjunto:
 def descricao_restricao_detalhe(perfil: Any, id_ons: Optional[str] = None, ceg: Optional[str] = None
                                 ) -> DescricaoConjunto:
     """Restrição com detalhe por usina, na variante do tipo: pelo id ONS, conferida pelo CEG; o id do conjunto fica
-    como texto, sem conferir (achado A7). ``id_ons`` e ``ceg`` de outro membro do conjunto servem à G2."""
+    como texto, sem conferir (FR-057). ``id_ons`` e ``ceg`` de outro membro do conjunto servem à G2."""
     tipo = tipo_da_usina(perfil)
     pacote, pasta = VARIANTES_RESTRICAO_DETALHE[tipo]
     id_ons = id_ons or perfil.identificacao.id_ons
@@ -301,7 +303,7 @@ def descricao_restricao_detalhe(perfil: Any, id_ons: Optional[str] = None, ceg: 
 
 
 def _restricao_razao(perfil: Any) -> DescricaoConjunto:
-    """Restrição com a razão (REL, CNF, ENE), da usina ou do conjunto, na variante do tipo (decisão R9; achado A8)."""
+    """Restrição com a razão (REL, CNF, ENE), da usina ou do conjunto, na variante do tipo (D27 e FR-057)."""
     pacote, pasta = VARIANTES_RESTRICAO_RAZAO[tipo_da_usina(perfil)]
     nivel, identificador, conferencias, filtro = _por_nivel(perfil, "restricao_razao")
     return DescricaoConjunto(
@@ -324,17 +326,17 @@ def _geracao(perfil: Any) -> DescricaoConjunto:
 
 @dataclass(frozen=True)
 class EntradaRegistro:
-    """O que o registro declara de um conjunto do ONS (data-model, seção 4)."""
+    """O que o registro declara de um conjunto do ONS (data-model da Coleta de dados, seção 6)."""
 
     chave: str
     pacotes: Tuple[Tuple[str, str], ...]  # (pacote no portal, pasta em data/raw/), na ordem de coleta
     tipos: Tuple[str, ...]
     niveis: Tuple[str, ...]
     resolucao: str
-    referencia: bool = False  # pode ser a série de referência (decisão R6)
+    referencia: bool = False  # pode ser a série de referência (D24)
     variantes: Tuple[Tuple[str, str], ...] = ()  # (tipo, pacote) quando o pacote muda com o tipo
     descricao: Optional[Callable[[Any], DescricaoConjunto]] = None  # conjuntos lidos pelo motor comum
-    so_catalogo: bool = False  # obtido só pelo catálogo de usinas, nunca pela Coleta da usina (decisão R31)
+    so_catalogo: bool = False  # obtido só pelo catálogo de usinas, nunca pela Coleta da usina (D33)
     campo_usina: str = ""  # campo de [usina] no perfil sem o qual o conjunto não é obtido (o subsistema do CMO)
 
     @property
@@ -356,17 +358,17 @@ REGISTRO: Tuple[EntradaRegistro, ...] = (
     EntradaRegistro("geracao", ((CONJUNTO_GERACAO, PASTA_GERACAO_RAW),), TIPOS_USINA, ("usina", "conjunto"),
                     "horaria", referencia=True, descricao=_geracao),
     EntradaRegistro("cadastro", ((CONJUNTO_CADASTRO, PASTA_CADASTRO_RAW),), TIPOS_USINA, ("usina",), "estatica"),
-    # Fase A (spec 006): composição dos conjuntos e unidades geradoras, fora da UHE sem [cobertura]
+    # Composição dos conjuntos e unidades geradoras, fora da UHE sem [cobertura]
     EntradaRegistro("composicao", ((CONJUNTO_COMPOSICAO, PASTA_COMPOSICAO_RAW),), TIPOS_USINA, ("conjunto",),
                     "estatica"),
     EntradaRegistro("capacidade", ((CONJUNTO_CAPACIDADE, PASTA_CAPACIDADE_RAW),), TIPOS_USINA, ("usina",), "estatica"),
-    # Fase B (spec 006): térmicas; o CMO é contexto do subsistema, sempre obtido com o subsistema no perfil
+    # Térmicas; o CMO é contexto do subsistema, sempre obtido com o subsistema no perfil
     EntradaRegistro("despacho", ((CONJUNTO_DESPACHO, PASTA_DESPACHO_RAW),), TERMICAS, ("usina",), "horaria",
                     descricao=_despacho),
     EntradaRegistro("cvu", ((CONJUNTO_CVU, PASTA_CVU_RAW),), TERMICAS, ("usina",), "semanal", descricao=_cvu),
     EntradaRegistro("cmo", ((CONJUNTO_CMO, PASTA_CMO_RAW),), TERMICAS, ("agregado",), "semanal", descricao=_cmo,
                     campo_usina="subsistema"),
-    # Fase C (spec 006): eólicas e solares; a restrição muda de pacote com o tipo (variantes)
+    # Eólicas e solares; a restrição muda de pacote com o tipo (variantes)
     EntradaRegistro("fator_capacidade", ((CONJUNTO_FATOR_CAPACIDADE, PASTA_FATOR_CAPACIDADE_RAW),), RENOVAVEIS,
                     ("usina", "conjunto"), "horaria", descricao=_fator_capacidade),
     EntradaRegistro("restricao_detalhe", tuple(VARIANTES_RESTRICAO_DETALHE.values()), RENOVAVEIS, ("usina",),
@@ -376,7 +378,7 @@ REGISTRO: Tuple[EntradaRegistro, ...] = (
     EntradaRegistro("restricao_razao", tuple(VARIANTES_RESTRICAO_RAZAO.values()), RENOVAVEIS, ("usina", "conjunto"),
                     "semi_horaria", variantes=tuple((t, p) for t, (p, _) in VARIANTES_RESTRICAO_RAZAO.items()),
                     descricao=_restricao_razao),
-    # Decisão R31: liga o CEG ao cod_usina e ao reservatório da EVT e dos dados hidrológicos
+    # D33: liga o CEG ao cod_usina e ao reservatório da EVT e dos dados hidrológicos
     EntradaRegistro("reservatorio", ((CONJUNTO_RESERVATORIO, PASTA_RESERVATORIO_RAW),), HIDRELETRICAS, ("usina",),
                     "estatica", so_catalogo=True),
 )
@@ -396,7 +398,7 @@ def pacotes(entradas: Iterable[EntradaRegistro], tipo: Optional[str] = None) -> 
 
 # Todos os conjuntos registrados (pacote -> pasta), na ordem do registro
 CONJUNTOS_PIPELINE: Dict[str, str] = pacotes(REGISTRO)
-# Sem [cobertura] (só na UHE): os dez conjuntos de hoje, e mais nenhum (decisão R8)
+# Sem [cobertura] (só na UHE): os dez conjuntos de hoje, e mais nenhum (D26)
 CHAVES_SEM_COBERTURA: Tuple[str, ...] = ("evt", "indicadores", "programacao", "disponibilidade", "hidrologia", "geracao",
                                          "cadastro")
 
@@ -410,7 +412,7 @@ def entrada(chave: str) -> EntradaRegistro:
 
 
 def tipo_da_usina(perfil: Any) -> str:
-    """Tipo da usina: o do perfil ou, sem ele, o prefixo do CEG (decisão R1)."""
+    """Tipo da usina: o do perfil ou, sem ele, o prefixo do CEG (D19)."""
     tipo = getattr(perfil.usina, "tipo", None)
     if tipo:
         return str(tipo).upper()
@@ -436,7 +438,7 @@ def _obtido(valor: Any) -> bool:
 
 
 def conjuntos_da_usina(perfil: Any) -> List[EntradaRegistro]:
-    """Conjuntos que a Coleta obtém para a usina, na ordem do registro (FR-015; data-model 3.3).
+    """Conjuntos que a Coleta obtém para a usina, na ordem do registro (FR-016; data-model da Coleta de dados, seção 6).
 
     Sem ``[cobertura]`` (só na UHE), os dez de hoje. Com ela, os conjuntos de série com ``proprio`` ou ``conjunto``
     (ou a lista dos dois) e, sempre, os cadastrais e os do subsistema do tipo.

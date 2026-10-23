@@ -9,12 +9,12 @@ comparação. A comparação não grava nada.
 Execução: ``python -m src comparar --usina <slug> --referencia <pasta>``, com código 0 sem diferença, 6 com diferença
 e 1 em erro.
 
-``python -m src comparar --todas [--coleta]`` (spec 006, decisão R22; contrato cli-referencias.md): para cada relatório
-de ``relatorios_referencia/``, refaz o Tratamento, a Conferência, as Análises e o Relatório num espaço isolado, a partir
-da Coleta e do perfil congelados e com a data de geração da referência, e compara com o relatório aprovado. Não toca em
-``data/usinas/``, ``reports/`` nem ``data/raw/``. Com ``--coleta``, refaz também a Coleta com ``--sem-portal`` e o
-perfil congelado, noutro espaço isolado, e a compara com a congelada: as séries só no período da referência, as
-auditorias só nas contagens por arquivo e os registros informativos sem o código 6.
+``python -m src comparar --todas [--coleta]`` (plano da Geração do relatório, D21; contrato cli-referencias): para
+cada relatório de ``relatorios_referencia/``, refaz o Tratamento, a Conferência, as Análises e o Relatório num espaço
+isolado, a partir da Coleta e do perfil congelados e com a data de geração da referência, e compara com o relatório
+aprovado. Não toca em ``data/usinas/``, ``reports/`` nem ``data/raw/``. Com ``--coleta``, refaz também a Coleta com
+``--sem-portal`` e o perfil congelado, noutro espaço isolado, e a compara com a congelada: as séries só no período da
+referência, as auditorias só nas contagens por arquivo e os registros informativos sem o código 6.
 """
 
 from __future__ import annotations
@@ -136,7 +136,7 @@ def executar_comparacao(pasta_atual: Path, pasta_referencia: Path) -> int:
 
 
 # ---------------------------------------------------------------------------
-# comparar --todas [--coleta] (spec 006, decisão R22; contrato cli-referencias.md)
+# comparar --todas [--coleta] (plano da Geração do relatório, D21; contrato cli-referencias)
 # ---------------------------------------------------------------------------
 
 # Na pasta da referência, o que não é relatório

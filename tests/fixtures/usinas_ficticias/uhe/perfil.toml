@@ -1,4 +1,5 @@
-# Usina fictícia do tipo UHE (spec 006, decisão R23): a mesma da usina fictícia de hoje, com EVT; só para testes.
+# Usina fictícia do tipo UHE (plano da Coleta de dados, D30): a mesma da usina fictícia de hoje, com EVT; só para
+# testes.
 # Identificadores próprios, que não existem no ONS.
 
 [usina]

@@ -1,14 +1,14 @@
 # Data Model: Análises
 
-**Spec**: [spec.md](spec.md) · **Plano**: [plan.md](plan.md) · **Atualizado em**: 2026-10-08
+**Spec**: [spec.md](spec.md) · **Plano**: [plan.md](plan.md) · **Atualizado em**: 2026-10-23
 
-Pastas relativas a `data/usinas/<slug>/`, salvo indicação. Tipos: `int`, `float`, `bool`, `str`, `datetime` (coluna de data e hora), `Timestamp` (valor de data e hora), `Period[M]` (mês), `list`, `dict` e `DataFrame` (tabela pandas).
+Pastas relativas a `data/usinas/<slug>/`, salvo indicação. Tipos: `int`, `float`, `bool`, `str`, `datetime` (coluna de data e hora), `Timestamp` (valor de data e hora), `Period[M]` (mês), `list`, `dict` e `DataFrame` (tabela pandas). "Hidrelétrica com EVT" é a UHE, PCH ou CGH cuja série de referência é a energia vertida turbinável; as demais são as "usinas sem EVT".
 
 ## 1. Entradas
 
 ### 1.1 Arquivos lidos
 
-Todos lidos por `src/analises/etapa.carregar_entradas`, salvo indicação. As Análises não alteram nenhum deles.
+**Hidrelétrica com EVT**: lidos por `src/analises/etapa.carregar_entradas`, salvo indicação. As Análises não alteram nenhum arquivo e não leem nada de `data/raw/`.
 
 | Arquivo | Gravado por | Lido por | O que as Análises usam |
 |---|---|---|---|
@@ -23,8 +23,25 @@ Todos lidos por `src/analises/etapa.carregar_entradas`, salvo indicação. As An
 | `coleta/cadastro_ficha.csv` | Coleta | `ficha_do_cadastro` | ficha da usina, sem `linhas_ceg`, com as divergências da conferência do cadastro |
 | `coleta/auditoria_cadastro.csv` | Coleta | `carregar_entradas` | colunas `COLUNAS_AUDITORIA_CADASTRO` |
 | `coleta/dicionarios.csv` | Coleta | `carregar_entradas` | registro dos dicionários de dados (→ `dicionarios`) |
-| `data/raw/_manifesto_ons.json` | Coleta | `cobertura._resumo_manifesto` | `ultima_modificacao` e `registrado_em_utc` de cada arquivo da EVT |
-| `data/raw/{disponibilidade_usina,dados_hidrologicos_ho,geracao_usina_2}/_manifesto_ons.json` | Coleta | `coleta.conjuntos.data_obtencao` | data de obtenção (maior `registrado_em_utc`) |
+| `coleta/datas_obtencao.csv` | Coleta | `datas_da_coleta` | por conjunto: `arquivos_registrados`, `publicacao_mais_recente` e `obtencao_mais_recente` (→ `datas_obtencao`; resumo do manifesto da EVT na cobertura; `obtido_em` das bases complementares) |
+
+**Usina sem EVT**: lidos por `src/analises/etapa.carregar_entradas_sem_evt`; os da hidrelétrica com EVT que se repetem (indicadores, programação, `conferencias.pkl`, ficha e auditoria do cadastro, `auditoria_programacao.csv`, `dicionarios.csv` e `datas_obtencao.csv`) são lidos do mesmo modo. A EVT, `validacao_fisica.csv` e as séries de disponibilidade e de geração (exceto no caso abaixo) não são lidas: a disponibilidade e a geração vêm da base horária comum.
+
+| Arquivo | Gravado por | Lido por | O que as Análises usam |
+|---|---|---|---|
+| `tratamento/base_horaria.csv` | Tratamento | `carregar_base_horaria` | `din_instante`, `geracao_mw`, `nivel`, `disponibilidade_operacional_mw`, `disponibilidade_sincronizada_mw`, `geracao_programada_mw`, `trecho`, `sinalizacoes` (→ `comum`) |
+| `tratamento/geracao_ausencias.csv` ou, com a restrição com detalhe como série de referência, `restricao_ausencias.csv` | Tratamento | `carregar_entradas_sem_evt` | horas ausentes da série de referência |
+| `tratamento/hidrologia_horaria.csv` (com ausências e auditoria) | Tratamento | `carregar_hidrologia_tratada` | hidrelétrica sem EVT (→ `hidrologia`, seção 3.17) |
+| `tratamento/despacho_horario.csv`, `despacho_unidades_horario.csv`, `cvu_semanal.csv`, `cmo_semanal.csv` | Tratamento | `carregar_despacho_tratado`, `carregar_semanal_tratado` | térmicas (→ `termica`, seção 3.14) |
+| `tratamento/fator_capacidade_horario.csv`, `restricao_semi_horaria.csv` | Tratamento | `carregar_renovavel` | eólicas e solares (→ `renovavel`, seção 3.15) |
+| `tratamento/geracao_horaria.csv` | Tratamento | `carregar_geracao_tratada` | só com a restrição com detalhe como série de referência: a Geração por usina do conjunto, para a seção do conjunto e a comparação com a programação do conjunto |
+| `conferencia/nao_aplicaveis.csv` | Conferência | `carregar_entradas_sem_evt` | `conferencia`, `motivo` (→ `comum["conferencias_nao_aplicaveis"]`) |
+| `coleta/etapa.json` | Coleta | `carregar_entradas_sem_evt` | do `resumo`: `linhas_usina_sem_valor` e `linhas_usina_sem_valor_periodo` (`inicio`, `fim`) |
+| `coleta/trechos.csv` | Coleta | `carregar_entradas_sem_evt` | trechos do período (→ `trechos`; base dos trechos de composição) |
+| `coleta/composicao_conjunto.csv` | Coleta | `carregar_entradas_sem_evt` | usinas do conjunto, com o tipo, as datas e o nome do conjunto |
+| `coleta/capacidade_ficha.csv` | Coleta | `agentes_atuais` | agentes proprietário e operador das unidades ativas |
+| `coleta/capacidade_membros.csv` | Coleta | `analisar_conjunto` | unidades das usinas do conjunto: `ceg`, `val_potenciaefetiva`, `dat_entradaoperacao`, `dat_desativacao`; ausente nas Coletas mais antigas (a composição sai sem a potência) |
+| `coleta/tipo_publicado.csv` | Coleta | `analisar_conjunto` | `trecho`, `inicio`, `fim`, `nom_tipousina`, `nom_tipocombustivel`, `horas` |
 
 Campos e formatos desses arquivos: [Coleta](../001-coleta-dados/data-model.md), [Tratamento](../002-tratamento-dados/data-model.md) e [Conferência](../003-conferencia/data-model.md).
 
@@ -40,6 +57,15 @@ Campos e formatos desses arquivos: [Coleta](../001-coleta-dados/data-model.md), 
 | `cadastro` | `divergencias` (texto) | `cadastro["ficha"]["divergencias"]` e `cadastro["divergencias"]` |
 
 Esses itens são usados só quando a base correspondente tem dados, e só eles seguem nos resultados. Os demais campos de cada `ResultadoConferencia`, como a situação "não aplicável", o motivo e os meses sem valor, ficam em `conferencias.pkl`.
+
+Nas usinas sem EVT, `conferencias.pkl` traz só as conferências aplicadas (as não aplicáveis ficam em `nao_aplicaveis.csv`):
+
+| Conferência (`id`) | O que segue | Vai para |
+|---|---|---|
+| `dispf_horas`, `teifa_teip`, `cadastro` | como na hidrelétrica com EVT | `ons` e `cadastro` |
+| `programacao_despacho` (G3), `verificada_despacho` (G4) | `aplicavel`, `motivo`, `comparados`, `coincidentes`, `divergentes`, o `resumo` e as tabelas `mensal` e `divergencias` | `termica["conferencias"]` |
+| `geracao_fontes` (G1), `soma_conjunto` (G2), `programacao_renovaveis` (G5) | os mesmos campos, mais a tabela `pares` | `renovavel["conferencias"]` |
+| `alinhamento_hidrologia` | a tabela `alinhamento` (correlações com −1, 0 e +1 h, horas comuns e `confirmado`) e, sem a conferência, o motivo | `hidrologia["alinhamento"]` e `hidrologia["motivo_alinhamento"]`; `publicado` = `confirmado` |
 
 ### 1.3 Campos do perfil usados
 
@@ -59,6 +85,13 @@ Lidos de `perfil_ativo()` ([perfil da usina](../001-coleta-dados/contracts/perfi
 | `analises.faixas_geracao_mw` | faixas intermediárias da EVT por nível de geração |
 | `usina.inicio_operacao_comercial` | constatação de cobertura (período anterior não coberto) |
 | `usina.nome_curto`, `identificacao.cod_usina`, `identificacao.id_ons` | textos das constatações de cadastro, cobertura e conferência da geração |
+| `usina.tipo` (ou o prefixo do CEG), `usina.modalidade` | `tipo` e `modalidade`; regras do tipo; seções do tipo |
+| `[cobertura]` | caminho (série de referência), nível de cada base (`registro.nivel_coletado`) e motivo das omissões |
+| `identificacao.ceg`, `identificacao.id_conjunto` | composição do conjunto e peso da usina; texto da série de referência da restrição com detalhe |
+| `identificacao.cod_programacao` ou `codigos_programacao` | identificador da programação em `niveis` |
+| `usina.nome`, `parametros.potencia_instalada_mw` | constatação "A usina no conjunto" |
+| `parametros.garantia_fisica_mwmed` ÷ `potencia_instalada_mw` | regra C18 (eólicas e solares, só com a garantia física) |
+| `parametros.ip_referencia`, `parametros.teif_referencia` | nas usinas sem EVT, opcionais: sem eles, a C5 não é avaliada, a C2 só dispara pela limitação forçada recorrente e a distância à referência do DISPF fica vazia |
 
 Numa chamada direta de `analisar` sem as sinalizações do Tratamento, o perfil inteiro vai para `sinalizar_anomalias` e `validar_regras_fisicas` (limites das regras R1 a R9).
 
@@ -77,7 +110,7 @@ Numa chamada direta de `analisar` sem as sinalizações do Tratamento, o perfil 
 
 | Chave | Tipo | Descrição |
 |---|---|---|
-| `versao_formato` | `int` | `resultados.VERSAO_FORMATO` = 1; muda quando os campos mudam |
+| `versao_formato` | `int` | `resultados.VERSAO_FORMATO` = 3; muda quando os campos mudam (2: `datas_obtencao`; 3: `tipo`, `modalidade`, `niveis`, `trechos`, `comum`, `termica`, `renovavel`, `conjunto`, `indicadores_carteira` e `omitidos`) |
 | `resultados` | `ResultadosAnalise` | seção 3.2 |
 
 Na São Domingos: 6,1 MB.
@@ -116,14 +149,26 @@ Manifesto da etapa (seção 4).
 | `achados` | `list[tuple[str, str]]` | constatações (título, texto) (3.10) |
 | `conclusao` | `list[dict]` | itens da conclusão (3.11) |
 | `ons` | `dict` | indicadores oficiais por unidade geradora (3.4); `{}` sem a base |
-| `programacao` | `dict` | programação diária (3.5); `{}` sem a base |
-| `disponibilidade` | `dict` | disponibilidade operacional e sincronizada (3.6); `{}` sem a base |
-| `hidrologia` | `dict` | afluência, vertimento e nível (3.7); `{}` sem a base |
-| `geracao_oficial` | `dict` | geração por usina (3.8); `{}` sem a base |
+| `programacao` | `dict` | programação diária (3.5); `{}` sem a base; vazio nas usinas sem EVT (a programação delas está em `comum`) |
+| `disponibilidade` | `dict` | disponibilidade operacional e sincronizada (3.6); `{}` sem a base; vazio nas usinas sem EVT |
+| `hidrologia` | `dict` | afluência, vertimento e nível (3.7); `{}` sem a base; na hidrelétrica sem EVT, a versão sem os cruzamentos com a EVT (3.17) |
+| `geracao_oficial` | `dict` | geração por usina (3.8); `{}` sem a base; vazio nas usinas sem EVT |
 | `cadastro` | `dict` | ficha do cadastro (3.9); `{}` sem a ficha |
 | `dicionarios` | `dict` | `{"registro": DataFrame}` (3.9); `{}` sem o registro |
+| `datas_obtencao` | `dict` | conjunto → `arquivos_registrados`, `publicacao_mais_recente`, `obtencao_mais_recente`, de `datas_obtencao.csv` |
 | `fontes` | `dict` | vazio no arquivo; montado pela Geração do relatório |
 | `serie_diaria`, `vazoes_anuais` | `DataFrame` | dados das figuras 01 e 05 (3.3) |
+| `tipo`, `modalidade` | `str` | do perfil (o tipo, ou o prefixo do CEG), nos dois caminhos |
+| `niveis` | `dict` | nível e identificador de cada base de nível variável (3.13); `{}` na hidrelétrica com EVT |
+| `trechos` | `DataFrame` | `trechos.csv` da Coleta (3.13); vazio na hidrelétrica com EVT |
+| `comum` | `dict` | seções comuns sobre a base horária comum (3.12); `{}` na hidrelétrica com EVT, o que define o caminho (`resultados.sem_evt`) |
+| `termica` | `dict` | seções de térmica (3.14); `{}` fora das térmicas ou sem o despacho |
+| `renovavel` | `dict` | seções de eólica e solar (3.15); `{}` fora delas ou sem nenhuma base |
+| `conjunto` | `dict` | composição e geração do conjunto (3.16); `{}` fora de conjunto ou sem a geração do conjunto |
+| `indicadores_carteira` | `dict` | indicadores da carteira (3.19), nos dois caminhos |
+| `omitidos` | `list[dict]` | seções e regras não avaliadas, com o motivo (3.18); vazio na hidrelétrica com EVT |
+
+Na hidrelétrica com EVT, os campos de antes têm os mesmos valores, e dos campos novos só `tipo`, `modalidade` e `indicadores_carteira` são preenchidos. Nas usinas sem EVT, os campos da base de EVT (`globais`, `indicadores_anuais`, `evt_mensal`, eventos, distribuições, perfis, `mudanca_classificacao`, sinalizados, extremos, `validacao`, `horas_geracao_zero`, `serie_diaria`, `vazoes_anuais`) ficam vazios, e `cobertura` é a cobertura da série de referência (`comum["cobertura"]`, seção 3.12).
 
 ### 3.3 Base de EVT
 
@@ -141,7 +186,7 @@ Manifesto da etapa (seção 4).
 | `agentes` | `DataFrame` | uma linha por agente, na ordem do primeiro registro: `nom_agente`, `primeiro_registro`, `ultimo_registro`, `horas` |
 | `identificacao` | `dict[str, str]` | `id_subsistema`, `nom_subsistema`, `nom_bacia`, `nom_rio`, `nom_reservatorio`, `cod_usina`: valores distintos unidos por " / " |
 | `arquivos` | `dict` | resumo da auditoria da extração (`{}` sem ela): `total`; `com_registros` (status `PROCESSADO`); `sem_registros` (períodos dos arquivos `SEM_REGISTROS`, como "2015" ou "01/2024"); `falhas` (nomes dos arquivos `FALHA`); `divergencias` (soma de `registros_codigo_sem_nome` e `registros_nome_sem_codigo`) |
-| `manifesto` | `dict` | resumo do manifesto da EVT (`{}` sem ele): `arquivos`, `ultima_modificacao_mais_recente`, `registro_mais_recente_utc` (str) |
+| `manifesto` | `dict` | resumo do manifesto da EVT, da linha da EVT em `datas_obtencao.csv` (`{}` sem ela ou sem arquivos registrados): `arquivos` (`arquivos_registrados`), `ultima_modificacao_mais_recente` (`publicacao_mais_recente`), `registro_mais_recente_utc` (`obtencao_mais_recente`) (str) |
 
 **`globais`** (`calcular_indicadores_globais`), com todos os registros, cada hora com o mesmo peso. As somas de MW horários são MWh.
 
@@ -244,7 +289,7 @@ As grandezas são as 10 de `OPERATIONAL_METRIC_COLUMNS`. A unidade vem de `evt.U
 | `divergencias` | `DataFrame` | sempre (vazio sem divergência) | tabela da conferência `dispf_horas`: `mes`, `ug`, `HP`, `HS`, `HRD`, `HDP`, `horas_programadas_indisppf`, `HDF`, `horas_forcadas_indispff`, `diferenca_programada_h`, `diferenca_forcada_h` |
 
 Ponderações:
-- **DISPF** (`_media_ponderada`): peso = horas da base de EVT no mês × `potencia_mw` (sem potência, `parametros.potencia_unitaria_mw`); só os meses presentes na base de EVT.
+- **DISPF** (`_media_ponderada`): peso = horas da base de EVT no mês × `potencia_mw` (sem potência, `parametros.potencia_unitaria_mw`); só os meses presentes na base de EVT. Nas usinas sem EVT, as horas são as da base horária comum no nível da usina, e `disponibilidade_declarada_pct` de `disp_anual` é a disponibilidade operacional relativa dos indicadores anuais comuns; sem o IP e a TEIF de referência no perfil, `desvio_dispf_referencia_pp` fica vazio.
 - **Decomposição**: janela de `JANELA_TAXAS_MESES` meses (`conferencia.indicadores.janela`); peso = `potencia_mw`, ou 1 sem potência (`peso`). Contribuição em p.p. = Σ peso × horas da parcela ÷ base × 100, com base Σ peso × (HP − HDP − HEDP) na TEIFa e Σ peso × HP na TEIP. Participação = contribuição ÷ soma das contribuições da taxa × 100.
 
 ### 3.5 Programação (`programacao`, `analisar_programacao`)
@@ -289,7 +334,7 @@ Ponderações:
 | `mensal` | `DataFrame` | por mês (`periodo` = "AAAA-MM"), tabela abaixo |
 | `anual` | `DataFrame` | por ano (`periodo` = "AAAA"), tabela abaixo + `ano_parcial` |
 | `auditoria`, `ausencias` | `DataFrame` | do Tratamento, como estão |
-| `obtido_em` | `str` | data de obtenção (UTC) do manifesto do conjunto; vazio sem registro |
+| `obtido_em` | `str` | data de obtenção (UTC) do conjunto, `obtencao_mais_recente` de `datas_obtencao.csv`; vazio sem registro |
 
 `mensal` e `anual` (horas comuns, sem as horas sinalizadas):
 
@@ -379,6 +424,29 @@ Na constatação 5, a frase da reprodução da TEIFa e da TEIP usa `recalculo_re
 
 Na São Domingos: 17 constatações (sem a 2 e a 18), com 21 dos 21 meses reproduzidos. `texto_conferencia_geracao` e `_texto_alinhamento` também são usadas pela Geração do relatório, no texto das seções de geração e de hidrologia.
 
+Nas usinas sem EVT, `montar_achados_comum`, nesta ordem (títulos fixos):
+
+| # | Título | Função | Gerada quando |
+|---|---|---|---|
+| 1 | Cobertura dos dados | `_achado_cobertura_comum` | sempre |
+| 2 | Cadastro da usina no ONS | `_achado_cadastro` | `cadastro["divergencias"]` não vazio |
+| 3 | A usina no conjunto | `conjunto.achado_usina_no_conjunto` | `em_duas_partes(res)` |
+| 4 | Geração | `_achado_geracao_comum` | sempre (uma frase por nível) |
+| 5 | Disponibilidade | `_achado_disponibilidade_comum` | há `comum["disponibilidade"]` |
+| 6 | Programação diária do ONS | `_achado_programacao_comum` | há `comum["programacao"]` |
+| 7 | Despacho por motivo | `termica.achados_termica` | há `termica` (sem geração, diz que a usina não gerou e ficou disponível) |
+| 8 | Atendimento ao despacho | idem | há horas com programação ou sem programação com geração acima dela |
+| 9 | Disponível sem despacho | idem | há `disponivel_sem_despacho` e a usina gerou |
+| 10 | CVU e CMO | idem | há `cvu_cmo` |
+| 11 | Fator de capacidade | `renovavel.achados_renovavel` | há `renovavel["fator_capacidade"]` |
+| 12 | Energia cortada | idem | há `renovavel["restricao"]` |
+| 13 | Recurso × geração | idem | há semi-horas com o recurso inválido ou acima do limite físico |
+| 14 | Composição do conjunto | `conjunto.achados_conjunto` | há `conjunto` (até 5 composições no texto) |
+| 15 | Afluência e vertimento | `_achado_afluencia_comum` | há `hidrologia` com `sem_evt` |
+| 16 | Qualidade dos dados | `_achado_qualidade_comum` | sempre; com as frases de `conjunto.frases_tipo_publicado` quando o tipo publicado diverge |
+
+`do_nivel` escreve " do conjunto <nome>" nos números do nível do conjunto. Nas usinas piloto: William Arjona, 9 constatações; Seriemas 1, 9; Praia Formosa, 7; Bandeirante, 6.
+
 ### 3.11 Conclusão (`conclusao`, `montar_conclusao`)
 
 Item:
@@ -387,9 +455,29 @@ Item:
 |---|---|---|
 | `lista` | `str` | `pontos_atencao`, `possiveis_problemas`, `confirmar_agente` ou `verificar_campo` |
 | `ordem` | `int` | posição na lista, de 1 em diante |
-| `regra` | `str` | `C1` a `C11` |
+| `regra` | `str` | `C1` a `C19` |
 | `texto` | `str` | uma frase, sem ponto final, com os números formatados |
 | `secoes` | `list[str]` | chaves das seções de origem (seção 5.4), na ordem de citação |
+
+**`RegraConclusao`** (`src/analises/conclusao.py`; o catálogo `CATALOGO_CONCLUSAO` tem C1 a C19, nessa ordem):
+
+| Campo | Tipo | Conteúdo |
+|---|---|---|
+| `codigo` | `str` | `C1` a `C19` |
+| `tipos` | `tuple[str]` | tipos em que a regra é avaliada (`HIDRELETRICAS`, `TERMICAS`, `RENOVAVEIS` do registro da Coleta) |
+| `listas` | `tuple[str]` | listas em que a regra pode gerar itens; cada item traz a sua |
+| `funcao` | função ou `None` | a regra sobre a base de EVT (C1 a C11); `None` de C12 em diante |
+| `secoes` | `tuple[str]` | seções de origem |
+| `limiares` | `tuple[str]` | nomes das constantes de `regras.py` |
+| `nivel_exigido` | `str` | `usina`: só entradas do nível da usina |
+| `periodo_minimo_meses` | `int` ou `None` | meses distintos da série; só a C18 (12) |
+| `funcao_comum` | função ou `None` | a regra nas usinas sem EVT (C2, C5, C8, C10 e C12 a C19); `None` nas que dependem da base de EVT |
+| `bases_comuns` | `tuple[str]` | bases da usina de que a regra precisa (basta uma): `disponibilidade`, `indicadores`, `despacho`, `cvu_cmo`, `restricao`, `recurso`, `fator_capacidade` (no nível da usina), `programacao` (no nível da usina) |
+| `exige_referencias` | `bool` | pede o IP e a TEIF de referência no perfil (C5) |
+| `exige_garantia_fisica` | `bool` | pede a garantia física no perfil (C18) |
+| `descricao` | função ou `None` | texto da regra na nota da conclusão das usinas sem EVT, com os limiares |
+
+Na hidrelétrica com EVT, `_avaliar` roda `REGRAS_CONCLUSAO` (as `funcao` de C1 a C11), como antes. Na usina sem EVT, roda a `funcao_comum` das regras do tipo (`regras_do_tipo`) que têm base: alguma das `bases_comuns` presente, as referências e a garantia física pedidas, e o período mínimo; as seções citadas passam às chaves do caminho sem EVT (`SECOES_SEM_EVT`: `indicadores_ons` → `indicadores_ons_comum`, `qualidade` → `qualidade_comum`, `disponibilidade_geracao` → `disponibilidade_geracao_comum`, `indicadores_anuais` → `anuais_comum`). As demais regras do tipo vão para `omitidos` (`regras_omitidas`), com o motivo: "regra da base de EVT, que a usina não tem"; "sem <bases> no nível da usina"; "sem IP e TEIF de referência no perfil da usina"; "sem a garantia física no perfil da usina"; ou "a série tem N meses distintos, menos que o período mínimo de 12". `frase_sem_itens` dá a frase da conclusão vazia: a de antes na hidrelétrica com EVT; nas usinas sem EVT, a de antes quando alguma regra foi avaliada, a de que o ONS publica só os números do conjunto quando a série de referência é do conjunto e nenhuma regra tem base, ou a de que nenhuma regra do tipo tem base para a usina.
 
 Regras (`REGRAS_CONCLUSAO`, uma função cada; limiares na seção 5.2):
 
@@ -407,17 +495,157 @@ Regras (`REGRAS_CONCLUSAO`, uma função cada; limiares na seção 5.2):
 | C10 | `eventos_indisponibilidade_total`, `ons["ug_anual"]` (anos completos) | a confirmar, a verificar | `disponibilidade_geracao` (evento) e `indicadores_ons` (unidades) |
 | C11 | `hidrologia["resumo"]["horas_sinalizadas"]`, horas da R9 | a verificar (um item) | `hidrologia` e `qualidade` |
 
-`montar_conclusao` ordena os itens de forma estável por lista (na ordem de `LISTAS_CONCLUSAO`) e pelo número da regra, e numera `ordem` em cada lista. Todos os itens ficam no arquivo. Na São Domingos: 19 itens (5 pontos de atenção, 4 possíveis problemas, 5 a confirmar e 5 a verificar), com as onze regras.
+Nas usinas sem EVT (funções `funcao_comum`):
+
+| Regra | Usa | Gera item em | Seções |
+|---|---|---|---|
+| C2 | `_regra_c2`, como na tabela acima; sem a TEIF de referência, só a limitação forçada recorrente | possíveis problemas, a confirmar, a verificar | `indicadores_ons_comum` |
+| C5 | `_regra_c5_comum`: `comum["disponibilidade"]["resumo"]["disponibilidade_relativa_pct"]` (operacional), `ons["disp_periodo"]`, `ons["taxa_ultima"]` | pontos de atenção (um item) | `disponibilidade_geracao_comum` (disponibilidade) e `indicadores_ons_comum` (DISPF ou taxas) |
+| C8 | `_regra_c8_comum`: horas com o código `R7` em `comum["qualidade"]["sinalizacoes"]` | possíveis problemas e a confirmar | `qualidade_comum` |
+| C10 | `_regra_c10_comum`: `comum["disponibilidade"]["eventos_indisponibilidade_total"]` e `ons["ug_anual"]`, com os anos seguidos de mesmas unidades juntos (`_unidades_agrupadas`: "de todas as unidades em …") | a confirmar, a verificar | `disponibilidade_geracao_comum` e `indicadores_ons_comum` |
+| C12 | `termica["atendimento"]["resumo"]["horas_abaixo"]` | possíveis problemas, a confirmar | `atendimento_despacho` |
+| C13 | `termica["cvu_cmo"]["horas_disponivel_cvu_abaixo"]` e `semanas_disponivel_cvu_abaixo` | a confirmar | `disponivel_sem_despacho` |
+| C14 | `termica["inflexibilidade_resumo"]["nao_verificada_pct"]` | pontos de atenção | `despacho_motivo` |
+| C15 | `termica["atendimento"]["resumo"]["horas_sem_programacao"]` | a confirmar | `atendimento_despacho` |
+| C16 | `renovavel["restricao"]["resumo"]["pct_estimada"]` | pontos de atenção | `energia_cortada` |
+| C17 | `renovavel["recurso"]["resumo"]["pct_invalidas"]` | a verificar | `recurso_geracao` |
+| C18 | `renovavel["fator_capacidade"]["anual"]` (nível da usina, anos completos) e a garantia física | pontos de atenção | `fator_capacidade` |
+| C19 | `renovavel["programacao"]` (nível da usina): `desvio_medio_absoluto_pct` | a confirmar | `programacao_comum` |
+
+`montar_conclusao` ordena os itens de forma estável por lista (na ordem de `LISTAS_CONCLUSAO`) e pelo número da regra, e numera `ordem` em cada lista. Todos os itens ficam no arquivo. Na São Domingos: 19 itens (5 pontos de atenção, 4 possíveis problemas, 5 a confirmar e 5 a verificar), com as onze regras. Na William Arjona: 7 itens (C8, C10, C12 e C15), com a C5 em `omitidos`. Na Seriemas 1 e na Praia Formosa: C16 e C17. Na Bandeirante: nenhum item, com C1 a C11 em `omitidos`.
+
+### 3.12 Seções comuns das usinas sem EVT (`comum`, `analisar_comum`)
+
+Sobre `base_horaria.csv`. Toda tabela por ano, mês ou hora tem a coluna `nivel` (`usina` ou `conjunto`), uma linha por nível; a disponibilidade é sempre da usina e só entra nas horas do nível da usina. Hora sem valor fica fora das médias e é contada.
+
+| Chave | Tipo | Conteúdo |
+|---|---|---|
+| `cobertura` | `dict` | `inicio`, `fim` (`Timestamp`), `horas_observadas`, `horas_esperadas` (grade horária contínua), `horas_ausentes` (das ausências da série de referência), `horas_sem_valor`, `anos_parciais`, `anos_completos` (`list[int]`), `meses_distintos` (meses do ano presentes, 1 a 12), `meses`, `niveis` (`nivel` → horas), `trechos` (quantidade) |
+| `anuais` | `DataFrame` | por ano e nível: `ano`, `nivel`, `ano_parcial`, `horas`, `horas_com_valor`, `geracao_media_mw`, `energia_mwh`, `geracao_maxima_mw`, `horas_paradas` (≤ 1 MW), `pct_horas_paradas`, `fator_capacidade_pct` (só EOL e UFV, no nível da usina; vazio nos demais), `disponibilidade_media_mw` e `disponibilidade_relativa_pct` (operacional, só da usina) |
+| `serie_diaria` | `DataFrame` | por dia e nível: `din_instante`, `nivel`, `geracao_mw` (média), `disponibilidade_operacional_mw` (média da usina; vazia no nível do conjunto) |
+| `mensal` | `DataFrame` | por mês e nível: `mes`, `nivel`, `horas`, `horas_com_valor`, `geracao_media_mw`, `energia_mwh` |
+| `sazonalidade` | `DataFrame` | por mês do ano e nível, só no nível com 12 meses distintos: `mes_do_ano`, `nivel`, `geracao_media_mw`, `anos` |
+| `perfil_horario` | `DataFrame` | por hora do dia e nível: `hora`, `nivel`, `geracao_media_mw`, `horas` |
+| `disponibilidade` | `dict` | `{}` sem a Disponibilidade por usina. `resumo` (`inicio`, `fim`, `horas`, `disp_operacional_media_mw`, `disp_sincronizada_media_mw`, `disponibilidade_relativa_pct`, `horas_indisponibilidade_total`, `horas_geracao_acima_disponibilidade`, `eventos_indisponibilidade_total`); `mensal` e `anual` (`periodo`, `horas_comuns`, `disp_operacional_media_mw`, `disp_sincronizada_media_mw`, `geracao_media_mw`, `capacidade_nao_sincronizada_media_mw`, `horas_indisponibilidade_total`, `horas_paradas_disponivel`, `horas_paradas_sincronizadas`, `horas_geracao_acima_disponibilidade`; a anual com `ano_parcial` e `disponibilidade_relativa_pct`); `eventos_indisponibilidade_total` (`inicio`, `fim`, `duracao_h`, `geracao_media_mw`) |
+| `programacao` | `dict` | `{}` sem horas comuns no mesmo nível. `nivel`; `resumo` (`inicio`, `fim`, `horas_comuns`, `geracao_media_mw`, `programada_media_mw`, `desvio_medio_mw`, `desvio_medio_absoluto_mw`, `correlacao` (vazia com série constante), `horas_desvio_programacao`, `eventos_desvio`, `dias_ausentes`); `mensal` (`mes`, `horas_comuns`, `geracao_media_mw`, `programada_media_mw`, `desvio_medio_mw`, `desvio_medio_absoluto_mw`, `horas_desvio_programacao`); `eventos` (`inicio`, `fim`, `duracao_h`, `programacao_media_mw`) |
+| `programacao_coletada`, `programacao_horas` | `bool`, `int` | a Programação diária foi coletada; horas dela no período (para o motivo da omissão) |
+| `qualidade` | `dict` | `sinalizacoes` (`codigo`, `descricao`, `horas`), `horas_sinalizadas`, `horas_sem_valor`, `ausencias` (`tipo`, `inicio`, `fim`, `horas`), `linhas_usina_sem_valor`, `linhas_usina_sem_valor_periodo` (`inicio`, `fim`) |
+| `conferencias_nao_aplicaveis` | `DataFrame` | `nao_aplicaveis.csv` da Conferência, como está (`conferencia`, `motivo`) |
+| `agentes` | `dict` | `proprietario` e `operador` (`list[str]`): agentes das unidades ativas no fim do período, da Capacidade de geração; `{}` sem a ficha |
+
+A comparação com a programação usa a base horária, nas horas do nível da programação; na eólica ou solar com a restrição com detalhe como série de referência e a programação do conjunto, usa `base_programacao_conjunto` (a Geração por usina do conjunto e a programação, com `nivel` = `conjunto`), fora da base da usina.
+
+### 3.13 Níveis e trechos (`niveis`, `trechos`)
+
+`niveis` (`niveis_da_usina`), só nas usinas sem EVT:
+
+| Chave | Campos | Quando |
+|---|---|---|
+| `geracao` | `nivel` (`usina`, `conjunto` ou `usina e conjunto`), `identificador_usina` (id ONS), `identificador_conjunto` (id do conjunto), `nome` (do conjunto, da composição); `fonte` = `restricao_detalhe` quando a série de referência é a restrição com detalhe | sempre |
+| `programacao` | `nivel`, `identificador` (os códigos de programação, separados por "; ") | com a Programação diária coletada |
+| `disponibilidade` | `nivel` = `usina`, `identificador` (id ONS) | com a Disponibilidade por usina coletada |
+| `fator_capacidade`, `restricao_razao` | `nivel`, `identificador` (id ONS ou id do conjunto) | eólicas e solares, com a base coletada |
+
+`trechos`: `trechos.csv` da Coleta, como está (`trecho`, `inicio`, `fim`, `modalidade`, `id_conjunto`, `composicao`, `tipos_composicao`, `codigos_planejamento`, `nivel_geracao`, `mostrar`).
+
+### 3.14 Térmica (`termica`, `analisar_termica`)
+
+Vazio sem o despacho tratado ou sem horas dele. As somas de MW horários são MWh.
+
+| Chave | Tipo | Conteúdo |
+|---|---|---|
+| `periodo` | `dict` | `inicio`, `fim`, `horas` do despacho |
+| `codigos` | `list[int]` | unidades de planejamento |
+| `motivos_anual`, `motivos_mensal` | `DataFrame` | `periodo`, `motivo`, `grupo` (`total`, `motivo` ou `detalhe`), `programado_mwh`, `verificado_mwh`, `parcela_programado_pct`, `parcela_verificado_pct` (sobre a geração total publicada; vazia com total nulo); só os motivos com energia |
+| `inflexibilidade` | `DataFrame` | por mês: `mes`, `programada_mwh`, `verificada_mwh`, `nao_verificada_mwh` (Σ máx(programada − verificada, 0)) |
+| `inflexibilidade_resumo` | `dict` | `programada_mwh`, `verificada_mwh`, `nao_verificada_mwh`, `nao_verificada_pct` (base da C14) |
+| `atendimento` | `dict` | `resumo` (`horas_comuns`, `horas_programadas` (> 1 MW), `horas_abaixo`, `energia_abaixo_mwh`, `horas_acima`, `energia_acima_mwh`, `horas_sem_programacao`, `energia_sem_programacao_mwh`, `desvio_medio_mw`, `limiar_mw`); `anual` (`ano` e as horas e energias acima); `mensal` (`mes`, `energia_abaixo_mwh`, `energia_acima_mwh`); `maiores_desvios` (`din_instante`, `programado_mw`, `verificado_mw`, `desvio_mw`; até 15, empates em ordem cronológica) |
+| `disponivel_sem_despacho` | `dict` | `{}` sem horas comuns com a disponibilidade. `resumo` (`horas_comuns`, `horas`, `pct_horas`, `potencia_disponivel_media_mw`, `inicio`, `fim`); `anual` (`ano`, `horas_comuns`, `horas_disponivel_sem_despacho`, `potencia_disponivel_media_mw`) |
+| `horas_com_despacho`, `horas_com_despacho_anual` | `int`, `dict` | horas com programação > 1 MW, no período e por ano |
+| `geracao_verificada_mwh`, `sem_geracao` | `float`, `bool` | geração verificada total; verdadeiro quando ela não passa de 1 MWh |
+| `cvu_cmo` | `dict` | `{}` sem o CVU ou o CMO. `semanal` (por semana operativa e unidade: `codigo`, `semana_inicio`, `semana_fim`, `cvu`, `sinal_cvu`, `cmo`, `relacao`, `geracao_mwh`, `horas_disponivel_sem_despacho`); `resumo` (por unidade: `codigo`, `semanas`, `semanas_abaixo`, `geracao_abaixo_mwh`, `semanas_acima`, `geracao_acima_mwh`, `semanas_igual`, `semanas_sem_comparacao`, `semanas_cvu_sinalizado`); `semanas_cvu_abaixo`; `horas_disponivel_cvu_abaixo` e `semanas_disponivel_cvu_abaixo` (base da C13) |
+| `cvu_coletado`, `cmo_coletado` | `bool` | o CVU e o CMO foram tratados |
+| `cvu_sinalizados` | `dict` | semanas com o CVU `ausente`, `zero` e `negativo` |
+| `conferencias` | `dict` | `programacao_despacho` (G3) e `verificada_despacho` (G4), seção 1.2 |
+
+Na William Arjona: 3.264 horas com programação, 2.821 abaixo (112.233 MWh), 86 acima e 114 sem programação (3.028 MWh); CVU zero em 366 semanas-unidade, sem comparação; nenhuma hora disponível sem despacho em semana com CVU abaixo do CMO.
+
+### 3.15 Eólica e solar (`renovavel`, `analisar_renovavel`)
+
+Vazio sem nenhuma das seções. As energias das semi-horas são potência × 0,5 h.
+
+| Chave | Tipo | Conteúdo |
+|---|---|---|
+| `tipo` | `str` | `EOL` ou `UFV` |
+| `fator_capacidade` | `dict` | `{}` sem a base. `nivel`; `mensal` e `anual` (`periodo`, `nivel`, `horas`, `geracao_verificada_mwh`, `capacidade_media_mw`, `fator_capacidade_pct` = Σ verificada ÷ Σ capacidade, `horas_fc_fora_0_1`, `horas_acima_capacidade`; a anual com `ano_parcial`); `resumo` (`inicio`, `fim`, `horas`, `fator_capacidade_pct`, `horas_fc_fora_0_1`, `horas_acima_capacidade`) |
+| `restricao` | `dict` | `{}` sem a restrição com detalhe. `resumo`, `mensal` e `anual` (`periodo`, `semi_horas`, `semi_horas_restritas`, `horas_restritas`, `semi_horas_sem_marca`, `semi_horas_sem_estimativa`, `semi_horas_restritas_sem_estimativa`, `energia_verificada_mwh` e `energia_estimada_mwh` (nas semi-horas com estimativa), `energia_estimada_com_marca_mwh`, `energia_cortada_mwh` (só nas restritas), `pct_estimada` (cortada ÷ estimada com a marca), `diferenca_bruta_mwh`; a mensal também `cortada_rel_mwh`, `cortada_cnf_mwh`, `cortada_ene_mwh`, `cortada_sem_razao_mwh`; o resumo também `inicio` e `fim`); `por_razao` (`razao`, `descricao`, `semi_horas`, `energia_cortada_mwh`, `pct_cortada`); `nivel_razao` |
+| `recurso` | `dict` | `{}` sem semi-horas com o recurso. `grandeza` (`vento` ou `irradiância`), `unidade`, `largura`, `limite`; `faixas` (`faixa_inicio`, `faixa_fim`, `semi_horas`, `geracao_media_mw`, `estimada_media_mw`, sem as estimativas ausentes); `resumo` (`semi_horas`, `semi_horas_validas`, `semi_horas_invalidas`, `pct_invalidas`, `semi_horas_implausiveis` (acima do limite físico, sem a marca do ONS), `semi_horas_sem_recurso`) |
+| `programacao` | `dict` | `{}` sem a programação comum. `nivel`, `maiores_desvios` (`din_instante`, `geracao_programada_mw`, `geracao_mw`, `desvio_mw`; até 15), `desvio_medio_absoluto_mw`, `desvio_medio_absoluto_pct` (÷ P), `horas` |
+| `conferencias` | `dict` | G1, G2 e G5 aplicadas (seção 1.2) |
+
+Na Praia Formosa: 184.769 MWh cortados nas 16.311 semi-horas restritas, 16,6 % da estimada, contra 355.038 MWh da diferença bruta; 10.504 semi-horas sem estimativa, 441 delas restritas; 13.157 semi-horas com o vento inválido e 111 acima de 40 m/s.
+
+### 3.16 Conjunto (`conjunto`, `analisar_conjunto`)
+
+Vazio fora de conjunto, sem a geração do conjunto, sem os trechos ou sem a composição.
+
+| Chave | Tipo | Conteúdo |
+|---|---|---|
+| `id`, `nome`, `nivel` | `str` | id e nome do conjunto; `nivel` = `conjunto` |
+| `com_capacidade` | `bool` | há `capacidade_membros.csv` |
+| `trechos` | `DataFrame` | por trecho de composição: `trecho`, `inicio`, `fim`, `usinas`, `tipos`, `horas`, `horas_com_valor`, `energia_mwh`, `geracao_media_mw`, `geracao_maxima_mw`, `potencia_somada_mw` (vazia sem a capacidade), `usinas_sem_potencia` |
+| `composicao` | `DataFrame` | por trecho e usina: `trecho`, `ceg`, `usina`, `tipo`, `entrada`, `saida`, `unidades`, `potencia_mw` (unidades em operação em algum momento do trecho; vazia sem unidade) |
+| `mensal` | `DataFrame` | `mes`, `trecho`, `horas_com_valor`, `geracao_media_mw`, `energia_mwh` |
+| `tipo_publicado` | `DataFrame` | por trecho de composição e tipo publicado: `trecho`, `inicio`, `fim`, `tipo_publicado`, `combustivel_publicado`, `horas`, `tipos_composicao`, `corresponde` |
+| `peso_usina` | `DataFrame` | `trecho`, `inicio`, `fim`, `potencia_usina_mw`, `potencia_somada_mw`, `peso_pct` (vazio sem potência da usina no trecho); vazia sem a capacidade |
+| `resumo` | `dict` | `inicio`, `fim`, `composicoes`, `horas_com_valor`, `trechos_tipo_divergente` |
+
+Trecho de composição: os trechos consecutivos de `trechos.csv` com a mesma `composicao`, juntos. A geração do conjunto vem das horas do nível do conjunto da base horária (série de referência do conjunto) ou, na eólica ou solar com série própria, da Geração por usina do conjunto (`serie_do_conjunto`). O tipo publicado corresponde quando o tipo do ONS (pela tabela `TIPOS_ONS`) inclui algum tipo da composição. `em_duas_partes(res)`: há `conjunto` e todas as horas da série de referência são do nível do conjunto.
+
+Na Bandeirante: três trechos de composição (8 usinas, PCH e UTE, até 26/09/2019; 9 até 30/06/2025; 4 PCH desde 01/07/2025, com 47,0 MWmed e 78,5 MW somados); peso de 6,7 % e 35,7 % nos dois últimos (no primeiro, sem unidade em operação); o tipo publicado "TÉRMICA" (Biomassa) não corresponde no terceiro.
+
+### 3.17 Hidrologia da hidrelétrica sem EVT (`hidrologia`, `analisar_hidrologia_sem_evt`)
+
+Vazio sem a série no período. Sempre: `resumo` (`_resumo_serie` e `sinalizadas_por_regra`, como na seção 3.7), `alinhamento` (da conferência `alinhamento_hidrologia`; sem ela, só `confirmado` falso), `auditoria`, `ausencias`, `obtido_em`, `publicado` (= `confirmado`), `sem_evt` (verdadeiro) e `motivo_alinhamento` (vazio com a conferência aplicada). Só com `publicado`: `mensal` e `anual` (as colunas de `resumir_hidrologia`, seção 3.7; a anual com `ano_parcial`) e, no `resumo`, `afluencia_media_m3s`, `afluencia_maxima_m3s`, `turbinada_media_m3s`, `vertida_media_m3s` e `horas_afluencia_acima_engolimento`, todos sobre a cópia `limpos`. Sem faixas de afluência, perfil por grupo de dias nem pico de afluência.
+
+### 3.18 Omissões (`omitidos`)
+
+Lista de `{"item", "tipo", "motivo"}`, na ordem do relatório; vazia na hidrelétrica com EVT.
+
+| `tipo` | `item` | Exemplos de motivo |
+|---|---|---|
+| `secao` | título da seção (por exemplo "Disponibilidade e geração por ano", "Sazonalidade (distribuição por mês do ano)", "Seções de térmica", "CVU × CMO", "Fator de capacidade", "Composição e geração do conjunto", "Programação diária × geração verificada", "Afluência, vertimento e nível do reservatório", "Conferência da geração entre fontes") | "sem a Disponibilidade por usina (cobertura: ausente)"; "a série do nível usina tem menos de 12 meses distintos (3)"; "o despacho não tem horas no período da série de referência"; "sem horas com a programação e a geração verificada no mesmo nível" |
+| `regra` | código da regra (`C1` a `C19`) | os da seção 3.11 (`regras_omitidas`) |
+
+A "Conferência da geração entre fontes" é sempre omitida nas usinas sem EVT: nas térmicas e nas eólicas e solares, os resultados das conferências G1 a G5 vão nas legendas das seções do tipo e nas abas da planilha; nos demais, nenhuma conferência entre fontes de geração se aplica.
+
+### 3.19 Indicadores da carteira (`indicadores_carteira`, `src/analises/carteira.py`)
+
+Gravado nos dois caminhos (`indicadores_carteira(res)`).
+
+| Chave | Tipo | Conteúdo |
+|---|---|---|
+| `tipo` | `str` | tipo da usina |
+| `periodo` | `dict` | `inicio`, `fim` da série de referência (`cobertura`) |
+| `ano`, `ano_parcial` | `int`, `bool` | `ano_dos_indicadores`: o maior de `anos_completos`; sem ele, o maior de `anos_parciais`, com `ano_parcial` verdadeiro |
+| `fator_capacidade` | `dict` ou `None` | `fator_capacidade_pct` do ano: `indicadores_anuais` (com EVT) ou `comum["anuais"]` no nível da usina (sem EVT; só EOL e UFV têm valor) |
+| `disponibilidade` | `dict` ou `None` | `disponibilidade_relativa_pct` do ano, das mesmas tabelas (declarada com EVT; operacional sem EVT) |
+| `teifa` | `dict` ou `None` | `ons["taxas"]`: no ano completo, a TEIFa de dezembro (sem dezembro, `None`); no parcial, a do último mês publicado do ano; × 100; com `mes` |
+| `energia_cortada` | `dict` ou `None` | `pct_estimada` da linha do ano em `renovavel["restricao"]["anual"]` |
+| `atendimento_despacho` | `dict` ou `None` | da linha do ano em `termica["atendimento"]["anual"]`: (`horas_programadas` − `horas_abaixo` − `horas_acima`) ÷ `horas_programadas` × 100, com `horas_dentro` e `horas_programadas`; `None` sem hora com programação |
+| `conclusao` | `dict` | `pontos_atencao`, `possiveis_problemas`, `confirmar_agente`, `verificar_campo` (todos os itens de cada lista; `None` quando nenhuma regra foi avaliada), `regras_avaliadas` e `regras_nao_avaliadas` (quantidades: C1 a C11 com EVT; as regras do tipo menos as de `omitidos` sem EVT) |
+
+Cada indicador presente é `{"valor": float, "nivel": "usina", "unidade": "%", ...}`; valor ausente, não numérico ou não finito dá `None`, nunca zero.
 
 ## 4. Manifesto da etapa (`etapa.json`)
 
 Campos comuns (`etapa`, `usina`, `versao_formato`, `iniciada_em`, `concluida_em`, `status`, `codigo_saida`, `etapa_anterior`, `arquivos`, `resumo`) e transições de `status`: [data-model da Coleta](../001-coleta-dados/data-model.md). Nesta etapa:
-- `versao_formato` = 1 (`pipeline.VERSAO_FORMATO["analises"]`);
+- `versao_formato` = 3 (`pipeline.VERSAO_FORMATO["analises"]`);
 - `etapa_anterior` = `{"etapa": "conferencia", "concluida_em": …}`;
 - `arquivos` = `resultados.pkl`, com `bytes` e `sha256`, mesmo quando o conteúdo não mudou;
 - em erro: `status` `falha`, `codigo_saida` 1, `arquivos` vazio e `resumo` = `{"erro": "<mensagem>"}`; na interrupção pelo usuário (Ctrl+C), `{"erro": "interrompida pelo usuário"}`.
 
-`resumo` (`executar_analises`):
+`resumo` (`executar_analises`), na hidrelétrica com EVT:
 
 | Campo | Tipo | Conteúdo |
 |---|---|---|
@@ -441,6 +669,15 @@ Na São Domingos:
                           "hidrologia": true, "geracao": true, "cadastro": true}
 }
 ```
+
+Na usina sem EVT (`_executar_sem_evt`), o `resumo` traz os mesmos `periodo`, `horas_analisadas`, `constatacoes`, `conclusao` e `regras_da_conclusao`, sobre a série de referência, e mais:
+
+| Campo | Tipo | Conteúdo |
+|---|---|---|
+| `tipo` | `str` | tipo da usina |
+| `niveis` | `dict[str, int]` | horas da série de referência por nível |
+| `omitidos` | `list[str]` | itens de `omitidos` (seções e regras), na ordem |
+| `bases_complementares` | `dict[str, bool]` | `indicadores`, `programacao` (a comparação comum), `disponibilidade`, `cadastro`; nas térmicas, `despacho` e `cvu_cmo`; nas eólicas e solares, `fator_capacidade`, `restricao` e `recurso`; na usina em conjunto, `conjunto`; nas hidrelétricas, `hidrologia` |
 
 ## 5. Regras, estados e validações
 
@@ -470,6 +707,15 @@ Iguais para qualquer usina; o perfil não as altera.
 | Distribuição ao longo do ano | anos completos; maio a outubro × janeiro a abril; 3 meses de maior EVT | `MESES_MAIO_A_OUTUBRO`, `MESES_JANEIRO_A_ABRIL` (`constatacoes.py`) |
 | Ano parcial | primeiro registro depois de 1º/jan 00h ou último antes de 31/dez 23h | `analisar_cobertura` |
 | Horas ausentes citadas (constatação 1) | até 5 | literal em `_achado_cobertura` |
+| Sazonalidade nas usinas sem EVT; período mínimo da C18 | 12 meses distintos | `PERIODO_MINIMO_SAZONALIDADE_MESES` (a C18 declara o seu em `RegraConclusao`) |
+| Fator de capacidade nos indicadores anuais comuns | só EOL e UFV, no nível da usina | `TIPOS_COM_FATOR_CAPACIDADE` |
+| Atendimento ao despacho | horas com programação > 1 MW; desvio além de 5 MW; sem programação, verificada > programada + 5 MW | `LIMIAR_GERACAO_PARADA_MW`, `LIMIAR_DESVIO_DESPACHO_MW` |
+| Disponível sem despacho | disponibilidade operacional > 0,001 MW; programação e geração ≤ 1 MW | `LIMIAR_INDISPONIBILIDADE_TOTAL_MW`, `LIMIAR_GERACAO_PARADA_MW` |
+| Maiores desvios (térmicas, eólicas e solares) | 15 horas | `NUMERO_EVENTOS_RELATORIO` |
+| Energia de uma semi-hora | potência × 0,5 h | `DURACAO_SEMI_HORA_H` |
+| Faixas do recurso | 2 m/s; 100 W/m² | `FAIXA_VENTO_MS`, `FAIXA_IRRADIANCIA_WM2` |
+| Limite físico do recurso | vento ≤ 40 m/s; irradiância ≤ 1.500 W/m² | `LIMITE_VENTO_PLAUSIVEL_MS`, `LIMITE_IRRADIANCIA_PLAUSIVEL_WM2` |
+| Composições citadas na constatação do conjunto | até 5 | `MAXIMO_TRECHOS_NA_CONSTATACAO` (`conjunto.py`) |
 
 ### 5.2 Limiares da conclusão (`src/comum/regras.py`)
 
@@ -489,14 +735,26 @@ Iguais para qualquer usina; o perfil não as altera.
 | `LIMIAR_CONCLUSAO_INDISPONIBILIDADE_DIAS` | 30 | C10: evento de indisponibilidade total ≥ 30 × 24 h |
 | `LIMIAR_CONCLUSAO_PROGRAMADA_UG_PCT` | 20,0 | C10: `indisppf` anual de uma unidade ≥ 20 num ano completo |
 | `LIMIAR_CONCLUSAO_R9_HORAS` | 24 | C11: horas da regra R9; ou dados hidrológicos com alguma hora sinalizada |
+| `LIMIAR_DESVIO_DESPACHO_MW` | 5,0 | C12 e C15: desvio da geração verificada em relação à programada |
+| `LIMIAR_CONCLUSAO_DESPACHO_ABAIXO_HORAS` | 24 | C12: `horas_abaixo` |
+| `LIMIAR_CONCLUSAO_DISPONIVEL_CVU_HORAS` | 168 | C13: `horas_disponivel_cvu_abaixo` |
+| `LIMIAR_CONCLUSAO_INFLEXIBILIDADE_PCT` | 5,0 | C14: `nao_verificada_pct` |
+| `LIMIAR_CONCLUSAO_SEM_PROGRAMACAO_HORAS` | 24 | C15: `horas_sem_programacao` |
+| `LIMIAR_CONCLUSAO_ENERGIA_CORTADA_PCT` | 5,0 | C16: `pct_estimada` |
+| `LIMIAR_CONCLUSAO_RECURSO_INVALIDO_PCT` | 10,0 | C17: `pct_invalidas` |
+| garantia física ÷ potência instalada | — | C18: fator de capacidade publicado da usina num ano completo abaixo da razão |
+| `LIMIAR_CONCLUSAO_DESVIO_PROGRAMACAO_PCT` | 15,0 | C19: `desvio_medio_absoluto_pct` |
 | `MAXIMO_ITENS_CONCLUSAO` | 5 | itens por lista no PDF e no Markdown, aplicado pela Geração do relatório |
+
+Os limiares de C12 a C15 foram aprovados pelo usuário em 20/10/2026, e os de C16 a C19 em 21/10/2026 (o da C19 subiu de 10 % para 15 %).
 
 ### 5.3 Versões de formato
 
 | Onde | Valor | Conferida por |
 |---|---|---|
-| `resultados.pkl` → `versao_formato` | 1 (`src/analises/resultados.VERSAO_FORMATO`) | `carregar_resultados` (Geração do relatório) |
-| `etapa.json` → `versao_formato` | 1 (`src/pipeline.VERSAO_FORMATO`) | pré-requisito da Geração do relatório |
+| `resultados.pkl` → `versao_formato` | 3 (`src/analises/resultados.VERSAO_FORMATO`) | `carregar_resultados` (Geração do relatório, no relatório da usina e no de carteira) |
+| `etapa.json` → `versao_formato` | 3 (`src/pipeline.VERSAO_FORMATO`) | pré-requisito da Geração do relatório; o relatório de carteira trata outra versão como "Análises em formato antigo" |
+| `etapa.json` da Conferência → `versao_formato` | 2 | pré-requisito desta etapa (código 5 com outra versão) |
 | `conferencias.pkl` → `versao_formato` | 1 | `carregar_conferencias`, na leitura das entradas |
 
 ### 5.4 Enumerações e rótulos
@@ -528,7 +786,14 @@ Iguais para qualquer usina; o perfil não as altera.
 - **Qualidade das séries complementares**: `OK` ou as regras violadas separadas por "," (disponibilidade: `D1` a `D4`; hidrologia: `H1` a `H4`).
 - **Parcelas das taxas** (`DESCRICAO_PARCELA`): `HDF` (desligamentos forçados) e `HEDF` (operação com limitação forçada de potência), na TEIFa; `HDP` (desligamentos programados) e `HEDP` (operação com limitação programada de potência), na TEIP.
 - **Listas da conclusão** (`LISTAS_CONCLUSAO`): `pontos_atencao` "Pontos de atenção", `possiveis_problemas` "Possíveis problemas", `confirmar_agente` "A confirmar com o agente", `verificar_campo` "A verificar em campo". As frases `FRASE_ABERTURA_CONCLUSAO` e `FRASE_CONCLUSAO_VAZIA` ficam em `conclusao.py` e são usadas só pela Geração do relatório.
-- **Seções citadas pelos itens** (chaves das seções do relatório): `eventos`, `programacao`, `indicadores_ons`, `hidrologia`, `perfil_horario`, `indicadores_anuais`, `disponibilidade_geracao`, `disponibilidade_sincronizada` e `qualidade`.
+- **Seções citadas pelos itens** (chaves das seções do relatório): `eventos`, `programacao`, `indicadores_ons`, `hidrologia`, `perfil_horario`, `indicadores_anuais`, `disponibilidade_geracao`, `disponibilidade_sincronizada` e `qualidade`; nas usinas sem EVT, também `indicadores_ons_comum`, `qualidade_comum`, `disponibilidade_geracao_comum`, `anuais_comum`, `programacao_comum`, `despacho_motivo`, `atendimento_despacho`, `disponivel_sem_despacho`, `fator_capacidade`, `energia_cortada` e `recurso_geracao`.
+- **Tipos de usina** (`tipo`): `UHE`, `PCH`, `CGH` (hidrelétricas), `UTE`, `UTN` (térmicas), `EOL`, `UFV` (eólicas e solares).
+- **Nível do dado** (`nivel`): `usina`, `conjunto` ou `agregado`.
+- **Omissões** (`omitidos[].tipo`): `secao` ou `regra`.
+- **Sinalizações da base horária comum** (`sinalizacoes`, separadas por ","): `G1` (geração com valor não numérico), `D1` a `D4` (disponibilidade) e `R7` (geração acima da disponibilidade declarada).
+- **Grupos dos motivos do despacho** (`grupo`): `total` (geração total publicada), `motivo` (ordem de mérito, inflexibilidade, razão elétrica, garantia energética, GFOM, reposição de perdas, exportação, reserva de potência, GSUB, unit commitment) e `detalhe` (inflexibilidade pura, inflexibilidade embutida no mérito, ordem de demérito acima da inflexibilidade, ordem de demérito de referência, inflexibilidade do DESSEM, constrained-off).
+- **Relação do CVU com o CMO** (`relacao`): `abaixo`, `acima`, `igual` e `sem comparação` (CVU sinalizado ou sem CMO na semana). **Sinal do CVU** (`sinal_cvu`, do Tratamento): vazio, `ausente`, `zero` ou `negativo`.
+- **Razões da restrição** (`razao`): `REL` (indisponibilidade externa), `CNF` (confiabilidade elétrica), `ENE` (razão energética) e "sem razão publicada" (semi-hora restrita sem código).
 
 ### 5.5 Estados: o que existe em cada execução
 
@@ -544,6 +809,23 @@ Iguais para qualquer usina; o perfil não as altera.
 | `ons["decomposicao"]` | o mês da TEIFa mais recente tem a janela de 60 meses completa | sem decomposição; C2 só pela limitação forçada |
 | `mudanca_classificacao["mes"]` | mês detectado | `None`; constatação 17 omitida, e a figura de EVT mensal sai sem a linha do mês |
 
+Nas usinas sem EVT:
+
+| Resultado | Preenchido quando | Sem a condição |
+|---|---|---|
+| `comum` | sempre (a base horária comum existe) | — |
+| `comum["disponibilidade"]` | a disponibilidade da usina tem horas na base horária | `{}`; seções de disponibilidade em `omitidos`; C8 e C10 sem a base de disponibilidade |
+| `comum["programacao"]` | há horas com a programação e a geração no mesmo nível | `{}`; seção de programação em `omitidos`, com o motivo (não coletada, sem horas no período ou sem o mesmo nível); C19 não avaliada |
+| `comum["sazonalidade"]` | o nível tem 12 meses distintos | sem as linhas do nível; sazonalidade em `omitidos` |
+| `ons` | os indicadores existem e têm meses | `{}`; seção em `omitidos` (hidrelétricas e térmicas) |
+| `termica` | térmica com o despacho no período | `{}`; "Seções de térmica" em `omitidos`; C12, C14 e C15 não avaliadas |
+| `termica["cvu_cmo"]` | o CVU e o CMO com semanas comuns | `{}`; "CVU × CMO" em `omitidos`; C13 não avaliada |
+| `renovavel["fator_capacidade"]`, `["restricao"]`, `["recurso"]` | a base com horas ou semi-horas no período | `{}`; a seção em `omitidos`; C18, C16 ou C17 não avaliada |
+| `conjunto` | usina em conjunto com a geração do conjunto, os trechos e a composição | `{}`; "Composição e geração do conjunto" em `omitidos` (só com `identificacao.id_conjunto`) |
+| `hidrologia` | hidrelétrica com os Dados hidrológicos no período | `{}`; seção em `omitidos` |
+| `hidrologia["mensal"]`, `["anual"]` | a hora confirmada pela geração (`publicado`) | só a cobertura e o resultado da conferência |
+| itens da conclusão | alguma regra do tipo com base e com a condição atendida | conclusão sem itens, com `frase_sem_itens`; sem regra avaliada, contagens da carteira vazias |
+
 ### 5.6 Validações e invariantes
 
 Invariantes do cálculo, conferidos nos testes:
@@ -555,3 +837,12 @@ Invariantes do cálculo, conferidos nos testes:
 - as faixas de afluência somam as horas com EVT do período da hidrologia;
 - nenhum registro sinalizado entra em `perfil_estatistico` nem em `extremos`;
 - itens da conclusão: ordenados por lista e regra; `ordem` de 1 em diante; ao menos uma seção; texto de uma frase, sem ponto final, sem os termos "satisfatório", "insatisfatório", "descumpr", "deficiente", "falha do agente" e "culpa", e sem frase de constatação com 40 caracteres ou mais.
+
+Nas usinas sem EVT, também valem:
+- nas tabelas de `comum`, nenhuma linha mistura níveis, e a disponibilidade só aparece no nível da usina;
+- nenhum número do conjunto entra na conclusão: cada regra avaliada tem alguma das suas bases no nível da usina, e as demais estão em `omitidos`;
+- nenhum número do conjunto é dividido entre as usinas, e nenhum fator de capacidade do conjunto é calculado;
+- a energia cortada só soma as semi-horas com a marca de restrição e com estimativa, e a energia por razão soma a energia cortada;
+- nenhuma semi-hora com o recurso inválido ou acima do limite físico entra nas faixas do recurso × geração;
+- nenhuma semana com o CVU sinalizado entra na comparação com o CMO;
+- os campos da base de EVT ficam vazios, e `indicadores_carteira` traz sempre as chaves fixas, com `None` (nunca zero) no que não se aplica.

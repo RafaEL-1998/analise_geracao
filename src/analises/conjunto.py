@@ -1,4 +1,4 @@
-"""Composição e geração do conjunto de usinas (spec 006, fase D; decisão R20; rascunho 004, FR-060).
+"""Composição e geração do conjunto de usinas (spec das Análises, FR-060; plano das Análises, D22).
 
 Na usina em conjunto, com a Geração por usina do conjunto: a composição em cada trecho de composição (os trechos
 consecutivos da Coleta com a mesma composição, juntos), com o nome, o tipo (pelo CEG) e a potência de cada usina no
@@ -110,7 +110,7 @@ def _geracao_por_trecho(serie: pd.DataFrame, composicoes: pd.DataFrame, tabela_c
 def _tipo_publicado(tipo_publicado: Optional[pd.DataFrame], trechos: pd.DataFrame,
                     composicoes: pd.DataFrame) -> pd.DataFrame:
     """O tipo publicado de cada trecho da Coleta, levado ao trecho de composição, e se corresponde a algum tipo da
-    composição (pelo CEG, decisão R1)."""
+    composição (pelo CEG; plano da Coleta de dados, D19)."""
     if tipo_publicado is None or not len(tipo_publicado):
         return pd.DataFrame(columns=COLUNAS_TIPO_PUBLICADO)
     inicio_de = dict(zip(trechos["trecho"].astype(int), pd.to_datetime(trechos["inicio"])))
@@ -156,8 +156,8 @@ def peso_da_usina(trechos: pd.DataFrame, composicao: pd.DataFrame, ceg: str) -> 
 
 
 def em_duas_partes(res: Any) -> bool:
-    """Relatório em duas partes (rascunho 005, FR-048): a usina em conjunto em que todos os números de operação são
-    do conjunto (série de referência = geração do conjunto), com a seção do conjunto calculada."""
+    """Relatório em duas partes (spec da Geração do relatório, FR-048): a usina em conjunto em que todos os números
+    de operação são do conjunto (série de referência = geração do conjunto), com a seção do conjunto calculada."""
     niveis = set(((getattr(res, "comum", None) or {}).get("cobertura") or {}).get("niveis", {}))
     return bool(getattr(res, "conjunto", None)) and niveis == {"conjunto"}
 
@@ -170,7 +170,7 @@ def analisar_conjunto(serie: Optional[pd.DataFrame], trechos: Optional[pd.DataFr
 
     ``serie``: a geração do conjunto hora a hora (``din_instante``, ``geracao_mw``), só as horas do nível do conjunto;
     ``trechos``: ``trechos.csv``; ``membros``: ``composicao_conjunto.csv``; ``capacidade``: ``capacidade_membros.csv``
-    (ausente nas Coletas anteriores à fase D: a composição sai sem a potência); ``tipo_publicado``: ``tipo_publicado.csv``.
+    (ausente nas Coletas anteriores: a composição sai sem a potência); ``tipo_publicado``: ``tipo_publicado.csv``.
     """
     if serie is None or not len(serie) or trechos is None or not len(trechos) or membros is None or not len(membros):
         return {}
@@ -233,7 +233,7 @@ def achados_conjunto(c: Dict[str, Any]) -> List[Tuple[str, str]]:
 
 def frases_tipo_publicado(c: Dict[str, Any]) -> List[str]:
     """A divergência entre o tipo que o ONS publica na série do conjunto e os tipos da composição, uma frase por
-    trecho, para a constatação da qualidade dos dados (caso de borda da spec 006; rascunho 004, FR-060)."""
+    trecho, para a constatação da qualidade dos dados (caso de borda e FR-060 da spec das Análises)."""
     tipos = (c or {}).get("tipo_publicado")
     if tipos is None or not len(tipos):
         return []
@@ -244,8 +244,8 @@ def frases_tipo_publicado(c: Dict[str, Any]) -> List[str]:
 
 
 def achado_usina_no_conjunto(c: Dict[str, Any], usina: str, potencia_mw: float) -> Tuple[str, str]:
-    """Constatação da parte da usina no relatório em duas partes (rascunho 005, FR-048): o peso dela na potência do
-    conjunto, por composição, sem estimar a geração dela."""
+    """Constatação da parte da usina no relatório em duas partes (spec da Geração do relatório, FR-048): o peso dela
+    na potência do conjunto, por composição, sem estimar a geração dela."""
     nome = f" {c['nome']}" if c.get("nome") else ""
     texto = (f"O ONS publica a geração, a programação e os demais dados de operação do conjunto{nome} ({c['id']}), e "
              f"não os da {usina} isolada.")

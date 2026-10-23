@@ -127,7 +127,7 @@ def _md_blocos(res: ResultadosAnalise, chave: str, titulo: str, figuras: Optiona
         elif b.tipo == "texto":
             for texto in b.textos:
                 saida += [texto, ""]
-        elif b.tipo == "subtitulo":  # subseção (a parte do conjunto, FR-048 do rascunho 005)
+        elif b.tipo == "subtitulo":  # subseção (a parte do conjunto, FR-048)
             saida += [f"### {b.textos[0]}", ""]
         elif b.tipo == "notas":
             saida += [f"- {texto}" for texto in b.textos] + [""]

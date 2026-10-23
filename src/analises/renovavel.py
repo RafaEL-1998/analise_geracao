@@ -1,11 +1,11 @@
-"""Seções de eólica e solar das Análises (spec 006, fase C; decisão R19; rascunho 004, FR-058).
+"""Seções de eólica e solar das Análises (spec das Análises, FR-058; plano das Análises, D21).
 
 A partir das tabelas do Tratamento (fator de capacidade horário, restrição com detalhe por semi-hora, com a razão de
 cada semi-hora) e da base horária comum, monta o campo ``renovavel`` de ``ResultadosAnalise``:
 
 - **fator de capacidade publicado**: Σ geração verificada ÷ Σ capacidade instalada nas horas com as duas, por mês e
   por ano, com o nível (usina ou conjunto); o calculado da série própria fica nos indicadores anuais comuns;
-- **energia cortada**: só nas semi-horas com a marca de restrição (decisão R12), por mês e por razão (REL, CNF, ENE);
+- **energia cortada**: só nas semi-horas com a marca de restrição (decisão D21), por mês e por razão (REL, CNF, ENE);
   as semi-horas sem a marca ficam contadas e fora do total; a diferença bruta (estimada − verificada em todas as
   semi-horas) é mostrada à parte, para comparação; a verificada e a estimada somam as mesmas semi-horas, as com
   estimativa (a estimada 0 com a usina gerando é estimativa ausente, contada à parte, com o corte não calculado nas
@@ -262,7 +262,7 @@ def _secao_programacao(base: pd.DataFrame, programacao: Dict[str, Any], potencia
 
 def analisar_renovavel(tabelas: Dict[str, Optional[pd.DataFrame]], base: pd.DataFrame, tipo: str, potencia: float,
                        programacao: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Campo ``renovavel`` dos resultados (decisão R19); as seções sem base ficam vazias (e são omitidas, com o
+    """Campo ``renovavel`` dos resultados (decisão D21); as seções sem base ficam vazias (e são omitidas, com o
     motivo, por quem chama)."""
     semi = tabelas.get("restricao_semi_horaria")
     renovavel = {
@@ -330,7 +330,7 @@ def achados_renovavel(renovavel: Dict[str, Any]) -> List[Tuple[str, str]]:
 
 
 def omissoes_renovavel(perfil: Any, renovavel: Dict[str, Any]) -> List[Dict[str, str]]:
-    """Seções de eólica e solar sem base para a usina, com o motivo (FR-024), na ordem do relatório."""
+    """Seções de eólica e solar sem base para a usina, com o motivo (FR-005), na ordem do relatório."""
     saida: List[Dict[str, str]] = []
     fc = renovavel.get("fator_capacidade") if renovavel else None
     if not fc:

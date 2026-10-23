@@ -1,4 +1,4 @@
-"""Registro dos conjuntos do ONS (spec 006, decisão R8; data-model, seção 4; tarefa T034).
+"""Registro dos conjuntos do ONS (plano da Coleta de dados, D26; data-model da Coleta de dados, seção 6).
 
 O registro declara, para cada conjunto, pacote e pasta, tipos de usina, nível, resolução e se pode ser série de
 referência. A Coleta, os dicionários e as fontes do relatório passam a usar só os conjuntos do tipo e da cobertura da
@@ -30,9 +30,9 @@ PACOTES_DE_HOJE = {
     "modalidade-usina": "modalidade_usina",
 }
 CHAVES_DE_HOJE = ["evt", "indicadores", "programacao", "disponibilidade", "hidrologia", "geracao", "cadastro"]
-# Fase A (tarefa T054; decisão R31): os cadastrais do catálogo e da Coleta das usinas com [cobertura]
-# Fase B (tarefa T084): despacho, CVU e CMO das térmicas
-# Fase C (tarefa T105): fator de capacidade e as restrições, com as variantes eólica e fotovoltaica
+# Os cadastrais do catálogo (D33) e da Coleta das usinas com [cobertura]
+# Despacho, CVU e CMO das térmicas
+# Fator de capacidade e as restrições, com as variantes eólica e fotovoltaica
 CHAVES_DO_REGISTRO = [*CHAVES_DE_HOJE, "composicao", "capacidade", "despacho", "cvu", "cmo", "fator_capacidade",
                       "restricao_detalhe", "restricao_razao", "reservatorio"]
 PACOTES_NOVOS = {"usina_conjunto": "usina_conjunto", "capacidade-geracao": "capacidade_geracao",
@@ -108,7 +108,7 @@ def test_descricoes_horarias_reproduzem_as_de_hoje() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Filtro por tipo e cobertura (FR-015)
+# Filtro por tipo e cobertura (FR-016)
 # ---------------------------------------------------------------------------
 
 
@@ -131,8 +131,9 @@ def test_conjuntos_pelo_tipo(ceg: str, chaves: list) -> None:
 
 
 def test_com_cobertura_so_os_conjuntos_proprio_ou_conjunto_e_sempre_os_cadastrais() -> None:
-    """data-model 3.3: com a tabela, a Coleta obtém os conjuntos com ``proprio`` ou ``conjunto`` (ou a lista) e,
-    sempre, os cadastrais; ``ausente``, ``agregado`` ou chave não declarada não são obtidos."""
+    """Data-model da Coleta de dados, seção 6: com a tabela, a Coleta obtém os conjuntos com ``proprio`` ou
+    ``conjunto`` (ou a lista) e, sempre, os cadastrais; ``ausente``, ``agregado`` ou chave não declarada não são
+    obtidos."""
     perfil = _perfil("PCH.PH.MS.032163-0.01", cobertura={
         "evt": "ausente", "indicadores": "proprio", "programacao": "conjunto", "hidrologia": "agregado",
         "geracao": ["proprio", "conjunto"]})
@@ -155,13 +156,13 @@ def test_uhe_sem_cobertura_coleta_os_dez_de_hoje_e_nao_pede_composicao_nem_capac
 
 
 def test_reservatorios_so_no_catalogo() -> None:
-    """Decisão R31: os Reservatórios ligam o CEG ao cod_usina no catálogo; a Coleta da usina não os obtém."""
+    """D33: os Reservatórios ligam o CEG ao cod_usina no catálogo; a Coleta da usina não os obtém."""
     perfil = _perfil("PCH.PH.MS.032163-0.01", cobertura={"geracao": "conjunto", "evt": "proprio"})
     assert "reservatorio" not in [e.chave for e in registro.conjuntos_da_usina(perfil)]
 
 
 def test_geracao_do_conjunto_pelo_id_do_conjunto_e_pelo_estado() -> None:
-    """Decisão R9: a geração do conjunto é identificada pelo id do conjunto e conferida pelo estado (CEG "-")."""
+    """D27: a geração do conjunto é identificada pelo id do conjunto e conferida pelo estado (CEG "-")."""
     perfil = _perfil("PCH.PH.MS.032163-0.01", cobertura={"geracao": "conjunto"})
     d = registro.descricoes(perfil)["geracao"]
     assert d.identificador == registro.Regra("id_ons", "CJU_XXCONJ")

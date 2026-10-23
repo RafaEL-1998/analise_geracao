@@ -1,8 +1,8 @@
-"""Rascunho do perfil: ``python -m src perfil --ceg <CEG> [--slug <slug>]`` (spec 006, decisões R5 e R31;
-contracts/cli-perfil.md e perfil-multitipo.md).
+"""Rascunho do perfil: ``python -m src perfil --ceg <CEG> [--slug <slug>]`` (plano da Coleta de dados, D23 e D33;
+contratos cli-perfil e perfil-usina da Coleta de dados).
 
 Lê só ``data/catalogo/``: não acessa o portal, não lê os brutos e não executa nenhuma etapa. Nunca sobrescreve um
-perfil (FR-007). Na ordem:
+perfil (FR-053). Na ordem:
 
 1. catálogo ausente ou em formato antigo: código 5;
 2. CEG fora do catálogo, tipo fora dos atendidos, usina Tipo III ou só com cobertura agregada ou ausente: código 2;
@@ -115,7 +115,7 @@ def _esperado(catalogo: Dict[str, Any], u: pd.Series, hoje: date) -> Dict[str, A
     for valor in (u["id_ons"], u["id_conjunto"]):
         if valor:
             ligados = programacao[programacao["id_usina_ou_conjunto"] == valor]
-            codigos = list(ligados["codigo_exibicao"])  # todos os do período, na ordem do primeiro dia (fase D)
+            codigos = list(ligados["codigo_exibicao"])  # todos os do período, na ordem do primeiro dia (FR-053)
             periodos = {r["codigo_exibicao"]: (r.get("primeiro_dia", ""), r.get("ultimo_dia", ""))
                         for _, r in ligados.iterrows()}
             if codigos:
@@ -229,7 +229,7 @@ def diferencas(perfil: Dict[str, Any], u: pd.Series, esperado: Dict[str, Any]) -
     if codigos_perfil and esperado["codigos"]:
         comparar("identificacao.codigos_programacao", ";".join(sorted(codigos_perfil)),
                  ";".join(sorted(esperado["codigos"])))
-    if u["tipo"] in registro.TERMICAS:  # fase B: subsistema (CMO) e códigos de planejamento (despacho e CVU)
+    if u["tipo"] in registro.TERMICAS:  # térmicas: subsistema (CMO) e códigos de planejamento (despacho e CVU)
         if usina.get("subsistema") or u["subsistema"]:
             comparar("usina.subsistema", usina.get("subsistema"), u["subsistema"])
         if ident.get("planejamento") or esperado["planejamento"]:
@@ -328,7 +328,7 @@ def montar_rascunho(catalogo: Dict[str, Any], u: pd.Series, esperado: Dict[str, 
     if esperado["codigos"]:
         linhas.append(_linha("codigos_programacao", esperado["codigos"], _origem(info, "programacao")))
         periodos = texto_periodos_codigos(esperado)
-        if periodos:  # o Tratamento soma os códigos por patamar: confira se os períodos não se sobrepõem (fase D)
+        if periodos:  # o Tratamento soma os códigos por patamar: confira se os períodos não se sobrepõem (FR-053)
             linhas.append(f"#   períodos na Programação diária: {periodos}")
         preenchidos += 1
     else:
