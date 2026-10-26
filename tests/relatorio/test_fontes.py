@@ -56,7 +56,9 @@ def _res(completo: bool = True, **mudancas: Any) -> SimpleNamespace:
 def test_catalogo_e_mapa_consistentes() -> None:
     assert set(CONJUNTOS) == IDS | {"projeto", "composicao", "capacidade", "despacho", "cvu", "cmo",  # usinas sem EVT
                                     "fator_capacidade", "restricao_detalhe", "restricao_razao",  # eólicas e solares
-                                    "capacidade_membros"}  # usina em conjunto: as unidades das usinas do conjunto
+                                    "capacidade_membros",  # usina em conjunto: as unidades das usinas do conjunto
+                                    # taxas operativas, só com a comparação (spec da Geração do relatório, FR-071)
+                                    "teif_teip_oper"}
     for chave, entrada in MAPA_FONTES.items():  # "referencia" e "geracao_programacao": apelidos
         assert set(entrada.conjuntos) <= set(CONJUNTOS) | {"referencia", "geracao_programacao"}, chave
         assert set(entrada.conferencias) <= set(CONFERENCIAS), chave

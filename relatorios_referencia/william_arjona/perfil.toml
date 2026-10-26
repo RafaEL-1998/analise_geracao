@@ -20,7 +20,7 @@ id_ons = "MSUTWI"                     # Modalidade das usinas
 codigos_programacao = ["MSUTWI"]      # Programação diária, publicado em 18/10/2026
 
 # Códigos de planejamento: Geração térmica por motivo de despacho, todos os arquivos (catálogo de 20/10/2026);
-# acrescentados na fase B com a aprovação do usuário (20/10/2026)
+# acrescentados com a aprovação do usuário (20/10/2026)
 [[identificacao.planejamento]]        # publicado como "Willian Arjona"
 codigo = 34
 inicio = "2013-01"
@@ -41,8 +41,8 @@ indicadores = "proprio"
 programacao = "proprio"
 disponibilidade = "proprio"
 geracao = "proprio"
-despacho = "proprio"                  # catálogo de 20/10/2026 (fase B)
-cvu = "proprio"                       # catálogo de 20/10/2026 (fase B)
+despacho = "proprio"                  # catálogo de 20/10/2026
+cvu = "proprio"                       # catálogo de 20/10/2026
 
 [parametros]
 potencia_instalada_mw = 177.116       # Capacidade de geração: 5 unidades ativas

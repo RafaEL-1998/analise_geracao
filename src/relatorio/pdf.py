@@ -48,6 +48,8 @@ from src.comum.perfil import perfil_ativo
 from src.relatorio.conteudo import (
     indicadores_capa,
     legenda_figura,
+    linhas_tabela_taxas_operativas,
+    texto_taxas_operativas,
     linhas_tabela_anual,
     linhas_tabela_disponibilidade_anual,
     linhas_tabela_disponibilidade_divergencias,
@@ -577,6 +579,13 @@ class PDFReportGenerator:
         if linhas:
             story += self._bloco_tabela("tab_ons_decomposicao", cabecalho, linhas, [60, 50, 300, 110, 120, 120],
                                         range(3, 6), intro=texto_taxas_ons(self.res))
+        cabecalho, linhas = linhas_tabela_taxas_operativas(self.res)  # spec da Geração do relatório, FR-071
+        if linhas:
+            story += self._bloco_tabela("tab_ons_taxas_operativas", cabecalho, linhas, [120, 150, 150, 210],
+                                        range(1, 4), intro=texto_taxas_operativas(self.res))
+            if "taxas_operativas" in self.figuras:
+                story.append(KeepTogether(self._figura("taxas_operativas",
+                                                       legenda_figura(self.res, "taxas_operativas"))))
         cabecalho, linhas = linhas_tabela_ons_ug_anual(self.res)
         if linhas:
             story += self._bloco_tabela("tab_ons_ug_anual", cabecalho, linhas, [70, 60, 110, 110, 110, 110], range(2, 6))

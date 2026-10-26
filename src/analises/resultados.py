@@ -42,7 +42,7 @@ class ResultadosAnalise:
     validacao: pd.DataFrame = field(default_factory=pd.DataFrame)
     horas_geracao_zero: pd.DataFrame = field(default_factory=pd.DataFrame)
     achados: List[Tuple[str, str]] = field(default_factory=list)
-    # Conclusão (spec das Análises, US4): itens das regras C1 a C11
+    # Conclusão (spec das Análises, US4): itens das regras C1 a C20
     conclusao: List[Dict[str, Any]] = field(default_factory=list)
     # Indicadores oficiais do ONS por unidade geradora (vazio se não foram gerados)
     ons: Dict[str, Any] = field(default_factory=dict)

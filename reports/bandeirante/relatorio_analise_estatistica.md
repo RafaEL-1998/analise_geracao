@@ -280,7 +280,7 @@ Sem itens: as regras da conclusão usam só dados do nível da usina, e o ONS pu
 - Nenhum valor é preenchido: as 744 horas ausentes estão listadas na planilha, e as horas sinalizadas ficam na base e nos totais, com o código da regra.
 - Granularidade: o ONS publica a geração do conjunto Conj. Chapadão (CJU_MSCAO), e não a da usina isolada. Os números do conjunto são identificados como tais e não são divididos entre as usinas; a conclusão da usina não usa números do conjunto.
 - O período começa na entrada da usina no conjunto (Composição dos conjuntos): antes dela, a geração do conjunto não inclui a usina. A composição de cada trecho vem da Composição dos conjuntos e a potência, das unidades da Capacidade de geração (pelo CEG de cada usina, inclusive as cadastradas em outro estado); a geração do conjunto não é dividida pela potência somada nem entre as usinas.
-- Conclusão: indícios gerados pelas regras do catálogo para PCH, iguais para as usinas do tipo e só com dados do nível da usina, a partir dos resultados das seções: C2 unidade com limitação forçada de potência em ≥ 50% dos meses ou, com a TEIF de referência no perfil, com ≥ 2/3 da TEIFa acima dela; C5 disponibilidade operacional, DISPF ou taxas piores que as referências do perfil; C8 geração acima da disponibilidade declarada em ≥ 100 h; C10 indisponibilidade total ≥ 30 dias, ou programada ≥ 20% numa unidade num ano completo. O relatório mostra até 5 itens por lista, na ordem das regras; todos estão na aba CONCLUSAO da planilha. Não avaliadas nesta usina: C1, C2, C3, C4, C5, C6, C7, C8, C9, C10 e C11 (motivos na tabela abaixo).
+- Conclusão: indícios gerados pelas regras do catálogo para PCH, iguais para as usinas do tipo e só com dados do nível da usina, a partir dos resultados das seções: C2 unidade com limitação forçada de potência em ≥ 50% dos meses ou, com a TEIF de referência no perfil, com ≥ 2/3 da TEIFa acima dela; C5 disponibilidade operacional, DISPF ou taxas piores que as referências do perfil; C8 geração acima da disponibilidade declarada em ≥ 100 h; C10 indisponibilidade total ≥ 30 dias, ou programada ≥ 20% numa unidade num ano completo; C20 TEIFa ou TEIP operativa do mês mais recente a 1 p.p. ou mais da oficial. O relatório mostra até 5 itens por lista, na ordem das regras; todos estão na aba CONCLUSAO da planilha. Não avaliadas nesta usina: C1, C2, C3, C4, C5, C6, C7, C8, C9, C10, C11 e C20 (motivos na tabela abaixo).
 - As seções e as regras sem base para a usina e as conferências que não se aplicam a ela estão nas tabelas abaixo, com o motivo de cada uma.
 
 ### Seções e regras sem base para a usina
@@ -303,6 +303,7 @@ Sem itens: as regras da conclusão usam só dados do nível da usina, e o ONS pu
 | C9 | regra da base de EVT, que a usina não tem |
 | C10 | sem a Disponibilidade por usina nem os Indicadores de desempenho do ONS no nível da usina |
 | C11 | regra da base de EVT, que a usina não tem |
+| C20 | sem as Taxas TEIFa Oper e TEIP Oper no nível da usina |
 
 Calculado neste relatório a partir de: parâmetros do projeto (origem na tabela de parâmetros).
 

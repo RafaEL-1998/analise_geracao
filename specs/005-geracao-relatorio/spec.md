@@ -424,7 +424,7 @@ Quero o mesmo formato para qualquer tipo de usina, com os blocos que o tipo perm
   | Fonte e cobertura dos dados | sempre | quadro da cobertura: conjunto de EVT; critério de extração; arquivos lidos e versão dos arquivos, quando a Coleta os registrou; período; registros e horas ausentes; anos parciais |
   | Indicadores anuais | sempre | indicadores por ano |
   | Disponibilidade e geração por ano | sempre | figura 04; períodos de indisponibilidade total de pelo menos 24 h |
-  | Indicadores oficiais do ONS por unidade geradora | com os indicadores por unidade geradora | disponibilidade por ano (declarada × DISPF); TEIFa e TEIP mais recentes por unidade e parcela, com o resumo das taxas frente às referências; indicadores anuais por unidade; horas por estado operativo; meses com DISPF e horas divergentes |
+  | Indicadores oficiais do ONS por unidade geradora | com os indicadores por unidade geradora | disponibilidade por ano (declarada × DISPF); TEIFa e TEIP mais recentes por unidade e parcela e as taxas operativas ao lado das oficiais (FR-071), com o resumo das taxas frente às referências; indicadores anuais por unidade; horas por estado operativo; meses com DISPF e horas divergentes |
   | Série temporal de disponibilidade, geração e EVT | sempre | figura 01 |
   | Energia vertida turbinável mensal | sempre | figura 02 |
   | Perfil horário da geração e da EVT | sempre | figura 03; EVT e geração nas janelas diurna e noturna, por ano |
@@ -633,6 +633,7 @@ Quero o mesmo formato para qualquer tipo de usina, com os blocos que o tipo perm
   | Indicadores de disponibilidade por unidade geradora, base mensal | `CEG <identificacao.ceg>` |
   | Indicadores de disponibilidade por unidade geradora, base anual | `CEG <identificacao.ceg>` |
   | Taxas TEIFa e TEIP | `CEG <identificacao.ceg>` |
+  | Taxas TEIFa Oper e TEIP Oper | `CEG <identificacao.ceg>` |
   | Parâmetros das taxas TEIFa e TEIP | `CEG <identificacao.ceg>` |
   | Programação diária | `<identificacao.cod_programacao>`; programação do conjunto: `conjunto de usinas, <códigos>` |
   | Disponibilidade por usina | `id ONS <identificacao.id_ons>` |
@@ -768,7 +769,7 @@ Quero o mesmo formato para qualquer tipo de usina, com os blocos que o tipo perm
   |---|---|---|
   | Constatações e conclusão | CONSTATACOES (tema e texto, na ordem das Análises), CONCLUSAO (FR-032) | sempre |
   | Base de EVT | INDICADORES_ANUAIS, INDICADORES_GLOBAIS, COBERTURA_POR_ANO, AGENTES, EVT_MENSAL, EVT_MES_DO_ANO, EVT_POR_FAIXA_GERACAO, PERFIL_HORARIO_GERACAO, PERFIL_HORARIO_EVT, EVENTOS_PARADA_COM_EVT, HORAS_GERACAO_ZERO_MES, EVENTOS_INDISP_TOTAL, ANOMALIAS, RESUMO_ANOMALIAS, VALIDACAO_REGRAS, EXTREMOS, PERFIL_ESTATISTICO_ANUAL, PARAMETROS | sempre |
-  | Indicadores por unidade geradora | ONS_DISP_ANUAL_USINA, ONS_UG_ANUAL, ONS_HORAS_UG_ANUAL, ONS_HORAS_UG_MENSAL, ONS_TEIFA_TEIP, ONS_DECOMPOSICAO_TAXAS, ONS_DIVERGENCIAS | cada uma, se tiver linhas |
+  | Indicadores por unidade geradora | ONS_DISP_ANUAL_USINA, ONS_UG_ANUAL, ONS_HORAS_UG_ANUAL, ONS_HORAS_UG_MENSAL, ONS_TEIFA_TEIP, ONS_DECOMPOSICAO_TAXAS, ONS_TAXAS_OPERATIVAS, ONS_DIVERGENCIAS | cada uma, se tiver linhas |
   | Programação diária | PROG_RESUMO_MENSAL, PROG_EVENTOS_DESVIO, PROG_HORA_DO_DIA, PROG_DIAS_AUSENTES, PROG_AUDITORIA_ARQUIVOS, PROG_HORAS_CLASSIFICADAS | cada uma, se tiver linhas |
   | Disponibilidade por usina | DISP_CONFERENCIA, DISP_DIVERGENCIAS, DISP_CLASSES_PARADA, DISP_HORAS_PARADAS, DISP_MENSAL, DISP_ANUAL, DISP_AUSENCIAS, DISP_AUDITORIA | cada uma, se tiver linhas |
   | Dados hidrológicos | HID_ALINHAMENTO, HID_FAIXAS_AFLUENCIA, HID_FAIXAS_ANUAL, HID_HORAS_EVT, HID_MENSAL, HID_ANUAL, HID_PERFIL_HORA_DO_DIA, HID_AUSENCIAS, HID_AUDITORIA | cada uma, se tiver linhas |
@@ -836,7 +837,7 @@ Quero o mesmo formato para qualquer tipo de usina, com os blocos que o tipo perm
   | A usina no conjunto | usina em conjunto sem série própria | FR-048 | FR-048 |
   | Indicadores anuais | todos | fora do relatório em duas partes | indicadores por ano e nível: horas, horas com valor, geração média, energia, máxima, horas até 1 MW e, conforme o tipo, fator de capacidade, disponibilidade, horas disponíveis sem despacho e energia cortada |
   | Disponibilidade e geração por ano | UHE, PCH, CGH, UTE, UTN | com a Disponibilidade por usina | disponibilidade e geração da usina por ano; períodos de indisponibilidade total de pelo menos 24 h, ou "Nenhum período com essa duração." |
-  | Indicadores oficiais do ONS por unidade geradora | UHE, PCH, CGH, UTE, UTN | com os indicadores por unidade geradora | disponibilidade da usina por ano (operacional × DISPF); TEIFa e TEIP mais recentes por unidade e parcela; indicadores anuais por unidade; horas por estado operativo; meses com DISPF e horas divergentes |
+  | Indicadores oficiais do ONS por unidade geradora | UHE, PCH, CGH, UTE, UTN | com os indicadores por unidade geradora | disponibilidade da usina por ano (operacional × DISPF); TEIFa e TEIP mais recentes por unidade e parcela e as taxas operativas ao lado das oficiais (FR-071); indicadores anuais por unidade; horas por estado operativo; meses com DISPF e horas divergentes |
   | Série temporal da geração e da disponibilidade; nas eólicas e solares, "Série temporal da geração" | todos | fora do relatório em duas partes | figura 01 |
   | Geração mensal e sazonalidade | todos | fora do relatório em duas partes | figura 02; figura 03, com pelo menos 12 meses distintos, ou a frase da sazonalidade omitida |
   | Perfil horário da geração | todos | fora do relatório em duas partes | figura 04 |
@@ -1007,6 +1008,13 @@ Quero o mesmo formato para qualquer tipo de usina, com os blocos que o tipo perm
 - **FR-068**: O resumo DEVE ser gerado para todos os tipos de usina que o fluxo atende. Cada tipo usa os seus indicadores-chave, os seus indicadores anuais e a conclusão do seu relatório completo.
 - **FR-069**: O resumo aprovado pelo usuário DEVE fazer parte da referência da usina (FR-042). A comparação dos relatórios de referência DEVE incluir o resumo (constituição, princípio IX).
 - **FR-070**: A geração do resumo NÃO DEVE mudar o relatório completo nem a planilha. A comparação com a referência da São Domingos não pode acusar diferença neles por causa do resumo.
+- **FR-071** (taxas operativas): Com a comparação das taxas (FR-063 da spec das Análises), a seção dos indicadores oficiais do ONS DEVE trazer, logo depois da decomposição das taxas, nas duas trilhas:
+  - a tabela "TEIFa e TEIP mais recentes: taxas oficiais e operativas do ONS" (taxa, oficial, operativa e diferença em p.p., com o sinal do valor arredondado), com a frase da série como introdução; com as diferenças nulas em todos os meses, a frase diz que as taxas coincidem;
+  - a figura `09_taxas_oficiais_e_operativas.png` (trilha da EVT) ou `16_taxas_oficiais_e_operativas.png` (trilha sem EVT), só com algum mês com diferença de pelo menos 1 p.p.: dois painéis, TEIFa e TEIP, a oficial em linha cheia e a operativa tracejada;
+  - as legendas com os dois conjuntos, a aba `ONS_TAXAS_OPERATIVAS` e a linha dela na aba FONTES;
+  - nas notas, a descrição das taxas operativas pelo dicionário do ONS, que não publica a diferença de regra; na usina com as taxas oficiais e sem as operativas, a nota de que elas não constam dos dados coletados, sem tabela.
+
+  O conjunto das taxas operativas entra entre os carregados (rodapé) só quando há a comparação.
 
 ### Key Entities
 
@@ -1159,6 +1167,8 @@ Quero o mesmo formato para qualquer tipo de usina, com os blocos que o tipo perm
 | 22/10/2026 | Relatório e resumo da PCH Bandeirante aprovados ("o resto está ok"), com as mudanças da Seriemas 1 (seção do conjunto e a linha "Fontes" do resumo com o nível); as duas referências registradas de novo. As diferenças da Coleta da William Arjona e da Praia Formosa por dados que o ONS publicou depois do congelamento contam como aprovadas, como as da São Domingos. | FR-042, FR-043, FR-046, FR-048, FR-062 |
 | 22/10/2026 | Carteira: indicadores do último ano completo da série; atendimento ao despacho pelas horas a até 5 MW da programada; contagens vazias, e não zero, quando nenhuma regra foi avaliada com dado da usina; fator de capacidade só onde o relatório da usina o calcula; "só agregado no ONS" como primeiro motivo, com a cobertura do catálogo; duas figuras. | FR-049 |
 | 23/10/2026 | Carteira de MS aprovada ("aprovo a carteira de MS"). O relatório atualizado da São Domingos fica em `reports/sao_domingos/`, com a série até 19/10/2026; a referência continua a aprovada. | FR-049, SC-001 |
+| 23/10/2026 | Taxas operativas no relatório: tabela, frase, figura com diferença de pelo menos 1 p.p., notas e aba; carteira sem coluna nova (aprovado pelo usuário). | FR-071 |
+| 26/10/2026 | Aprovados os relatórios da São Domingos e da William Arjona com as taxas operativas, a mudança da PCH Bandeirante (C20 entre as regras não avaliadas e o PDF de 13 para 14 páginas) e a fotografia nova da hidrelétrica fictícia; referências das três usinas registradas de novo. | FR-071, princípio IX |
 
 ---
 

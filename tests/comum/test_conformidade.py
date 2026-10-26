@@ -14,7 +14,7 @@ import pytest
 from src import pipeline
 from src.__main__ import main
 from src.comum.logger import LOGGERS_PIPELINE, configurar_nivel_log, setup_logger
-from src.relatorio import figuras
+from src.relatorio import figuras, figuras_comum
 
 RAIZ = Path(__file__).resolve().parents[2]
 FONTES = sorted(p for p in (RAIZ / "src").rglob("*.py") if "__pycache__" not in p.parts)
@@ -31,7 +31,15 @@ def test_todas_as_funcoes_de_grafico_usam_seaborn() -> None:
     assert len(funcoes) == len(figuras.NOMES_FIGURAS) + len(figuras.NOMES_FIGURAS_OPCIONAIS)
     assert set(figuras.NOMES_FIGURAS_OPCIONAIS) == set(figuras._GERADORES_OPCIONAIS)
     for funcao in funcoes:
-        assert "sns." in inspect.getsource(funcao), funcao.__name__
+        fonte = inspect.getsource(funcao)
+        if "figuras_comum import" in fonte:  # a mesma figura da trilha comum (spec da Geração do relatório, FR-071)
+            fonte = inspect.getsource(figuras_comum.grafico_taxas_operativas)
+        assert "sns." in fonte, funcao.__name__
+    # trilha comum: toda figura registrada é desenhada com seaborn
+    assert set(figuras_comum._GERADORES) == set(figuras_comum.NOMES_FIGURAS_COMUM) | set(
+        figuras_comum.NOMES_FIGURAS_COMUM_OPCIONAIS)
+    for chave, funcao in figuras_comum._GERADORES.items():
+        assert "sns." in inspect.getsource(funcao), chave
 
 
 # ---------------------------------------------------------------------------

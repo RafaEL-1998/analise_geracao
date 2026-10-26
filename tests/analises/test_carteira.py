@@ -107,10 +107,10 @@ def test_contagem_de_todos_os_itens_de_cada_lista() -> None:
 
 def test_contagens_vazias_sem_regra_avaliada_com_dado_da_usina() -> None:
     res = _sem_evt("PCH", [[2025, "conjunto", False, float("nan"), float("nan")]], [2025], [])
-    res.omitidos = [{"item": f"C{k}", "tipo": "regra", "motivo": "só o conjunto"} for k in range(1, 12)]
+    res.omitidos = [{"item": f"C{k}", "tipo": "regra", "motivo": "só o conjunto"} for k in (*range(1, 12), 20)]
     c = indicadores_carteira(res)["conclusao"]
     assert [c[k] for k in ("pontos_atencao", "possiveis_problemas", "confirmar_agente", "verificar_campo")] == [None] * 4
-    assert (c["regras_avaliadas"], c["regras_nao_avaliadas"]) == (0, 11)
+    assert (c["regras_avaliadas"], c["regras_nao_avaliadas"]) == (0, 12)  # C1 a C11 e a C20
 
 
 def test_caminho_com_evt_sobre_a_tabela_anual_de_hoje() -> None:
@@ -130,4 +130,4 @@ def test_caminho_com_evt_sobre_a_tabela_anual_de_hoje() -> None:
     assert i["energia_cortada"] is None and i["atendimento_despacho"] is None
     c = i["conclusao"]
     assert (c["pontos_atencao"], c["possiveis_problemas"], c["regras_avaliadas"], c["regras_nao_avaliadas"]) == (
-        5, 4, 11, 0)  # C1 a C11
+        5, 4, 12, 0)  # C1 a C11 e a C20

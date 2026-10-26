@@ -23,6 +23,7 @@ PACOTES_DE_HOJE = {
     "ind_disponibilidade_fgeracao_uge_anual": "indicadores_ons/ind_disponibilidade_fgeracao_uge_anual",
     "taxa_teif_teip_parametro": "indicadores_ons/taxa_teif_teip_parametro",
     "taxa_teif_teip": "indicadores_ons/taxa_teif_teip",
+    "taxa_teif_teip_oper": "indicadores_ons/taxa_teif_teip_oper",
     "programacao_diaria": "programacao_diaria",
     "disponibilidade_usina": "disponibilidade_usina",
     "dados_hidrologicos_ho": "dados_hidrologicos_ho",
@@ -178,10 +179,10 @@ def test_geracao_do_conjunto_pelo_id_do_conjunto_e_pelo_estado() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_registro_dos_dicionarios_da_uhe_sem_cobertura_tem_os_dez_de_hoje(tmp_path: Path) -> None:
+def test_registro_dos_dicionarios_da_uhe_sem_cobertura_tem_os_onze_de_hoje(tmp_path: Path) -> None:
     pacotes = registro.pacotes(registro.conjuntos_da_usina(carregar_perfil("sao_domingos")))
     tabela = montar_registro(tmp_path, pacotes)
-    assert len(tabela) == 20
+    assert len(tabela) == 2 * len(PACOTES_DE_HOJE) == 22
     assert list(dict.fromkeys(tabela["conjunto"])) == list(PACOTES_DE_HOJE)
     assert (tabela.groupby("conjunto").size() == 2).all()
 

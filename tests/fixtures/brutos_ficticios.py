@@ -208,6 +208,9 @@ def _indicadores(raiz: Path) -> None:
               "num_versao": "1.0", "din_calculo": "2024-03-10 10:00:00"}
              for mes in meses for taxa, valor in (("TEIFa", "0.01"), ("TEIP", "0.02"))]
     _csv(pd.DataFrame(taxas), raiz / "taxa_teif_teip" / "TAXA_TEIF_TEIP.csv")
+    # Taxas operativas iguais às oficiais (spec das Análises, FR-063): tabela e frase, sem figura e sem a C20
+    operativas = [{**t, "nom_taxa": f"{t['nom_taxa']}_oper"} for t in taxas]
+    _csv(pd.DataFrame(operativas), raiz / "taxa_teif_teip_oper" / "TAXA_TEIF_TEIP_OPER.csv")
 
 
 # ---------------------------------------------------------------------------
@@ -404,6 +407,10 @@ def _indicadores_utn(raiz: Path) -> None:
               "num_versao": "1.0", "din_calculo": "2024-03-10 10:00:00"}
              for mes in meses for taxa, valor in (("TEIFa", "0.03"), ("TEIP", "0.01"))]
     _acrescentar(pd.DataFrame(taxas), raiz / "taxa_teif_teip" / "TAXA_TEIF_TEIP.csv")
+    # Taxas operativas da nuclear: TEIFa 1,5 p.p. abaixo da oficial e TEIP igual (figura e item da C20)
+    operativas = [{**t, "nom_taxa": f"{t['nom_taxa']}_oper", "val_taxa": "0.015" if t["nom_taxa"] == "TEIFa"
+                   else t["val_taxa"]} for t in taxas]
+    _acrescentar(pd.DataFrame(operativas), raiz / "taxa_teif_teip_oper" / "TAXA_TEIF_TEIP_OPER.csv")
 
 
 def _programacao_ficticias(raw: Path) -> None:

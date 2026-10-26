@@ -9,7 +9,7 @@ import pytest
 
 from src.analises.etapa import analisar
 from src.analises.evt import preparar_dados
-from src.analises.indicadores import decompor_taxas
+from src.analises.indicadores import comparar_taxas_operativas, decompor_taxas
 from src.conferencia.indicadores import conferencia_dispf_horas, conferencia_teifa_teip, recalcular_taxas
 from src.tratamento.indicadores import IndicadoresONS
 
@@ -113,3 +113,43 @@ def test_frase_da_teifa_cita_os_meses_reproduzidos_pela_conferencia(resultados_c
     texto = dict(montar_achados(res))["Estados operativos das unidades geradoras (ONS)"]
     assert "reproduzem a TEIFa e a TEIP publicadas em 19 dos 21 meses" in texto
     assert "tolerância de 0,001 p.p." in texto
+
+
+# ---------------------------------------------------------------------------
+# Taxas operativas × oficiais (spec das Análises, FR-063)
+# ---------------------------------------------------------------------------
+
+
+def _taxas_com_operativas(teifa_oper: list, teip_oper: list) -> pd.DataFrame:
+    meses = pd.date_range("2026-06-01", periods=len(teifa_oper), freq="MS")
+    return pd.DataFrame({"mes": meses, "teifa": [0.30] * len(meses), "teip": [0.70] * len(meses),
+                         "teifa_oper": teifa_oper, "teip_oper": teip_oper})
+
+
+def test_taxas_operativas_iguais_as_oficiais() -> None:
+    c = comparar_taxas_operativas(_taxas_com_operativas([0.30, 0.30, 0.30], [0.70, 0.70, 0.70]))
+    assert c["mes"] == pd.Timestamp("2026-08-01") and c["meses"] == 3
+    assert (c["meses_dif_teifa"], c["meses_dif_teip"], c["figura"]) == (0, 0, False)
+    assert c["dif_teifa_pp"] == pytest.approx(0.0) and c["teifa_oper_pct"] == pytest.approx(30.0)
+
+
+def test_taxas_operativas_diferentes_contam_os_meses_e_a_maior_diferenca() -> None:
+    c = comparar_taxas_operativas(_taxas_com_operativas([0.295, 0.13, 0.12], [0.70, 0.59, 0.70]))
+    assert c["dif_teifa_pp"] == pytest.approx(-18.0) and c["dif_teip_pp"] == pytest.approx(0.0)
+    assert (c["meses_dif_teifa"], c["meses_dif_teip"], c["figura"]) == (2, 1, True)  # 0,5 p.p. fica abaixo do limiar
+    assert c["maior_teifa"]["pp"] == pytest.approx(-18.0) and c["maior_teifa"]["mes"] == pd.Timestamp("2026-08-01")
+    assert c["maior_teip"]["mes"] == pd.Timestamp("2026-07-01")
+    assert list(c["serie"].columns) == ["mes", "teifa_pct", "teifa_oper_pct", "teip_pct", "teip_oper_pct",
+                                        "dif_teifa_pp", "dif_teip_pp"]
+
+
+def test_mes_mais_recente_sem_a_taxa_operativa() -> None:
+    c = comparar_taxas_operativas(_taxas_com_operativas([0.30, float("nan")], [0.70, float("nan")]))
+    assert c["mes"] == pd.Timestamp("2026-07-01") and c["meses"] == 1
+    assert pd.isna(c["teifa_oper_pct"]) and pd.isna(c["dif_teifa_pp"])
+
+
+def test_sem_taxas_operativas_nao_ha_comparacao() -> None:
+    oficiais = _taxas_com_operativas([0.3], [0.7]).drop(columns=["teifa_oper", "teip_oper"])
+    assert comparar_taxas_operativas(oficiais) is None
+    assert comparar_taxas_operativas(_taxas_com_operativas([float("nan")], [float("nan")])) is None

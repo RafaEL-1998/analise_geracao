@@ -31,7 +31,7 @@ A Coleta de dados obtém do portal de dados abertos do ONS os arquivos dos conju
 | Arquivo | Conteúdo | Usinas |
 |---|---|---|
 | `evt_extraido.csv` | linhas da usina na EVT, consolidadas (FR-041) | hidrelétrica com EVT |
-| `indicadores_extraido.parquet` | linhas da usina nos dois conjuntos de indicadores por unidade geradora e nos dois de taxas TEIFa e TEIP, com o conjunto de origem (FR-042) | com os indicadores |
+| `indicadores_extraido.parquet` | linhas da usina nos dois conjuntos de indicadores por unidade geradora e nos três de taxas TEIFa e TEIP (parâmetros, taxas oficiais e taxas operativas), com o conjunto de origem (FR-042) | com os indicadores |
 | `programacao_extraido.parquet` | geração programada da usina, ou do conjunto, por dia e patamar (FR-043) | com a programação |
 | `disponibilidade_extraido.parquet`, `hidrologia_extraido.parquet`, `geracao_extraido.parquet` | linhas da usina nos conjuntos horários, com o instante como publicado (FR-044); na Geração por usina, a série da usina ou do conjunto (FR-054) | com o conjunto |
 | `despacho_extraido.parquet`, `cvu_extraido.parquet`, `cmo_extraido.parquet` | despacho térmico por motivo, CVU e CMO semanal do subsistema (FR-055) | UTE e UTN |
@@ -469,6 +469,7 @@ As FR-001 a FR-015 e a FR-056 são regras comuns às cinco etapas. As specs das 
   | Indicadores de disponibilidade por unidade geradora, base anual | `indicadores` | `ind_disponibilidade_fgeracao_uge_anual` | `indicadores_ons/ind_disponibilidade_fgeracao_uge_anual/` | arquivo único | CSV |
   | Parâmetros das taxas TEIFa e TEIP | `indicadores` | `taxa_teif_teip_parametro` | `indicadores_ons/taxa_teif_teip_parametro/` | um arquivo por ano | CSV |
   | Taxas TEIFa e TEIP | `indicadores` | `taxa_teif_teip` | `indicadores_ons/taxa_teif_teip/` | arquivo único | CSV |
+  | Taxas TEIFa Oper e TEIP Oper | `indicadores` | `taxa_teif_teip_oper` | `indicadores_ons/taxa_teif_teip_oper/` | arquivo único | CSV |
   | Programação diária | `programacao` | `programacao_diaria` | `programacao_diaria/` | um arquivo por dia, em três formatos | Parquet |
   | Disponibilidade por usina | `disponibilidade` | `disponibilidade_usina` | `disponibilidade_usina/` | um arquivo por mês, em CSV; em Parquet só em parte dos meses | Parquet; CSV no mês sem Parquet |
   | Dados hidrológicos horários | `hidrologia` | `dados_hidrologicos_ho` | `dados_hidrologicos_ho/` | um arquivo por mês, em Parquet; alguns meses só em CSV | Parquet; CSV no mês sem Parquet |
@@ -531,7 +532,7 @@ As FR-001 a FR-015 e a FR-056 são regras comuns às cinco etapas. As specs das 
   |---|---|---|
   | Energia Vertida Turbinável | `cod_usina` = `identificacao.cod_usina` | `nom_reservatorio` contém `identificacao.nome_ons` |
   | Indicadores de disponibilidade por unidade geradora, bases mensal e anual | `ceg` = `identificacao.ceg` | `id_usina` = `identificacao.id_ons` |
-  | Taxas TEIFa e TEIP; Parâmetros das taxas TEIFa e TEIP | `cod_ceg` = `identificacao.ceg` | não há: os dois conjuntos não publicam o id ONS |
+  | Taxas TEIFa e TEIP; Taxas TEIFa Oper e TEIP Oper; Parâmetros das taxas TEIFa e TEIP | `cod_ceg` = `identificacao.ceg` | não há: os três conjuntos não publicam o id ONS |
   | Programação diária | `cod_exibicaousina` entre os códigos do perfil (`identificacao.cod_programacao` ou `codigos_programacao`) | `id_estado` = `usina.estado` e, nas hidrelétricas, `nom_usina` contém `identificacao.nome_ons` |
   | Disponibilidade por usina | `id_ons` = `identificacao.id_ons` | `ceg` = `identificacao.ceg`, e `id_estado` = `usina.estado` |
   | Dados hidrológicos horários | `cod_usina` = `identificacao.cod_usina` | `nom_reservatorio` contém `identificacao.nome_ons`, e `id_reservatorio` = `identificacao.id_reservatorio` |
@@ -544,7 +545,7 @@ As FR-001 a FR-015 e a FR-056 são regras comuns às cinco etapas. As specs das 
   A identificação nos conjuntos das térmicas e das eólicas e solares está nas FR-055 e FR-057; a das unidades das usinas do conjunto, na FR-060.
 - **FR-035**: Na comparação, os textos DEVEM ser tomados sem acento, sem espaços nas pontas e em maiúsculas, e os códigos numéricos como número. A mesma normalização DEVE valer na extração e nos pré-filtros de todos os conjuntos; o filtro empurrado à leitura do Parquet DEVE usar o valor como está no perfil e a forma normalizada. "Contém" exige o valor do perfil dentro do texto do campo. O nome do agente, o nome da usina fora das conferências declaradas e os demais campos de cadastro (subsistema, bacia e rio) NÃO DEVEM ser usados na identificação.
 - **FR-036**: Só DEVEM ser extraídas as linhas em que o identificador e a conferência conferem. As linhas em que só um dos dois confere NÃO DEVEM ser extraídas: DEVEM ser contadas por arquivo, em "só identificador" e "só conferência", com aviso no log que cita o arquivo. Num conjunto com conferência declarada, a coluna de conferência ausente torna o arquivo `FALHA`, com o motivo, e a coleta termina com código 2. Há três exceções:
-  - Taxas TEIFa e TEIP e Parâmetros das taxas TEIFa e TEIP: sem campo de conferência publicado, a extração usa só o identificador, e as contagens parciais não se aplicam;
+  - Taxas TEIFa e TEIP, Taxas TEIFa Oper e TEIP Oper e Parâmetros das taxas TEIFa e TEIP: sem campo de conferência publicado, a extração usa só o identificador, e as contagens parciais não se aplicam;
   - CMO semanal: contexto do subsistema, sem conferência; não há linha "só conferência" (FR-055);
   - Modalidade das usinas: a ficha é localizada pelo identificador; id ONS ou estado diferente do perfil não exclui a linha, que é extraída e examinada pela Conferência, e as contagens parciais ficam na auditoria.
 - **FR-037**: Os arquivos CSV DEVEM ser lidos com separador `;`, em UTF-8; com erro de decodificação, o arquivo inteiro DEVE ser relido em Latin-1. As colunas DEVEM ser localizadas pelo nome no cabeçalho, e não pela posição; nos arquivos Parquet, também pelo nome. Arquivo vazio, corrompido ou sem as colunas de identificação DEVE ficar como `FALHA`, com o motivo, sem interromper a leitura dos demais; a coleta termina com código 2.
@@ -562,7 +563,7 @@ As FR-001 a FR-015 e a FR-056 são regras comuns às cinco etapas. As specs das 
   - CSV com `;`, ponto decimal, UTF-8 sem BOM e valores ausentes em branco.
 
   Sem nenhuma linha da usina na EVT, a coleta DEVE gravar a auditoria da EVT, avisar no log que a usina não foi encontrada, não coletar os demais conjuntos e terminar com código 2.
-- **FR-042**: Nos indicadores por unidade geradora e nas taxas TEIFa e TEIP, a coleta DEVE extrair as linhas da usina com todas as colunas publicadas, com o conjunto e o arquivo de origem, em `indicadores_extraido.parquet`.
+- **FR-042**: Nos indicadores por unidade geradora e nas taxas TEIFa e TEIP, oficiais e operativas, a coleta DEVE extrair as linhas da usina com todas as colunas publicadas, com o conjunto e o arquivo de origem, em `indicadores_extraido.parquet`.
 - **FR-043**: Na Programação diária, a coleta DEVE:
   - identificar a usina pelos códigos de exibição do perfil: `cod_programacao` ou, quando a usina ou o conjunto é programado em mais de um código (um por barra), a lista `codigos_programacao`; a conferência é pelo estado e, nas hidrelétricas, também pelo nome (`nome_ons`); nos demais tipos, que não têm `nome_ons`, só pelo estado;
   - tomar o dia do nome do arquivo (`..._AAAA_MM_DD`) e conferir a data interna, aceitando `AAAA-MM-DD` e `DD/MM/AAAA`; a divergência vai para a auditoria e para o log;
@@ -840,6 +841,7 @@ As FR-001 a FR-015 e a FR-056 são regras comuns às cinco etapas. As specs das 
 | 22/10/2026 | A potência das usinas da composição entra na Coleta (`capacidade_membros.csv`), sem dividir número do conjunto. | FR-060 |
 | 22/10/2026 | Aprovados: os códigos de programação de todo o período no catálogo e no rascunho, com o primeiro e o último dia de cada um; o tipo publicado da série do conjunto, por trecho; o período das linhas próprias sem valor no resumo. | FR-048; FR-051; FR-053; FR-061 |
 | 22/10/2026 | A geração da usina pela CCEE (dados abertos, com download manual) fica como proposta para uma avaliação futura, que pede mudança do princípio IV da constituição; a Coleta continua só com o portal do ONS. | Assumptions |
+| 23/10/2026 | Coletar o conjunto Taxas TEIFa Oper e TEIP Oper (`taxa_teif_teip_oper`), nas mesmas regras das taxas oficiais: arquivo único, extração pelo CEG, manifesto, versões anteriores e dicionários (aprovado pelo usuário). | FR-042 |
 
 ---
 

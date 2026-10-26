@@ -1,10 +1,10 @@
 # UHE São Domingos — resumo executivo
 
-28/08/2018 00h a 21/10/2026 23h (71.447 registros horários) · Gerado em 23/10/2026 11:30
+28/08/2018 00h a 23/10/2026 23h (71.495 registros horários) · Gerado em 26/10/2026 09:00
 
 UHE · MS · TIPO II-A · 48,0 MW
 
-Agentes: CGT ELETROSUL (28/08/2018 a 28/02/2026); AXIA SUL (01/03/2026 a 21/10/2026)
+Agentes: CGT ELETROSUL (28/08/2018 a 28/02/2026); AXIA SUL (01/03/2026 a 23/10/2026)
 
 Resume o relatório completo "UHE São Domingos — Análise do desempenho operacional", de 30 páginas, gerado na mesma data.
 
@@ -17,8 +17,8 @@ Resume o relatório completo "UHE São Domingos — Análise do desempenho opera
 | Disponibilidade média declarada | 87,9% | da potência instalada; referência da garantia física: 91,0% |
 | Disponibilidade apurada pelo ONS (DISPF) | 91,1% | média das unidades; TEIFa 4,11% e TEIP 4,74% em set/2026 |
 | Fator de capacidade | 56,3% | geração média de 27,0 MWmed, 74,3% da garantia física |
-| Energia vertida turbinável | 153,2 GWh | 7,3% de geração + EVT; presente em 86,1% das horas |
-| EVT com a usina parada | 46,0 GWh | 30,1% da EVT, em 2.292 h com geração até 1 MW |
+| Energia vertida turbinável | 153,6 GWh | 7,4% de geração + EVT; presente em 86,1% das horas |
+| EVT com a usina parada | 46,3 GWh | 30,2% da EVT, em 2.304 h com geração até 1 MW |
 
 Seção de origem: capa do relatório completo.
 
@@ -34,17 +34,17 @@ Seção de origem: capa do relatório completo.
 | 2023 | 90,5% | 63,1% | 83,2% | 13.078 | 110 |
 | 2024 | 91,2% | 57,6% | 76,0% | 8.940 | 44 |
 | 2025 | 91,2% | 49,2% | 64,9% | 30.690 | 920 |
-| 2026* | 90,5% | 45,0% | 59,4% | 31.553 | 1.158 |
+| 2026* | 90,5% | 45,1% | 59,4% | 31.927 | 1.170 |
 
 \* Ano parcial. Colunas e definições na seção 2 do relatório completo.
 
 ## Sobre os dados
 
-Dados: série horária de 28/08/2018 00h a 21/10/2026 23h, com 71.447 registros; 2018 e 2026 são anos parciais. 535 registros (0,75%) violam ao menos uma regra de plausibilidade física e foram mantidos nos totais, sinalizados.
+Dados: série horária de 28/08/2018 00h a 23/10/2026 23h, com 71.495 registros; 2018 e 2026 são anos parciais. 535 registros (0,75%) violam ao menos uma regra de plausibilidade física e foram mantidos nos totais, sinalizados.
 
 Conferências: geração coincidente com Geração por usina em 100,0% das horas; disponibilidade declarada coincidente com Disponibilidade por usina em 100,0% das horas; vazões turbinada e vertida coincidentes com Dados hidrológicos horários em 100,0% das horas; TEIFa e TEIP refeitas em 22 de 22 meses; DISPF e horas por estado operativo com 5 divergências (meses-unidade); cadastro sem divergência. Os dados abertos do ONS não informam a causa das paradas nem os eventos individuais de desligamento.
 
-Fontes: Energia Vertida Turbinável (cod_usina 153), obtido em 23/10/2026; Indicadores de disponibilidade por unidade geradora, base mensal, Indicadores de disponibilidade por unidade geradora, base anual, Taxas TEIFa e TEIP, Parâmetros das taxas TEIFa e TEIP e Modalidade das usinas (CEG UHE.PH.MS.028761-0.01), obtidos em 23/10/2026; Programação diária (PRUHSD), obtido em 21/10/2026; Disponibilidade por usina e Geração por usina (id ONS MSUHSD), obtidos em 23/10/2026; Dados hidrológicos horários (cod_usina 153, reservatório PNUHSD), obtido em 23/10/2026.
+Fontes: Energia Vertida Turbinável (cod_usina 153), obtido em 26/10/2026; Indicadores de disponibilidade por unidade geradora, base mensal, Indicadores de disponibilidade por unidade geradora, base anual, Taxas TEIFa e TEIP, Parâmetros das taxas TEIFa e TEIP, Taxas TEIFa Oper e TEIP Oper e Modalidade das usinas (CEG UHE.PH.MS.028761-0.01), obtidos em 26/10/2026; Programação diária (PRUHSD), obtido em 26/10/2026; Disponibilidade por usina e Geração por usina (id ONS MSUHSD), obtidos em 26/10/2026; Dados hidrológicos horários (cod_usina 153, reservatório PNUHSD), obtido em 26/10/2026.
 
 ## Conclusão
 
@@ -54,7 +54,7 @@ Indícios a confirmar, gerados pelas regras descritas nas notas metodológicas a
 
 ### Pontos de atenção
 
-- 46,0 GWh de EVT (30,1% do total) ocorreram com a usina parada, em 2.292 h, sobretudo em 2025 e 2026; no período com programação diária, 91,7% dessas horas tinham programação do ONS de até 1 MW (seções 8 e 9).
+- 46,3 GWh de EVT (30,2% do total) ocorreram com a usina parada, em 2.304 h, sobretudo em 2025 e 2026; no período com programação diária, 91,7% dessas horas tinham programação do ONS de até 1 MW (seções 8 e 9).
 - Em 92,8% das horas com EVT, a afluência cabia nas turbinas da usina, cujo engolimento máximo é de 163,0 m³/s (seção 11).
 - Em 2025 e 2026 (parcial), a EVT concentrou-se na janela das 9h às 15h, com a geração diurna em 71% e 51% da noturna (seção 7).
 - Disponibilidade declarada média de 87,9%, 3,1 p.p. abaixo da referência da garantia física, de 91,0%; TEIFa de 4,11% em set/2026, acima da TEIF de referência de 2,333% (seções 2 e 4).
@@ -64,7 +64,7 @@ Indícios a confirmar, gerados pelas regras descritas nas notas metodológicas a
 
 - UG2: indício de problema na unidade, com limitação forçada de potência em 79 dos 81 meses (3.861 h equivalentes; UG1: 58 h); responde por 91% da TEIFa de set/2026, que ficou em 4,11%, acima da referência de 2,333% (seção 4).
 - 184 h em 70 eventos com a usina parada e programação do ONS acima de 5 MW; o mais longo, de 01/05/2026 21h a 02/05/2026 09h, durou 13 h (seção 9).
-- Capacidade não sincronizada diferente da reserva desligada informada ao ONS em 2024 (−11,7 GWh), 2025 (−12,4 GWh) e 2026* (−8,0 GWh); 5 meses-unidade em que o DISPF e as horas por estado operativo classificam o tempo parado de forma diferente (seções 4 e 10).
+- Capacidade não sincronizada diferente da reserva desligada informada ao ONS em 2024 (−11,7 GWh), 2025 (−12,4 GWh) e 2026* (−7,7 GWh); 5 meses-unidade em que o DISPF e as horas por estado operativo classificam o tempo parado de forma diferente (seções 4 e 10).
 - Geração acima da disponibilidade declarada em 293 h, segundo a regra R7 (seção 15).
 
 ### A confirmar com o agente

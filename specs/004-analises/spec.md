@@ -322,6 +322,7 @@ Nas usinas sem EVT:
   | Programação zero e desvio da programação | programação ≤ 1 MW; usina parada com programação > 5 MW |
   | Unidade sincronizada | disponibilidade sincronizada > 1 MW |
   | Janela da TEIFa e da TEIP | 60 meses |
+  | Diferença entre a taxa operativa e a oficial (figura e C20) | 1 p.p. |
   | Identidade das horas por estado operativo | soma das parcelas igual às horas do período, com diferença ≤ 0,1 h |
   | Capacidade não sincronizada × reserva desligada (constatação) | coincidem no ano com diferença ≤ 0,1 GWh |
   | Distribuição ao longo do ano | só anos completos; maio a outubro × janeiro a abril; três meses de maior EVT |
@@ -332,7 +333,7 @@ Nas usinas sem EVT:
   | Faixas do recurso (eólicas e solares) | 2 m/s de vento; 100 W/m² de irradiância |
   | Limite físico do recurso | vento ≤ 40 m/s; irradiância ≤ 1.500 W/m² |
   | Maiores desvios listados (térmicas, eólicas e solares) | 15 horas, de maior desvio absoluto |
-  | Limiares da conclusão | catálogo C1 a C19 (FR-045) |
+  | Limiares da conclusão | catálogo C1 a C20 (FR-045) |
 
 - **FR-007**: Os valores próprios da usina DEVEM vir do perfil, cujos campos e validação estão na spec da Coleta de dados, e os derivados DEVEM ser calculados a partir dele:
 
@@ -669,13 +670,13 @@ Nas usinas sem EVT:
 
 - **FR-045**: Os itens da conclusão DEVEM ser gerados pelas regras do catálogo abaixo, aplicadas aos resultados das análises e das conferências; nenhum item é escrito à mão nem fica fixo no texto.
   - O catálogo é uma lista de regras declaradas. Cada regra declara: o código; os tipos em que é avaliada; as listas em que pode gerar itens (cada item traz a sua); o nível exigido, só dado da usina (FR-054); os limiares, em `src/comum/regras.py`; o período mínimo, quando há (FR-053); e as seções de origem.
-  - Na hidrelétrica com EVT, C1 a C11 continuam com a mesma ordem, os mesmos textos, limiares e listas, sem período mínimo, e a nota da conclusão continua o texto de antes. Nas usinas sem EVT, são avaliadas as regras do tipo: as comuns C2, C5, C8 e C10 sobre a base horária comum (hidrelétricas sem EVT, térmicas), C12 a C15 nas térmicas (FR-057) e C16 a C19 nas eólicas e solares (FR-059).
+  - Na hidrelétrica com EVT, C1 a C11 continuam com a mesma ordem, os mesmos textos, limiares e listas, sem período mínimo, e a nota da conclusão continua o texto de antes. Nas usinas sem EVT, são avaliadas as regras do tipo: as comuns C2, C5, C8 e C10 sobre a base horária comum (hidrelétricas sem EVT, térmicas), C12 a C15 nas térmicas (FR-057) e C16 a C19 nas eólicas e solares (FR-059). Nas hidrelétricas e térmicas, com ou sem EVT, também a C20 (FR-063).
   - As listas são quatro: pontos de atenção, possíveis problemas, a confirmar com o agente e a verificar em campo.
   - Os itens são ordenados pela lista, nessa ordem, e, dentro dela, pelo número da regra (na C2, pela unidade).
   - Todos os itens gerados ficam nos resultados; o limite de cinco itens por lista é aplicado na Geração do relatório.
 - **FR-046**: Cada item DEVE ter:
   - lista e ordem na lista, a partir de 1;
-  - regra (C1 a C19);
+  - regra (C1 a C20);
   - texto de uma frase, sem ponto final, com o número que sustenta o item;
   - seções de origem, guardadas pelo identificador da seção; o número da seção é resolvido na Geração do relatório, conforme as seções presentes.
 - **FR-047**: Os itens NÃO DEVEM afirmar causa nem avaliar o desempenho da usina. O vocabulário é de indício ("indício", "possível", "a confirmar"), e nenhum item tem os termos "satisfatório", "insatisfatório", "descumpr", "deficiente", "falha do agente" ou "culpa".
@@ -711,6 +712,7 @@ Regras, tipos e listas:
 | C17 | EOL, UFV | a verificar em campo |
 | C18 | EOL, UFV | pontos de atenção |
 | C19 | EOL, UFV | a confirmar com o agente |
+| C20 | UHE, PCH, CGH, UTE, UTN | a confirmar com o agente |
 
 Seções citadas pelos itens:
 
@@ -888,6 +890,12 @@ Nas hidrelétricas sem EVT e nas térmicas, C2, C5, C8 e C10 são avaliadas sobr
     - UTE William Arjona (2025): disponibilidade de 20,9 %, TEIFa de 30,5 % (12/2025) e atendimento ao despacho de 6,25 %, exibido como 6,2 % pelo arredondamento do projeto (2 de 32 horas com programação); fator de capacidade e energia cortada vazios; 0 pontos de atenção, 2 possíveis problemas, 4 itens a confirmar com o agente e 1 a verificar em campo; 7 de 8 regras avaliadas.
     - UFV Seriemas 1 (2026 parcial, de 22/08 a 19/10/2026): fator de capacidade de 17,2 % e energia cortada de 16,3 %; disponibilidade, TEIFa e atendimento vazios; 1 ponto de atenção e 1 item a verificar em campo; 2 de 4 regras avaliadas.
     - PCH Bandeirante (em conjunto, sem série própria): indicadores e contagens vazios; nenhuma das 11 regras avaliada.
+- **FR-063** (taxas operativas × oficiais): Com as taxas operativas na tabela mensal (FR-045 da spec do Tratamento de dados), as Análises DEVEM gravar a comparação:
+  - o mês mais recente das taxas oficiais, as duas oficiais e as duas operativas desse mês e as diferenças (operativa − oficial, em p.p.);
+  - os meses com as quatro taxas, os meses com diferença absoluta de pelo menos 1 p.p. em cada taxa e a maior diferença de cada taxa, com o mês;
+  - a série mensal (dados da figura e da aba) e se há a figura (algum mês com diferença de pelo menos 1 p.p.).
+
+  Sem mês com as quatro taxas, não há comparação. A regra C20 (lista a confirmar com o agente, seção dos indicadores oficiais) dispara quando a TEIFa ou a TEIP operativa do mês mais recente está a pelo menos 1 p.p. da oficial e cita só as taxas que diferem; sem as taxas operativas, fica entre as não avaliadas, com o motivo.
 
 ### Key Entities
 
@@ -901,7 +909,7 @@ Nas hidrelétricas sem EVT e nas térmicas, C2, C5, C8 e C10 são avaliadas sobr
 - **Evento**: sequência de horas consecutivas numa condição (usina parada com EVT, indisponibilidade total ou desvio da programação), com início, fim, duração e médias.
 - **Classe horária**: classe de uma hora segundo a programação, a sincronização das unidades ou a faixa de afluência.
 - **Constatação**: título fixo, texto gerado e condição de existência.
-- **Regra da conclusão**: identificador (C1 a C19), tipos em que é avaliada, condição e limiares, listas em que gera item e o que cada item diz, nível exigido, período mínimo, seções citadas e bases necessárias.
+- **Regra da conclusão**: identificador (C1 a C20), tipos em que é avaliada, condição e limiares, listas em que gera item e o que cada item diz, nível exigido, período mínimo, seções citadas e bases necessárias.
 - **Item da conclusão**: lista, ordem, regra, texto de uma frase e seções de origem.
 - **Indicadores da carteira**: chaves fixas, com o ano, os indicadores comparáveis (valor, nível e unidade) e as contagens da conclusão.
 - **Dados de figura**: séries e tabelas que a Geração do relatório desenha, sem recalcular.
@@ -955,7 +963,7 @@ Nas hidrelétricas sem EVT e nas térmicas, C2, C5, C8 e C10 são avaliadas sobr
 - **SC-003**: 100 % das 10 grandezas têm perfil estatístico em todos os anos da série, com mínimo e máximo e as respectivas data e hora, e nenhum registro sinalizado entra no perfil nem nos extremos.
 - **SC-004**: Na série sintética, sem as bases complementares, as Análises produzem exatamente 12 constatações, que reproduzem os fatos conhecidos (30 h de indisponibilidade total, 5 h de usina parada com EVT, mudança em jan/2024 e o registro de 60 MW fora dos extremos), sem parecer e sem nenhuma das afirmações removidas na auditoria.
 - **SC-005**: Recebem classe 100 % das horas comuns com programação, 100 % das horas paradas com dado de disponibilidade e 100 % das horas com EVT do período da hidrologia; em cada caso, a soma das classes é igual ao total, e as horas paradas com EVT se dividem exatamente entre as duas classes de programação.
-- **SC-006**: Nos testes, cada regra C1 a C19 dispara e deixa de disparar conforme a condição; 100 % dos itens têm regra e ao menos uma seção de origem; nenhum item tem termo de avaliação de desempenho nem repete frase de constatação; os itens estão ordenados por lista e por regra; nas usinas sem EVT, as regras sem base no nível da usina ficam nas omissões, com o motivo.
+- **SC-006**: Nos testes, cada regra C1 a C20 dispara e deixa de disparar conforme a condição; 100 % dos itens têm regra e ao menos uma seção de origem; nenhum item tem termo de avaliação de desempenho nem repete frase de constatação; os itens estão ordenados por lista e por regra; nas usinas sem EVT, as regras sem base no nível da usina ficam nas omissões, com o motivo.
 - **SC-007**: Em 100 % das tentativas de executar as Análises sem a Conferência concluída e atualizada, a etapa sai com código 5 e não grava nada.
 - **SC-008**: Com o perfil da usina fictícia dos testes, as faixas de afluência dizem "entre uma e três unidades", as faixas de geração são as do perfil, nenhum texto gerado menciona a São Domingos nem os valores dela, e as análises das bases ausentes são omitidas.
 - **SC-009**: 100 % dos números citados nas constatações e nos itens da conclusão vêm dos resultados gravados e são iguais aos das tabelas do relatório e das abas da planilha.
@@ -987,6 +995,7 @@ Nas hidrelétricas sem EVT e nas térmicas, C2, C5, C8 e C10 são avaliadas sobr
 | 22/10/2026 | A seção do conjunto vale para toda usina em conjunto, inclusive a eólica ou solar com série própria; a potência das usinas da composição entra, sem dividir número do conjunto e sem fator de capacidade do conjunto. Na hidrelétrica sem EVT, a hora dos dados hidrológicos é conferida pela geração da usina, sem meta. | FR-060, FR-061 |
 | 22/10/2026 | O peso da usina na potência do conjunto, por composição, entra na usina em conjunto, só com a potência, sem estimar a geração dela; na usina em conjunto sem série própria, o relatório sai em duas partes. | FR-060 |
 | 22/10/2026 | Indicadores da carteira do último ano completo da série; atendimento ao despacho pelas horas a até 5 MW da programada; contagens vazias, e não zero, quando nenhuma regra é avaliada com dado da usina; fator de capacidade só onde o relatório da usina o calcula. | FR-062 |
+| 23/10/2026 | Taxas operativas comparadas às oficiais, com o limiar de 1 p.p. para a figura e para a regra C20, na lista a confirmar com o agente; a carteira não ganha coluna (decisões recomendadas, aprovadas pelo usuário). | FR-063, C20 |
 
 ---
 

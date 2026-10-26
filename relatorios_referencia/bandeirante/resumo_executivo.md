@@ -6,7 +6,7 @@ PCH · MS · TIPO II-C · 28,0 MW
 
 Agente atual (Capacidade de geração do ONS): RIO AGUA CLARA (proprietário); ITATIM (operador)
 
-Resume o relatório completo "PCH Bandeirante — Análise do desempenho operacional", de 13 páginas, gerado na mesma data.
+Resume o relatório completo "PCH Bandeirante — Análise do desempenho operacional", de 14 páginas, gerado na mesma data.
 
 **Termos.** ONS: Operador Nacional do Sistema Elétrico; MWmed: megawatt médio, a energia dividida pelas horas do período.
 

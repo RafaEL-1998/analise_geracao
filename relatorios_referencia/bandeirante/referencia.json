@@ -1,7 +1,7 @@
 {
  "usina": "bandeirante",
  "data_geracao": "22/10/2026 10:00",
- "aprovado_em": "22/10/2026",
+ "aprovado_em": "26/10/2026",
  "periodo": {
   "inicio": "2019-08-22 00:00:00",
   "fim": "2026-10-20 23:00:00"
@@ -9,18 +9,18 @@
  "arquivos": [
   {
    "nome": "relatorio_analise_estatistica.pdf",
-   "bytes": 1037601,
-   "sha256": "809371f7f36354316301edeee4cd801f5f1f796716ace87f58a69597521dfdcc"
+   "bytes": 1038642,
+   "sha256": "fe1c4b717c63b9eef622f8243939fb858e34a37bf2c5764743f0d574b5e8d342"
   },
   {
    "nome": "relatorio_analise_estatistica.md",
-   "bytes": 25831,
-   "sha256": "cc0fe70ed0952c3371d502300583b34aac1a3f573d5e1f04bd31cbbaf0b62f65"
+   "bytes": 25980,
+   "sha256": "86a51339d3e5de11fd79f0b7d279a165f7f5ae93b4c52d0241242395f174b5a2"
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
-   "bytes": 35861,
-   "sha256": "7b8f169a2c12a238f161202598c666b01e19e2b49a6eb2fc5578343976c8e138"
+   "bytes": 35896,
+   "sha256": "0cc2c0aeecef3a5e13ae8cda59879ddbb66ab0e45ab94af7d544691675f3f683"
   },
   {
    "nome": "perfil_estatistico_anual.csv",
@@ -30,12 +30,12 @@
   {
    "nome": "resumo_executivo.pdf",
    "bytes": 79408,
-   "sha256": "8603f2573c03a07c21a7f1cf9537fd062fb43ca6cfb431342be4a89917012b72"
+   "sha256": "d1358af2527e64aeb7cc8083641fc6d390b031228141465e163f6b452889864b"
   },
   {
    "nome": "resumo_executivo.md",
    "bytes": 2573,
-   "sha256": "ed80b524ff370d1ae98113c08d7f265b6c2dc78df74c5fcb1a59aba2ea1065fe"
+   "sha256": "cc0cbfaa5c606fc9a343d08704c30f64acd029b7587d27f612c5e08bbfd4d5fd"
   },
   {
    "nome": "figures/01_serie_temporal_geracao_disponibilidade.png",

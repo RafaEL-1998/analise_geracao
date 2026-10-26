@@ -441,6 +441,7 @@ Como fiscal, quero que a etapa faça, em qualquer tipo de usina (UHE, PCH, CGH, 
 | 20/10/2026 | Aprovado o relatório da UTE William Arjona com a TEIFa e a TEIP refeitas sem reproduzir nenhum dos 4 meses de janela completa (diferenças de 0,08 a 2,07 p.p. na TEIFa): sem fonte publicada de uma regra própria das térmicas, a divergência fica registrada, sem ajuste. | FR-022 |
 | 22/10/2026 | Na hidrelétrica sem EVT, a hora dos Dados hidrológicos é conferida pela correlação da vazão turbinada com a geração da usina, com −1, 0 e +1 h, sem meta. | FR-026 |
 | 22/10/2026 | A CCEE como fonte nova (geração das PCH e CGH em conjunto) fica para uma avaliação própria, depois da ampliação para todos os tipos; até lá, continua fora do fluxo. | FR-006; Assumptions (Bases) |
+| 23/10/2026 | As taxas operativas não são conferidas com as oficiais: as regras de apuração diferem, e o ONS não publica a diferença; a comparação entre as duas é das Análises (aprovado pelo usuário). | conferência `teifa_teip` |
 
 ## Conferências manuais (fora do fluxo)
 

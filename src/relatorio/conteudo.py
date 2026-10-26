@@ -61,6 +61,7 @@ from src.comum.regras import (
     LIMIAR_CONCLUSAO_R7_HORAS,
     LIMIAR_CONCLUSAO_R9_HORAS,
     LIMIAR_DESVIO_PROGRAMACAO_MW,
+    LIMIAR_DIFERENCA_TAXAS_OPERATIVAS_PP,
     LIMIAR_GERACAO_PARADA_MW,
     LIMIAR_SINCRONIZADA_MW,
     MAXIMO_ITENS_CONCLUSAO,
@@ -120,7 +121,7 @@ def tabela_conclusao(res: ResultadosAnalise) -> pd.DataFrame:
 
 
 def nota_conclusao() -> str:
-    """Item das notas metodológicas com as regras (C1 a C11) e os limiares da conclusão."""
+    """Item das notas metodológicas com as regras (C1 a C11 e C20) e os limiares da conclusão."""
     fracao = LIMIAR_CONCLUSAO_PARTICIPACAO_TEIFA
     participacao = "2/3" if abs(fracao - 2 / 3) < 1e-9 else fmt_pct(fracao * 100, 0)
     regras = [
@@ -140,6 +141,8 @@ def nota_conclusao() -> str:
         f"C10 indisponibilidade total ≥ {fmt_int(LIMIAR_CONCLUSAO_INDISPONIBILIDADE_DIAS)} dias, ou programada ≥ "
         f"{fmt_pct(LIMIAR_CONCLUSAO_PROGRAMADA_UG_PCT, 0)} numa unidade num ano completo",
         f"C11 dados hidrológicos sinalizados, ou geração com vazão turbinada nula em ≥ {fmt_int(LIMIAR_CONCLUSAO_R9_HORAS)} h",
+        f"C20 TEIFa ou TEIP operativa do mês mais recente a {fmt_num(LIMIAR_DIFERENCA_TAXAS_OPERATIVAS_PP, 0)} p.p. ou "
+        "mais da oficial",
     ]
     return (
         "Conclusão: indícios gerados por regras fixas, iguais para qualquer usina, a partir dos resultados das seções: "
@@ -212,6 +215,9 @@ def notas_metodologicas(res: ResultadosAnalise) -> List[str]:
         )
     if res.ons:
         notas += notas_indicadores_ons()
+        nota = nota_taxas_operativas(res)
+        if nota:
+            notas.append(nota)
     if res.programacao:
         notas += notas_programacao()
     return notas + notas_bases_complementares(res) + [nota_conclusao()]
@@ -412,6 +418,78 @@ def texto_taxas_ons(res: ResultadosAnalise) -> str:
         f"TEIFa {fmt_pct(t['teifa_pct'], 3)} (referência TEIF {fmt_pct(perfil_ativo().parametros.teif_referencia * 100, 3)}); TEIP "
         f"{fmt_pct(t['teip_pct'], 3)} (referência IP {fmt_pct(perfil_ativo().parametros.ip_referencia * 100, 3)}); (1 − TEIFa) × (1 − TEIP) = "
         f"{fmt_pct(t['disponibilidade_verificada_pct'], 2)} (referência {fmt_pct(perfil_ativo().disponibilidade_referencia * 100, 2)})."
+    )
+
+
+# Título e rodapé da tabela das taxas operativas, iguais nas duas trilhas (spec da Geração do relatório, FR-071)
+TEXTO_TABELA_TAXAS_OPERATIVAS = (
+    "TEIFa e TEIP mais recentes: taxas oficiais e operativas do ONS",
+    "Oficiais: conjunto Taxas TEIFa e TEIP; operativas: conjunto Taxas TEIFa Oper e TEIP Oper; janela de "
+    f"{JANELA_TAXAS_MESES} meses. A diferença é calculada neste relatório.")
+
+
+def _pp(valor: float) -> str:
+    """Diferença em p.p. com duas casas e o sinal do valor arredondado (nunca "+0,00")."""
+    return fmt_pp(round(valor, 2) + 0.0, 2)
+
+
+def linhas_tabela_taxas_operativas(res: ResultadosAnalise) -> Tuple[List[str], List[List[str]]]:
+    """Taxas oficiais e operativas do mês mais recente, com a diferença; vazia sem elas.
+
+    Spec da Geração do relatório, FR-071.
+    """
+    cabecalho = ["Taxa", "Oficial", "Operativa", "Diferença (operativa − oficial)"]
+    c = (res.ons or {}).get("taxas_operativas")
+    if not c:
+        return cabecalho, []
+    return cabecalho, [[nome, fmt_pct(c[f"{t}_pct"], 3), fmt_pct(c[f"{t}_oper_pct"], 3), _pp(c[f"dif_{t}_pp"])]
+                       for t, nome in (("teifa", "TEIFa"), ("teip", "TEIP"))]
+
+
+def texto_taxas_operativas(res: ResultadosAnalise) -> str:
+    """Frase da série das taxas oficiais e operativas (spec da Geração do relatório, FR-071); vazia sem elas."""
+    c = (res.ons or {}).get("taxas_operativas")
+    if not c:
+        return ""
+    meses = c["serie"].dropna()["mes"]
+    limiar = fmt_num(LIMIAR_DIFERENCA_TAXAS_OPERATIVAS_PP, 0)
+    texto = (f"Taxas de {fmt_mes_ano(c['mes'])} nos conjuntos Taxas TEIFa e TEIP (oficiais) e Taxas TEIFa Oper e "
+             f"TEIP Oper (operativas), ambas com janela de {JANELA_TAXAS_MESES} meses. Nos {fmt_int(c['meses'])} meses "
+             f"com as quatro taxas ({fmt_mes_ano(meses.min())} a {fmt_mes_ano(meses.max())}), ")
+    if all(round(abs(m["pp"]), 2) == 0 for m in (c["maior_teifa"], c["maior_teip"])):
+        texto += "as taxas operativas coincidem com as oficiais em todos os meses."
+    else:
+        if c["meses_dif_teifa"] == 0 and c["meses_dif_teip"] == 0:
+            texto += f"a diferença entre a operativa e a oficial ficou abaixo de {limiar} p.p. em todos os meses"
+        else:
+            texto += (f"a diferença entre a operativa e a oficial chegou a {limiar} p.p. ou mais em "
+                      f"{fmt_int(c['meses_dif_teifa'])} {plural(c['meses_dif_teifa'], 'mês', 'meses')} na TEIFa e "
+                      f"em {fmt_int(c['meses_dif_teip'])} na TEIP")
+        maiores = [f"{_pp(m['pp'])} na {nome} ({fmt_mes_ano(m['mes'])})"
+                   for nome, m in (("TEIFa", c["maior_teifa"]), ("TEIP", c["maior_teip"]))]
+        texto += f"; a maior diferença foi de {fmt_lista(maiores)}."
+    if pd.isna(c["teifa_oper_pct"]) and pd.isna(c["teip_oper_pct"]):
+        texto += f" As taxas operativas de {fmt_mes_ano(c['mes'])} não constam dos dados coletados."
+    return texto
+
+
+def nota_taxas_operativas(res: ResultadosAnalise) -> str:
+    """Nota das taxas operativas, nas usinas com as taxas oficiais; vazia sem elas.
+
+    Spec da Geração do relatório, FR-071.
+    """
+    if not (res.ons or {}).get("taxa_ultima"):
+        return ""
+    if not res.ons.get("taxas_operativas"):
+        return "Taxas operativas: as Taxas TEIFa Oper e TEIP Oper da usina não constam dos dados coletados."
+    return (
+        f"Taxas operativas: conjunto Taxas TEIFa Oper e TEIP Oper ({ONS_PORTAL_DATASET_URL}taxa_teif_teip_oper), que o "
+        "dicionário do ONS descreve como a Taxa Equivalente de Indisponibilidade Forçada Operativa (TEIFa_Oper) e a Taxa "
+        "de Indisponibilidade Programada Operativa (TEIP_Oper) das usinas despachadas centralizadamente (Tipo I e Tipo "
+        f"II-A), dos últimos {JANELA_TAXAS_MESES} meses, na versão mais recente. O ONS não publica a diferença de regra "
+        "entre elas e as taxas TEIFa e TEIP; o relatório mostra as duas lado a lado, com a diferença em pontos "
+        f"percentuais, e a figura das séries quando a diferença chega a {fmt_num(LIMIAR_DIFERENCA_TAXAS_OPERATIVAS_PP, 0)} "
+        "p.p. em algum mês."
     )
 
 
@@ -763,10 +841,24 @@ def _eventos_longos(res: ResultadosAnalise) -> pd.DataFrame:
     return eventos[eventos["duracao_h"] >= DURACAO_MINIMA_EVENTO_RELATORIO_H] if len(eventos) else eventos
 
 
+def legenda_taxas_operativas(res: ResultadosAnalise) -> str:
+    """Legenda descritiva da figura das taxas oficiais e operativas, nas duas trilhas.
+
+    Spec da Geração do relatório, FR-071.
+    """
+    c = res.ons["taxas_operativas"]
+    return (f"TEIFa (à esquerda) e TEIP (à direita) publicadas pelo ONS, por mês, em %: oficial em linha cheia e "
+            f"operativa em linha tracejada; cada valor é o da janela de {JANELA_TAXAS_MESES} meses que termina no mês. "
+            f"Diferença de {fmt_num(LIMIAR_DIFERENCA_TAXAS_OPERATIVAS_PP, 0)} p.p. ou mais em "
+            f"{fmt_int(c['meses_dif_teifa'])} meses na TEIFa e em {fmt_int(c['meses_dif_teip'])} na TEIP.")
+
+
 def legenda_figura(res: ResultadosAnalise, chave: str) -> str:
     """Legenda descritiva de cada figura, igual no PDF e no Markdown."""
     c = res.cobertura
     mc = res.mudanca_classificacao
+    if chave == "taxas_operativas":
+        return legenda_taxas_operativas(res)
     if chave == "disponibilidade_anual":
         referencia = perfil_ativo().disponibilidade_referencia * 100
         gf_rel = perfil_ativo().parametros.garantia_fisica_mwmed / perfil_ativo().parametros.potencia_instalada_mw * 100
@@ -847,6 +939,7 @@ def textos_tabelas(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
             "TEIFa e TEIP mais recentes: contribuição de cada unidade e parcela de horas",
             f"Contribuição = horas da parcela na janela de {JANELA_TAXAS_MESES} meses (ponderadas pela potência) ÷ denominador da taxa; as "
             "contribuições somam a taxa publicada."),
+        "tab_ons_taxas_operativas": TEXTO_TABELA_TAXAS_OPERATIVAS,
         "tab_ons_ug_anual": (
             "Indicadores anuais por unidade geradora (base anual do ONS)",
             "* Ano parcial. DISPF, INDISPPF e INDISPFF em % do tempo; DMDFF = duração média dos desligamentos forçados "

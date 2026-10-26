@@ -86,7 +86,7 @@ def _atendimento(res: ResultadosAnalise, ano: Optional[int]) -> Optional[Dict[st
 def contagens_conclusao(res: ResultadosAnalise) -> Dict[str, Optional[int]]:
     """Itens de cada lista da conclusão (todos, e não só os exibidos) e as regras avaliadas e não avaliadas.
 
-    Nas hidrelétricas com EVT, as regras são C1 a C11; nas demais, as do tipo, menos as que estão em ``omitidos``.
+    Nas hidrelétricas com EVT, as regras são C1 a C11 e a C20; nas demais, as do tipo, menos as que estão em ``omitidos``.
     """
     do_tipo = ([r.codigo for r in regras_do_tipo(res)] if sem_evt(res)
                else [r.codigo for r in CATALOGO_CONCLUSAO if r.funcao is not None])

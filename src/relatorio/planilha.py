@@ -133,6 +133,7 @@ def exportar_tabelas(
         "ONS_HORAS_UG_MENSAL": o.get("horas_mensal"),
         "ONS_TEIFA_TEIP": o.get("recalculo_taxas"),
         "ONS_DECOMPOSICAO_TAXAS": o.get("decomposicao"),
+        "ONS_TAXAS_OPERATIVAS": (o.get("taxas_operativas") or {}).get("serie"),  # spec da Geração do relatório, FR-071
         "ONS_DIVERGENCIAS": o.get("divergencias"),
     }
     abas.update({nome: t for nome, t in abas_ons.items() if t is not None and len(t)})
@@ -210,6 +211,7 @@ def _abas_complementares(res: ResultadosAnalise, abas: Dict[str, pd.DataFrame]) 
         "ONS_HORAS_UG_MENSAL": o.get("horas_mensal"),
         "ONS_TEIFA_TEIP": o.get("recalculo_taxas"),
         "ONS_DECOMPOSICAO_TAXAS": o.get("decomposicao"),
+        "ONS_TAXAS_OPERATIVAS": (o.get("taxas_operativas") or {}).get("serie"),  # spec da Geração do relatório, FR-071
         "ONS_DIVERGENCIAS": o.get("divergencias"),
     }
     abas.update({nome: t for nome, t in abas_ons.items() if t is not None and len(t)})

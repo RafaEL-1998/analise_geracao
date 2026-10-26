@@ -17,6 +17,8 @@ from src.comum.perfil import perfil_ativo
 from src.relatorio.conteudo import (
     indicadores_capa,
     legenda_figura,
+    linhas_tabela_taxas_operativas,
+    texto_taxas_operativas,
     linhas_tabela_anual,
     linhas_tabela_disponibilidade_anual,
     linhas_tabela_disponibilidade_divergencias,
@@ -162,6 +164,12 @@ def _md_conteudo_secao(res: ResultadosAnalise, chave: str, titulo: str, figuras:
             cabecalho, linhas = funcao(res)
             if linhas:
                 saida += tab(c, (cabecalho, linhas), texto_taxas_ons(res) if c == "tab_ons_decomposicao" else "")
+            # as taxas operativas logo depois, como no PDF (spec da Geração do relatório, FR-071)
+            if c == "tab_ons_decomposicao":
+                cabecalho, linhas = linhas_tabela_taxas_operativas(res)
+                if linhas:
+                    saida += tab("tab_ons_taxas_operativas", (cabecalho, linhas), texto_taxas_operativas(res))
+                    saida += fig("taxas_operativas")
     elif chave in ("serie_temporal", "evt_mensal"):
         saida += fig(chave)
     elif chave == "perfil_horario":

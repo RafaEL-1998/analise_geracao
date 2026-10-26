@@ -55,7 +55,12 @@ from src.conferencia.aplicabilidade import CATALOGO_CONFERENCIAS
 from src.relatorio.conteudo import (
     linhas_tabela_hidrologia_anual,
     nota_conclusao_catalogo,
+    legenda_taxas_operativas,
     linhas_tabela_ons_decomposicao,
+    linhas_tabela_taxas_operativas,
+    nota_taxas_operativas,
+    texto_taxas_operativas,
+    TEXTO_TABELA_TAXAS_OPERATIVAS,
     linhas_tabela_ons_divergencias,
     linhas_tabela_ons_horas,
     linhas_tabela_ons_ug_anual,
@@ -564,6 +569,7 @@ def textos_tabelas(res: ResultadosAnalise) -> Dict[str, Tuple[str, str]]:
             "referência em cada mês; Δ = diferença para a disponibilidade de referência da garantia física, quando o "
             "perfil a informa."),
         "tab_ons_decomposicao": ("TEIFa e TEIP mais recentes: contribuição de cada unidade e parcela de horas", ""),
+        "tab_ons_taxas_operativas": TEXTO_TABELA_TAXAS_OPERATIVAS,
         "tab_ons_ug_anual": ("Indicadores anuais por unidade geradora (base anual do ONS)",
                              "* Ano parcial. DISPF, INDISPPF e INDISPFF em % do tempo; DMDFF = duração média dos "
                              "desligamentos forçados (h)."),
@@ -644,6 +650,8 @@ def legenda_figura(res: ResultadosAnalise, chave: str) -> str:
     if chave == "hidrologia_mensal_comum":  # hidrelétrica sem EVT
         return ("Médias mensais da vazão afluente, da turbinada e da vertida publicadas pelo ONS (Dados hidrológicos "
                 "horários), sem os valores sinalizados; a hora da série foi conferida pela geração da usina.")
+    if chave == "taxas_operativas":  # spec da Geração do relatório, FR-071
+        return legenda_taxas_operativas(res)
     if getattr(res, "termica", None):
         from src.relatorio import secoes_termica
 
@@ -685,6 +693,9 @@ def notas(res: ResultadosAnalise) -> List[str]:
             f"Granularidade: o ONS publica a geração do conjunto {nome_conjunto(res)} ({_g(res).get('identificador_conjunto', '')}), "
             "e não a da usina isolada. Os números do conjunto são identificados como tais e não são divididos entre as "
             "usinas; a conclusão da usina não usa números do conjunto.")
+    texto = nota_taxas_operativas(res)  # só com as taxas oficiais (spec da Geração do relatório, FR-071)
+    if texto:
+        saida.append(texto)
     if getattr(res, "termica", None):
         from src.relatorio import secoes_termica
 
@@ -867,6 +878,13 @@ def blocos_secao(res: ResultadosAnalise, chave: str) -> List[Bloco]:
             cab, linhas = funcao(res)
             if linhas:
                 b.append(_tabela(c, (cab, linhas), numericas=_numericas(cab, 2)))
+            if c == "tab_ons_decomposicao":  # as taxas operativas logo depois (spec da Geração do relatório, FR-071)
+                cab, linhas = linhas_tabela_taxas_operativas(res)
+                if linhas:
+                    b.append(_tabela("tab_ons_taxas_operativas", (cab, linhas), [0.8, 1.0, 1.0, 1.4],
+                                     _numericas(cab, 1), texto_taxas_operativas(res)))
+                    if res.ons["taxas_operativas"]["figura"]:
+                        b.append(Bloco("figura", "taxas_operativas"))
     elif chave == "serie_temporal_comum":
         b.append(Bloco("figura", "serie_temporal_comum"))
     elif chave == "geracao_mensal":

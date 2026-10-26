@@ -286,7 +286,7 @@ def test_analisar_preenche_a_conclusao(df_base: pd.DataFrame) -> None:
 # Catálogo da conclusão por tipo (plano das Análises, D18; data-model das Análises, seção 3.11)
 # ---------------------------------------------------------------------------
 
-REGRAS_COMUNS = {"C2", "C5", "C8", "C10"}
+REGRAS_COMUNS = {"C2", "C5", "C8", "C10", "C20"}  # C20: taxas operativas (spec das Análises, FR-063)
 REGRAS_TERMICAS = {"C12", "C13", "C14", "C15"}  # térmicas (decisão D18)
 REGRAS_RENOVAVEIS = {"C16", "C17", "C18", "C19"}  # eólicas e solares
 
@@ -296,7 +296,7 @@ def test_catalogo_declara_os_campos_de_cada_regra() -> None:
     from src.coleta.registro import RENOVAVEIS, TERMICAS
     from src.comum import regras
 
-    assert [r.codigo for r in CATALOGO_CONCLUSAO] == [f"C{i}" for i in range(1, 20)]
+    assert [r.codigo for r in CATALOGO_CONCLUSAO] == [f"C{i}" for i in range(1, 21)]
     for r in CATALOGO_CONCLUSAO:
         assert r.tipos and set(r.listas) <= set(LISTAS) and r.nivel_exigido == "usina", r.codigo
         assert (callable(r.funcao) or r.codigo in REGRAS_TERMICAS | REGRAS_RENOVAVEIS) and r.secoes, r.codigo
@@ -309,7 +309,7 @@ def test_catalogo_declara_os_campos_de_cada_regra() -> None:
     assert all(r.tipos == RENOVAVEIS and r.funcao is None for r in CATALOGO_CONCLUSAO if r.codigo in REGRAS_RENOVAVEIS)
     # as regras comuns não valem para eólicas e solares
     assert not any(set(r.tipos) & set(RENOVAVEIS) for r in CATALOGO_CONCLUSAO if r.codigo in REGRAS_COMUNS)
-    assert len(REGRAS_CONCLUSAO) == 11  # o caminho da EVT continua com C1 a C11 (decisão D16)
+    assert len(REGRAS_CONCLUSAO) == 12  # o caminho da EVT: C1 a C11 (decisão D16) e a C20 (spec das Análises, FR-063)
 
 
 def test_itens_so_nas_listas_declaradas_e_na_ordem_de_hoje(df_base: pd.DataFrame) -> None:
@@ -573,3 +573,44 @@ def test_c19_so_com_a_programacao_da_usina() -> None:
     res = _res_renovavel(_renovavel(desvio_pct=P19 + 5, nivel_prog="conjunto"))
     assert not montar_conclusao(res)
     assert "Programação diária no nível da usina" in {o["item"]: o["motivo"] for o in regras_omitidas(res)}["C19"]
+
+
+# ---------------------------------------------------------------------------
+# C20: taxas operativas × oficiais (spec das Análises, FR-063)
+# ---------------------------------------------------------------------------
+
+
+def _ons_com_operativas(teifa_oper: float, teip_oper: float) -> dict:
+    from src.analises.indicadores import comparar_taxas_operativas
+
+    taxas = pd.DataFrame({"mes": [pd.Timestamp("2026-08-01"), pd.Timestamp("2026-09-01")], "teifa": [0.30, 0.3007],
+                          "teip": [0.70, 0.703], "teifa_oper": [0.13, teifa_oper], "teip_oper": [0.59, teip_oper]})
+    return {"taxa_ultima": {"mes": pd.Timestamp("2026-09-01")}, "taxas_operativas": comparar_taxas_operativas(taxas)}
+
+
+def test_c20_cita_so_as_taxas_que_diferem_no_mes_mais_recente() -> None:
+    from src.analises.conclusao import _regra_c20
+
+    res = _res_termica(_termica())
+    res.ons = _ons_com_operativas(0.1289, 0.703)
+    itens = _regra_c20(res)
+    assert [(i["lista"], i["regra"]) for i in itens] == [("confirmar_agente", "C20")]
+    assert "set/2026" in itens[0]["texto"] and "TEIFa operativa de 12,89% e oficial de 30,07%" in itens[0]["texto"]
+    assert "−17,18 p.p." in itens[0]["texto"] and "TEIP" not in itens[0]["texto"]
+
+
+def test_c20_nao_dispara_abaixo_do_limiar() -> None:
+    from src.analises.conclusao import _regra_c20
+
+    res = _res_termica(_termica())
+    res.ons = _ons_com_operativas(0.3057, 0.70)  # 0,5 p.p. e 0,3 p.p.: abaixo de 1 p.p.
+    assert _regra_c20(res) == []
+
+
+def test_c20_nao_avaliada_sem_as_taxas_operativas() -> None:
+    from src.analises.conclusao import regras_omitidas
+
+    res = _res_termica(_termica())
+    res.ons = {"taxa_ultima": {"mes": pd.Timestamp("2026-09-01")}}
+    motivos = {o["item"]: o["motivo"] for o in regras_omitidas(res)}
+    assert motivos["C20"] == "sem as Taxas TEIFa Oper e TEIP Oper no nível da usina"

@@ -15,7 +15,7 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
-from src.coleta.indicadores import ANUAL, MENSAL, PARAMETROS, TAXAS, separar_conjuntos
+from src.coleta.indicadores import ANUAL, MENSAL, PARAMETROS, TAXAS, TAXAS_OPERATIVAS, separar_conjuntos
 from src.comum.caminhos import ARQUIVOS_TRATAMENTO
 from src.comum.logger import setup_logger
 from src.comum.persistencia import gravar_csv, gravar_planilha
@@ -122,8 +122,12 @@ def tratar_horas_estado(df: pd.DataFrame) -> pd.DataFrame:
     return largo.sort_values(["mes", "ug"]).reset_index(drop=True)
 
 
-def tratar_taxas(df: pd.DataFrame) -> pd.DataFrame:
-    """TEIFa e TEIP por mês (versão mais recente), como fração entre 0 e 1."""
+def tratar_taxas(df: pd.DataFrame, sufixo: str = "") -> pd.DataFrame:
+    """TEIFa e TEIP por mês (versão mais recente), como fração entre 0 e 1.
+
+    Com ``sufixo="_oper"``, as taxas operativas (``TEIFa_oper`` e ``TEIP_oper``, em qualquer caixa), em colunas com o
+    sufixo (spec do Tratamento de dados, FR-045).
+    """
     if df.empty:
         return pd.DataFrame()
     longo = pd.DataFrame({
@@ -135,10 +139,21 @@ def tratar_taxas(df: pd.DataFrame) -> pd.DataFrame:
     })
     longo = longo.sort_values("num_versao").drop_duplicates(["mes", "taxa"], keep="last")
     largo = longo.pivot_table(index="mes", columns="taxa", values="valor", aggfunc="first")
-    largo = largo.rename(columns={"TEIFA": "teifa", "TEIP": "teip"}).reindex(columns=["teifa", "teip"])
-    largo["num_versao"] = longo.groupby("mes")["num_versao"].max()
-    largo["din_calculo"] = longo.groupby("mes")["din_calculo"].max()
+    nomes = {f"TEIFA{sufixo.upper()}": f"teifa{sufixo}", f"TEIP{sufixo.upper()}": f"teip{sufixo}"}
+    largo = largo.rename(columns=nomes).reindex(columns=list(nomes.values()))
+    largo[f"num_versao{sufixo}"] = longo.groupby("mes")["num_versao"].max()
+    largo[f"din_calculo{sufixo}"] = longo.groupby("mes")["din_calculo"].max()
     return largo.reset_index().sort_values("mes").reset_index(drop=True)
+
+
+def juntar_taxas_operativas(taxas: pd.DataFrame, operativas: pd.DataFrame) -> pd.DataFrame:
+    """As taxas oficiais com as operativas do mesmo mês, pelos meses das oficiais (spec do Tratamento de dados, FR-045).
+
+    Sem linhas das operativas, a tabela fica como a das oficiais, sem as colunas novas.
+    """
+    if taxas.empty or operativas.empty:
+        return taxas
+    return taxas.merge(operativas, on="mes", how="left")
 
 
 def recortar_periodo(ind: IndicadoresONS, inicio: pd.Timestamp, fim: pd.Timestamp) -> IndicadoresONS:
@@ -165,13 +180,14 @@ def recortar_periodo(ind: IndicadoresONS, inicio: pd.Timestamp, fim: pd.Timestam
 
 
 def montar_indicadores(extraido: pd.DataFrame, inicio: pd.Timestamp, fim: pd.Timestamp) -> IndicadoresONS:
-    """Trata os quatro conjuntos extraídos, recorta no período e junta a potência às horas por estado."""
+    """Trata os cinco conjuntos extraídos, recorta no período e junta a potência às horas por estado."""
     tabelas = separar_conjuntos(extraido)
     ind = recortar_periodo(IndicadoresONS(
         ug_mensal=tratar_indicadores_ug(tabelas[MENSAL], anual=False),
         ug_anual=tratar_indicadores_ug(tabelas[ANUAL], anual=True),
         horas_estado=tratar_horas_estado(tabelas[PARAMETROS]),
-        taxas=tratar_taxas(tabelas[TAXAS]),
+        taxas=juntar_taxas_operativas(tratar_taxas(tabelas[TAXAS]),
+                                      tratar_taxas(tabelas[TAXAS_OPERATIVAS], sufixo="_oper")),
     ), inicio, fim)
     if not ind.horas_estado.empty and not ind.ug_mensal.empty:
         ind.horas_estado = ind.horas_estado.merge(
@@ -194,7 +210,7 @@ _TABELAS = {
     "indicadores_ug_mensal": ("ug_mensal", ["mes"]),
     "indicadores_ug_anual": ("ug_anual", []),
     "horas_estado_mensal": ("horas_estado", ["mes"]),
-    "teifa_teip_mensal": ("taxas", ["mes", "din_calculo"]),
+    "teifa_teip_mensal": ("taxas", ["mes", "din_calculo", "din_calculo_oper"]),
 }
 
 

@@ -1,7 +1,7 @@
-# Análise de Desempenho de Usinas com Dados Abertos do ONS — Constituição
+# Análise de Desempenho de Usinas com Dados Públicos — Constituição
 
-Este projeto gera, para uma usina de cada vez, um relatório de desempenho operacional a partir dos dados abertos do
-Operador Nacional do Sistema Elétrico (ONS), para subsidiar a fiscalização.
+Este projeto gera, para uma usina de cada vez, um relatório de desempenho operacional a partir dos dados públicos sobre
+ela, a começar pelos dados abertos do Operador Nacional do Sistema Elétrico (ONS), para subsidiar a fiscalização.
 
 - **Usinas atendidas**: as que esses dados cobrem, ou seja, hidrelétricas (UHE, PCH e CGH), térmicas (UTE), nucleares
   (UTN), eólicas (EOL) e solares (UFV).
@@ -10,7 +10,8 @@ Operador Nacional do Sistema Elétrico (ONS), para subsidiar a fiscalização.
   - o relatório de uma usina, em PDF, em Markdown e em planilha, com as figuras;
   - o resumo executivo de uma usina, em PDF e em Markdown, com no máximo duas páginas e sem figuras, gerado junto
     com o relatório completo e com a conclusão dele copiada igual;
-  - o relatório de carteira, que reúne as usinas de um estado ou de um tipo.
+  - o relatório de carteira, que reúne as usinas de um estado ou de um tipo;
+  - os anexos de uma usina, fora do fluxo, com arquivos não públicos recebidos pela AGEMS (princípio X).
 - **Origem do conteúdo**: todo o conteúdo vem dos dados, do perfil da usina e das regras gerais do projeto.
 
 O trabalho segue um único fluxo de cinco etapas. Cada etapa tem uma spec, na mesma ordem:
@@ -34,7 +35,7 @@ O trabalho segue um único fluxo de cinco etapas. Cada etapa tem uma spec, na me
 - O que vale só para um tipo de usina DEVE ficar na spec da etapa, identificado pelo tipo. NÃO DEVE haver spec por
   tipo de usina nem spec que remende outra.
 - Cada etapa DEVE ler só os resultados gravados pelas etapas anteriores e gravar os seus. Só a Coleta, que também
-  monta o catálogo de usinas, acessa o portal do ONS. Uma etapa sem os resultados das anteriores DEVE parar sem gravar
+  monta o catálogo de usinas, acessa as fontes de dados. Uma etapa sem os resultados das anteriores DEVE parar sem gravar
   nada e indicar a etapa a executar antes.
 
 ### II. Relatório fiel aos dados
@@ -80,8 +81,16 @@ O trabalho segue um único fluxo de cinco etapas. Cada etapa tem uma spec, na me
 
 ### IV. Coleta completa e rastreável
 
-- **Fonte**: a Coleta DEVE acessar só o portal de dados abertos do ONS. Fontes de outras instituições, como ANEEL e
-  CCEE, só podem entrar no fluxo com mudança desta constituição.
+- **Fontes públicas**: a Coleta DEVE usar só dados públicos, isto é, publicados por uma instituição e acessíveis a
+  qualquer pessoa, sem pedido nem acesso restrito. O portal de dados abertos do ONS é a fonte principal. Outra fonte
+  pública, como ANEEL e CCEE, entra no fluxo por mudança da spec da Coleta aprovada pelo usuário, que declara a
+  instituição, o endereço, o método de acesso, os conjuntos usados, a identificação da usina em cada um e os termos de
+  uso.
+- **Mesmas regras para todas**: a varredura, as ausências, o download e as versões, os dicionários e a extração valem
+  para toda fonte pública. O que uma fonte não oferece, como um dicionário de dados, é declarado na spec da Coleta.
+  Onde os itens abaixo dizem "portal" ou "ONS" em sentido geral, valem para a fonte de cada conjunto.
+- **Dados não públicos**: um arquivo obtido por pedido, por ofício ou por acesso restrito, como o SAGER entregue pelo
+  agente, NÃO DEVE entrar no fluxo. Ele só pode ser usado num anexo fora do fluxo (princípio X).
 - **Varredura**: a Coleta DEVE inspecionar todos os arquivos publicados de cada conjunto do ONS usado, sem supor data
   de início de operação nem descartar arquivo por heurística de ano.
 - **Período da análise**: DEVE ser definido pela série de referência do tipo da usina, declarada na spec da Coleta.
@@ -128,7 +137,8 @@ O trabalho segue um único fluxo de cinco etapas. Cada etapa tem uma spec, na me
   - as seções comuns a todos os tipos e as seções próprias do tipo, numeradas em ordem fixa;
   - a conclusão antes das notas metodológicas.
 - **Legendas**: cada figura e cada tabela DEVE ter, logo abaixo, a legenda com a fonte dos dados:
-  - os conjuntos do ONS usados, com o identificador da usina e a data de obtenção, e as conferências com o resultado;
+  - os conjuntos usados, com a instituição que os publica, o identificador da usina e a data de obtenção, e as
+    conferências com o resultado;
   - ou "calculado neste relatório a partir de", quando for derivada.
 - **Resumo executivo**: no lugar da legenda por tabela, PODE trazer um bloco único de fontes ("Sobre os dados"),
   com as mesmas informações de fonte e de conferência. Cada tabela do resumo DEVE indicar a seção de origem no
@@ -160,6 +170,23 @@ O trabalho segue um único fluxo de cinco etapas. Cada etapa tem uma spec, na me
 - **Diferença**: só é aceita com aprovação do usuário. Com a aprovação, o relatório novo passa a ser a referência, e a
   anterior permanece no controle de versões.
 
+### X. Anexos fora do fluxo
+
+- **O que é**: um anexo usa um arquivo não público recebido pela AGEMS, por pedido ou por ofício, para complementar o
+  relatório de uma usina. Ele é gerado por um script em `anexos/<nome>/`, fora das cinco etapas.
+- **Isolamento**: o script DEVE ler só o arquivo recebido e os resultados já gravados pelo fluxo, e NÃO DEVE gravar em
+  `data/` nem em `reports/`. O anexo não muda o relatório, a conclusão nem o relatório de referência da usina, e o
+  relatório não o cita (princípio VI).
+- **Guarda**: o arquivo recebido e o anexo gerado ficam em `usinas/<slug>/documentos/`, fora do controle de versões; o
+  script fica no controle de versões.
+- **Mesmas regras de conteúdo**: o anexo segue o princípio II (fatos dos dados, sem parecer) e o VII (legenda com a
+  fonte em cada tabela e figura, figuras com `seaborn`, PDF e Markdown com o mesmo conteúdo, planilha com a aba de
+  origens). A fonte DEVE dizer o que é o arquivo, quem o entregou, em resposta a quê e a data de recebimento.
+- **Dados pessoais**: nomes, logins e e-mails do arquivo recebido DEVEM ser removidos antes da gravação do anexo, e a
+  remoção DEVE ser conferida.
+- **Descrição**: o cabeçalho do script DEVE trazer o uso, as entradas, as saídas e as regras de cálculo. O anexo não
+  tem spec de etapa; o documento gerado é aprovado pelo usuário.
+
 ## Requisitos Técnicos
 
 1. **Linguagem e dependências**:
@@ -181,11 +208,13 @@ O trabalho segue um único fluxo de cinco etapas. Cada etapa tem uma spec, na me
    - A mais antiga só sai depois de a nova estar completa e conferida; se a criação falhar, nenhuma é excluída.
    - Nenhum outro arquivo `.bak` fica solto no projeto.
 6. **Pastas**:
-   - Dados brutos do ONS compartilhados por todas as usinas, em `data/raw/`; catálogo de usinas em `data/catalogo/`.
+   - Dados brutos do ONS compartilhados por todas as usinas, em `data/raw/`; os de outra fonte pública, numa pasta
+     própria dela dentro de `data/raw/`; catálogo de usinas em `data/catalogo/`.
    - Resultados de cada etapa separados por usina, em `data/usinas/<slug>/<etapa>/`; relatórios em `reports/<slug>/`;
      relatórios de carteira em `reports/carteiras/<nome>/`.
    - Documentos de referência fora do controle de versões: os da usina em `usinas/<slug>/documentos/`, os gerais em
      `referencias/`.
+   - Scripts de anexos em `anexos/<nome>/`; os anexos gerados, em `usinas/<slug>/documentos/`.
 7. **Log**: log estruturado na saída padrão, com o arquivo processado, as linhas lidas, os registros extraídos, o
    tempo e as exceções de rede e de leitura. O nível escolhido na linha de comando DEVE valer para todos os módulos
    executados na chamada.
@@ -213,16 +242,19 @@ O trabalho segue um único fluxo de cinco etapas. Cada etapa tem uma spec, na me
      plano, as tarefas, a implementação e a convergência.
    - **Spec de mudança temporária**: uma mudança que atinge várias etapas PODE usar uma spec de mudança, numerada
      depois das specs das etapas. Ela descreve a mudança, os ajustes em cada spec de etapa, o plano e as tarefas. Ao
-     concluir, os ajustes DEVEM estar incorporados às specs das etapas, e a spec de mudança é excluída.
+     concluir, os ajustes DEVEM estar incorporados às specs das etapas, e a spec de mudança é excluída, salvo se o
+     usuário decidir mantê-la como registro. Nesse caso, ela recebe no início a situação "concluída e incorporada",
+     com a data e as specs de etapa que a absorveram, e deixa de valer como fonte de requisitos: vale a spec da etapa.
    - Spec nova permanente só para uma etapa nova.
    - Ao concluir, as tarefas saem da spec.
    - Mudanças na constituição e nas specs, a aceitação de diferença num relatório de referência e a exclusão de
      arquivos do usuário dependem da aprovação do usuário.
-3. **Histórico**: fica no controle de versões do projeto, não neste arquivo nem nas specs.
+3. **Histórico**: fica no controle de versões do projeto e nas specs de mudança mantidas como registro, não neste
+   arquivo nem nas specs das etapas.
 4. **Versionamento semântico**:
    - **MAJOR**: remoção ou redefinição incompatível de um princípio.
    - **MINOR**: princípio ou seção nova, ou ampliação relevante de uma regra.
    - **PATCH**: redação e esclarecimentos sem mudança de escopo.
 5. **Conformidade**: todo plano de implementação DEVE conferir a aderência a esta constituição antes do código.
 
-**Version**: 3.1.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-13
+**Version**: 3.2.0 | **Ratified**: 2026-09-30 | **Last Amended**: 2026-10-23

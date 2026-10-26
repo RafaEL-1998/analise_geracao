@@ -1,6 +1,6 @@
-# Análise de Usinas com Dados Abertos do ONS
+# Análise de Usinas com Dados Públicos
 
-Pipeline em Python que gera, para uma usina, um relatório de apoio à fiscalização a partir do [Portal de Dados Abertos do ONS](https://dados.ons.org.br). Ele:
+Pipeline em Python que gera, para uma usina, um relatório de apoio à fiscalização a partir dos dados públicos sobre ela, a começar pelo [Portal de Dados Abertos do ONS](https://dados.ons.org.br). Ele:
 
 - coleta os conjuntos do ONS que o tipo da usina tem, pelos identificadores do perfil;
 - trata e confere os dados;
@@ -56,7 +56,7 @@ A usina é extraída de cada conjunto por um identificador e conferida por um se
 | Conjunto do ONS | Tipos | Nível |
 |---|---|---|
 | [Energia vertida turbinável](https://dados.ons.org.br/dataset/energia-vertida-turbinavel) | UHE, PCH, CGH | usina |
-| [Indicadores de disponibilidade por unidade geradora](https://dados.ons.org.br/dataset/ind_disponibilidade_fgeracao_uge_mensal), [Taxas TEIFa e TEIP](https://dados.ons.org.br/dataset/taxa_teif_teip) e parâmetros das taxas | UHE, PCH, CGH, UTE, UTN | usina |
+| [Indicadores de disponibilidade por unidade geradora](https://dados.ons.org.br/dataset/ind_disponibilidade_fgeracao_uge_mensal), [Taxas TEIFa e TEIP](https://dados.ons.org.br/dataset/taxa_teif_teip), [Taxas TEIFa Oper e TEIP Oper](https://dados.ons.org.br/dataset/taxa_teif_teip_oper) e parâmetros das taxas | UHE, PCH, CGH, UTE, UTN | usina |
 | [Disponibilidade por usina](https://dados.ons.org.br/dataset/disponibilidade_usina) | UHE, PCH, CGH, UTE, UTN | usina |
 | [Dados hidrológicos horários](https://dados.ons.org.br/dataset/dados_hidrologicos_ho) e Reservatórios | UHE, PCH, CGH | usina |
 | [Programação diária](https://dados.ons.org.br/dataset/programacao_diaria) | todos | usina ou conjunto |
@@ -176,9 +176,11 @@ Uma falha ao obter um dicionário de dados não muda o código de saída. Com `-
 │   └── relatorio/              5. Geração do relatório, resumo executivo e carteira
 ├── tests/                      testes sem rede: uma pasta por etapa, mais comum/, integracao/ e fixtures/
 │                               (uma usina fictícia por tipo em fixtures/usinas_ficticias/)
+├── anexos/<nome>/              scripts dos anexos fora do fluxo, com arquivos não públicos recebidos pela AGEMS
+│                               (anexos/sager/: eventos das unidades geradoras pelo SAGER do ONS)
 ├── usinas/<slug>/
 │   ├── perfil.toml             perfil da usina
-│   └── documentos/             documentos da usina (fora do git)
+│   └── documentos/             documentos da usina e os anexos gerados (fora do git)
 ├── data/                       dados (fora do git)
 │   ├── raw/                    arquivos do ONS, compartilhados por todas as usinas, com manifestos,
 │   │                           _versoes_anteriores/ e _dicionarios/
@@ -214,7 +216,7 @@ O caminho do relatório segue a presença da série de energia vertida turbináv
   - hidrelétrica sem EVT, com hidrologia: afluência, vertimento e nível.
 - **usina em conjunto sem série própria** (como a PCH Bandeirante): o relatório tem duas partes, "A usina no conjunto", com o que o ONS publica da usina isolada e o peso dela na potência do conjunto, e "Operação do conjunto", antes da conclusão.
 
-A conclusão é gerada por um catálogo de regras declaradas (C1 a C19, com limiares gerais), só com dados do nível da usina, em quatro listas: pontos de atenção, possíveis problemas, a confirmar com o agente e a verificar em campo. Ela fala em indícios, sem afirmar causa nem dar parecer de desempenho. Cada figura e tabela traz, logo abaixo, a fonte dos dados com o identificador, a data de obtenção e as conferências.
+A conclusão é gerada por um catálogo de regras declaradas (C1 a C20, com limiares gerais), só com dados do nível da usina, em quatro listas: pontos de atenção, possíveis problemas, a confirmar com o agente e a verificar em campo. Ela fala em indícios, sem afirmar causa nem dar parecer de desempenho. Cada figura e tabela traz, logo abaixo, a fonte dos dados com o identificador, a data de obtenção e as conferências.
 
 O **relatório de carteira** reúne as usinas de um estado ou de um tipo só a partir dos resultados já gravados: o quadro das usinas, os indicadores comparáveis do último ano completo, a ordenação pelos itens da conclusão, as usinas sem resultado (com o motivo) e, na carteira de um estado, o panorama dos agregados por modalidade e mês. Ele não atribui nota nem parecer.
 
@@ -294,7 +296,7 @@ Depois de um ajuste no código, `python -m src comparar --todas --coleta` confer
 - **Série de referência**: a série horária que define o período da usina; nas usinas sem série própria, a do conjunto, a partir da entrada da usina nele. Os trechos de nível e de composição dentro do período são listados.
 - **Validação**: as regras são aplicadas no Tratamento; os registros sinalizados são mantidos nos totais e excluídos só no campo afetado. As regras conferem a consistência interna das grandezas do ONS e a plausibilidade física frente aos parâmetros do perfil.
 - **Horários**: cada conjunto é levado à hora de início; os dados hidrológicos e a restrição com detalhe têm convenções próprias, descritas na spec do Tratamento. Ausências são listadas e nunca interpoladas.
-- **Indicadores oficiais**: o DISPF da usina é a média das unidades, ponderada pela potência e pelas horas; nas hidrelétricas, TEIFa = Σ(HDF + HEDF) ÷ Σ(HP − HDP − HEDP) e TEIP = Σ(HDP + HEDP) ÷ ΣHP, em janela de 60 meses, recalculadas e conferidas com as publicadas.
+- **Indicadores oficiais**: o DISPF da usina é a média das unidades, ponderada pela potência e pelas horas; nas hidrelétricas, TEIFa = Σ(HDF + HEDF) ÷ Σ(HP − HDP − HEDP) e TEIP = Σ(HDP + HEDP) ÷ ΣHP, em janela de 60 meses, recalculadas e conferidas com as publicadas. As taxas operativas do ONS (TEIFa_Oper e TEIP_Oper) aparecem ao lado das oficiais, com a diferença; com diferença de 1 p.p. ou mais no mês mais recente, a conclusão pede a confirmação do motivo ao agente (regra C20).
 - **Usina parada**: geração ≤ 1 MW. Nas hidrelétricas com EVT, as horas paradas são classificadas pela EVT, pela programação diária e pela sincronização das unidades.
 - **Conclusão**: regras comuns e regras do tipo, com limiares gerais e período mínimo; uma regra sem base no nível da usina não gera item e fica nas notas, com o motivo.
 - **Limitações**:

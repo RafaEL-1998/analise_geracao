@@ -479,7 +479,7 @@ def test_indicadores_da_carteira_gravados_em_cada_tipo(execucoes) -> None:
     ind = {tipo: carregar_resultados(e["dados"] / "analises" / "resultados.pkl").indicadores_carteira
            for tipo, e in execucoes.items()}
     assert all(i and i["tipo"] == tipo.upper() for tipo, i in ind.items())
-    assert ind["uhe"]["fator_capacidade"] is not None and ind["uhe"]["conclusao"]["regras_avaliadas"] == 11
+    assert ind["uhe"]["fator_capacidade"] is not None and ind["uhe"]["conclusao"]["regras_avaliadas"] == 12  # C1 a C11 e a C20
     for tipo in ("ute", "utn", "pch", "cgh", "uhe"):
         assert ind[tipo]["energia_cortada"] is None, tipo
     for tipo in ("ute", "utn", "pch", "cgh"):
@@ -510,3 +510,40 @@ def test_carteira_de_go_com_os_resultados_gravados_das_usinas_ficticias(execucoe
     assert "7 usinas no recorte: 7 com resultado e 0 sem resultado." in md
     assert "O ONS não publicou agregado para GO" in md
     assert not re.search(r"satisfat|cumpre", md, re.IGNORECASE)
+
+
+# ---------------------------------------------------------------------------
+# Taxas operativas (spec da Geração do relatório, FR-071)
+# ---------------------------------------------------------------------------
+
+
+def _abas(e) -> list:
+    from openpyxl import load_workbook
+
+    livro = load_workbook(e["relatorio"] / "perfil_estatistico_anual.xlsx", read_only=True)
+    try:
+        return list(livro.sheetnames)
+    finally:
+        livro.close()
+
+
+def test_utn_com_as_taxas_operativas_a_figura_e_a_c20(execucoes) -> None:
+    e = execucoes["utn"]
+    md = e["md"]
+    assert "### TEIFa e TEIP mais recentes: taxas oficiais e operativas do ONS" in md
+    assert "| TEIFa | 3,000% | 1,500% | −1,50 p.p. |" in md
+    assert "chegou a 1 p.p. ou mais em 2 meses na TEIFa e em 0 na TEIP" in md  # 01 e 02/2024
+    assert (e["relatorio"] / "figures" / "16_taxas_oficiais_e_operativas.png").exists()
+    assert "Taxas TEIFa Oper e TEIP Oper (CEG" in md  # legenda de fonte
+    assert "Motivo da diferença entre as taxas operativas e as oficiais do ONS" in md  # C20
+    assert "ONS_TAXAS_OPERATIVAS" in _abas(e)
+
+
+def test_uhe_com_as_taxas_operativas_iguais_sem_figura_e_sem_c20(execucoes) -> None:
+    e = execucoes["uhe"]
+    md = e["md"]
+    assert "### TEIFa e TEIP mais recentes: taxas oficiais e operativas do ONS" in md
+    assert "as taxas operativas coincidem com as oficiais em todos os meses" in md
+    assert not (e["relatorio"] / "figures" / "09_taxas_oficiais_e_operativas.png").exists()
+    assert "Motivo da diferença entre as taxas operativas" not in md
+    assert "C20 TEIFa ou TEIP operativa do mês mais recente a 1 p.p. ou mais da oficial" in md  # nota da conclusão

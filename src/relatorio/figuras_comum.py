@@ -61,6 +61,8 @@ NOMES_FIGURAS_COMUM_OPCIONAIS: Dict[str, str] = {
     # Fase D: a geração do conjunto por trecho de composição e as vazões da hidrelétrica sem EVT
     "conjunto_mensal": "14_geracao_do_conjunto_por_trecho.png",
     "hidrologia_mensal_comum": "15_vazoes_mensais.png",
+    # Spec da Geração do relatório, FR-071: só com diferença de pelo menos 1 p.p. em algum mês
+    "taxas_operativas": "16_taxas_oficiais_e_operativas.png",
 }
 COR_CONJUNTO = "#184f95"  # azul escuro da rampa: a série do conjunto, ao lado da azul da usina
 # Motivos do despacho: cada motivo com a sua posição fixa na ordem categórica (validada com o script da skill de
@@ -590,6 +592,43 @@ def _grafico_hidrologia_comum(res: ResultadosAnalise, caminho: Path, dpi: int) -
     plt.close(fig)
 
 
+# ---------------------------------------------------------------------------
+# Taxas oficiais e operativas (spec da Geração do relatório, FR-071): a mesma figura nas duas trilhas
+# ---------------------------------------------------------------------------
+
+
+def grafico_taxas_operativas(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    """TEIFa e TEIP, oficial e operativa, por mês, em dois painéis; a operativa tracejada (identidade além da cor)."""
+    s = res.ons["taxas_operativas"]["serie"]
+    oficial, operativa = "Oficial (Taxas TEIFa e TEIP)", "Operativa (Taxas TEIFa Oper e TEIP Oper)"
+    cores = {oficial: COR_GERACAO, operativa: COR_EVT}
+    meses = sorted(s["mes"].unique())
+    poucos = len(meses) <= 36  # série longa: só as linhas, sem um ponto por mês
+    fig, eixos = plt.subplots(1, 2, figsize=TAMANHO_FIGURA_PADRONIZADA)
+    for ax, (taxa, nome) in zip(eixos, (("teifa", "TEIFa"), ("teip", "TEIP"))):
+        longo = pd.concat([pd.DataFrame({"mes": s["mes"], "serie": oficial, "pct": s[f"{taxa}_pct"]}),
+                           pd.DataFrame({"mes": s["mes"], "serie": operativa, "pct": s[f"{taxa}_oper_pct"]})],
+                          ignore_index=True).dropna(subset=["pct"])
+        sns.lineplot(data=longo, x="mes", y="pct", hue="serie", hue_order=list(cores), palette=cores, style="serie",
+                     style_order=list(cores), dashes={oficial: "", operativa: (4, 2)},
+                     linewidth=1.6 if poucos else 1.3, marker="o" if poucos else None, markersize=4, legend=False,
+                     ax=ax)
+        ax.set_xlim(pd.Timestamp(meses[0]) - pd.Timedelta(days=20), pd.Timestamp(meses[-1]) + pd.Timedelta(days=20))
+        ax.set_ylim(bottom=0)
+        ax.set_xlabel("")
+        ax.set_ylabel(f"{nome} (%)")
+        ax.yaxis.set_major_formatter(_FORMATADOR_Y)
+        _eixo_tempo(ax, meses[0], meses[-1], diario=False)
+        ax.grid(axis="x", visible=False)
+        ax.set_title(f"{nome}, janela de 60 meses")
+    fig.legend(handles=[plt.Line2D([], [], color=cor, lw=2, ls="-" if nome == oficial else (0, (4, 2)),
+                                   marker="o" if poucos else None, label=nome) for nome, cor in cores.items()],
+               loc="lower center", bbox_to_anchor=(0.5, 0.0), ncol=2)
+    fig.subplots_adjust(left=0.07, right=0.98, top=0.9, bottom=0.22, wspace=0.22)
+    fig.savefig(caminho, dpi=dpi)
+    plt.close(fig)
+
+
 def _renovavel(res: ResultadosAnalise, chave: str) -> dict:
     return (getattr(res, "renovavel", None) or {}).get(chave) or {}
 
@@ -615,6 +654,7 @@ _GERADORES = {
     "desvio_programacao": _grafico_desvio_programacao,
     "conjunto_mensal": _grafico_conjunto,
     "hidrologia_mensal_comum": _grafico_hidrologia_comum,
+    "taxas_operativas": grafico_taxas_operativas,
 }
 _CONDICOES = {
     "sazonalidade": lambda res: len(res.comum["sazonalidade"]) > 0,
@@ -633,6 +673,7 @@ _CONDICOES = {
     "conjunto_mensal": lambda res: bool(getattr(res, "conjunto", None)) and len(res.conjunto["mensal"]) > 0,
     "hidrologia_mensal_comum": lambda res: bool((getattr(res, "hidrologia", None) or {}).get("publicado"))
     and len(res.hidrologia.get("mensal", ())) > 0,
+    "taxas_operativas": lambda res: bool(((res.ons or {}).get("taxas_operativas") or {}).get("figura")),
 }
 
 

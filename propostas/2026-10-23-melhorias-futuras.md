@@ -6,6 +6,7 @@ Itens anotados pelo usuário em 23/10/2026, no fechamento da ampliação para to
 
 ## 1. Eventos das unidades geradoras pelo SAGER (prioridade)
 
+- **Decisão do usuário (26/10/2026), que substitui as abaixo**: o SAGER não entra no pipeline; vai ser um documento fora deste projeto. A avaliação (`.specify/assessments/sager-eventos-ug/`) concluiu que ele não é público. Os arquivos recebidos, do agente por ofício e da ANEEL (`SAGER_UHE_Sao_Domingos_2021-2026.xlsx`, recorte de `SAGER_UHE_UTE_202101_a_202610.xlsx`, que a ANEEL recebe do ONS com as hidrelétricas e as térmicas), ficam em `usinas/sao_domingos/documentos/`.
 - **Decisão do usuário (23/10/2026)**: é a prioridade das melhorias, porque cobre as hidrelétricas e as térmicas, a maioria das usinas de MS com relatório próprio.
 - **O que é**: o relatório "SAGER – Mudança de Estado Operativo de UGE" do ONS, uma linha por mudança de estado de cada unidade geradora, com:
   - o estado operativo: LIG (ligada), DCO (desligada por conveniência operativa, a reserva), DPR (desligamento programado), DAU (automático), DUR (de urgência), DEM (de emergência) e DCA;

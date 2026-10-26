@@ -1,13 +1,14 @@
 """Indicadores de disponibilidade por unidade geradora e taxas TEIFa e TEIP na Coleta de dados (FR-042).
 
-Quatro conjuntos do Portal de Dados Abertos do ONS, com a usina localizada pelo CEG (FR-034 a FR-036):
+Cinco conjuntos do Portal de Dados Abertos do ONS, com a usina localizada pelo CEG (FR-034 a FR-036):
 
 - ind_disponibilidade_fgeracao_uge_mensal e _anual: DISPF, INDISPPF, INDISPFF, DMDFF, FDFF e TDFF por unidade
   geradora (Submódulo 9.2 dos Procedimentos de Rede), conferidos pelo id ONS (``id_usina``);
 - taxa_teif_teip_parametro: horas mensais de cada unidade geradora por estado operativo;
-- taxa_teif_teip: TEIFa e TEIP da usina (janela de 60 meses).
+- taxa_teif_teip: TEIFa e TEIP da usina (janela de 60 meses);
+- taxa_teif_teip_oper: TEIFa_Oper e TEIP_Oper da usina (janela de 60 meses; spec da Coleta de dados, FR-042).
 
-Os dois conjuntos de taxas não publicam o id ONS: a extração usa só o CEG. As colunas ficam como publicadas (texto sem
+Os três conjuntos de taxas não publicam o id ONS: a extração usa só o CEG. As colunas ficam como publicadas (texto sem
 espaços nas pontas); a conversão em número, a escolha da versão mais recente e o recorte do período são do Tratamento
 de dados. Os arquivos brutos ficam em ``data/raw/indicadores_ons/<conjunto>/``, cada conjunto com seu manifesto.
 """
@@ -42,9 +43,11 @@ MENSAL = "ind_disponibilidade_fgeracao_uge_mensal"
 ANUAL = "ind_disponibilidade_fgeracao_uge_anual"
 PARAMETROS = "taxa_teif_teip_parametro"
 TAXAS = "taxa_teif_teip"
+TAXAS_OPERATIVAS = "taxa_teif_teip_oper"
 
 # Coluna que traz o CEG em cada conjunto e, nos indicadores por unidade geradora, a do id ONS (conferência)
-COLUNA_CEG: Dict[str, str] = {MENSAL: "ceg", ANUAL: "ceg", PARAMETROS: "cod_ceg", TAXAS: "cod_ceg"}
+COLUNA_CEG: Dict[str, str] = {MENSAL: "ceg", ANUAL: "ceg", PARAMETROS: "cod_ceg", TAXAS: "cod_ceg",
+                              TAXAS_OPERATIVAS: "cod_ceg"}
 COLUNA_CONFERENCIA: Dict[str, str] = {MENSAL: "id_usina", ANUAL: "id_usina"}
 COLUNA_CONJUNTO = "conjunto"
 
@@ -86,7 +89,7 @@ def sincronizar_indicadores(
     destino: Path,
     force: bool = False,
 ) -> List[Dict[str, Any]]:
-    """Baixa os CSVs dos quatro conjuntos que cobrem os anos informados (cache por versão).
+    """Baixa os CSVs dos cinco conjuntos que cobrem os anos informados (cache por versão).
 
     Catálogo inacessível levanta exceção (código 1). Um arquivo não obtido não interrompe os demais: volta como falha,
     no formato das linhas de auditoria (FR-026).
@@ -186,7 +189,7 @@ def extrair_indicadores(
     id_ons: str,
     falhas: Optional[List[Dict[str, Any]]] = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Linhas da usina nos quatro conjuntos, com o conjunto de origem, e a auditoria (uma linha por arquivo).
+    """Linhas da usina nos cinco conjuntos, com o conjunto de origem, e a auditoria (uma linha por arquivo).
 
     Os conjuntos são lidos na ordem do pipeline e os arquivos em ordem de nome; os não obtidos entram na auditoria.
     """

@@ -1,4 +1,4 @@
-"""Indicadores oficiais de disponibilidade por unidade geradora: resumos, horas por estado operativo, TEIFa e TEIP e a decomposição das taxas (spec das Análises, US2, FR-023 a FR-025)."""
+"""Indicadores oficiais de disponibilidade por unidade geradora: resumos, horas por estado operativo, TEIFa e TEIP e a decomposição das taxas (spec das Análises, US2, FR-023 a FR-025), e as taxas operativas comparadas às oficiais (spec das Análises, FR-063)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 import pandas as pd
 
 from src.comum.perfil import perfil_ativo
-from src.comum.regras import JANELA_TAXAS_MESES
+from src.comum.regras import JANELA_TAXAS_MESES, LIMIAR_DIFERENCA_TAXAS_OPERATIVAS_PP
 from src.conferencia.indicadores import janela as _janela, peso as _peso, reproducao_das_taxas
 from src.tratamento.indicadores import IndicadoresONS, INSUMOS_HORAS, TOLERANCIA_IDENTIDADE_HORAS
 
@@ -49,6 +49,46 @@ DESCRICAO_PARCELA: Dict[str, str] = {
     "HDP": "desligamentos programados",
     "HEDP": "operação com limitação programada de potência",
 }
+
+
+def comparar_taxas_operativas(taxas: pd.DataFrame) -> Optional[Dict[str, Any]]:
+    """Taxas operativas × oficiais (spec das Análises, FR-063): o mês mais recente das oficiais e a série.
+
+    Diferença = operativa − oficial, em pontos percentuais. None sem mês com as quatro taxas.
+    """
+    colunas = ["teifa", "teifa_oper", "teip", "teip_oper"]
+    if taxas.empty or any(c not in taxas.columns for c in colunas):
+        return None
+    serie = taxas[["mes", *colunas]].sort_values("mes").reset_index(drop=True)
+    for c in colunas:
+        serie[f"{c}_pct"] = serie[c] * 100.0
+    serie["dif_teifa_pp"] = serie["teifa_oper_pct"] - serie["teifa_pct"]
+    serie["dif_teip_pp"] = serie["teip_oper_pct"] - serie["teip_pct"]
+    serie = serie.drop(columns=colunas)
+    completos = serie.dropna()
+    if completos.empty:
+        return None
+
+    def acima(dif: pd.Series) -> pd.Series:
+        return dif.abs() >= LIMIAR_DIFERENCA_TAXAS_OPERATIVAS_PP - 1e-9  # tolerância do ponto flutuante
+
+    def maior(coluna: str) -> Dict[str, Any]:
+        linha = completos.loc[completos[coluna].abs().idxmax()]
+        return {"pp": float(linha[coluna]), "mes": linha["mes"]}
+
+    ultima = serie.iloc[-1]
+    return {
+        "mes": ultima["mes"],
+        **{chave: float(ultima[chave]) for chave in ("teifa_pct", "teifa_oper_pct", "dif_teifa_pp", "teip_pct",
+                                                     "teip_oper_pct", "dif_teip_pp")},
+        "meses": len(completos),
+        "meses_dif_teifa": int(acima(completos["dif_teifa_pp"]).sum()),
+        "meses_dif_teip": int(acima(completos["dif_teip_pp"]).sum()),
+        "maior_teifa": maior("dif_teifa_pp"),
+        "maior_teip": maior("dif_teip_pp"),
+        "figura": bool((acima(completos["dif_teifa_pp"]) | acima(completos["dif_teip_pp"])).any()),
+        "serie": serie,
+    }
 
 
 def _media_ponderada(g: pd.DataFrame, coluna: str) -> float:
@@ -150,6 +190,9 @@ def analisar_indicadores_ons(
             resultado["recalculo_resumo"] = dict(reproducao)
             if ultima["mes"] in set(completos["mes"]):
                 resultado["decomposicao"] = decompor_taxas(horas, ultima["mes"], JANELA_TAXAS_MESES)
+        operativas = comparar_taxas_operativas(taxas)
+        if operativas is not None:
+            resultado["taxas_operativas"] = operativas
 
     if len(ind.divergencias):
         resultado["divergencias"] = ind.divergencias.copy()

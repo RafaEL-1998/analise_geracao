@@ -90,6 +90,7 @@ CONJUNTOS_INDICADORES_ONS: Dict[str, str] = {
     "ind_disponibilidade_fgeracao_uge_anual": "Indicadores de disponibilidade da função geração por unidade geradora (base anual)",
     "taxa_teif_teip_parametro": "Parâmetros (horas por estado operativo) das taxas TEIFa e TEIP",
     "taxa_teif_teip": "Taxas TEIFa e TEIP (janela de 60 meses, versão mais recente)",
+    "taxa_teif_teip_oper": "Taxas TEIFa Oper e TEIP Oper (janela de 60 meses, versão mais recente)",
 }
 
 # Pasta de cada conjunto dentro de data/raw/ (a EVT fica na própria raiz)
@@ -166,7 +167,7 @@ TAMANHO_FIGURA_PADRONIZADA: Tuple[float, float] = (11, 4.3)  # figuras 01, 02, 0
 LARGURA_FIGURA_CARTEIRA: float = 7.5  # figuras do relatório de carteira (A4 retrato), em polegadas
 
 # ---------------------------------------------------------------------------
-# Conclusão do relatório: limiares do catálogo de regras C1 a C11
+# Conclusão do relatório: limiares do catálogo de regras C1 a C20
 # ---------------------------------------------------------------------------
 
 LIMIAR_CONCLUSAO_EVT_PARADA_PCT: float = 10.0  # C1: EVT com a usina parada, em % da EVT
@@ -196,6 +197,9 @@ LIMIAR_CONCLUSAO_RECURSO_INVALIDO_PCT: float = 10.0  # C17: semi-horas com o rec
 # C19: desvio médio absoluto, em % da potência instalada; 15 % aprovado pelo usuário em 21/10/2026, pois
 # os 10 % iniciais apontavam desvios usuais da previsão de vento (10,4 % na EOL Praia Formosa)
 LIMIAR_CONCLUSAO_DESVIO_PROGRAMACAO_PCT: float = 15.0
+# Taxas operativas × oficiais (spec das Análises, FR-063; aprovado pelo usuário em 23/10/2026): diferença absoluta,
+# em p.p., a partir da qual o relatório mostra a figura e a regra C20 dispara
+LIMIAR_DIFERENCA_TAXAS_OPERATIVAS_PP: float = 1.0
 DURACAO_SEMI_HORA_H: float = 0.5  # energia de uma semi-hora: potência média × 0,5 h (plano do Tratamento de dados, D17)
 FAIXA_VENTO_MS: float = 2.0  # largura das faixas de vento (m/s) do recurso × geração (plano das Análises, D21)
 FAIXA_IRRADIANCIA_WM2: float = 100.0  # largura das faixas de irradiância (W/m²)

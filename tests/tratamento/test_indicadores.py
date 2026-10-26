@@ -7,6 +7,7 @@ import pytest
 
 from src.tratamento.indicadores import (
     IndicadoresONS,
+    juntar_taxas_operativas,
     numero_ug,
     recortar_periodo,
     tratar_horas_estado,
@@ -46,6 +47,38 @@ def test_taxas_usam_a_versao_mais_recente() -> None:
     assert len(taxas) == 1
     assert taxas.iloc[0]["teifa"] == pytest.approx(0.041)
     assert taxas.iloc[0]["teip"] == pytest.approx(0.048)
+
+
+def _taxas_publicadas(nomes: tuple, meses: list, valores: list) -> pd.DataFrame:
+    linhas = [{"din_mes": mes, "nom_taxa": nome, "val_taxa": valor, "num_versao": "1.0",
+               "din_calculo": "2026-09-11 16:55:06"}
+              for mes, par in zip(meses, valores) for nome, valor in zip(nomes, par)]
+    return pd.DataFrame(linhas)
+
+
+def test_taxas_operativas_com_sufixo_em_qualquer_caixa() -> None:
+    bruto = _taxas_publicadas(("TEIFa_oper", "TEIP_Oper"), ["2026-08-01"], [("0.12", "0.59")])
+    oper = tratar_taxas(bruto, sufixo="_oper")
+    assert list(oper.columns) == ["mes", "teifa_oper", "teip_oper", "num_versao_oper", "din_calculo_oper"]
+    assert oper.iloc[0]["teifa_oper"] == pytest.approx(0.12)
+    assert oper.iloc[0]["teip_oper"] == pytest.approx(0.59)
+
+
+def test_juncao_pelos_meses_das_oficiais() -> None:
+    oficiais = tratar_taxas(_taxas_publicadas(("TEIFa", "TEIP"), ["2026-07-01", "2026-08-01"],
+                                              [("0.30", "0.70"), ("0.31", "0.71")]))
+    oper = tratar_taxas(_taxas_publicadas(("TEIFa_oper", "TEIP_oper"), ["2026-07-01", "2026-06-01"],
+                                          [("0.13", "0.59"), ("0.12", "0.58")]), sufixo="_oper")
+    juntas = juntar_taxas_operativas(oficiais, oper)
+    assert list(juntas["mes"]) == [pd.Timestamp("2026-07-01"), pd.Timestamp("2026-08-01")]
+    assert juntas.iloc[0]["teifa_oper"] == pytest.approx(0.13)
+    assert pd.isna(juntas.iloc[1]["teifa_oper"])  # mês da oficial sem a operativa
+
+
+def test_sem_operativas_a_tabela_fica_como_a_das_oficiais() -> None:
+    oficiais = tratar_taxas(_taxas_publicadas(("TEIFa", "TEIP"), ["2026-08-01"], [("0.04", "0.05")]))
+    juntas = juntar_taxas_operativas(oficiais, tratar_taxas(pd.DataFrame(), sufixo="_oper"))
+    assert list(juntas.columns) == ["mes", "teifa", "teip", "num_versao", "din_calculo"]
 
 
 def _horas_sinteticas() -> pd.DataFrame:

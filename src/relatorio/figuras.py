@@ -85,6 +85,7 @@ NOMES_FIGURAS_OPCIONAIS: Dict[str, str] = {
     "disponibilidade_sincronizada": "06_disponibilidade_operacional_sincronizada_mensal.png",
     "faixas_afluencia": "07_evt_por_faixa_de_afluencia.png",
     "perfil_hidrologico": "08_perfil_horario_nivel_vazoes.png",
+    "taxas_operativas": "09_taxas_oficiais_e_operativas.png",  # spec da Geração do relatório, FR-071
 }
 
 
@@ -524,6 +525,16 @@ def gerar_graficos(
     return caminhos
 
 
+def _grafico_taxas_operativas(res: ResultadosAnalise, caminho: Path, dpi: int) -> None:
+    """A mesma figura da trilha comum (spec da Geração do relatório, FR-071).
+
+    Importada aqui para evitar a importação circular.
+    """
+    from src.relatorio.figuras_comum import grafico_taxas_operativas
+
+    grafico_taxas_operativas(res, caminho, dpi)
+
+
 # Figuras opcionais: chave -> (função que gera, condição para gerar)
 _GERADORES_OPCIONAIS: Dict[str, Tuple[Any, Any]] = {
     "disponibilidade_sincronizada": (_grafico_disponibilidade_sincronizada,
@@ -532,4 +543,6 @@ _GERADORES_OPCIONAIS: Dict[str, Tuple[Any, Any]] = {
                          lambda res: bool(res.hidrologia.get("publicado")) and len(res.hidrologia["faixas_anual"]) > 0),
     "perfil_hidrologico": (_grafico_perfil_hidrologico,
                            lambda res: bool(res.hidrologia.get("publicado")) and len(res.hidrologia["perfil"]) > 0),
+    "taxas_operativas": (_grafico_taxas_operativas,
+                         lambda res: bool(((res.ons or {}).get("taxas_operativas") or {}).get("figura"))),
 }

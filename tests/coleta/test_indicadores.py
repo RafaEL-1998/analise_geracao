@@ -14,6 +14,7 @@ from src.coleta.indicadores import (
     MENSAL,
     PARAMETROS,
     TAXAS,
+    TAXAS_OPERATIVAS,
     ano_do_recurso,
     extrair_indicadores,
     filtrar_csv,
@@ -22,6 +23,7 @@ from src.coleta.indicadores import (
     sincronizar_indicadores,
 )
 from src.comum.modelos import RecursoONS
+from src.comum.regras import CONJUNTOS_INDICADORES_ONS
 
 CEG = "UHE.PH.MS.028761-0.01"
 ID_ONS = "MSUHSD"
@@ -128,5 +130,21 @@ def test_sincronizacao_registra_falha_sem_interromper(tmp_path: Path) -> None:
     with patch("src.coleta.indicadores.fetch_ckan_package_metadata", return_value=metadados), \
             patch("src.coleta.indicadores.download_resource", side_effect=baixar):
         falhas = sincronizar_indicadores(2025, 2025, tmp_path)
-    assert len(falhas) == 4 and {f["arquivo"] for f in falhas} == {"A_2025.csv"}
-    assert {f["periodo"] for f in falhas} == {"2025"} and len(obtidos) == 4
+    n = len(CONJUNTOS_INDICADORES_ONS)  # um arquivo de cada conjunto falha e o outro é obtido
+    assert len(falhas) == n and {f["arquivo"] for f in falhas} == {"A_2025.csv"}
+    assert {f["periodo"] for f in falhas} == {"2025"} and len(obtidos) == n
+
+
+def test_taxas_operativas_extraidas_pelo_ceg(tmp_path: Path) -> None:
+    """Spec da Coleta de dados, FR-042: o conjunto das taxas operativas segue as regras das taxas oficiais."""
+    assert TAXAS_OPERATIVAS in CONJUNTOS_INDICADORES_ONS
+    raiz = tmp_path / "indicadores_ons"
+    _gravar(raiz / TAXAS_OPERATIVAS, "TAXA_TEIF_TEIP_OPER.csv", [
+        CAB_TAXA, f"{CEG};2025-01-01;TEIFa_oper;0.012;1.0", f"{OUTRO_CEG};2025-01-01;TEIFa_oper;0.5;1.0"])
+    extraido, auditoria = extrair_indicadores(raiz, pd.Timestamp("2025-01-01"), pd.Timestamp("2025-01-31 23:00"),
+                                              CEG, ID_ONS)
+    linha = auditoria[auditoria["conjunto"] == TAXAS_OPERATIVAS].iloc[0]
+    assert (linha["linhas_lidas"], linha["linhas_usina"], linha["status"]) == (2, 1, "PROCESSADO")
+    assert pd.isna(linha["linhas_so_identificador"])  # sem id ONS publicado
+    tabela = separar_conjuntos(extraido)[TAXAS_OPERATIVAS]
+    assert tabela["val_taxa"].tolist() == ["0.012"]

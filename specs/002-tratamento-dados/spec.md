@@ -39,7 +39,7 @@ Os cadastrais não têm tratamento: a ficha do cadastro, a composição do conju
 | `indicadores_ug_mensal.csv` | `mes`, `ug`, `cod_equipamento`, `potencia_mw`, `dispf`, `indisppf`, `indispff`, `dmdff`, `fdff`, `tdff`, `id_usina`, `agente`, `modalidade`, `arquivo_origem` |
 | `indicadores_ug_anual.csv` | as mesmas colunas, com `ano` no lugar de `mes` |
 | `horas_estado_mensal.csv` | `mes`, `ug`, `HP`, `HS`, `HRD`, `HDP`, `HDF`, `HDCE`, `HEDP`, `HEDF`, `num_versao`, `residuo_identidade_h`, `potencia_mw` |
-| `teifa_teip_mensal.csv` | `mes`, `teifa`, `teip`, `num_versao`, `din_calculo` |
+| `teifa_teip_mensal.csv` | `mes`, `teifa`, `teip`, `num_versao`, `din_calculo`; com as taxas operativas da usina, também `teifa_oper`, `teip_oper`, `num_versao_oper`, `din_calculo_oper` (FR-045) |
 | `indicadores.xlsx` | as quatro tabelas acima e as siglas das horas (FR-025) |
 | `programacao_horaria.csv` | `din_instante`, `geracao_programada_mw`, `patamares` |
 | `programacao_dias_ausentes.csv` | `dia` |
@@ -249,7 +249,7 @@ Como fiscal, quero que toda regravação de um dado tratado guarde antes a vers�
 - **FR-001**: A etapa DEVE rodar pelo comando `python -m src tratamento --usina <slug>`, sem opções próprias, para todos os tipos de usina. Na hidrelétrica com EVT, a validação R1 a R9, o relatório de validação e os três formatos da base de EVT fazem sempre parte da etapa: não há opção para desligá-los nem para escolher formatos.
 - **FR-002**: A etapa DEVE ler só as entradas da tabela "Entradas", gravadas pela Coleta da usina, e o perfil. NÃO DEVE acessar o portal do ONS nem ler nada de `data/raw/` (dados brutos dos conjuntos, versões anteriores deles ou dicionários), nem ler cópias `.bak` ou arquivos temporários como dados.
 - **FR-003**: A etapa DEVE tratar os conjuntos do ONS que a Coleta extraiu para a usina, conforme o tipo e a cobertura do perfil (seção "Aplicabilidade por tipo"), menos os cadastrais:
-  - na hidrelétrica com EVT, os nove conjuntos do fluxo da hidrelétrica: Energia Vertida Turbinável; indicadores por unidade geradora, mensais e anuais; parâmetros da TEIFa e da TEIP (horas por estado operativo); taxas TEIFa e TEIP; programação diária; disponibilidade por usina; dados hidrológicos horários; geração por usina;
+  - na hidrelétrica com EVT, os dez conjuntos do fluxo da hidrelétrica: Energia Vertida Turbinável; indicadores por unidade geradora, mensais e anuais; parâmetros da TEIFa e da TEIP (horas por estado operativo); taxas TEIFa e TEIP; taxas TEIFa Oper e TEIP Oper; programação diária; disponibilidade por usina; dados hidrológicos horários; geração por usina;
   - nas usinas sem EVT, entre esses, os que a cobertura declara, sem a EVT, e os próprios do tipo: o despacho térmico por motivo, o CVU e o CMO, nas térmicas; o fator de capacidade e as restrições por constrained-off com detalhe e com a razão, nas eólicas e solares.
 - **FR-004**: O período de referência DEVE ser o da série de referência gravada pela Coleta (FR-054 da spec da Coleta de dados):
   - na hidrelétrica com EVT, o da base de EVT da usina: do primeiro ao último instante horário extraído;
@@ -438,6 +438,7 @@ Como fiscal, quero que toda regravação de um dado tratado guarde antes a vers�
   - `sinal_acima_capacidade`: geração verificada acima da capacidade instalada publicada na mesma hora, com a folga de 1,0 MW da R7.
 
   A hora sinalizada continua no fator de capacidade publicado, e as horas sinalizadas são contadas.
+- **FR-045**: As taxas operativas (Taxas TEIFa Oper e TEIP Oper) DEVEM ser tratadas pela regra das taxas oficiais: a versão de maior número de cada mês e taxa, como fração entre 0 e 1. Elas DEVEM ser juntadas à tabela mensal das oficiais pelos meses das oficiais, nas colunas `teifa_oper`, `teip_oper`, `num_versao_oper` e `din_calculo_oper`; o mês das oficiais sem a operativa fica com as colunas vazias. Sem linhas das operativas, a tabela não ganha as colunas.
 
 ### Key Entities
 
@@ -539,6 +540,7 @@ A usina em conjunto sem série própria (PCH, CGH, EOL ou UFV) tem a série de r
 | 20/10/2026 | Requisitos das eólicas e solares aprovados: semi-horárias na resolução publicada e em hora cheia, energia cortada só nas semi-horas restritas, razão por semi-hora com o nível, fator de capacidade com as sinalizações e recurso inválido sinalizado | FR-041 a FR-044 |
 | 21/10/2026 | Estimativa ausente: geração estimada 0 com a verificada acima de 1 MW é estimativa que o ONS não calculou; sinalizada, contada, fora dos totais e das médias da estimada, e sem energia cortada na semi-hora restrita | FR-042 |
 | 21/10/2026 | Limite físico do recurso (vento acima de 40 m/s, irradiância acima de 1.500 W/m²): falha de medição sem a marca do ONS, tirada do recurso × geração pelas Análises; no Tratamento, o valor fica como publicado | FR-041, casos de borda |
+| 23/10/2026 | As taxas operativas entram na tabela mensal das taxas, ao lado das oficiais, uma linha por mês (aprovado pelo usuário). | FR-045 |
 
 ---
 

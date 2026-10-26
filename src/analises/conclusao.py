@@ -1,11 +1,12 @@
-"""Conclusão do relatório: regras C1 a C19, que apontam indícios sem afirmar causa (spec das Análises, FR-045).
+"""Conclusão do relatório: regras C1 a C20, que apontam indícios sem afirmar causa (spec das Análises, FR-045).
 
 As regras formam um catálogo declarado (plano das Análises, D18): cada uma diz os tipos de usina, as listas em que pode
 gerar itens, o nível exigido (só dado da usina), os limiares, o período mínimo e as seções de origem. Nas hidrelétricas
 com EVT, C1 a C11 continuam como antes, com a mesma ordem, texto, limiares e listas (decisão D16). Nas usinas sem EVT,
 as regras comuns (C2, C5, C8 e C10) são avaliadas sobre a base horária comum, só com dados da usina; nas térmicas, também
 C12 a C15, sobre o despacho, o CVU e o CMO (decisão D18); nas eólicas e solares, só C16 a C19, sobre a
-restrição de operação, o recurso, o fator de capacidade e a programação da usina. O que não é avaliado vai para
+restrição de operação, o recurso, o fator de capacidade e a programação da usina. Nas hidrelétricas e térmicas,
+com ou sem EVT, também a C20, sobre as taxas operativas (spec das Análises, FR-063). O que não é avaliado vai para
 ``omitidos``, com o motivo.
 """
 
@@ -21,7 +22,8 @@ from src.analises.hidrologia import ATE_UMA_UNIDADE, entre_unidades
 from src.analises.indicadores import DESCRICAO_PARCELA
 from src.analises.resultados import ResultadosAnalise, sem_evt
 from src.coleta.registro import HIDRELETRICAS, RENOVAVEIS, TERMICAS
-from src.comum.formatacao import fmt_data, fmt_data_hora, fmt_int, fmt_lista, fmt_mes_ano, fmt_num, fmt_pct, plural
+from src.comum.formatacao import (fmt_data, fmt_data_hora, fmt_int, fmt_lista, fmt_mes_ano, fmt_num, fmt_pct,
+                                   fmt_pp, plural)
 from src.comum.perfil import perfil_ativo
 from src.comum.regras import (
     HORAS_DIURNAS,
@@ -44,6 +46,7 @@ from src.comum.regras import (
     LIMIAR_CONCLUSAO_SEM_PROGRAMACAO_HORAS,
     LIMIAR_DESVIO_DESPACHO_MW,
     LIMIAR_DESVIO_PROGRAMACAO_MW,
+    LIMIAR_DIFERENCA_TAXAS_OPERATIVAS_PP,
     LIMIAR_GERACAO_PARADA_MW,
     RAZAO_DIURNA_RELEVANTE,
 )
@@ -595,6 +598,27 @@ def _regra_c19(res: ResultadosAnalise) -> List[Dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
+# Hidrelétricas e térmicas: taxas operativas × oficiais (spec das Análises, FR-063)
+# ---------------------------------------------------------------------------
+
+
+def _regra_c20(res: ResultadosAnalise) -> List[Dict[str, Any]]:
+    """C20: taxa operativa do mês mais recente a pelo menos o limiar da oficial; cita só as taxas que diferem."""
+    c = (res.ons or {}).get("taxas_operativas")
+    if not c:
+        return []
+    partes = [f"{nome} operativa de {fmt_pct(c[f'{t}_oper_pct'], 2)} e oficial de {fmt_pct(c[f'{t}_pct'], 2)} "
+              f"(diferença de {fmt_pp(c[f'dif_{t}_pp'], 2)})"
+              for t, nome in (("teifa", "TEIFa"), ("teip", "TEIP"))
+              if abs(c[f"dif_{t}_pp"]) >= LIMIAR_DIFERENCA_TAXAS_OPERATIVAS_PP - 1e-9]  # NaN não dispara
+    if not partes:
+        return []
+    return [_item("confirmar_agente", "C20", (
+        f"Motivo da diferença entre as taxas operativas e as oficiais do ONS em {fmt_mes_ano(c['mes'])}: "
+        + "; ".join(partes)), ["indicadores_ons"])]
+
+
+# ---------------------------------------------------------------------------
 # Catálogo
 # ---------------------------------------------------------------------------
 
@@ -700,15 +724,22 @@ CATALOGO_CONCLUSAO: Tuple[RegraConclusao, ...] = (
                    bases_comuns=("programacao",),
                    descricao=lambda: (f"C19 desvio médio absoluto entre a geração programada e a verificada ≥ "
                                       f"{fmt_pct(LIMIAR_CONCLUSAO_DESVIO_PROGRAMACAO_PCT, 0)} da potência instalada")),
+    # Spec das Análises, FR-063: nas duas trilhas (com e sem EVT)
+    RegraConclusao("C20", _COM_DISPONIBILIDADE, ("confirmar_agente",), _regra_c20, ("indicadores_ons",),
+                   ("LIMIAR_DIFERENCA_TAXAS_OPERATIVAS_PP",), funcao_comum=_regra_c20,
+                   bases_comuns=("taxas_operativas",),
+                   descricao=lambda: (f"C20 TEIFa ou TEIP operativa do mês mais recente a "
+                                      f"{fmt_num(LIMIAR_DIFERENCA_TAXAS_OPERATIVAS_PP, 0)} p.p. ou mais da oficial")),
 )
-# As funções de hoje, na ordem do catálogo (C1 a C11), as únicas do caminho da EVT
+# As funções do caminho da EVT, na ordem do catálogo: C1 a C11 e a C20 (spec das Análises, FR-063)
 REGRAS_CONCLUSAO = tuple(r.funcao for r in CATALOGO_CONCLUSAO if r.funcao is not None)
 
 NOMES_BASES = {"disponibilidade": "a Disponibilidade por usina", "indicadores": "os Indicadores de desempenho do ONS",
                "despacho": "a Geração térmica por motivo de despacho",
                "cvu_cmo": "o CVU e o CMO cruzados com a disponibilidade e o despacho",
                "restricao": "a Restrição com detalhe", "recurso": "o recurso válido da Restrição com detalhe",
-               "fator_capacidade": "o Fator de capacidade", "programacao": "a Programação diária"}
+               "fator_capacidade": "o Fator de capacidade", "programacao": "a Programação diária",
+               "taxas_operativas": "as Taxas TEIFa Oper e TEIP Oper"}
 
 
 def _bases_da_usina(res: ResultadosAnalise) -> Dict[str, bool]:
@@ -722,7 +753,8 @@ def _bases_da_usina(res: ResultadosAnalise) -> Dict[str, bool]:
             # a restrição com detalhe é sempre da usina; o fator de capacidade e a programação, só no nível dela
             "restricao": bool(r.get("restricao")), "recurso": bool(r.get("recurso")),
             "fator_capacidade": fc.get("nivel") == "usina",
-            "programacao": (r.get("programacao") or {}).get("nivel") == "usina"}
+            "programacao": (r.get("programacao") or {}).get("nivel") == "usina",
+            "taxas_operativas": bool((res.ons or {}).get("taxas_operativas"))}
 
 
 def _motivo(regra: RegraConclusao, res: ResultadosAnalise) -> Optional[str]:

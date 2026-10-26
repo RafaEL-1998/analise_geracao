@@ -96,7 +96,9 @@ CONJUNTOS: Dict[str, Conjunto] = {
                             "ind_disponibilidade_fgeracao_uge_anual"),
     "teif_teip": Conjunto("Taxas TEIFa e TEIP", "CEG {ceg}", "taxa_teif_teip"),
     "teif_teip_parametro": Conjunto("Parâmetros das taxas TEIFa e TEIP", "CEG {ceg}", "taxa_teif_teip_parametro"),
-    "programacao": Conjunto("Programação diária", "{cod_programacao}", CONJUNTO_PROGRAMACAO_DIARIA),
+    # Spec da Geração do relatório, FR-071: carregado só quando a usina tem as taxas operativas (fora de INDICADORES)
+    "teif_teip_oper": Conjunto("Taxas TEIFa Oper e TEIP Oper", "CEG {ceg}", "taxa_teif_teip_oper"),
+    "programacao":Conjunto("Programação diária", "{cod_programacao}", CONJUNTO_PROGRAMACAO_DIARIA),
     "disponibilidade": Conjunto("Disponibilidade por usina", "id ONS {id_ons}", CONJUNTO_DISPONIBILIDADE),
     "hidrologia": Conjunto("Dados hidrológicos horários", "cod_usina {cod_usina}, reservatório {id_reservatorio}",
                            CONJUNTO_HIDROLOGIA),
@@ -521,6 +523,8 @@ MAPA_FONTES: Dict[str, Entrada] = {
     "tab_ons_ug_anual": _e(["dispf_anual"], ["dispf_horas"]),
     "tab_ons_horas": _e(["teif_teip_parametro"], ["dispf_horas"]),
     "tab_ons_divergencias": _e(["dispf_mensal", "teif_teip_parametro"], ["dispf_horas"]),
+    "tab_ons_taxas_operativas": _e(["teif_teip", "teif_teip_oper"], calculado=True),
+    "taxas_operativas": _e(["teif_teip", "teif_teip_oper"], calculado=True),
     # Programação diária
     "tab_programacao_mensal": _e(["programacao", "evt"], ["geracao"], [PROGRAMACAO, EVT], calculado=True),
     "tab_programacao_hora": _e(["programacao", "evt"], ["geracao"], [PROGRAMACAO, EVT], calculado=True),
@@ -642,6 +646,7 @@ _ABAS_EXATAS: Dict[str, Entrada] = {
     "ONS_HORAS_UG_MENSAL": MAPA_FONTES["tab_ons_horas"],
     "ONS_TEIFA_TEIP": _e(["teif_teip"], ["teifa_teip"]),
     "ONS_DECOMPOSICAO_TAXAS": MAPA_FONTES["tab_ons_decomposicao"],
+    "ONS_TAXAS_OPERATIVAS": MAPA_FONTES["tab_ons_taxas_operativas"],
     "ONS_DIVERGENCIAS": MAPA_FONTES["tab_ons_divergencias"],
     "PROG_DIAS_AUSENTES": _e(["programacao"]),
     "PROG_AUDITORIA_ARQUIVOS": _e(["programacao"]),
@@ -737,6 +742,8 @@ def _carregados_sem_evt(res: Any) -> List[str]:
     carregados = ["geracao"]
     if res.ons:
         carregados += list(INDICADORES)
+    if (res.ons or {}).get("taxas_operativas"):
+        carregados.append("teif_teip_oper")
     if res.comum.get("programacao_coletada"):
         carregados.append("programacao")
     if res.comum.get("disponibilidade"):
@@ -771,6 +778,8 @@ def conjuntos_carregados(res: Any) -> List[str]:
     carregados = ["evt"]
     if res.ons:
         carregados += list(INDICADORES)
+    if (res.ons or {}).get("taxas_operativas"):
+        carregados.append("teif_teip_oper")
     for cid, campo in (("programacao", "programacao"), ("disponibilidade", "disponibilidade"),
                        ("hidrologia", "hidrologia"), ("geracao", "geracao_oficial"), ("cadastro", "cadastro")):
         if getattr(res, campo):

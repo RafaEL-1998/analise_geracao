@@ -459,6 +459,7 @@ tests/
 | 21/10/2026 | A EOL fictícia tem a restrição com detalhe desde 15/01/2024, dentro do período sintético de jan e fev/2024, e não desde 10/2021, como previa a tabela das usinas fictícias (D30). | registrada nos testes das eólicas e solares e aceita pelo usuário com a aprovação das referências da Seriemas 1 e da Praia Formosa (21/10/2026) |
 | 22/10/2026 | A CGH fictícia tem geração própria e Dados hidrológicos (é a hidrelétrica sem EVT), e não "em conjunto, só o nível do conjunto"; o caso da CGH em conjunto é o mesmo caminho da PCH, cujo conjunto fictício tem uma CGH (D30). | aceita pelo usuário com a aprovação da PCH Bandeirante (22/10/2026) |
 | 22/10/2026 | O rascunho da PCH Bandeirante traz oito códigos de programação, e não os quatro do exemplo do contrato do perfil: são os códigos de todo o período (FR-051 e FR-053); o exemplo do contrato foi atualizado. | usuário, ao completar o perfil e aprovar o relatório da Bandeirante (22/10/2026) |
+| 26/10/2026 | O dicionário das taxas operativas chama duas colunas de `id_tipousina` e `din_instante`, e o arquivo publica `tip_usina` e `din_calculo`. A diferença não é registrada na auditoria da Coleta, como previa o rascunho aprovado; valem as colunas do arquivo, e o Tratamento aceita os dois nomes da data de cálculo. | aceito pelo usuário em 26/10/2026 |
 
 ## Complexity Tracking
 
