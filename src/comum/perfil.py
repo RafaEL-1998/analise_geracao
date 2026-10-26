@@ -343,6 +343,14 @@ def _campo_por_tipo(le: _Leitor, campo: str, tipo: Optional[str], cobertura: Dic
     return e.nivel == OBRIGATORIO or presente
 
 
+def _programacao_exigida(le: _Leitor, tipo: Optional[str], cobertura: Dict[str, Any]) -> bool:
+    """O código de programação é obrigatório quando a Programação diária é coletada: sem a ``[cobertura]`` (UHE de
+    hoje, que coleta a programação) ou com a programação própria ou do conjunto na cobertura."""
+    if tipo is None or le.dados.get("cobertura") is None:
+        return True
+    return perfil_campos.exigido_pela_cobertura("identificacao.cod_programacao", tipo, cobertura) is not None
+
+
 def _cobertura(le: _Leitor, tipo: Optional[str]) -> Dict[str, Any]:
     """``[cobertura]``: uma chave por conjunto de série do registro que serve ao tipo (data-model da Coleta de dados,
     seção 5.1)."""
@@ -467,7 +475,7 @@ def validar_perfil(dados: Dict[str, Any], slug_pasta: str) -> Tuple[Optional[Dic
         le.confere(lista is None or len(lista) > 0, "identificacao.codigos_programacao: lista vazia")
         c["codigos_programacao"] = tuple(lista or ())
     else:
-        codigo = le.texto("identificacao.cod_programacao")
+        codigo = le.texto("identificacao.cod_programacao", obrigatorio=_programacao_exigida(le, tipo, cobertura))
         c["codigos_programacao"] = (codigo,) if codigo else ()
     # identificação por tipo e cobertura
     for campo in ("id_ons", "id_reservatorio", "id_conjunto"):
@@ -595,7 +603,8 @@ def carregar_perfil(slug: str, raiz: Optional[Path] = None) -> Perfil:
     return Perfil(
         usina=Usina(c["slug"], c["nome"], c["nome_curto"], c["estado"], c["inicio"], c["tipo"], c["modalidade"],
                     c["situacao"], tuple(c["pendentes"]), c["subsistema"]),
-        identificacao=Identificacao(c["cod_usina"], c["nome_ons"], c["ceg"], c["id_ons"], c["codigos_programacao"][0],
+        identificacao=Identificacao(c["cod_usina"], c["nome_ons"], c["ceg"], c["id_ons"],
+                                    c["codigos_programacao"][0] if c["codigos_programacao"] else "",
                                     c["id_reservatorio"], c["codigos_programacao"], c["id_conjunto"],
                                     c["planejamento"], c["membros"]),
         parametros=Parametros(

@@ -761,7 +761,7 @@ Regras gerais de `validar_perfil`:
 | `usina.pendentes` | lista de textos não vazios, opcional | vazia ou ausente quando `conferido` |
 | `usina.subsistema` | texto | um de `SUBSISTEMAS` (`SE`, `S`, `NE`, `N`) |
 | `identificacao.ceg` | texto | `^(UHE\|PCH\|CGH\|UTE\|UTN\|EOL\|UFV)\.[A-Z]{2}\.[A-Z]{2}\.\d{6}-\d\.\d{2}$` |
-| `identificacao.cod_programacao` ou `codigos_programacao` | texto ou lista de textos | um dos dois, nunca os dois; a lista não vazia |
+| `identificacao.cod_programacao` ou `codigos_programacao` | texto ou lista de textos | um dos dois, nunca os dois; a lista não vazia; obrigatório só com a Programação diária coletada (sem a `[cobertura]`, na UHE, ou com a programação `proprio` ou `conjunto`); com a programação `ausente`, um código informado é aceito e não é usado |
 | `identificacao.cod_usina` | inteiro | > 0 |
 | `identificacao.nome_ons` | texto | `^[A-Z0-9 .\-/]+$` (maiúsculas sem acento) |
 | `identificacao.id_ons`, `id_reservatorio`, `id_conjunto` | texto | não vazio |

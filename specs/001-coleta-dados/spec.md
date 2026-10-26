@@ -343,7 +343,7 @@ As FR-001 a FR-015 e a FR-056 são regras comuns às cinco etapas. As specs das 
   | `usina.pendentes` | lista de texto | opcional: os campos ainda a preencher; vazia ou ausente quando `conferido` |
   | `usina.subsistema` | texto | `SE`, `S`, `NE` ou `N` (FR-056) |
   | `identificacao.ceg` | texto | no padrão da ANEEL `<tipo>.<2 letras>.<UF>.<6 algarismos>-<1 algarismo>.<2 algarismos>`, com o tipo entre os sete |
-  | `identificacao.cod_programacao` ou `identificacao.codigos_programacao` | texto ou lista de texto | um dos dois, não vazio; a lista quando a usina ou o conjunto é programado em mais de um código (FR-043) |
+  | `identificacao.cod_programacao` ou `identificacao.codigos_programacao` | texto ou lista de texto | um dos dois, não vazio; a lista quando a usina ou o conjunto é programado em mais de um código (FR-043); obrigatório só com a Programação diária coletada (sem a `[cobertura]`, na UHE, ou com a programação `proprio` ou `conjunto`); com a programação `ausente`, um código informado é aceito e não é usado |
   | `identificacao.cod_usina` | inteiro | > 0 |
   | `identificacao.nome_ons` | texto | não vazio, em maiúsculas e sem acento; nome da usina e do reservatório nos conjuntos do ONS |
   | `identificacao.id_ons` | texto | não vazio |
@@ -842,6 +842,7 @@ As FR-001 a FR-015 e a FR-056 são regras comuns às cinco etapas. As specs das 
 | 22/10/2026 | Aprovados: os códigos de programação de todo o período no catálogo e no rascunho, com o primeiro e o último dia de cada um; o tipo publicado da série do conjunto, por trecho; o período das linhas próprias sem valor no resumo. | FR-048; FR-051; FR-053; FR-061 |
 | 22/10/2026 | A geração da usina pela CCEE (dados abertos, com download manual) fica como proposta para uma avaliação futura, que pede mudança do princípio IV da constituição; a Coleta continua só com o portal do ONS. | Assumptions |
 | 23/10/2026 | Coletar o conjunto Taxas TEIFa Oper e TEIP Oper (`taxa_teif_teip_oper`), nas mesmas regras das taxas oficiais: arquivo único, extração pelo CEG, manifesto, versões anteriores e dicionários (aprovado pelo usuário). | FR-042 |
+| 26/10/2026 | O código de programação deixa de ser obrigatório na usina com a Programação diária `ausente` na cobertura; um código informado nesse caso é aceito e não é usado (avaliação de bug `programacao-sem-cobertura`, homologação de 26/10/2026; aprovado pelo usuário). | perfil, `identificacao.cod_programacao` |
 
 ---
 

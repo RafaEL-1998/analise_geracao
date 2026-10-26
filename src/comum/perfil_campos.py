@@ -61,6 +61,10 @@ CAMPOS: Dict[str, Dict[str, Exigencia]] = {
     "identificacao.nome_ons": {"UHE": O, "PCH_CGH": _EVT_OU_HIDROLOGIA, "UTE_UTN": NAO, "EOL_UFV": NAO},
     "identificacao.id_reservatorio": {"UHE": O, "PCH_CGH": _c("hidrologia"), "UTE_UTN": NAO, "EOL_UFV": NAO},
     "identificacao.id_conjunto": {"UHE": NAO, "PCH_CGH": _ID_CONJUNTO, "UTE_UTN": _ID_CONJUNTO, "EOL_UFV": _ID_CONJUNTO},
+    # cod_programacao ou codigos_programacao: só com a Programação diária na cobertura; sem a [cobertura] (UHE de hoje),
+    # a programação é coletada e o código é obrigatório (``src.comum.perfil``). Com a programação ausente, um código
+    # informado é aceito e não é usado (decisão do usuário de 26/10/2026)
+    "identificacao.cod_programacao": {grupo: _c("programacao") for grupo in ("UHE", "PCH_CGH", "UTE_UTN", "EOL_UFV")},
     "identificacao.planejamento": {"UHE": NAO, "PCH_CGH": NAO, "UTE_UTN": _c("despacho", "cvu"), "EOL_UFV": NAO},
     "identificacao.membros": {"UHE": NAO, "PCH_CGH": OPC, "UTE_UTN": NAO, "EOL_UFV": OPC},
     **{f"parametros.{campo}": {"UHE": O, "PCH_CGH": _EVT_OU_HIDROLOGIA, "UTE_UTN": NAO, "EOL_UFV": NAO}

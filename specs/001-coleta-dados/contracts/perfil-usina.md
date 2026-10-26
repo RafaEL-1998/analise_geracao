@@ -44,7 +44,7 @@ Exigência por tipo, nas colunas de cada tabela: `O` = obrigatório; `C` = obrig
 | `cod_usina` | inteiro | O | C: EVT ou hidrologia | — | — | > 0 | identificador na EVT e nos Dados hidrológicos horários |
 | `nome_ons` | texto | O | C: EVT ou hidrologia | — | — | maiúsculas sem acento: letras, algarismos, espaço, `.`, `-` e `/` | conferência ("contém") na EVT, na hidrologia e na programação; homônimos no cadastro |
 | `id_reservatorio` | texto | O | C: hidrologia | — | — | não vazio | conferência nos Dados hidrológicos horários |
-| `cod_programacao` ou `codigos_programacao` | texto ou lista de texto | O | O | O | O | um dos dois, nunca os dois; a lista não vazia | identificador na Programação diária (código de exibição); a lista quando a usina ou o conjunto é programado em mais de um código, um por barra |
+| `cod_programacao` ou `codigos_programacao` | texto ou lista de texto | O sem a `[cobertura]`; C: programação | C: programação | C: programação | C: programação | um dos dois, nunca os dois; a lista não vazia; com a programação `ausente`, aceito e não usado | identificador na Programação diária (código de exibição); a lista quando a usina ou o conjunto é programado em mais de um código, um por barra |
 | `id_conjunto` | texto | — | C: `conjunto` na geração, no fator de capacidade ou na razão da restrição | idem | idem | não vazio | identificador da série do conjunto na geração, no fator de capacidade e na razão da restrição; composição do conjunto |
 
 #### `[[identificacao.planejamento]]` (UTE e UTN)

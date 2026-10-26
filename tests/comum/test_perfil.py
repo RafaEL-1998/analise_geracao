@@ -399,3 +399,33 @@ def test_planejamento_com_o_mesmo_codigo_sobreposto_recusado(tmp_path: Path) -> 
 def test_planejamento_nao_se_aplica_a_uhe(tmp_path: Path) -> None:
     texto = PERFIL_SD.replace("[parametros]\n", _planejamento((1, "2018-01", "")).lstrip() + "\n[parametros]\n", 1)
     assert "identificacao.planejamento: não se aplica a UHE" in _problemas(_gravar(tmp_path, texto))
+
+
+# ---------------------------------------------------------------------------
+# Código de programação pela cobertura (bug programacao-sem-cobertura; homologação de 26/10/2026)
+# ---------------------------------------------------------------------------
+
+
+def test_sem_programacao_na_cobertura_o_codigo_nao_e_exigido(tmp_path: Path) -> None:
+    texto = _trocar(_trocar(PERFIL_UTE, 'cod_programacao = "GOUTFI"\n', ""), 'programacao = "proprio"',
+                    'programacao = "ausente"')
+    p = _carregar(tmp_path, texto, "ute_ficticia")
+    assert p.identificacao.codigos_programacao == () and p.identificacao.cod_programacao == ""
+
+
+def test_com_programacao_na_cobertura_o_codigo_continua_obrigatorio(tmp_path: Path) -> None:
+    texto = _trocar(PERFIL_UTE, 'cod_programacao = "GOUTFI"\n', "")
+    problemas = _problemas(_gravar(tmp_path, texto, slug="ute_ficticia"), "ute_ficticia")
+    assert "identificacao.cod_programacao: campo obrigatório ausente" in problemas
+
+
+def test_codigo_informado_com_programacao_ausente_e_aceito(tmp_path: Path) -> None:
+    """Decisão do usuário de 26/10/2026: o código fica no perfil, sem uso, à espera da ligação no catálogo."""
+    texto = _trocar(PERFIL_UTE, 'programacao = "proprio"', 'programacao = "ausente"')
+    assert _carregar(tmp_path, texto, "ute_ficticia").identificacao.codigos_programacao == ("GOUTFI",)
+
+
+def test_uhe_sem_cobertura_continua_exigindo_o_codigo(tmp_path: Path) -> None:
+    """Sem a [cobertura], a UHE coleta a Programação diária (São Domingos): o código continua obrigatório."""
+    texto = _trocar(PERFIL_SD, 'cod_programacao = "PRUHSD"           # Programação diária (código de exibição)\n', "")
+    assert "identificacao.cod_programacao: campo obrigatório ausente" in _problemas(_gravar(tmp_path, texto))
