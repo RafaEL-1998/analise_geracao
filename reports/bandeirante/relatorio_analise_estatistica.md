@@ -1,7 +1,7 @@
 # PCH Bandeirante — Análise do desempenho operacional
 
-**Período**: 22/08/2019 00h a 20/10/2026 23h (62.064 registros horários da série de referência, Geração por usina (conjunto de usinas, id ONS CJU_MSCAO))
-**Gerado em**: 22/10/2026 10:00
+**Período**: 22/08/2019 00h a 27/10/2026 23h (62.232 registros horários da série de referência, Geração por usina (conjunto de usinas, id ONS CJU_MSCAO))
+**Gerado em**: 29/10/2026 08:00
 
 ### Identificação nos dados do ONS
 
@@ -15,7 +15,7 @@
 | Estado | MS |
 | Agente atual | RIO AGUA CLARA (proprietário); ITATIM (operador) |
 
-Fonte dos dados: Modalidade das usinas (CEG PCH.PH.MS.032163-0.01), obtido em 22/10/2026; Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026; Capacidade de geração (CEG PCH.PH.MS.032163-0.01), obtido em 22/10/2026.
+Fonte dos dados: Modalidade das usinas (CEG PCH.PH.MS.032163-0.01), obtido em 29/10/2026; Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026; Capacidade de geração (CEG PCH.PH.MS.032163-0.01), obtido em 29/10/2026.
 
 ### Cadastro no ONS
 
@@ -29,7 +29,7 @@ Fonte dos dados: Modalidade das usinas (CEG PCH.PH.MS.032163-0.01), obtido em 22
 | Estado · situação na ANEEL | MS · A |
 | Homônimos excluídos pelo CEG | 4 |
 
-Fonte dos dados: Modalidade das usinas (CEG PCH.PH.MS.032163-0.01), obtido em 22/10/2026. Conferência: potência autorizada e estado conferidos com os parâmetros do projeto: sem divergência.
+Fonte dos dados: Modalidade das usinas (CEG PCH.PH.MS.032163-0.01), obtido em 29/10/2026. Conferência: potência autorizada e estado conferidos com os parâmetros do projeto: sem divergência.
 
 ### Parâmetros técnicos da usina
 
@@ -44,12 +44,12 @@ Fonte dos dados: parâmetros do projeto (origem na tabela de parâmetros).
 
 | Indicador | Valor | Detalhe |
 | --- | --- | --- |
-| Geração média do conjunto Conj. Chapadão | 115,0 MWmed | 7.135,4 GWh em 62.064 horas com valor |
-| Horas com geração até 1 MW do conjunto Conj. Chapadão | 0,0% | 0 de 62.064 horas com valor |
+| Geração média do conjunto Conj. Chapadão | 114,7 MWmed | 7.140,6 GWh em 62.232 horas com valor |
+| Horas com geração até 1 MW do conjunto Conj. Chapadão | 0,0% | 0 de 62.232 horas com valor |
 
 Indicadores calculados a partir da série de referência e da disponibilidade publicadas pelo ONS; não substituem os índices regulatórios. Os números do conjunto de usinas são da soma das usinas do conjunto, como o ONS publica, e não são divididos entre elas. Ver notas metodológicas.
 
-Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026. Sem outra fonte para conferir: geração.
+Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026. Sem outra fonte para conferir: geração.
 
 ## Sumário
 
@@ -62,30 +62,30 @@ Calculado neste relatório a partir de: Geração por usina (conjunto de usinas,
 
 ## 1. Fonte e cobertura dos dados
 
-**Cobertura dos dados.** Série de referência: Geração por usina do conjunto Conj. Chapadão (id ONS CJU_MSCAO), de 22/08/2019 00h a 20/10/2026 23h: 62.064 horas com registro de 62.808 no período (98,82%). 744 horas ausentes, listadas na planilha, sem preenchimento. O período tem 3 trechos, com mudança de modalidade, de composição do conjunto ou de código.
+**Cobertura dos dados.** Série de referência: Geração por usina do conjunto Conj. Chapadão (id ONS CJU_MSCAO), de 22/08/2019 00h a 27/10/2026 23h: 62.232 horas com registro de 62.976 no período (98,82%). 744 horas ausentes, listadas na planilha, sem preenchimento. O período tem 3 trechos, com mudança de modalidade, de composição do conjunto ou de código.
 
 | Item | Valor |
 | --- | --- |
 | Série de referência | Geração por usina (conjunto de usinas, id ONS CJU_MSCAO) — Portal de Dados Abertos do ONS (https://dados.ons.org.br/dataset/geracao-usina-2) |
-| Período | 22/08/2019 00h a 20/10/2026 23h |
-| Registros | 62.064 de 62.808 horas do período; 744 horas ausentes em 1 intervalo; 0 horas sem valor |
-| Níveis | conjunto de usinas: 62.064 horas |
+| Período | 22/08/2019 00h a 27/10/2026 23h |
+| Registros | 62.232 de 62.976 horas do período; 744 horas ausentes em 1 intervalo; 0 horas sem valor |
+| Níveis | conjunto de usinas: 62.232 horas |
 | Anos parciais | 2019 e 2026 |
 | Trechos | 3 (tabela abaixo) |
 
-Fonte dos dados: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026.
+Fonte dos dados: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026.
 
 ### Conjuntos do ONS, nível e identificador
 
 | Conjunto do ONS | Nível | Identificador | Obtenção |
 | --- | --- | --- | --- |
-| Geração por usina (série de referência) | conjunto | CJU_MSCAO | obtido em 22/10/2026 |
-| Programação diária | conjunto | MSCAO-9761; MSCAO-9762; MSCAO-9763; MSCAO-9766; MSCAO-10205; MSCAO-9764; MSCAO-9765; MSCAO-9784 | obtido em 20/10/2026 |
-| Modalidade das usinas | usina | CEG PCH.PH.MS.032163-0.01 | obtido em 22/10/2026 |
-| Composição dos conjuntos de usinas | conjunto | CJU_MSCAO | obtido em 22/10/2026 |
-| Capacidade de geração | usinas do conjunto | CEG das usinas de CJU_MSCAO | obtido em 22/10/2026 |
+| Geração por usina (série de referência) | conjunto | CJU_MSCAO | obtido em 29/10/2026 |
+| Programação diária | conjunto | MSCAO-9761; MSCAO-9762; MSCAO-9763; MSCAO-9766; MSCAO-10205; MSCAO-9764; MSCAO-9765; MSCAO-9784 | obtido em 29/10/2026 |
+| Modalidade das usinas | usina | CEG PCH.PH.MS.032163-0.01 | obtido em 29/10/2026 |
+| Composição dos conjuntos de usinas | conjunto | CJU_MSCAO | obtido em 29/10/2026 |
+| Capacidade de geração | usinas do conjunto | CEG das usinas de CJU_MSCAO | obtido em 29/10/2026 |
 
-Fonte dos dados: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026; Programação diária (conjunto de usinas, MSCAO-9761; MSCAO-9762; MSCAO-9763; MSCAO-9766; MSCAO-10205; MSCAO-9764; MSCAO-9765; MSCAO-9784), obtido em 20/10/2026; Modalidade das usinas (CEG PCH.PH.MS.032163-0.01), obtido em 22/10/2026; Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026.
+Fonte dos dados: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026; Programação diária (conjunto de usinas, MSCAO-9761; MSCAO-9762; MSCAO-9763; MSCAO-9766; MSCAO-10205; MSCAO-9764; MSCAO-9765; MSCAO-9784), obtido em 29/10/2026; Modalidade das usinas (CEG PCH.PH.MS.032163-0.01), obtido em 29/10/2026; Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026.
 
 ### Trechos do período
 
@@ -93,18 +93,18 @@ Fonte dos dados: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obt
 | --- | --- | --- | --- | --- | --- |
 | 1 | 22/08/2019 00h | 26/09/2019 23h | Conjunto de Usinas | conjunto | PCH; UTE |
 | 2 | 27/09/2019 00h | 30/06/2025 23h | Conjunto de Usinas | conjunto | PCH; UTE |
-| 3 | 01/07/2025 00h | 20/10/2026 23h | Conjunto de Usinas | conjunto | PCH |
+| 3 | 01/07/2025 00h | 27/10/2026 23h | Conjunto de Usinas | conjunto | PCH |
 
 Trecho novo a cada mudança de modalidade, de composição do conjunto ou de código; as usinas de cada composição estão na seção do conjunto.
 
-Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026; Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026.
+Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026; Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026.
 
 
 ## 2. A usina no conjunto
 
-**A usina no conjunto.** O ONS publica a geração, a programação e os demais dados de operação do conjunto Conj. Chapadão (CJU_MSCAO), e não os da PCH Bandeirante isolada. Peso da usina (28,0 MW) na potência das usinas do conjunto: 6,7% de 27/09/2019 a 30/06/2025 e 35,7% de 01/07/2025 a 20/10/2026; esse peso não estima a geração dela.
+**A usina no conjunto.** O ONS publica a geração, a programação e os demais dados de operação do conjunto Conj. Chapadão (CJU_MSCAO), e não os da PCH Bandeirante isolada. Peso da usina (28,0 MW) na potência das usinas do conjunto: 6,7% de 27/09/2019 a 30/06/2025 e 35,7% de 01/07/2025 a 27/10/2026; esse peso não estima a geração dela.
 
-Da usina isolada, o ONS publica só a ficha do cadastro (na capa), as unidades geradoras e a entrada no conjunto e, de 01/05/2026 a 20/10/2026, linhas próprias na Geração por usina, todas sem valor; não publica a geração, a disponibilidade nem os indicadores dela. Os dados de operação são os do conjunto, na seção 4, antes da conclusão. A geração da usina isolada consta da medição da CCEE e dos registros do agente, que este relatório não usa: ele se limita aos dados abertos do ONS.
+Da usina isolada, o ONS publica só a ficha do cadastro (na capa), as unidades geradoras e a entrada no conjunto e, de 01/05/2026 a 27/10/2026, linhas próprias na Geração por usina, todas sem valor; não publica a geração, a disponibilidade nem os indicadores dela. Os dados de operação são os do conjunto, na seção 4, antes da conclusão. A geração da usina isolada consta da medição da CCEE e dos registros do agente, que este relatório não usa: ele se limita aos dados abertos do ONS.
 
 ### Peso da usina na potência do conjunto, por composição
 
@@ -112,16 +112,16 @@ Da usina isolada, o ONS publica só a ficha do cadastro (na capa), as unidades g
 | --- | --- | --- | --- | --- | --- |
 | 1 | 22/08/2019 | 26/09/2019 | — | 344,8 | — |
 | 2 | 27/09/2019 | 30/06/2025 | 28,0 | 415,8 | 6,7% |
-| 3 | 01/07/2025 | 20/10/2026 | 28,0 | 78,5 | 35,7% |
+| 3 | 01/07/2025 | 27/10/2026 | 28,0 | 78,5 | 35,7% |
 
 Potência das unidades da usina em operação no trecho ÷ potência somada das usinas do conjunto com unidade cadastrada (Capacidade de geração); «—» = unidades da usina ainda fora de operação. É um fato do cadastro, não uma estimativa da geração da usina: a geração do conjunto não é dividida entre as usinas.
 
-Calculado neste relatório a partir de: Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026; Capacidade de geração (CEG das usinas do conjunto CJU_MSCAO), obtido em 22/10/2026.
+Calculado neste relatório a partir de: Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026; Capacidade de geração (CEG das usinas do conjunto CJU_MSCAO), obtido em 29/10/2026.
 
 
 ## 3. Qualidade dos dados
 
-**Qualidade dos dados.** Nenhuma hora sinalizada na base horária. A Geração por usina traz 4.152 linhas próprias da usina sem valor, de 01/05/2026 a 20/10/2026; a série usada é a do conjunto. O ONS publica a série do conjunto como TÉRMICA (Biomassa) de 01/07/2025 a 20/10/2026, quando a composição tem só PCH; o tipo das usinas vem do CEG.
+**Qualidade dos dados.** Nenhuma hora sinalizada na base horária. A Geração por usina traz 4.320 linhas próprias da usina sem valor, de 01/05/2026 a 27/10/2026; a série usada é a do conjunto. O ONS publica a série do conjunto como TÉRMICA (Biomassa) de 01/07/2025 a 27/10/2026, quando a composição tem só PCH; o tipo das usinas vem do CEG.
 
 ### Horas sinalizadas na base horária
 
@@ -135,16 +135,16 @@ Nenhuma hora sinalizada.
 
 Até 15 intervalos, os mais longos; nenhuma hora é preenchida. A lista completa está na planilha.
 
-Fonte dos dados: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026.
+Fonte dos dados: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026.
 
 
 ## 4. Operação do conjunto Conj. Chapadão (CJU_MSCAO)
 
-**Geração.** Geração média do conjunto Conj. Chapadão de 115,0 MWmed nas 62.064 horas com valor (7.135.437 MWh); geração até 1 MW em 0,0% das horas; entre os anos completos, maior média em 2020 (134,5 MWmed) e menor em 2025 (71,8 MWmed).
+**Geração.** Geração média do conjunto Conj. Chapadão de 114,7 MWmed nas 62.232 horas com valor (7.140.552 MWh); geração até 1 MW em 0,0% das horas; entre os anos completos, maior média em 2020 (134,5 MWmed) e menor em 2025 (71,8 MWmed).
 
-**Programação diária do ONS.** Nas 17.472 horas com programação e geração verificada do conjunto Conj. Chapadão, geração verificada média de 70,0 MW e programada de 69,3 MW (desvio médio absoluto de 10,8 MW; correlação de 0,92); 0 horas com geração até 1 MW e programação acima de 5 MW.
+**Programação diária do ONS.** Nas 17.640 horas com programação e geração verificada do conjunto Conj. Chapadão, geração verificada média de 69,6 MW e programada de 68,9 MW (desvio médio absoluto de 10,7 MW; correlação de 0,92); 0 horas com geração até 1 MW e programação acima de 5 MW.
 
-**Composição do conjunto.** O conjunto Conj. Chapadão (CJU_MSCAO) teve 3 composições no período: de 22/08/2019 a 26/09/2019, 8 usinas (PCH e UTE), geração média do conjunto de 167,6 MWmed; de 27/09/2019 a 30/06/2025, 9 usinas (PCH e UTE), geração média do conjunto de 129,7 MWmed; de 01/07/2025 a 20/10/2026, 4 usinas (PCH), geração média do conjunto de 47,0 MWmed. Os números são do conjunto, sem divisão entre as usinas.
+**Composição do conjunto.** O conjunto Conj. Chapadão (CJU_MSCAO) teve 3 composições no período: de 22/08/2019 a 26/09/2019, 8 usinas (PCH e UTE), geração média do conjunto de 167,6 MWmed; de 27/09/2019 a 30/06/2025, 9 usinas (PCH e UTE), geração média do conjunto de 129,7 MWmed; de 01/07/2025 a 27/10/2026, 4 usinas (PCH), geração média do conjunto de 46,8 MWmed. Os números são do conjunto, sem divisão entre as usinas.
 
 ### Indicadores anuais do conjunto
 
@@ -157,19 +157,19 @@ Fonte dos dados: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obt
 | 2023 | conjunto | 8.760 | 8.760 | 132,3 | 1.159.041 | 246,7 | 0 | 0,0% |
 | 2024 | conjunto | 8.784 | 8.784 | 123,6 | 1.086.117 | 197,2 | 0 | 0,0% |
 | 2025 | conjunto | 8.760 | 8.760 | 71,8 | 629.352 | 207,9 | 0 | 0,0% |
-| 2026* | conjunto | 7.032 | 7.032 | 51,0 | 358.675 | 73,9 | 0 | 0,0% |
+| 2026* | conjunto | 7.200 | 7.200 | 50,5 | 363.790 | 73,9 | 0 | 0,0% |
 
 \* Ano parcial. Geração média = média das horas com valor; horas até 1 MW = horas com geração até esse limiar, sobre as horas com valor. Nível: usina, ou conjunto de usinas quando o ONS publica só a soma do conjunto (decisão de não dividir os números do conjunto entre as usinas).
 
-Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026; parâmetros do projeto (origem na tabela de parâmetros). Sem outra fonte para conferir: geração.
+Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026; parâmetros do projeto (origem na tabela de parâmetros). Sem outra fonte para conferir: geração.
 
 ### Série temporal da geração do conjunto
 
 ![Operação do conjunto Conj. Chapadão (CJU_MSCAO)](figures/01_serie_temporal_geracao_disponibilidade.png)
 
-Médias diárias da geração, de 22/08/2019 a 20/10/2026. A série do conjunto Conj. Chapadão é a soma das usinas do conjunto, como o ONS publica.
+Médias diárias da geração, de 22/08/2019 a 27/10/2026. A série do conjunto Conj. Chapadão é a soma das usinas do conjunto, como o ONS publica.
 
-Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026. Sem outra fonte para conferir: geração.
+Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026. Sem outra fonte para conferir: geração.
 
 ### Geração mensal e sazonalidade do conjunto
 
@@ -177,13 +177,13 @@ Calculado neste relatório a partir de: Geração por usina (conjunto de usinas,
 
 Energia gerada em cada mês (GWh), pela soma das horas com valor. Maior energia mensal: 141,7 GWh em out/2019. A série do conjunto Conj. Chapadão é a soma das usinas do conjunto, como o ONS publica.
 
-Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026. Sem outra fonte para conferir: geração.
+Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026. Sem outra fonte para conferir: geração.
 
 ![Operação do conjunto Conj. Chapadão (CJU_MSCAO)](figures/03_geracao_por_mes_do_ano.png)
 
 Geração média por mês do ano, só com a série de pelo menos 12 meses distintos; cada barra junta os anos do período com aquele mês. A série do conjunto Conj. Chapadão é a soma das usinas do conjunto, como o ONS publica.
 
-Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026. Sem outra fonte para conferir: geração.
+Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026. Sem outra fonte para conferir: geração.
 
 ### Perfil horário da geração do conjunto
 
@@ -191,7 +191,7 @@ Calculado neste relatório a partir de: Geração por usina (conjunto de usinas,
 
 Geração média por hora do dia, no período, sobre as horas com valor. A série do conjunto Conj. Chapadão é a soma das usinas do conjunto, como o ONS publica.
 
-Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026. Sem outra fonte para conferir: geração.
+Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026. Sem outra fonte para conferir: geração.
 
 ### Geração do conjunto Conj. Chapadão (CJU_MSCAO) por trecho de composição
 
@@ -199,17 +199,17 @@ Calculado neste relatório a partir de: Geração por usina (conjunto de usinas,
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 22/08/2019 00h | 26/09/2019 23h | 8 | PCH, UTE | 864 | 144.781 | 167,6 | 204,5 | 344,8 |
 | 2 | 27/09/2019 00h | 30/06/2025 23h | 9 | PCH, UTE | 49.752 | 6.452.545 | 129,7 | 246,7 | 415,8 |
-| 3 | 01/07/2025 00h | 20/10/2026 23h | 4 | PCH | 11.448 | 538.110 | 47,0 | 184,3 | 78,5 |
+| 3 | 01/07/2025 00h | 27/10/2026 23h | 4 | PCH | 11.616 | 543.226 | 46,8 | 184,3 | 78,5 |
 
 Trecho novo a cada mudança da composição do conjunto (Composição dos conjuntos); horas e médias da série do conjunto, sem divisão entre as usinas; potência somada = soma das unidades da Capacidade de geração em operação em algum momento do trecho, das usinas com unidade cadastrada (as demais aparecem com «—» na composição).
 
-Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026; Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026; Capacidade de geração (CEG das usinas do conjunto CJU_MSCAO), obtido em 22/10/2026. Sem outra fonte para conferir: geração.
+Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026; Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026; Capacidade de geração (CEG das usinas do conjunto CJU_MSCAO), obtido em 29/10/2026. Sem outra fonte para conferir: geração.
 
 ![Operação do conjunto Conj. Chapadão (CJU_MSCAO)](figures/14_geracao_do_conjunto_por_trecho.png)
 
 Geração média mensal do conjunto Conj. Chapadão (CJU_MSCAO) (MWmed), uma cor por trecho de composição; linhas verticais nas mudanças de composição. Linhas tracejadas: potência somada das usinas de cada trecho (unidades em operação). Os números são do conjunto, como o ONS publica.
 
-Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026; Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026; Capacidade de geração (CEG das usinas do conjunto CJU_MSCAO), obtido em 22/10/2026. Sem outra fonte para conferir: geração.
+Calculado neste relatório a partir de: Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026; Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026; Capacidade de geração (CEG das usinas do conjunto CJU_MSCAO), obtido em 29/10/2026. Sem outra fonte para conferir: geração.
 
 ### Usinas da composição no período
 
@@ -227,11 +227,11 @@ Calculado neste relatório a partir de: Geração por usina (conjunto de usinas,
 
 Entrada e saída da usina no conjunto, como o ONS publica na Composição dos conjuntos; tipo pelo prefixo do CEG; potência = maior soma das unidades em operação num trecho em que a usina está no conjunto.
 
-Calculado neste relatório a partir de: Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026; Capacidade de geração (CEG das usinas do conjunto CJU_MSCAO), obtido em 22/10/2026.
+Calculado neste relatório a partir de: Composição dos conjuntos de usinas (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026; Capacidade de geração (CEG das usinas do conjunto CJU_MSCAO), obtido em 29/10/2026.
 
 ### Programação diária × geração verificada do conjunto
 
-Programação diária do ONS (conjunto) × geração verificada, de 01/10/2024 a 20/10/2026: 17.472 horas comuns; correlação de 0,92; 20 dias sem arquivo de programação.
+Programação diária do ONS (conjunto) × geração verificada, de 01/10/2024 a 27/10/2026: 17.640 horas comuns; correlação de 0,92; 20 dias sem arquivo de programação.
 
 ### Geração programada × verificada por mês
 
@@ -240,14 +240,14 @@ Programação diária do ONS (conjunto) × geração verificada, de 01/10/2024 a
 | out/2024 | 744 | 141,6 | 146,0 | -4,5 | 16,4 | 0 |
 | nov/2024 | 720 | 151,5 | 152,7 | -1,2 | 18,9 | 0 |
 | dez/2024 | 744 | 67,0 | 86,2 | -19,2 | 25,2 | 0 |
-| jan/2025 | 744 | 55,5 | 55,5 | -0,0 | 6,1 | 0 |
+| jan/2025 | 744 | 55,5 | 55,5 | 0,0 | 6,1 | 0 |
 | fev/2025 | 672 | 59,5 | 59,0 | 0,5 | 7,8 | 0 |
 | mar/2025 | 720 | 56,3 | 53,5 | 2,8 | 7,6 | 0 |
 | abr/2025 | 720 | 103,4 | 87,9 | 15,5 | 20,2 | 0 |
 | mai/2025 | 744 | 172,0 | 162,9 | 9,1 | 22,3 | 0 |
 | jun/2025 | 696 | 172,2 | 172,6 | -0,3 | 19,1 | 0 |
 | jul/2025 | 696 | 45,5 | 67,8 | -22,3 | 25,7 | 0 |
-| ago/2025 | 720 | 41,1 | 41,1 | -0,0 | 2,2 | 0 |
+| ago/2025 | 720 | 41,1 | 41,1 | 0,0 | 2,2 | 0 |
 | set/2025 | 720 | 34,0 | 36,0 | -2,1 | 3,0 | 0 |
 | out/2025 | 744 | 37,4 | 35,8 | 1,6 | 5,7 | 0 |
 | nov/2025 | 648 | 42,0 | 41,4 | 0,5 | 4,9 | 0 |
@@ -261,11 +261,11 @@ Programação diária do ONS (conjunto) × geração verificada, de 01/10/2024 a
 | jul/2026 | 744 | 59,5 | 60,0 | -0,5 | 0,5 | 0 |
 | ago/2026 | 744 | 39,3 | 47,2 | -7,9 | 8,6 | 0 |
 | set/2026 | 720 | 25,5 | 25,6 | -0,1 | 2,7 | 0 |
-| out/2026 | 480 | 33,7 | 30,2 | 3,5 | 7,7 | 0 |
+| out/2026 | 648 | 32,9 | 30,7 | 2,1 | 7,0 | 0 |
 
 Horas comuns às duas fontes, no mesmo nível. Desvio = verificada − programada; horas parada c/ programação = geração até 1 MW com programação acima de 5 MW.
 
-Calculado neste relatório a partir de: Programação diária (conjunto de usinas, MSCAO-9761; MSCAO-9762; MSCAO-9763; MSCAO-9766; MSCAO-10205; MSCAO-9764; MSCAO-9765; MSCAO-9784), obtido em 20/10/2026; Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 22/10/2026. Sem outra fonte para conferir: programação diária, geração.
+Calculado neste relatório a partir de: Programação diária (conjunto de usinas, MSCAO-9761; MSCAO-9762; MSCAO-9763; MSCAO-9766; MSCAO-10205; MSCAO-9764; MSCAO-9765; MSCAO-9784), obtido em 29/10/2026; Geração por usina (conjunto de usinas, id ONS CJU_MSCAO), obtido em 29/10/2026. Sem outra fonte para conferir: programação diária, geração.
 
 
 ## 5. Conclusão

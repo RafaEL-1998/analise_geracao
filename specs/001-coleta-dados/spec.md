@@ -125,7 +125,7 @@ Como fiscal, quero informar a usina por um perfil com o tipo, a modalidade, os i
 **Acceptance Scenarios**:
 
 1. **Given** um perfil válido (perfil da São Domingos), **When** um comando com `--usina sao_domingos` é executado, **Then** o perfil é aceito e a etapa segue.
-2. **Given** o perfil de uma UHE sem `parametros.garantia_fisica_mwmed`, **When** qualquer comando com `--usina` começa, **Then** ele termina com código 4 antes da coleta, sem gravar nada, e a mensagem cita o campo.
+2. **Given** o perfil de uma UHE sem `[cobertura]` (com a EVT, como a São Domingos) e sem `parametros.garantia_fisica_mwmed`, **When** qualquer comando com `--usina` começa, **Then** ele termina com código 4 antes da coleta, sem gravar nada, e a mensagem cita o campo.
 3. **Given** um perfil em que a potência unitária vezes o número de unidades geradoras difere da potência instalada em mais de 0,1 MW, **When** o comando começa, **Then** o perfil é recusado com código 4, e a mensagem cita a incoerência.
 4. **Given** um perfil com vários problemas, **When** o comando começa, **Then** a mensagem lista todos de uma vez, um por linha.
 5. **Given** um slug sem pasta em `usinas/`, ou diferente do `usina.slug` do perfil, **When** o comando começa, **Then** o perfil é recusado com código 4.
@@ -321,7 +321,7 @@ As FR-001 a FR-015 e a FR-056 são regras comuns às cinco etapas. As specs das 
   | Comando | 0 | 1 | 2 | 4 | 5 | 6 |
   |---|---|---|---|---|---|---|
   | `usinas` | catálogo montado e listado, inclusive com o filtro vazio | erro, inclusive o catálogo do ONS inacessível | opção inválida; Modalidade das usinas, Composição dos conjuntos, Capacidade de geração ou Reservatórios não obtido | — | — | — |
-  | `perfil` | rascunho gravado, ou perfil existente igual ao catálogo | erro, inclusive o perfil existente ilegível | opção inválida, inclusive o slug; CEG fora do catálogo; tipo fora dos sete; usina Tipo III ou só com agregado | — | catálogo ausente ou em formato antigo | perfil existente com diferenças |
+  | `perfil` | rascunho gravado, ou perfil existente igual ao catálogo | erro, inclusive o perfil existente ilegível | opção inválida, inclusive o slug; CEG fora do catálogo; tipo fora dos sete; usina Tipo III, só com agregado ou sem série de referência | — | catálogo ausente ou em formato antigo | perfil existente com diferenças |
   | `carteira` | carteira gerada | erro | opção inválida, inclusive sem `--estado` nem `--tipo` | — | catálogo ausente, ou nenhuma usina do recorte com as Análises concluídas | — |
   | `referencia` | referência registrada | erro; relatório gerado com outra data; referência atual não commitada; falha na gravação ou na conferência | opção inválida | perfil inválido | relatório ou Coleta da usina ausente ou não concluída | — |
   | `comparar --todas` | nenhuma diferença | erro, inclusive sem referências ou com a Coleta congelada ausente | opção inválida | — | — | alguma diferença |
@@ -375,21 +375,21 @@ As FR-001 a FR-015 e a FR-056 são regras comuns às cinco etapas. As specs das 
   | Campo | UHE | PCH e CGH | UTE e UTN | EOL e UFV |
   |---|---|---|---|---|
   | `identificacao.id_ons` | O | C: `proprio` na geração ou na disponibilidade | O | C: `proprio` na geração, no fator de capacidade ou nas restrições |
-  | `identificacao.cod_usina`, `identificacao.nome_ons` | O | C: EVT ou hidrologia | — | — |
-  | `identificacao.id_reservatorio` | O | C: hidrologia | — | — |
+  | `identificacao.cod_usina`, `identificacao.nome_ons` | O sem a `[cobertura]`; C: EVT ou hidrologia | C: EVT ou hidrologia | — | — |
+  | `identificacao.id_reservatorio` | O sem a `[cobertura]`; C: hidrologia | C: hidrologia | — | — |
   | `identificacao.id_conjunto` | — | C: `conjunto` na geração, no fator de capacidade ou na razão da restrição | idem | idem |
   | `[[identificacao.planejamento]]` | — | — | C: despacho ou CVU (FR-056) | — |
   | `[[identificacao.membros]]` | — | opcional | — | opcional |
   | `usina.subsistema` | opcional | opcional | C: CVU (FR-056) | opcional |
   | `[cobertura]` | opcional; sem ela, os dez conjuntos da UHE (FR-016) | O | O | O |
-  | `parametros.tipo_turbina`, `engolimento_nominal_ug_m3s`, `queda_bruta_m`, `perda_hidraulica_m`, `rendimento_turbina_gerador`, `vazao_remanescente_m3s` | O | C: EVT ou hidrologia | — | — |
-  | `parametros.garantia_fisica_mwmed` | O | opcional | opcional | opcional |
-  | `parametros.ip_referencia`, `parametros.teif_referencia` | O | opcional | opcional | — |
+  | `parametros.tipo_turbina`, `engolimento_nominal_ug_m3s`, `queda_bruta_m`, `perda_hidraulica_m`, `rendimento_turbina_gerador`, `vazao_remanescente_m3s` | O sem a `[cobertura]`; C: EVT ou hidrologia | C: EVT ou hidrologia | — | — |
+  | `parametros.garantia_fisica_mwmed` | O sem a `[cobertura]`; C: EVT | opcional | opcional | opcional |
+  | `parametros.ip_referencia`, `parametros.teif_referencia` | O sem a `[cobertura]`; C: EVT | opcional | opcional | — |
   | `parametros.combustivel` | — | — | O | — |
-  | `[analises]` (`vertimento_minimo_m3s`, `faixas_geracao_mw`) | O | C: EVT | — | — |
+  | `[analises]` (`vertimento_minimo_m3s`, `faixas_geracao_mw`) | O sem a `[cobertura]`; C: EVT | C: EVT | — | — |
   | textos opcionais (tabela seguinte) | opcional | opcional | opcional | opcional |
 
-  O perfil da São Domingos ganha só `usina.tipo = "UHE"` e `usina.modalidade = "TIPO II-A"`; na UHE, os demais campos e regras não mudam.
+  O perfil da São Domingos ganha só `usina.tipo = "UHE"` e `usina.modalidade = "TIPO II-A"`. Na UHE sem `[cobertura]` (a de hoje, com a EVT), os demais campos e regras não mudam: todo campo `C` é obrigatório. Na UHE com a `[cobertura]`, os campos da trilha da EVT seguem a cobertura, como na PCH e na CGH: sem a EVT, a garantia física, o IP e o TEIF de referência e o `[analises]` não são exigidos, e os parâmetros hidráulicos, só com a hidrologia.
 
   Os campos de texto desta tabela são opcionais e, quando presentes, NÃO DEVEM estar vazios. Eles levam ao relatório os trechos próprios da usina; sem um deles, o relatório omite o trecho correspondente (spec da Geração do relatório):
 
@@ -654,7 +654,7 @@ As FR-001 a FR-015 e a FR-056 são regras comuns às cinco etapas. As specs das 
 
   Junto, o identificador usado, as linhas, as linhas sem valor, o arquivo e a data de publicação verificados. A verificação usa o arquivo mais recente de cada conjunto de série e sempre os códigos, nunca o nome: o CEG nos indicadores e no despacho; o id ONS na disponibilidade, na geração, no fator de capacidade e nas restrições; o id do conjunto na geração, no fator de capacidade e na razão da restrição; o `cod_usina` dos Reservatórios na EVT e nos dados hidrológicos (sem linha nos Reservatórios, `ausente`); na programação, os códigos ligados à usina ou ao conjunto presentes no arquivo; no CVU, os códigos de planejamento do CEG presentes no último mês do despacho. A restrição com detalhe só tem o nível da usina. `usinas.csv` traz o melhor nível da usina em `cobertura_resumo`.
 - **FR-053** (rascunho do perfil): O comando `python -m src perfil --ceg <CEG> [--slug <slug>]` DEVE ler só `data/catalogo/`, sem acessar o portal, sem ler os brutos e sem executar etapa, e:
-  - recusar, sem gravar: o slug fora do padrão ou `carteiras` (código 2); o catálogo ausente ou em formato antigo (código 5); o CEG fora do catálogo (código 2); o tipo fora dos sete (código 2); a usina Tipo III, ou só com cobertura agregada ou ausente, com a mensagem que indica o panorama da carteira do estado (código 2);
+  - recusar, sem gravar: o slug fora do padrão ou `carteiras` (código 2); o catálogo ausente ou em formato antigo (código 5); o CEG fora do catálogo (código 2); o tipo fora dos sete (código 2); a usina Tipo III, ou só com cobertura agregada ou ausente, com a mensagem que indica o panorama da carteira do estado (código 2); a usina sem a série de referência da Coleta (FR-054), pela mesma regra que a Coleta aplica ao perfil, com a mensagem que diz os conjuntos de série que o catálogo encontra e que ela não tem relatório individual (código 2);
   - com perfil existente, na pasta do slug ou em outra com o mesmo CEG, nunca sobrescrever: só mostrar as diferenças entre o perfil e o catálogo (tipo, modalidade, estado, CEG, os identificadores que o perfil traz, os códigos de programação, nas térmicas o subsistema e os códigos de planejamento, e a `[cobertura]`, inclusive as chaves que o perfil não tem) e sair com 6, ou com 0 sem diferença;
   - gravar o rascunho, com o slug informado ou derivado do nome da usina (sem acento, em minúsculas e com `_`), `situacao = "rascunho"`, a lista `pendentes` e a origem de cada valor em comentário (`contracts/perfil-usina.md`, seção "Rascunho"), com:
     - os identificadores (CEG, id ONS quando há e id do conjunto) e o subsistema; nas hidrelétricas com linha nos Reservatórios, `cod_usina`, `nome_ons` (o nome do reservatório, sem acento e em maiúsculas) e `id_reservatorio`;
@@ -842,6 +842,8 @@ As FR-001 a FR-015 e a FR-056 são regras comuns às cinco etapas. As specs das 
 | 22/10/2026 | Aprovados: os códigos de programação de todo o período no catálogo e no rascunho, com o primeiro e o último dia de cada um; o tipo publicado da série do conjunto, por trecho; o período das linhas próprias sem valor no resumo. | FR-048; FR-051; FR-053; FR-061 |
 | 22/10/2026 | A geração da usina pela CCEE (dados abertos, com download manual) fica como proposta para uma avaliação futura, que pede mudança do princípio IV da constituição; a Coleta continua só com o portal do ONS. | Assumptions |
 | 23/10/2026 | Coletar o conjunto Taxas TEIFa Oper e TEIP Oper (`taxa_teif_teip_oper`), nas mesmas regras das taxas oficiais: arquivo único, extração pelo CEG, manifesto, versões anteriores e dicionários (aprovado pelo usuário). | FR-042 |
+| 26/10/2026 | O comando `perfil` recusa (código 2) a usina sem a série de referência da Coleta, pela mesma regra (uma função só, usada pelo rascunho e pela Coleta), em vez de gravar um rascunho que a Coleta recusaria; a coluna da série de referência no catálogo fica para a ligação dos códigos de programação (avaliação de bug `rascunho-sem-serie-referencia`, homologação de 26/10/2026; aprovado pelo usuário). | FR-053 |
+| 26/10/2026 | Na UHE com a `[cobertura]`, os campos da trilha da EVT seguem a cobertura, como na PCH e na CGH: garantia física, IP e TEIF de referência e `[analises]` obrigatórios só com a EVT (opcionais sem ela); parâmetros hidráulicos, `cod_usina` e `nome_ons` com a EVT ou a hidrologia; `id_reservatorio` com a hidrologia. A UHE sem `[cobertura]` (São Domingos) não muda (avaliação de bug `uhe-sem-evt-campos-evt`, homologação de 26/10/2026; aprovado pelo usuário). | perfil, campos da UHE |
 | 26/10/2026 | O código de programação deixa de ser obrigatório na usina com a Programação diária `ausente` na cobertura; um código informado nesse caso é aceito e não é usado (avaliação de bug `programacao-sem-cobertura`, homologação de 26/10/2026; aprovado pelo usuário). | perfil, `identificacao.cod_programacao` |
 
 ---

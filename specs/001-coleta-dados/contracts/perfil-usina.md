@@ -41,9 +41,9 @@ Exigência por tipo, nas colunas de cada tabela: `O` = obrigatório; `C` = obrig
 |---|---|---|---|---|---|---|---|
 | `ceg` | texto | O | O | O | O | `<UHE\|PCH\|CGH\|UTE\|UTN\|EOL\|UFV>.<2 letras>.<UF>.<6 algarismos>-<1 algarismo>.<2 algarismos>` | identificador nos indicadores, nas taxas, no cadastro, no despacho e na Capacidade de geração; conferência na disponibilidade, na geração, no fator de capacidade e nas restrições da usina |
 | `id_ons` | texto | O | C: `proprio` na geração ou na disponibilidade | O | C: `proprio` na geração, no fator de capacidade ou nas restrições | não vazio | identificador na disponibilidade, na geração, no fator de capacidade e nas restrições da usina; conferência nos indicadores por UG e no cadastro |
-| `cod_usina` | inteiro | O | C: EVT ou hidrologia | — | — | > 0 | identificador na EVT e nos Dados hidrológicos horários |
-| `nome_ons` | texto | O | C: EVT ou hidrologia | — | — | maiúsculas sem acento: letras, algarismos, espaço, `.`, `-` e `/` | conferência ("contém") na EVT, na hidrologia e na programação; homônimos no cadastro |
-| `id_reservatorio` | texto | O | C: hidrologia | — | — | não vazio | conferência nos Dados hidrológicos horários |
+| `cod_usina` | inteiro | O sem a `[cobertura]`; C: EVT ou hidrologia | C: EVT ou hidrologia | — | — | > 0 | identificador na EVT e nos Dados hidrológicos horários |
+| `nome_ons` | texto | O sem a `[cobertura]`; C: EVT ou hidrologia | C: EVT ou hidrologia | — | — | maiúsculas sem acento: letras, algarismos, espaço, `.`, `-` e `/` | conferência ("contém") na EVT, na hidrologia e na programação; homônimos no cadastro |
+| `id_reservatorio` | texto | O sem a `[cobertura]`; C: hidrologia | C: hidrologia | — | — | não vazio | conferência nos Dados hidrológicos horários |
 | `cod_programacao` ou `codigos_programacao` | texto ou lista de texto | O sem a `[cobertura]`; C: programação | C: programação | C: programação | C: programação | um dos dois, nunca os dois; a lista não vazia; com a programação `ausente`, aceito e não usado | identificador na Programação diária (código de exibição); a lista quando a usina ou o conjunto é programado em mais de um código, um por barra |
 | `id_conjunto` | texto | — | C: `conjunto` na geração, no fator de capacidade ou na razão da restrição | idem | idem | não vazio | identificador da série do conjunto na geração, no fator de capacidade e na razão da restrição; composição do conjunto |
 
@@ -86,15 +86,15 @@ Uma chave por conjunto de série do registro que serve ao tipo ([data-model](../
 | `potencia_instalada_mw` | real | O | O | O | O | > 0; em EOL e UFV, é a capacidade instalada | análises, relatório, limites físicos e conferência do cadastro |
 | `unidades_geradoras` | inteiro | O | O | O | O | ≥ 1 | engolimento máximo, faixas de afluência, relatório |
 | `potencia_unitaria_mw` ou `potencias_unidades_mw` | real ou lista de reais | O (só a unitária) | O | O | O | um dos dois, nunca os dois; a lista com um valor > 0 por unidade; a soma das unidades igual à potência instalada, com tolerância de 0,1 MW | indicadores por UG e relatório |
-| `tipo_turbina` | texto | O | C: EVT ou hidrologia | — | — | não vazio | tabela de parâmetros e textos do relatório |
-| `engolimento_nominal_ug_m3s` | real | O | C: EVT ou hidrologia | — | — | > 0 | engolimento máximo e faixas de afluência |
-| `garantia_fisica_mwmed` | real | O | opcional | opcional | opcional | > 0 e ≤ `potencia_instalada_mw` | análises, conclusão e relatório |
-| `ip_referencia` | real | O | opcional | opcional | — | ≥ 0 e < 1 | disponibilidade de referência; análises e relatório |
-| `teif_referencia` | real | O | opcional | opcional | — | ≥ 0 e < 1 | disponibilidade de referência; análises e relatório |
-| `queda_bruta_m` | real | O | C: EVT ou hidrologia | — | — | > 0 | produtividade nominal (validação física) e tabela de parâmetros |
-| `perda_hidraulica_m` | real | O | C: EVT ou hidrologia | — | — | ≥ 0 e < `queda_bruta_m` | idem |
-| `rendimento_turbina_gerador` | real | O | C: EVT ou hidrologia | — | — | > 0 e ≤ 1 | idem |
-| `vazao_remanescente_m3s` | real | O | C: EVT ou hidrologia | — | — | ≥ 0 | tabela de parâmetros e notas |
+| `tipo_turbina` | texto | O sem a `[cobertura]`; C: EVT ou hidrologia | C: EVT ou hidrologia | — | — | não vazio | tabela de parâmetros e textos do relatório |
+| `engolimento_nominal_ug_m3s` | real | O sem a `[cobertura]`; C: EVT ou hidrologia | C: EVT ou hidrologia | — | — | > 0 | engolimento máximo e faixas de afluência |
+| `garantia_fisica_mwmed` | real | O sem a `[cobertura]`; C: EVT | opcional | opcional | opcional | > 0 e ≤ `potencia_instalada_mw` | análises, conclusão e relatório |
+| `ip_referencia` | real | O sem a `[cobertura]`; C: EVT | opcional | opcional | — | ≥ 0 e < 1 | disponibilidade de referência; análises e relatório |
+| `teif_referencia` | real | O sem a `[cobertura]`; C: EVT | opcional | opcional | — | ≥ 0 e < 1 | disponibilidade de referência; análises e relatório |
+| `queda_bruta_m` | real | O sem a `[cobertura]`; C: EVT ou hidrologia | C: EVT ou hidrologia | — | — | > 0 | produtividade nominal (validação física) e tabela de parâmetros |
+| `perda_hidraulica_m` | real | O sem a `[cobertura]`; C: EVT ou hidrologia | C: EVT ou hidrologia | — | — | ≥ 0 e < `queda_bruta_m` | idem |
+| `rendimento_turbina_gerador` | real | O sem a `[cobertura]`; C: EVT ou hidrologia | C: EVT ou hidrologia | — | — | > 0 e ≤ 1 | idem |
+| `vazao_remanescente_m3s` | real | O sem a `[cobertura]`; C: EVT ou hidrologia | C: EVT ou hidrologia | — | — | ≥ 0 | tabela de parâmetros e notas |
 | `combustivel` | texto | — | — | O | — | não vazio | tabela de parâmetros e seções de térmica |
 
 ### `[parametros.fontes]`
@@ -108,7 +108,7 @@ Uma chave por conjunto de série do registro que serve ao tipo ([data-model](../
 
 ### `[analises]`
 
-Exigida na UHE e, na PCH e na CGH, com a EVT na `[cobertura]`; não se aplica a UTE, UTN, EOL e UFV.
+Exigida na UHE sem `[cobertura]` e, na UHE, na PCH e na CGH, com a EVT na `[cobertura]`; não se aplica a UTE, UTN, EOL e UFV.
 
 | Campo | Tipo | Obrigatório | Validação | Uso |
 |---|---|---|---|---|

@@ -400,3 +400,16 @@ def test_notas_com_omissoes_niveis_e_nao_aplicaveis(sem_evt_gerados, df_base: pd
     md_uhe, _ = _md(_completo(df_base), df_base, tmp_path)
     assert "Granularidade" not in md_uhe and "Seções e regras sem base" not in md_uhe
     assert "Conferências que não se aplicam" not in md_uhe
+
+
+def test_granularidade_com_a_geracao_da_usina_e_a_programacao_do_conjunto(sem_evt_gerados) -> None:
+    """Bug nota-granularidade-conjunto: a nota cita a Programação diária do conjunto, com os códigos, e não diz que a
+    geração é do conjunto (homologação de 26/10/2026: PCH Dreher e Kotzian, UTE Eldorado e Santa Luzia I)."""
+    from src.relatorio.comum import notas
+
+    res = _resultados_sem_evt(sem_evt_gerados["ute_beta"])
+    res.niveis["programacao"] = {"nivel": "conjunto", "identificador": "GOCJU-1; GOCJU-2"}
+    texto = next(n for n in notas(res) if n.startswith("Granularidade"))
+    assert texto.startswith("Granularidade: a geração é a da própria usina, mas o ONS publica a Programação diária "
+                            "(GOCJU-1; GOCJU-2) do conjunto, e não da usina isolada.")
+    assert "publica a geração do conjunto" not in texto and "()" not in texto

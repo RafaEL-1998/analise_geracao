@@ -349,13 +349,13 @@ Como fiscal, quero que toda regravação de um dado tratado guarde antes a vers�
 
 **Indicadores por unidade geradora e taxas (US5)**
 
-- **FR-021**: Os indicadores mensais e anuais por unidade geradora DEVEM ter uma linha por mês de referência (ou ano) e unidade, com o código do equipamento, a potência, DISPF, INDISPPF, INDISPFF, DMDFF, FDFF e TDFF, o id da usina, o agente, a modalidade e o arquivo de origem; os valores numéricos são convertidos com a vírgula decimal aceita. Quando o mesmo mês (ou ano) e unidade aparecer mais de uma vez, DEVE ficar a linha do arquivo lido por último, na ordem dos nomes dos arquivos, com aviso no log.
-- **FR-022**: As horas por estado operativo DEVEM ter uma linha por mês e unidade, com HP, HS, HRD, HDP, HDF, HDCE, HEDP e HEDF. Para cada mês, unidade e estado, DEVE ficar o valor de maior número de versão. A unidade é o número no fim do nome da unidade publicado. A linha DEVE trazer também:
+- **FR-021**: Os indicadores mensais e anuais por unidade geradora DEVEM ter uma linha por mês de referência (ou ano) e unidade, com o código do equipamento, a potência, DISPF, INDISPPF, INDISPFF, DMDFF, FDFF e TDFF, o id da usina, o agente, a modalidade e o arquivo de origem; os valores numéricos são convertidos com a vírgula decimal aceita. A unidade DEVE ser o rótulo que o ONS publica (`num_unidadegeradora`). Ela é inteira quando todos os rótulos da usina são só algarismos. Quando algum tem letra, ela DEVE ser texto, nas três tabelas por unidade: por exemplo, no ciclo combinado, "1A", "1B" e "1C". A linha sem rótulo DEVE ficar com a unidade vazia, com aviso no log. Quando o mesmo mês (ou ano) e unidade aparecer mais de uma vez, DEVE ficar a linha do arquivo lido por último, na ordem dos nomes dos arquivos, com aviso no log.
+- **FR-022**: As horas por estado operativo DEVEM ter uma linha por mês e unidade, com HP, HS, HRD, HDP, HDF, HDCE, HEDP e HEDF. Para cada mês, unidade e estado, DEVE ficar o valor de maior número de versão. A unidade é o rótulo no fim do nome da unidade publicado (o último termo antes da sigla do estado), com a mesma regra do FR-021, para que as duas bases se juntem por mês e unidade. A linha DEVE trazer também:
   - o maior número de versão usado;
   - o resíduo da identidade das horas: HP menos a soma das demais parcelas; resíduo acima de 0,1 h, em valor absoluto, DEVE ser avisado no log, sem excluir o mês-unidade;
   - a potência da unidade, tirada dos indicadores mensais do mesmo mês.
 - **FR-023**: A TEIFa e a TEIP mensais DEVEM manter, para cada mês e taxa, o valor de maior número de versão, como fração de 0 a 1, com o número de versão e a data do cálculo.
-- **FR-024**: As tabelas mensais DEVEM manter só os meses do mês inicial ao mês final do período de referência, e a anual, só os anos do ano inicial ao final. As tabelas ficam em ordem de mês (ou ano) e unidade.
+- **FR-024**: As tabelas mensais DEVEM manter só os meses do mês inicial ao mês final do período de referência, e a anual, só os anos do ano inicial ao final. As tabelas ficam em ordem de mês (ou ano) e unidade; a unidade, na ordem natural do rótulo (2 antes de 10, 1A antes de 1B e de 2A).
 - **FR-025**: A planilha `indicadores.xlsx` DEVE reunir as tabelas tratadas nas abas `UG_MENSAL`, `UG_ANUAL`, `HORAS_ESTADO_UG_MENSAL`, `TEIFA_TEIP_MENSAL` e `SIGLAS_HORAS` (sigla e descrição de cada estado operativo), nesta ordem, com cabeçalho congelado. O recálculo da TEIFa e da TEIP e as divergências entre DISPF e horas ficam com a Conferência; a auditoria dos arquivos, com a Coleta.
 
 **Programação diária (US5)**
@@ -541,6 +541,8 @@ A usina em conjunto sem série própria (PCH, CGH, EOL ou UFV) tem a série de r
 | 21/10/2026 | Estimativa ausente: geração estimada 0 com a verificada acima de 1 MW é estimativa que o ONS não calculou; sinalizada, contada, fora dos totais e das médias da estimada, e sem energia cortada na semi-hora restrita | FR-042 |
 | 21/10/2026 | Limite físico do recurso (vento acima de 40 m/s, irradiância acima de 1.500 W/m²): falha de medição sem a marca do ONS, tirada do recurso × geração pelas Análises; no Tratamento, o valor fica como publicado | FR-041, casos de borda |
 | 23/10/2026 | As taxas operativas entram na tabela mensal das taxas, ao lado das oficiais, uma linha por mês (aprovado pelo usuário). | FR-045 |
+| 29/10/2026 | Unidade com letra no nome (ciclo combinado da UTE Três Lagoas; achado 10 da homologação): a unidade passa a ser o rótulo publicado. Ela continua inteira quando todos os rótulos da usina são só algarismos, de modo que nenhuma referência muda, e é texto quando algum tem letra. A ordem é a natural. Aprovado pelo usuário: "siga com suas recomendações" | FR-021, FR-022, FR-024 |
+| 29/10/2026 | Na verificação da correção, a UHE Santa Branca publica "UG1" e "UG2" nos parâmetros das taxas até 2025 e "1" e "2" nos indicadores: "UG" seguido só de algarismos passa a valer o número, para as duas bases se juntarem. Aprovado pelo usuário: "vamos com suas recomendações" | FR-022 |
 
 ---
 

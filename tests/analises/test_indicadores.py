@@ -18,14 +18,15 @@ def _conferencias(ind: IndicadoresONS) -> dict:
     return {"dispf_horas": conferencia_dispf_horas(ind), "teifa_teip": conferencia_teifa_teip(ind)}
 
 
-def _horas_sinteticas() -> pd.DataFrame:
+def _horas_sinteticas(rotulos: tuple = (1, 2)) -> pd.DataFrame:
+    ug1, ug2 = rotulos
     linhas = []
     for mes in pd.date_range("2019-03-01", "2024-02-01", freq="MS"):
         hp = mes.days_in_month * 24.0
         # UG1: 6 h programadas e 4 h forçadas por mês; UG2: 20 h equivalentes de limitação forçada e 50 h em reserva
-        linhas.append({"mes": mes, "ug": 1, "HP": hp, "HS": hp - 10, "HRD": 0.0, "HDP": 6.0, "HDF": 4.0,
+        linhas.append({"mes": mes, "ug": ug1, "HP": hp, "HS": hp - 10, "HRD": 0.0, "HDP": 6.0, "HDF": 4.0,
                        "HDCE": 0.0, "HEDP": 0.0, "HEDF": 0.0})
-        linhas.append({"mes": mes, "ug": 2, "HP": hp, "HS": hp - 70, "HRD": 50.0, "HDP": 0.0, "HDF": 0.0,
+        linhas.append({"mes": mes, "ug": ug2, "HP": hp, "HS": hp - 70, "HRD": 50.0, "HDP": 0.0, "HDF": 0.0,
                        "HDCE": 0.0, "HEDP": 0.0, "HEDF": 20.0})
     h = pd.DataFrame(linhas)
     h["num_versao"] = 1.0
@@ -34,19 +35,20 @@ def _horas_sinteticas() -> pd.DataFrame:
     return h
 
 
-def _indicadores_sinteticos() -> IndicadoresONS:
-    horas = _horas_sinteticas()
+def _indicadores_sinteticos(rotulos: tuple = (1, 2)) -> IndicadoresONS:
+    """Duas unidades; ``rotulos``: como o ONS as identifica (1 e 2, ou com letra, como '2A' e '10A')."""
+    horas = _horas_sinteticas(rotulos)
     h = horas[horas["mes"] >= "2023-11-01"]
     mensal = h[["mes", "ug", "HP", "HDP", "HDF"]].copy()
     mensal["indisppf"] = mensal["HDP"] / mensal["HP"] * 100
     mensal["indispff"] = mensal["HDF"] / mensal["HP"] * 100
     # jan/2024, UG2: as 50 h de reserva aparecem como indisponibilidade programada no DISPF
-    sel = (mensal["mes"] == "2024-01-01") & (mensal["ug"] == 2)
+    sel = (mensal["mes"] == "2024-01-01") & (mensal["ug"] == rotulos[1])
     mensal.loc[sel, "indisppf"] = 50 / 744 * 100
     mensal["dispf"] = 100 - mensal["indisppf"] - mensal["indispff"]
     mensal["potencia_mw"] = 24.0
     mensal = mensal.drop(columns=["HP", "HDP", "HDF"])
-    anual = pd.DataFrame({"ano": [2023, 2023, 2024, 2024], "ug": [1, 2, 1, 2], "dispf": [98.6, 100, 98.6, 96.4],
+    anual = pd.DataFrame({"ano": [2023, 2023, 2024, 2024], "ug": [*rotulos, *rotulos], "dispf": [98.6, 100, 98.6, 96.4],
                           "indisppf": [0.8, 0, 0.8, 3.6], "indispff": [0.6, 0, 0.6, 0], "dmdff": [4.0, 0, 4.0, 0]})
     w = horas.tail(120)
     teifa = (w["HDF"] + w["HEDF"]).sum() / (w["HP"] - w["HDP"] - w["HEDP"]).sum()
@@ -73,10 +75,10 @@ def test_recalculo_e_decomposicao_das_taxas() -> None:
     assert (maior["ug"], maior["parcela"]) == (2, "HEDF")
 
 
-def montar_resultados_com_indicadores(df_sintetico: pd.DataFrame, tmp_path: Path):
+def montar_resultados_com_indicadores(df_sintetico: pd.DataFrame, tmp_path: Path, rotulos: tuple = (1, 2)):
     """Resultados com os indicadores sintéticos (também usado pelos testes do relatório)."""
     df = preparar_dados(df_sintetico)
-    ind = _indicadores_sinteticos()
+    ind = _indicadores_sinteticos(rotulos)
     return analisar(df, _conferencias(ind), tmp_path / "sem_auditoria.csv", indicadores=ind)
 
 
@@ -100,6 +102,29 @@ def test_analise_inclui_constatacoes_dos_indicadores(resultados_com_indicadores)
     esperado = 100 - perdido / (2 * sum(horas_meses.values())) * 100
     assert res.ons["disp_periodo"]["dispf_pct"] == pytest.approx(esperado)
     assert res.ons["recalculo_resumo"]["meses"] == 1
+
+
+def test_unidades_com_letra_ficam_separadas_e_em_ordem_natural(df_sintetico: pd.DataFrame, tmp_path: Path) -> None:
+    """Rótulo com letra (ciclo combinado, como a UTE Três Lagoas; misto, como Itaipu): unidades separadas, em ordem
+    natural ('2A' antes de '10A'), sem exceção nas Análises, na conclusão e nas tabelas (bug unidade-com-letra)."""
+    from src.analises.conclusao import montar_conclusao
+    from src.relatorio.conteudo import linhas_tabela_ons_decomposicao, linhas_tabela_ons_horas
+
+    res = montar_resultados_com_indicadores(df_sintetico, tmp_path, rotulos=("2A", "10A"))
+    dec = res.ons["decomposicao"]
+    teifa = dec[dec["taxa"] == "TEIFa"]
+    maior = teifa.loc[teifa["contribuicao_pp"].idxmax()]
+    assert (maior["ug"], maior["parcela"]) == ("10A", "HEDF")
+    assert list(dict.fromkeys(dec["ug"])) == ["2A", "10A"]
+    assert list(res.ons["horas_anual"]["ug"].drop_duplicates()) == ["2A", "10A"]
+    assert [linha[1] for linha in linhas_tabela_ons_horas(res)[1][:2]] == ["UG2A", "UG10A"]
+    assert [linha[1] for linha in linhas_tabela_ons_decomposicao(res)[1][:3:2]] == ["UG2A", "UG10A"]
+
+    texto = dict(res.achados)["Estados operativos das unidades geradoras (ONS)"]
+    assert "da UG10A;" in texto and "A UG10A registrou limitação forçada" in texto and "(UG2A: 0 h)" in texto
+    assert texto.index("UG2A — ") < texto.index("UG10A — ")
+    c2 = [i["texto"] for i in montar_conclusao(res) if i["regra"] == "C2"]
+    assert c2[0].startswith("UG10A: indício de problema na unidade") and "; UG2A: 0 h)" in c2[0]
 
 
 def test_frase_da_teifa_cita_os_meses_reproduzidos_pela_conferencia(resultados_com_indicadores) -> None:

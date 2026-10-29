@@ -24,7 +24,7 @@ python -m src perfil --ceg <CEG> [--slug <slug>] [--log-level <nível>]
 2. Catálogo ausente ou em formato antigo (`catalogo.json` sem o `versao_formato` atual): código 5, sem gravar nada.
 3. CEG fora do catálogo: código 2.
 4. Tipo pelo CEG fora dos sete (`conjunto` ou `outro`): código 2.
-5. Usina Tipo III, ou só com cobertura agregada ou ausente em todos os conjuntos de série: código 2, sem gravar nada, com a mensagem da tabela abaixo.
+5. Usina Tipo III, ou só com cobertura agregada ou ausente em todos os conjuntos de série: código 2, sem gravar nada, com a mensagem da tabela abaixo. Também a usina sem a série de referência da Coleta (spec, FR-054) pela cobertura do catálogo, com a mesma regra que a Coleta aplica ao perfil: nem a EVT, nem a Geração por usina própria ou do conjunto, nem, na EOL e na UFV, a restrição com detalhe da usina (como a usina que o ONS só programa).
 6. Slug derivado do nome fora do padrão: código 2, pedindo `--slug`.
 7. Perfil existente (`usinas/<slug>/perfil.toml`, ou outro perfil com o mesmo CEG): nada é gravado. Mostra as diferenças entre o perfil e o catálogo, uma por linha:
    - sempre, `usina.tipo`, `usina.modalidade`, `usina.estado` e `identificacao.ceg`;
@@ -49,7 +49,7 @@ python -m src perfil --ceg <CEG> [--slug <slug>] [--log-level <nível>]
 |---|---|
 | 0 | rascunho gravado, ou perfil existente igual ao catálogo |
 | 1 | erro de gravação, perfil existente ilegível, interrupção pelo usuário ou erro inesperado |
-| 2 | opção inválida, inclusive o slug; CEG fora do catálogo; tipo fora dos sete; usina Tipo III ou só com agregado ou sem dados no ONS |
+| 2 | opção inválida, inclusive o slug; CEG fora do catálogo; tipo fora dos sete; usina Tipo III ou só com agregado ou sem dados no ONS; usina sem série de referência |
 | 5 | catálogo ainda não montado ou em formato antigo |
 | 6 | perfil existente com diferenças em relação ao catálogo (nada gravado) |
 
@@ -62,6 +62,7 @@ python -m src perfil --ceg <CEG> [--slug <slug>] [--log-level <nível>]
 | CEG fora do catálogo (2) | log, `ERROR` | `CEG <CEG> fora do catálogo de usinas (data/catalogo/usinas.csv).` |
 | Tipo fora dos sete (2) | log, `ERROR` | `A usina <nome> (<CEG>) tem o tipo "<tipo>" pelo CEG, fora dos tipos atendidos (UHE, PCH, CGH, UTE, UTN, EOL, UFV).` |
 | Só agregado (2) | log, `ERROR` | `O ONS publica a usina <nome> (<CEG>) só em agregado (<modalidade>), sem dados próprios nem de conjunto. Ela aparece no panorama da carteira: python -m src carteira --estado <UF>` |
+| Sem série de referência (2) | log, `ERROR` | `O ONS não publica a série de referência da usina <nome> (<CEG>): nem a Energia Vertida Turbinável nem a Geração por usina, da usina ou do conjunto[, nem a restrição com detalhe da usina]. Dos conjuntos de série, o catálogo encontra só: <chave> = "<nível>"; …. Sem a série de referência, a usina não tem relatório individual.` (o trecho entre colchetes só na EOL e na UFV) |
 | Slug inválido (2) | log, `ERROR` | `Slug inválido: '<slug>' (letras minúsculas, algarismos e _; "carteiras" é reservado).` ou `Slug derivado do nome inválido: '<slug>'; informe --slug.` |
 | Perfil existente com diferenças (6) | saída padrão | `O perfil usinas/<slug>/perfil.toml já existe e não foi alterado. Diferenças em relação ao catálogo:`, seguido de uma linha `- <campo>: perfil <valor>; catálogo <valor>` por diferença (`(ausente)` quando o valor falta) |
 | Perfil existente sem diferença (0) | saída padrão | `O perfil usinas/<slug>/perfil.toml já existe e não foi alterado; sem diferença em relação ao catálogo.` |

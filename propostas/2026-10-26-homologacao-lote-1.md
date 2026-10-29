@@ -47,6 +47,12 @@ Toda usina com o perfil válido e com série de referência gerou o relatório (
 ## Andamento das correções
 
 - 26/10/2026, `programacao-sem-cobertura` (achado 3): aplicada; Angra I e Angra II geram o relatório; Três Lagoas passa do perfil e para no achado 10. Referências sem diferença.
+- 29/10/2026, em outra máquina, com os dados baixados de novo do portal (a Coleta congelada das referências não está nela; a conferência do princípio IX foi feita contra uma linha de base gerada com o código anterior, ver os `fix.md`):
+  - `uhe-sem-evt-campos-evt` (achado 1): aplicada; Canastra e Pimental passam a exigir só os seis parâmetros hidráulicos, e a UHE Anta, só o cadastro;
+  - `rascunho-sem-serie-referencia` (achado 4): aplicada; Suzano RRP1, Amandina II e Fibria MS recusadas já no rascunho;
+  - `nota-granularidade-conjunto` (achado 5): aplicada; nenhuma referência muda;
+  - `zero-negativo-tabela` (achado 7): código aplicado; a referência da Bandeirante muda em duas células. A diferença foi aprovada pelo usuário em 29/10/2026, e o novo registro fica para a máquina com a Coleta congelada;
+  - `unidade-com-letra` (achado 10): aplicada em 29/10/2026, com a abordagem aprovada pelo usuário. A unidade passa a ser o rótulo publicado: inteira quando a usina só tem algarismos, texto com letra. Nenhuma referência muda. Verificada no mesmo dia (`test.md`), com um ajuste aprovado pelo usuário: "UG1" vale "1", porque a UHE Santa Branca publica as duas formas. Há outras usinas com unidades com letra no Brasil (Campo Grande, Povoação 1, Juiz de Fora, B. Bonita I e Itaipu, esta mista: 1 a 18, "9A" e "G18A"), além de rótulos como "TG10" e "ST1".
 
 ## Próximos passos propostos
 

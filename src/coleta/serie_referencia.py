@@ -60,21 +60,30 @@ class Escolha:
     motivo: str
 
 
-def escolher(perfil: Any) -> Escolha:
-    """Série de referência pelo tipo e pela cobertura (D24). Sem nenhuma, ``ValueError``."""
-    chaves = [e.chave for e in registro.conjuntos_da_usina(perfil)]
+def escolher_pela_cobertura(tipo: str, cobertura: Dict[str, Any]) -> Optional[Escolha]:
+    """Série de referência pelo tipo e pela cobertura (D24); None sem nenhuma. Regra única da Coleta e do rascunho do
+    perfil, que tem só a cobertura do catálogo (bug rascunho-sem-serie-referencia)."""
+    chaves = [e.chave for e in registro.conjuntos_pela_cobertura(tipo, cobertura)]
     if "evt" in chaves:
         return Escolha("evt", ("usina",), MOTIVOS["evt"])
-    valor = registro.cobertura_da_usina(perfil).get("geracao")
+    valor = cobertura.get("geracao")
     valores = valor if isinstance(valor, (list, tuple)) else [valor]
     niveis = tuple(registro.NIVEL_DA_COBERTURA[v] for v in ("proprio", "conjunto") if v in valores)
     if ("usina" not in niveis and "restricao_detalhe" in chaves
-            and registro.nivel_coletado(perfil, "restricao_detalhe") == "usina"):  # linha da FR-059 na tabela da FR-054
+            and registro.nivel_na_cobertura("restricao_detalhe", cobertura) == "usina"):  # FR-059 na tabela da FR-054
         return Escolha("restricao_detalhe", ("usina",), MOTIVOS["restricao_detalhe"])
     if "geracao" not in chaves or not niveis:
+        return None
+    return Escolha("geracao", niveis, MOTIVOS["_".join(niveis)])
+
+
+def escolher(perfil: Any) -> Escolha:
+    """Série de referência pelo tipo e pela cobertura (D24). Sem nenhuma, ``ValueError``."""
+    escolha = escolher_pela_cobertura(registro.tipo_da_usina(perfil), registro.cobertura_da_usina(perfil))
+    if escolha is None:
         raise ValueError(f"a usina '{perfil.usina.slug}' não tem série de referência: nem a Energia Vertida Turbinável "
                          "nem a Geração por usina (da usina ou do conjunto) na [cobertura]")
-    return Escolha("geracao", niveis, MOTIVOS["_".join(niveis)])
+    return escolha
 
 
 def descricoes_referencia(perfil: Any, escolha: Escolha) -> Dict[str, DescricaoConjunto]:

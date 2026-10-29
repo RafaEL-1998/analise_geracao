@@ -10,7 +10,9 @@ Para cada campo e grupo de tipos, a exigência:
 - ``—``: não se aplica, e a presença é recusada.
 
 Os campos comuns a todos os tipos (data-model da Coleta de dados, seção 5.1) são conferidos diretamente em
-``src.comum.perfil``. Na UHE, os campos e as regras de hoje continuam iguais.
+``src.comum.perfil``. Na UHE, os campos da trilha da EVT dependem da cobertura, como na PCH e na CGH; a UHE sem a
+``[cobertura]`` (a de hoje, com a EVT) coleta os conjuntos de hoje, e neles todo campo ``C`` é obrigatório (bug
+uhe-sem-evt-campos-evt; decisão do usuário de 26/10/2026).
 """
 
 from __future__ import annotations
@@ -57,9 +59,12 @@ CAMPOS: Dict[str, Dict[str, Exigencia]] = {
                              "UTE_UTN": O,
                              "EOL_UFV": _c("geracao", "fator_capacidade", "restricao_detalhe", "restricao_razao",
                                            coberturas=("proprio",))},
-    "identificacao.cod_usina": {"UHE": O, "PCH_CGH": _EVT_OU_HIDROLOGIA, "UTE_UTN": NAO, "EOL_UFV": NAO},
-    "identificacao.nome_ons": {"UHE": O, "PCH_CGH": _EVT_OU_HIDROLOGIA, "UTE_UTN": NAO, "EOL_UFV": NAO},
-    "identificacao.id_reservatorio": {"UHE": O, "PCH_CGH": _c("hidrologia"), "UTE_UTN": NAO, "EOL_UFV": NAO},
+    "identificacao.cod_usina": {"UHE": _EVT_OU_HIDROLOGIA, "PCH_CGH": _EVT_OU_HIDROLOGIA, "UTE_UTN": NAO,
+                                "EOL_UFV": NAO},
+    "identificacao.nome_ons": {"UHE": _EVT_OU_HIDROLOGIA, "PCH_CGH": _EVT_OU_HIDROLOGIA, "UTE_UTN": NAO,
+                               "EOL_UFV": NAO},
+    "identificacao.id_reservatorio": {"UHE": _c("hidrologia"), "PCH_CGH": _c("hidrologia"), "UTE_UTN": NAO,
+                                      "EOL_UFV": NAO},
     "identificacao.id_conjunto": {"UHE": NAO, "PCH_CGH": _ID_CONJUNTO, "UTE_UTN": _ID_CONJUNTO, "EOL_UFV": _ID_CONJUNTO},
     # cod_programacao ou codigos_programacao: só com a Programação diária na cobertura; sem a [cobertura] (UHE de hoje),
     # a programação é coletada e o código é obrigatório (``src.comum.perfil``). Com a programação ausente, um código
@@ -67,14 +72,16 @@ CAMPOS: Dict[str, Dict[str, Exigencia]] = {
     "identificacao.cod_programacao": {grupo: _c("programacao") for grupo in ("UHE", "PCH_CGH", "UTE_UTN", "EOL_UFV")},
     "identificacao.planejamento": {"UHE": NAO, "PCH_CGH": NAO, "UTE_UTN": _c("despacho", "cvu"), "EOL_UFV": NAO},
     "identificacao.membros": {"UHE": NAO, "PCH_CGH": OPC, "UTE_UTN": NAO, "EOL_UFV": OPC},
-    **{f"parametros.{campo}": {"UHE": O, "PCH_CGH": _EVT_OU_HIDROLOGIA, "UTE_UTN": NAO, "EOL_UFV": NAO}
+    **{f"parametros.{campo}": {"UHE": _EVT_OU_HIDROLOGIA, "PCH_CGH": _EVT_OU_HIDROLOGIA, "UTE_UTN": NAO,
+                               "EOL_UFV": NAO}
        for campo in HIDRAULICOS},
-    "parametros.garantia_fisica_mwmed": {"UHE": O, "PCH_CGH": OPC, "UTE_UTN": OPC, "EOL_UFV": OPC},
-    "parametros.ip_referencia": {"UHE": O, "PCH_CGH": OPC, "UTE_UTN": OPC, "EOL_UFV": NAO},
-    "parametros.teif_referencia": {"UHE": O, "PCH_CGH": OPC, "UTE_UTN": OPC, "EOL_UFV": NAO},
+    # na UHE, obrigatórios com a EVT (a trilha da EVT os usa) e opcionais sem ela, como na PCH
+    "parametros.garantia_fisica_mwmed": {"UHE": _c("evt"), "PCH_CGH": OPC, "UTE_UTN": OPC, "EOL_UFV": OPC},
+    "parametros.ip_referencia": {"UHE": _c("evt"), "PCH_CGH": OPC, "UTE_UTN": OPC, "EOL_UFV": NAO},
+    "parametros.teif_referencia": {"UHE": _c("evt"), "PCH_CGH": OPC, "UTE_UTN": OPC, "EOL_UFV": NAO},
     "parametros.combustivel": {"UHE": NAO, "PCH_CGH": NAO, "UTE_UTN": O, "EOL_UFV": NAO},
     "usina.subsistema": {"UHE": OPC, "PCH_CGH": OPC, "UTE_UTN": _c("cvu"), "EOL_UFV": OPC},
-    "analises": {"UHE": O, "PCH_CGH": _c("evt"), "UTE_UTN": NAO, "EOL_UFV": NAO},
+    "analises": {"UHE": _c("evt"), "PCH_CGH": _c("evt"), "UTE_UTN": NAO, "EOL_UFV": NAO},
 }
 
 

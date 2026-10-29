@@ -10,7 +10,8 @@ import pandas as pd
 from src.comum.perfil import perfil_ativo
 from src.comum.regras import JANELA_TAXAS_MESES, LIMIAR_DIFERENCA_TAXAS_OPERATIVAS_PP
 from src.conferencia.indicadores import janela as _janela, peso as _peso, reproducao_das_taxas
-from src.tratamento.indicadores import IndicadoresONS, INSUMOS_HORAS, TOLERANCIA_IDENTIDADE_HORAS
+from src.tratamento.indicadores import (IndicadoresONS, INSUMOS_HORAS, TOLERANCIA_IDENTIDADE_HORAS, chave_ug,
+                                       ordenar_por_ug)
 
 
 def decompor_taxas(horas: pd.DataFrame, mes_fim: pd.Timestamp, janela_meses: int = 60) -> pd.DataFrame:
@@ -27,13 +28,13 @@ def decompor_taxas(horas: pd.DataFrame, mes_fim: pd.Timestamp, janela_meses: int
     linhas = []
     for taxa, (base, parcelas) in bases.items():
         total = sum(float((p * janela[c]).sum()) for c in parcelas) / base * 100.0 if base else float("nan")
-        for ug, g in janela.groupby("ug"):
+        for ug, g in sorted(janela.groupby("ug"), key=lambda par: chave_ug(par[0])):
             pg = _peso(g)
             for parcela in parcelas:
                 contribuicao = float((pg * g[parcela]).sum()) / base * 100.0 if base else float("nan")
                 linhas.append({
                     "taxa": taxa,
-                    "ug": int(ug),
+                    "ug": ug if isinstance(ug, str) else int(ug),  # o rótulo com letra fica como texto ('1A')
                     "parcela": parcela,
                     "horas": float(g[parcela].sum()),
                     "contribuicao_pp": contribuicao,
@@ -159,7 +160,7 @@ def analisar_indicadores_ons(
         resultado["horas_mensal"] = horas
         soma = horas.groupby(["ano", "ug"])[list(INSUMOS_HORAS)].sum()
         soma["meses"] = horas.groupby(["ano", "ug"])["mes"].nunique()
-        soma = soma.reset_index()
+        soma = ordenar_por_ug(soma.reset_index(), ["ano", "ug"])
         soma["ano_parcial"] = soma["meses"] < 12
         resultado["horas_anual"] = soma
         resultado["horas_periodo"] = {

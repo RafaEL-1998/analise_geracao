@@ -330,6 +330,8 @@ def _campo_por_tipo(le: _Leitor, campo: str, tipo: Optional[str], cobertura: Dic
     if tipo is None:  # tipo desconhecido: sem as regras por tipo, o campo é lido se estiver presente
         return le.presente(campo)
     e = perfil_campos.exigencia(campo, tipo)
+    if e.nivel == COM_COBERTURA and tipo == "UHE" and le.dados.get("cobertura") is None:
+        e = perfil_campos.O  # UHE sem a [cobertura] (a de hoje): coleta os conjuntos de hoje, com a EVT
     presente = le.presente(campo)
     if e.nivel == NAO_SE_APLICA:
         le.confere(not presente, f"{campo}: não se aplica a {tipo}")

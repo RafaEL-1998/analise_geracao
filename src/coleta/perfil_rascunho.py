@@ -5,7 +5,8 @@ Lê só ``data/catalogo/``: não acessa o portal, não lê os brutos e não exec
 perfil (FR-053). Na ordem:
 
 1. catálogo ausente ou em formato antigo: código 5;
-2. CEG fora do catálogo, tipo fora dos atendidos, usina Tipo III ou só com cobertura agregada ou ausente: código 2;
+2. CEG fora do catálogo, tipo fora dos atendidos, usina Tipo III, só com cobertura agregada ou ausente, ou sem a série
+   de referência da Coleta (``serie_referencia.escolher_pela_cobertura``): código 2;
 3. perfil existente (na pasta do slug ou em outra, com o mesmo CEG): nada é gravado; mostra as diferenças em relação ao
    catálogo e sai com 6, ou com 0 sem diferença;
 4. grava ``usinas/<slug>/perfil.toml`` com ``situacao = "rascunho"``: os identificadores, o subsistema, a
@@ -31,6 +32,7 @@ import pandas as pd
 from src.coleta import registro
 from src.coleta.catalogo_usinas import ler_catalogo, perfis_por_ceg
 from src.coleta.registro import normalizar_texto
+from src.coleta.serie_referencia import escolher_pela_cobertura
 from src.comum import caminhos, perfil_campos
 from src.comum.formatacao import fmt_data, fmt_num
 from src.comum.logger import setup_logger
@@ -104,11 +106,16 @@ def _numero(valor: Any) -> Optional[float]:
 # ---------------------------------------------------------------------------
 
 
+def _cobertura(catalogo: Dict[str, Any], ceg: str) -> Dict[str, str]:
+    """A cobertura da usina no catálogo: conjunto de série -> nível."""
+    tabela = catalogo["cobertura"]
+    return {r["conjunto_ons"]: r["nivel"] for _, r in tabela[tabela["ceg"] == ceg].iterrows()}
+
+
 def _esperado(catalogo: Dict[str, Any], u: pd.Series, hoje: date) -> Dict[str, Any]:
     """Os valores do catálogo para o perfil da usina: identificação, cobertura, membros, unidades e códigos."""
     tipo = u["tipo"]
-    cobertura_tab = catalogo["cobertura"]
-    cobertura = {r["conjunto_ons"]: r["nivel"] for _, r in cobertura_tab[cobertura_tab["ceg"] == u["ceg"]].iterrows()}
+    cobertura = _cobertura(catalogo, u["ceg"])
     programacao = catalogo["programacao"]
     codigos: List[str] = []
     periodos: Dict[str, Tuple[str, str]] = {}
@@ -191,6 +198,15 @@ def _resolver_usina(catalogo: Dict[str, Any], ceg: str) -> Tuple[Optional[pd.Ser
         return None, CODIGO_INVALIDO, (f"O ONS publica a usina {u['nom_usina']} ({u['ceg']}) só em agregado "
                                        f"({u['modalidade']}), sem dados próprios nem de conjunto. Ela aparece no panorama "
                                        f"da carteira: python -m src carteira --estado {u['id_estado']}")
+    cobertura = _cobertura(catalogo, u["ceg"])
+    if escolher_pela_cobertura(u["tipo"], cobertura) is None:  # a mesma regra da Coleta
+        restricao = ", nem a restrição com detalhe da usina" if u["tipo"] in registro.RENOVAVEIS else ""
+        publicados = "; ".join(f'{chave} = "{nivel}"' for chave, nivel in cobertura.items()
+                               if nivel in registro.COBERTURAS_QUE_OBTEM)
+        return None, CODIGO_INVALIDO, (f"O ONS não publica a série de referência da usina {u['nom_usina']} ({u['ceg']}): "
+                                       f"nem a Energia Vertida Turbinável nem a Geração por usina, da usina ou do "
+                                       f"conjunto{restricao}. Dos conjuntos de série, o catálogo encontra só: "
+                                       f"{publicados}. Sem a série de referência, a usina não tem relatório individual.")
     return u, CODIGO_SUCESSO, ""
 
 

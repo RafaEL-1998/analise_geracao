@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import pandas as pd
 
@@ -31,6 +31,7 @@ from src.comum.regras import (
     TOLERANCIA_DIVERGENCIA_HORAS,
     TOLERANCIA_REPRODUCAO_TAXAS_PP,
 )
+from src.tratamento.indicadores import chave_ug, em_ordem_ug, nome_ug
 from src.tratamento.validacao import COLUNA_QUALIDADE
 
 
@@ -143,7 +144,7 @@ def _achado_indicadores_ons(res: ResultadosAnalise) -> Optional[Tuple[str, str]]
     return "Indicadores oficiais de disponibilidade (ONS)", texto
 
 
-def _horas_por_ano_texto(horas_anual: pd.DataFrame, ug: int, coluna: str) -> str:
+def _horas_por_ano_texto(horas_anual: pd.DataFrame, ug: Any, coluna: str) -> str:
     sel = horas_anual[horas_anual["ug"] == ug]
     return "; ".join(
         f"{int(r.ano)}{' (parcial)' if r.ano_parcial else ''}: {fmt_int(getattr(r, coluna))} h" for r in sel.itertuples()
@@ -189,40 +190,40 @@ def _achado_estados_operativos(res: ResultadosAnalise) -> Optional[Tuple[str, st
         maior = teifa.loc[teifa["contribuicao_pp"].idxmax()]
         partes.append(
             f"Da TEIFa de {fmt_pct(t['teifa_pct'], 2)} em {fmt_mes_ano(t['mes'])}, {fmt_num(maior['contribuicao_pp'], 2)} p.p. "
-            f"({fmt_pct(maior['participacao_pct'], 0)}) vêm de {DESCRICAO_PARCELA[maior['parcela']]} da UG{int(maior['ug'])}; "
+            f"({fmt_pct(maior['participacao_pct'], 0)}) vêm de {DESCRICAO_PARCELA[maior['parcela']]} da {nome_ug(maior['ug'])}; "
             f"sem essa parcela, a TEIFa seria de {fmt_pct(t['teifa_pct'] - maior['contribuicao_pp'], 2)}."
         )
     # Unidade com mais horas equivalentes de limitação forçada
-    por_ug = horas.groupby("ug").agg(hedf=("HEDF", "sum"), meses=("mes", "nunique"),
-                                     meses_hedf=("HEDF", lambda s: int((s > 0).sum())))
+    por_ug = em_ordem_ug(horas.groupby("ug").agg(hedf=("HEDF", "sum"), meses=("mes", "nunique"),
+                                                 meses_hedf=("HEDF", lambda s: int((s > 0).sum()))))
     if por_ug["hedf"].max() > 0:
-        ug = int(por_ug["hedf"].idxmax())
+        ug = por_ug["hedf"].idxmax()
         r = por_ug.loc[ug]
         outras = por_ug.drop(index=ug)
         partes.append(
-            f"A UG{ug} registrou limitação forçada de potência em {fmt_int(r['meses_hedf'])} dos {fmt_int(r['meses'])} meses, "
+            f"A {nome_ug(ug)} registrou limitação forçada de potência em {fmt_int(r['meses_hedf'])} dos {fmt_int(r['meses'])} meses, "
             f"somando {fmt_int(r['hedf'])} horas equivalentes"
-            + (f" (UG{', UG'.join(str(int(u)) for u in outras.index)}: {fmt_lista(fmt_int(v) + ' h' for v in outras['hedf'])})"
+            + (f" ({', '.join(nome_ug(u) for u in outras.index)}: {fmt_lista(fmt_int(v) + ' h' for v in outras['hedf'])})"
                if len(outras) else "")
             + "."
         )
-    ugs = sorted(int(u) for u in horas_anual["ug"].unique())
+    ugs = sorted(horas_anual["ug"].unique(), key=chave_ug)
     partes.append(
         "Horas em reserva desligada (unidade disponível, parada), por ano: "
-        + " | ".join(f"UG{u} — {_horas_por_ano_texto(horas_anual, u, 'HRD')}" for u in ugs)
+        + " | ".join(f"{nome_ug(u)} — {_horas_por_ano_texto(horas_anual, u, 'HRD')}" for u in ugs)
         + "."
     )
-    externa = horas.groupby("ug")["HDCE"].sum()
+    externa = em_ordem_ug(horas.groupby("ug")["HDCE"].sum())
     if externa.sum() > 0:
         partes.append(
             "Desligamentos por causa externa: "
-            + fmt_lista(f"UG{int(u)}: {fmt_num(v, 1)} h" for u, v in externa.items())
+            + fmt_lista(f"{nome_ug(u)}: {fmt_num(v, 1)} h" for u, v in externa.items())
             + "."
         )
     div = o.get("divergencias", pd.DataFrame())
     if len(div):
         itens = [
-            f"{fmt_mes_ano(r.mes)} UG{int(r.ug)}: {fmt_int(r.horas_programadas_indisppf)} h programadas pelo DISPF e "
+            f"{fmt_mes_ano(r.mes)} {nome_ug(r.ug)}: {fmt_int(r.horas_programadas_indisppf)} h programadas pelo DISPF e "
             f"{fmt_int(r.HDP)} h pelo TEIP"
             for r in div.itertuples()
         ]

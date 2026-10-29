@@ -181,6 +181,51 @@ def test_recusas_com_codigo_2_sem_gravar(ambiente, caplog, ceg: str, trecho: str
     assert not ambiente["usinas"].exists() or not any(ambiente["usinas"].iterdir())
 
 
+def _trocar_cobertura(ambiente: Dict[str, Path], ceg: str, niveis: Dict[str, str]) -> None:
+    """Muda, na cobertura.csv montada, o nível de conjuntos da usina (o catálogo não guarda hash das tabelas)."""
+    arquivo = ambiente["catalogo"] / ARQUIVOS_CATALOGO["cobertura"]
+    tabela = pd.read_csv(arquivo, sep=";", dtype=str, keep_default_na=False)
+    for chave, nivel in niveis.items():
+        tabela.loc[(tabela["ceg"] == ceg) & (tabela["conjunto_ons"] == chave), "nivel"] = nivel
+    tabela.to_csv(arquivo, sep=";", index=False)
+
+
+def test_usina_so_com_a_programacao_e_recusada_no_rascunho(ambiente, caplog) -> None:
+    """Bug rascunho-sem-serie-referencia: a mesma regra da série de referência da Coleta, já no rascunho."""
+    _trocar_cobertura(ambiente, bc.UTE["ceg"], {"geracao": "ausente", "indicadores": "ausente",
+                                                "disponibilidade": "ausente", "despacho": "ausente", "cvu": "ausente"})
+    assert _perfil(ambiente, bc.UTE["ceg"])[0] == 2
+    erros = [r.getMessage() for r in caplog.records if r.levelname == "ERROR"]
+    assert any(f"O ONS não publica a série de referência da usina UTE BETA ({bc.UTE['ceg']})" in m
+               and 'o catálogo encontra só: programacao = "proprio"' in m and "não tem relatório individual" in m
+               for m in erros), erros
+    assert not ambiente["usinas"].exists() or not any(ambiente["usinas"].iterdir())
+
+
+def test_usina_com_a_geracao_do_conjunto_continua_com_rascunho(ambiente) -> None:
+    """Como a PCH Bandeirante: sem série própria, a Geração por usina do conjunto é a série de referência."""
+    assert _toml_depois(ambiente, bc.PCH["ceg"], "pch_alfa")["cobertura"]["geracao"] == "conjunto"
+
+
+def test_solar_em_conjunto_com_a_restricao_com_detalhe_propria_continua_com_rascunho(ambiente) -> None:
+    """Como a Seriemas 1: sem a geração da usina, a série de referência é a restrição com detalhe dela."""
+    _trocar_cobertura(ambiente, bc.UFV["ceg"], {"geracao": "conjunto", "restricao_detalhe": "proprio"})
+    assert _toml_depois(ambiente, bc.UFV["ceg"], "ufv_gama")["cobertura"]["restricao_detalhe"] == "proprio"
+
+
+def test_solar_so_com_a_razao_da_restricao_do_conjunto_e_recusada(ambiente, caplog) -> None:
+    _trocar_cobertura(ambiente, bc.UFV["ceg"], {"geracao": "ausente", "restricao_detalhe": "ausente"})
+    assert _perfil(ambiente, bc.UFV["ceg"])[0] == 2
+    assert any("nem a restrição com detalhe da usina" in r.getMessage() for r in caplog.records
+               if r.levelname == "ERROR")
+
+
+def _toml_depois(ambiente: Dict[str, Path], ceg: str, slug: str) -> Dict[str, Any]:
+    codigo, texto = _perfil(ambiente, ceg)
+    assert codigo == 0, texto
+    return _toml(ambiente, slug)
+
+
 def test_tipo_iii_cita_a_carteira(ambiente, caplog) -> None:
     _perfil(ambiente, bc.CGH["ceg"])
     assert any("O ONS publica a usina CGH DELTA" in r.getMessage() and "python -m src carteira --estado GO" in

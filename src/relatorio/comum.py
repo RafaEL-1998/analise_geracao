@@ -70,6 +70,9 @@ from src.relatorio import secoes_conjunto
 from src.relatorio.secoes_renovavel import SECOES_RENOVAVEL, pacote_variante, referencia_restricao
 
 ROTULO_NIVEL = {"usina": "usina", "conjunto": "conjunto", "agregado": "agregado"}
+# Séries que o ONS pode publicar só do conjunto quando a geração é a da usina (nota de granularidade)
+SERIES_DO_CONJUNTO = {"programacao": "a Programação diária", "fator_capacidade": "o fator de capacidade",
+                      "restricao_razao": "a razão da restrição"}
 COLUNA_CORTE = "Energia cortada (MWh, % est.)"  # o indicador de perda das eólicas e solares (D27)
 DESCRICAO_CONFERENCIAS = {c.id: c.descricao for c in CATALOGO_CONFERENCIAS}
 
@@ -688,11 +691,19 @@ def notas(res: ResultadosAnalise) -> List[str]:
             f"{nome_conjunto(res) or ident.id_conjunto} ({ident.id_conjunto}), e a restrição com detalhe de cada usina; "
             "a série de referência é a da usina. Os números do conjunto são identificados como tais e não são divididos "
             "entre as usinas; a conclusão da usina não usa números do conjunto.")
-    elif com_conjunto(res):
+    elif "conjunto" in niveis_da_base(res):  # a geração (série de referência) é a do conjunto
         saida.append(
             f"Granularidade: o ONS publica a geração do conjunto {nome_conjunto(res)} ({_g(res).get('identificador_conjunto', '')}), "
             "e não a da usina isolada. Os números do conjunto são identificados como tais e não são divididos entre as "
             "usinas; a conclusão da usina não usa números do conjunto.")
+    elif com_conjunto(res):  # a geração é a da usina; outra série, como a Programação diária, é a do conjunto
+        series = fmt_lista(f"{SERIES_DO_CONJUNTO.get(chave, chave)} ({n.get('identificador', '')})"
+                           for chave, n in res.niveis.items() if chave != "geracao" and n.get("nivel") == "conjunto")
+        conjunto = f"do conjunto {nome_conjunto(res)}".rstrip()
+        saida.append(
+            f"Granularidade: a geração é a da própria usina, mas o ONS publica {series} {conjunto}, e não da usina "
+            "isolada. Esses números são identificados como do conjunto e não são divididos entre as usinas; a conclusão "
+            "da usina não usa números do conjunto.")
     texto = nota_taxas_operativas(res)  # só com as taxas oficiais (spec da Geração do relatório, FR-071)
     if texto:
         saida.append(texto)

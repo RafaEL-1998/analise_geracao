@@ -1,7 +1,7 @@
 # UTE William Arjona — Análise do desempenho operacional
 
-**Período**: 10/07/2021 00h a 24/10/2026 23h (46.387 registros horários da série de referência, Geração por usina (id ONS MSUTWI))
-**Gerado em**: 26/10/2026 09:00
+**Período**: 10/07/2021 00h a 27/10/2026 23h (46.459 registros horários da série de referência, Geração por usina (id ONS MSUTWI))
+**Gerado em**: 29/10/2026 08:00
 
 ### Identificação nos dados do ONS
 
@@ -16,7 +16,7 @@
 | Códigos de planejamento | 34 (01/2013 a 08/2018); 334 (desde 07/2021); 434 (08/2021 a 01/2026) |
 | Agente atual | DELTA GERAÇÃO (proprietário e operador) |
 
-Fonte dos dados: Modalidade das usinas (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026; Geração por usina (id ONS MSUTWI), obtido em 26/10/2026; Capacidade de geração (CEG UTE.GN.MS.027075-0.01), obtido em 22/10/2026; Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 21/10/2026.
+Fonte dos dados: Modalidade das usinas (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026; Geração por usina (id ONS MSUTWI), obtido em 29/10/2026; Capacidade de geração (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026; Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 29/10/2026.
 
 ### Cadastro no ONS
 
@@ -30,7 +30,7 @@ Fonte dos dados: Modalidade das usinas (CEG UTE.GN.MS.027075-0.01), obtido em 26
 | Estado · situação na ANEEL | MS · A |
 | Homônimos excluídos pelo CEG | 0 |
 
-Fonte dos dados: Modalidade das usinas (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026. Conferência: potência autorizada e estado conferidos com os parâmetros do projeto: sem divergência.
+Fonte dos dados: Modalidade das usinas (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026. Conferência: potência autorizada e estado conferidos com os parâmetros do projeto: sem divergência.
 
 ### Parâmetros técnicos da usina
 
@@ -46,14 +46,14 @@ Fonte dos dados: parâmetros do projeto (origem na tabela de parâmetros).
 
 | Indicador | Valor | Detalhe |
 | --- | --- | --- |
-| Geração média | 6,6 MWmed | 307,5 GWh em 46.387 horas com valor |
-| Horas com despacho | 7,1% | 3.271 de 46.272 horas do despacho com geração programada acima de 1 MW |
-| Disponibilidade operacional média | 21,9% | da potência instalada (38,8 MW), nas 46.387 horas com o dado |
+| Geração média | 6,7 MWmed | 309,1 GWh em 46.459 horas com valor |
+| Horas com despacho | 7,0% | 3.271 de 46.464 horas do despacho com geração programada acima de 1 MW |
+| Disponibilidade operacional média | 22,0% | da potência instalada (39,0 MW), nas 46.459 horas com o dado |
 | Disponibilidade apurada pelo ONS (DISPF) | 39,7% | média das unidades; TEIFa 30,07% em set/2026 |
 
 Indicadores calculados a partir da série de referência e da disponibilidade publicadas pelo ONS; não substituem os índices regulatórios. Ver notas metodológicas.
 
-Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 26/10/2026; Disponibilidade por usina (id ONS MSUTWI), obtido em 26/10/2026; Indicadores de disponibilidade por unidade geradora, base mensal (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026; Taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 52 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS; TEIFa e TEIP recalculadas conferidas com as publicadas em Taxas TEIFa e TEIP: 0 de 4 meses reproduzidos (diferença máxima de 2,067 p.p.). Sem outra fonte para conferir: geração.
+Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 29/10/2026; Disponibilidade por usina (id ONS MSUTWI), obtido em 29/10/2026; Indicadores de disponibilidade por unidade geradora, base mensal (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026; Taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 52 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS; TEIFa e TEIP recalculadas conferidas com as publicadas em Taxas TEIFa e TEIP: 0 de 4 meses reproduzidos (diferença máxima de 2,067 p.p.). Sem outra fonte para conferir: geração.
 
 ## Sumário
 
@@ -75,30 +75,30 @@ Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obt
 
 ## 1. Fonte e cobertura dos dados
 
-**Cobertura dos dados.** Série de referência: Geração por usina (id ONS MSUTWI), de 10/07/2021 00h a 24/10/2026 23h: 46.387 horas com registro de 46.392 no período (99,99%). 5 horas ausentes, listadas na planilha, sem preenchimento. O período tem 3 trechos, com mudança de modalidade, de composição do conjunto ou de código.
+**Cobertura dos dados.** Série de referência: Geração por usina (id ONS MSUTWI), de 10/07/2021 00h a 27/10/2026 23h: 46.459 horas com registro de 46.464 no período (99,99%). 5 horas ausentes, listadas na planilha, sem preenchimento. O período tem 3 trechos, com mudança de modalidade, de composição do conjunto ou de código.
 
 | Item | Valor |
 | --- | --- |
 | Série de referência | Geração por usina (id ONS MSUTWI) — Portal de Dados Abertos do ONS (https://dados.ons.org.br/dataset/geracao-usina-2) |
-| Período | 10/07/2021 00h a 24/10/2026 23h |
-| Registros | 46.387 de 46.392 horas do período; 5 horas ausentes em 4 intervalos; 0 horas sem valor |
-| Níveis | usina: 46.387 horas |
+| Período | 10/07/2021 00h a 27/10/2026 23h |
+| Registros | 46.459 de 46.464 horas do período; 5 horas ausentes em 4 intervalos; 0 horas sem valor |
+| Níveis | usina: 46.459 horas |
 | Anos parciais | 2021 e 2026 |
 | Trechos | 3 (tabela abaixo) |
 
-Fonte dos dados: Geração por usina (id ONS MSUTWI), obtido em 26/10/2026.
+Fonte dos dados: Geração por usina (id ONS MSUTWI), obtido em 29/10/2026.
 
 ### Conjuntos do ONS, nível e identificador
 
 | Conjunto do ONS | Nível | Identificador | Obtenção |
 | --- | --- | --- | --- |
-| Geração por usina (série de referência) | usina | MSUTWI | obtido em 26/10/2026 |
-| Programação diária | usina | MSUTWI | obtido em 26/10/2026 |
-| Disponibilidade por usina | usina | MSUTWI | obtido em 26/10/2026 |
-| Indicadores de desempenho do ONS | usina | CEG UTE.GN.MS.027075-0.01 | obtido em 26/10/2026 |
-| Modalidade das usinas | usina | CEG UTE.GN.MS.027075-0.01 | obtido em 26/10/2026 |
+| Geração por usina (série de referência) | usina | MSUTWI | obtido em 29/10/2026 |
+| Programação diária | usina | MSUTWI | obtido em 29/10/2026 |
+| Disponibilidade por usina | usina | MSUTWI | obtido em 29/10/2026 |
+| Indicadores de desempenho do ONS | usina | CEG UTE.GN.MS.027075-0.01 | obtido em 29/10/2026 |
+| Modalidade das usinas | usina | CEG UTE.GN.MS.027075-0.01 | obtido em 29/10/2026 |
 
-Fonte dos dados: Geração por usina (id ONS MSUTWI), obtido em 26/10/2026; Programação diária (MSUTWI), obtido em 26/10/2026; Disponibilidade por usina (id ONS MSUTWI), obtido em 26/10/2026; Indicadores de disponibilidade por unidade geradora, base mensal (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026; Modalidade das usinas (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026.
+Fonte dos dados: Geração por usina (id ONS MSUTWI), obtido em 29/10/2026; Programação diária (MSUTWI), obtido em 29/10/2026; Disponibilidade por usina (id ONS MSUTWI), obtido em 29/10/2026; Indicadores de disponibilidade por unidade geradora, base mensal (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026; Modalidade das usinas (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026.
 
 ### Trechos do período
 
@@ -106,16 +106,16 @@ Fonte dos dados: Geração por usina (id ONS MSUTWI), obtido em 26/10/2026; Prog
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 10/07/2021 00h | 31/07/2021 23h | TIPO I | usina |  |  |
 | 2 | 01/08/2021 00h | 31/01/2026 23h | TIPO I | usina |  |  |
-| 3 | 01/02/2026 00h | 24/10/2026 23h | TIPO I | usina |  |  |
+| 3 | 01/02/2026 00h | 27/10/2026 23h | TIPO I | usina |  |  |
 
 Trecho novo a cada mudança de modalidade, de composição do conjunto ou de código; composição pelos CEGs das usinas do conjunto.
 
-Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 26/10/2026.
+Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 29/10/2026.
 
 
 ## 2. Indicadores anuais
 
-**Geração.** Geração média de 6,6 MWmed nas 46.387 horas com valor (307.484 MWh); geração até 1 MW em 92,8% das horas; entre os anos completos, maior média em 2022 (0,6 MWmed) e menor em 2023 (0,0 MWmed).
+**Geração.** Geração média de 6,7 MWmed nas 46.459 horas com valor (309.146 MWh); geração até 1 MW em 92,8% das horas; entre os anos completos, maior média em 2022 (0,6 MWmed) e menor em 2023 (0,0 MWmed).
 
 | Ano | Nível | Horas | Com valor | Geração média (MWmed) | Energia (MWh) | Máxima (MW) | Horas até 1 MW | % das horas | Disp. média (MW) | Disp. (% Pinst) | Disp. sem despacho (h) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -124,16 +124,16 @@ Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obt
 | 2023 | usina | 8.760 | 8.760 | 0,0 | 0 | 0,0 | 8.760 | 100,0% | 0,0 | 0,0% | 1 |
 | 2024 | usina | 8.784 | 8.784 | 0,2 | 1.444 | 43,5 | 8.724 | 99,3% | 0,0 | 0,0% | 0 |
 | 2025 | usina | 8.760 | 8.760 | 0,3 | 2.741 | 121,4 | 8.686 | 99,2% | 36,9 | 20,9% | 2.943 |
-| 2026* | usina | 7.123 | 7.123 | 1,5 | 10.737 | 154,7 | 6.983 | 98,0% | 142,2 | 80,3% | 6.671 |
+| 2026* | usina | 7.195 | 7.195 | 1,7 | 12.399 | 157,9 | 7.040 | 97,8% | 142,2 | 80,3% | 6.848 |
 
 \* Ano parcial. Geração média = média das horas com valor; horas até 1 MW = horas com geração até esse limiar, sobre as horas com valor; disp. = disponibilidade operacional média da usina (Disponibilidade por usina); disp. sem despacho = horas disponíveis, sem programação e sem geração no despacho.
 
-Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 26/10/2026; Disponibilidade por usina (id ONS MSUTWI), obtido em 26/10/2026; parâmetros do projeto (origem na tabela de parâmetros). Sem outra fonte para conferir: geração.
+Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 29/10/2026; Disponibilidade por usina (id ONS MSUTWI), obtido em 29/10/2026; parâmetros do projeto (origem na tabela de parâmetros). Sem outra fonte para conferir: geração.
 
 
 ## 3. Disponibilidade e geração por ano
 
-**Disponibilidade.** Disponibilidade operacional média de 38,8 MW (21,9% da potência instalada) e sincronizada de 7,0 MW, nas 46.387 horas com o dado; indisponibilidade total em 32.140 horas (22 eventos); geração acima da disponibilidade declarada em 1.320 horas.
+**Disponibilidade.** Disponibilidade operacional média de 39,0 MW (22,0% da potência instalada) e sincronizada de 7,0 MW, nas 46.459 horas com o dado; indisponibilidade total em 32.140 horas (22 eventos); geração acima da disponibilidade declarada em 1.331 horas.
 
 ### Disponibilidade e geração da usina por ano
 
@@ -144,11 +144,11 @@ Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obt
 | 2023 | 8.760 | 0,0 | 0,0% | 0,0 | 0,0 | 8.759 | 1 | 0 |
 | 2024 | 8.784 | 0,0 | 0,0% | 0,0 | 0,2 | 8.784 | 0 | 60 |
 | 2025 | 8.760 | 36,9 | 20,9% | 0,3 | 0,3 | 5.750 | 2.944 | 17 |
-| 2026* | 7.123 | 142,2 | 80,3% | 4,1 | 1,5 | 190 | 6.793 | 9 |
+| 2026* | 7.195 | 142,2 | 80,3% | 4,2 | 1,7 | 190 | 6.850 | 20 |
 
 \* Ano parcial. Só as horas com a disponibilidade e a geração da usina. Indisponibilidade total = disponibilidade operacional até 0,001 MW; parada disponível = geração até 1 MW com disponibilidade acima desse valor; geração > disp. = regra R7 (tolerância de 1,0 MW).
 
-Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUTWI), obtido em 26/10/2026; Geração por usina (id ONS MSUTWI), obtido em 26/10/2026. Sem outra fonte para conferir: disponibilidade sincronizada, geração.
+Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUTWI), obtido em 29/10/2026; Geração por usina (id ONS MSUTWI), obtido em 29/10/2026. Sem outra fonte para conferir: disponibilidade sincronizada, geração.
 
 ### Indisponibilidade total com pelo menos 24 h
 
@@ -164,7 +164,7 @@ Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUTWI
 
 Até 15 eventos, os mais longos; a lista completa está na planilha.
 
-Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUTWI), obtido em 26/10/2026; Geração por usina (id ONS MSUTWI), obtido em 26/10/2026.
+Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUTWI), obtido em 29/10/2026; Geração por usina (id ONS MSUTWI), obtido em 29/10/2026.
 
 
 ## 4. Indicadores oficiais do ONS por unidade geradora
@@ -182,7 +182,7 @@ Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUTWI
 
 \* Ano parcial. DISPF da usina = média das unidades ponderada pela potência e pelas horas da série de referência em cada mês; Δ = diferença para a disponibilidade de referência da garantia física, quando o perfil a informa.
 
-Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUTWI), obtido em 26/10/2026; Indicadores de disponibilidade por unidade geradora, base mensal (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 52 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
+Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUTWI), obtido em 29/10/2026; Indicadores de disponibilidade por unidade geradora, base mensal (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 52 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
 
 ### TEIFa e TEIP mais recentes: contribuição de cada unidade e parcela de horas
 
@@ -209,7 +209,7 @@ Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUTWI
 | TEIP | UG5 | HDP (desligamentos programados) | 30.872,7 | 13,268 | 18,6% |
 | TEIP | UG5 | HEDP (operação com limitação programada de potência) | 3,8 | 0,002 | 0,0% |
 
-Calculado neste relatório a partir de: Parâmetros das taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026; Taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026. Conferência: TEIFa e TEIP recalculadas conferidas com as publicadas em Taxas TEIFa e TEIP: 0 de 4 meses reproduzidos (diferença máxima de 2,067 p.p.).
+Calculado neste relatório a partir de: Parâmetros das taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026; Taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026. Conferência: TEIFa e TEIP recalculadas conferidas com as publicadas em Taxas TEIFa e TEIP: 0 de 4 meses reproduzidos (diferença máxima de 2,067 p.p.).
 
 ### TEIFa e TEIP mais recentes: taxas oficiais e operativas do ONS
 
@@ -222,13 +222,13 @@ Taxas de set/2026 nos conjuntos Taxas TEIFa e TEIP (oficiais) e Taxas TEIFa Oper
 
 Oficiais: conjunto Taxas TEIFa e TEIP; operativas: conjunto Taxas TEIFa Oper e TEIP Oper; janela de 60 meses. A diferença é calculada neste relatório.
 
-Calculado neste relatório a partir de: Taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026; Taxas TEIFa Oper e TEIP Oper (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026.
+Calculado neste relatório a partir de: Taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026; Taxas TEIFa Oper e TEIP Oper (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026.
 
 ![Indicadores oficiais do ONS por unidade geradora](figures/16_taxas_oficiais_e_operativas.png)
 
 TEIFa (à esquerda) e TEIP (à direita) publicadas pelo ONS, por mês, em %: oficial em linha cheia e operativa em linha tracejada; cada valor é o da janela de 60 meses que termina no mês. Diferença de 1 p.p. ou mais em 55 meses na TEIFa e em 56 na TEIP.
 
-Calculado neste relatório a partir de: Taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026; Taxas TEIFa Oper e TEIP Oper (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026.
+Calculado neste relatório a partir de: Taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026; Taxas TEIFa Oper e TEIP Oper (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026.
 
 ### Indicadores anuais por unidade geradora (base anual do ONS)
 
@@ -267,7 +267,7 @@ Calculado neste relatório a partir de: Taxas TEIFa e TEIP (CEG UTE.GN.MS.027075
 
 \* Ano parcial. DISPF, INDISPPF e INDISPFF em % do tempo; DMDFF = duração média dos desligamentos forçados (h).
 
-Fonte dos dados: Indicadores de disponibilidade por unidade geradora, base anual (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 52 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
+Fonte dos dados: Indicadores de disponibilidade por unidade geradora, base anual (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 52 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
 
 ### Horas por estado operativo, por ano e unidade geradora
 
@@ -306,7 +306,7 @@ Fonte dos dados: Indicadores de disponibilidade por unidade geradora, base anual
 
 \* Ano parcial.
 
-Fonte dos dados: Parâmetros das taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 52 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
+Fonte dos dados: Parâmetros das taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 52 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
 
 ### Meses em que o indicador DISPF e as horas do TEIP divergem
 
@@ -365,16 +365,16 @@ Fonte dos dados: Parâmetros das taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01),
 | mar/2026 | UG4 | 40,4 | 609,0 | 0,0 | 0,0 | 3,2 | 0,0 |
 | mai/2026 | UG4 | 0,0 | 607,1 | 27,9 | 0,0 | 35,3 | 0,0 |
 
-Fonte dos dados: Indicadores de disponibilidade por unidade geradora, base mensal (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026; Parâmetros das taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01), obtido em 26/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 52 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
+Fonte dos dados: Indicadores de disponibilidade por unidade geradora, base mensal (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026; Parâmetros das taxas TEIFa e TEIP (CEG UTE.GN.MS.027075-0.01), obtido em 29/10/2026. Conferência: DISPF conferido com as horas por estado operativo (Parâmetros das taxas TEIFa e TEIP): 52 divergências (meses-unidade), listadas na aba ONS_DIVERGENCIAS.
 
 
 ## 5. Série temporal da geração e da disponibilidade
 
 ![Série temporal da geração e da disponibilidade](figures/01_serie_temporal_geracao_disponibilidade.png)
 
-Médias diárias da geração e da disponibilidade operacional da usina, de 10/07/2021 a 24/10/2026. Linha tracejada: potência instalada da usina (177 MW).
+Médias diárias da geração e da disponibilidade operacional da usina, de 10/07/2021 a 27/10/2026. Linha tracejada: potência instalada da usina (177 MW).
 
-Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 26/10/2026; Disponibilidade por usina (id ONS MSUTWI), obtido em 26/10/2026. Sem outra fonte para conferir: geração.
+Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 29/10/2026; Disponibilidade por usina (id ONS MSUTWI), obtido em 29/10/2026. Sem outra fonte para conferir: geração.
 
 
 ## 6. Geração mensal e sazonalidade
@@ -383,13 +383,13 @@ Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obt
 
 Energia gerada em cada mês (GWh), pela soma das horas com valor. Maior energia mensal: 79,6 GWh em out/2021.
 
-Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 26/10/2026. Sem outra fonte para conferir: geração.
+Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 29/10/2026. Sem outra fonte para conferir: geração.
 
 ![Geração mensal e sazonalidade](figures/03_geracao_por_mes_do_ano.png)
 
 Geração média por mês do ano, só com a série de pelo menos 12 meses distintos; cada barra junta os anos do período com aquele mês.
 
-Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 26/10/2026. Sem outra fonte para conferir: geração.
+Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 29/10/2026. Sem outra fonte para conferir: geração.
 
 
 ## 7. Perfil horário da geração
@@ -398,34 +398,34 @@ Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obt
 
 Geração média por hora do dia, no período, sobre as horas com valor.
 
-Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 26/10/2026. Sem outra fonte para conferir: geração.
+Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 29/10/2026. Sem outra fonte para conferir: geração.
 
 
 ## 8. Geração por motivo de despacho e inflexibilidade
 
-**Despacho por motivo.** Geração verificada do despacho de 305.063 MWh de 10/07/2021 a 19/10/2026 (unidades de planejamento 334 e 434); geração programada em 3.271 horas. Maior motivo verificado: garantia energética, com 69,5% da geração verificada.
+**Despacho por motivo.** Geração verificada do despacho de 306.754 MWh de 10/07/2021 a 27/10/2026 (unidades de planejamento 334 e 434); geração programada em 3.271 horas. Maior motivo verificado: garantia energética, com 69,1% da geração verificada.
 
-Despacho de 10/07/2021 a 19/10/2026 (46.272 horas), com as unidades de planejamento 334 e 434.
+Despacho de 10/07/2021 a 27/10/2026 (46.464 horas), com as unidades de planejamento 334 e 434.
 
 ### Geração por motivo de despacho no período
 
 | Motivo | Programada (MWh) | Verificada (MWh) | % da programada | % da verificada |
 | --- | --- | --- | --- | --- |
-| Geração total | 412.896 | 305.063 | 100,0% | 100,0% |
-| Ordem de mérito | 78.848 | 62.378 | 19,1% | 20,4% |
-| Inflexibilidade | 0 | 3.524 | 0,0% | 1,2% |
-| Razão elétrica | 6.107 | 3.420 | 1,5% | 1,1% |
-| Garantia energética | 298.210 | 211.904 | 72,2% | 69,5% |
-| Unit commitment | 29.468 | 23.837 | 7,1% | 7,8% |
-| Inflexibilidade pura (detalhe) | 0 | 3.512 | 0,0% | 1,2% |
+| Geração total | 412.896 | 306.754 | 100,0% | 100,0% |
+| Ordem de mérito | 78.848 | 62.378 | 19,1% | 20,3% |
+| Inflexibilidade | 0 | 3.557 | 0,0% | 1,2% |
+| Razão elétrica | 6.107 | 5.066 | 1,5% | 1,7% |
+| Garantia energética | 298.210 | 211.904 | 72,2% | 69,1% |
+| Unit commitment | 29.468 | 23.849 | 7,1% | 7,8% |
+| Inflexibilidade pura (detalhe) | 0 | 3.545 | 0,0% | 1,2% |
 | Inflexibilidade embutida no mérito (detalhe) | 0 | 12 | 0,0% | 0,0% |
-| Ordem de demérito acima da inflexibilidade (detalhe) | 78.848 | 62.378 | 19,1% | 20,4% |
+| Ordem de demérito acima da inflexibilidade (detalhe) | 78.848 | 62.378 | 19,1% | 20,3% |
 | Ordem de demérito de referência (detalhe) | 89.544 | — | 21,7% | — |
 | Constrained-off (detalhe) | 3.048 | 2.379 | 0,7% | 0,8% |
 
 Motivos e totais como publicados pelo ONS, somadas as unidades de planejamento. Os motivos podem se sobrepor (os marcados como detalhe compõem ou se sobrepõem a outros), e a soma das parcelas pode diferir de 100 %; a parcela é sobre a geração total publicada. Só os motivos com energia no período.
 
-Calculado neste relatório a partir de: Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 21/10/2026. Conferência: geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): 46.137 de 46.267 horas coincidentes (99,7%), 130 divergências, listadas na aba CONF_G4_DIVERGENCIAS, 5 horas só numa das fontes. Sem outra fonte para conferir: motivos de despacho.
+Calculado neste relatório a partir de: Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 29/10/2026. Conferência: geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): 46.337 de 46.459 horas coincidentes (99,7%), 122 divergências, listadas na aba CONF_G4_DIVERGENCIAS, 5 horas só numa das fontes. Sem outra fonte para conferir: motivos de despacho.
 
 ### Geração programada e verificada do despacho por ano
 
@@ -436,28 +436,28 @@ Calculado neste relatório a partir de: Geração térmica por motivo de despach
 | 2023 | 0 | 0 | 0 | 0 | 0 |
 | 2024 | 0 | 1.444 | 0 | 0 | 1.444 |
 | 2025 | 3.548 | 2.741 | 32 | 0 | 1.067 |
-| 2026* | 13.746 | 10.708 | 118 | 0 | 985 |
+| 2026* | 13.746 | 12.399 | 118 | 0 | 1.018 |
 
 \* Ano parcial. Horas com despacho = horas com geração programada acima de 1 MW.
 
-Calculado neste relatório a partir de: Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 21/10/2026. Conferência: programação diária conferida com o programado da Geração térmica por motivo de despacho (G3): 5.784 de 5.784 horas coincidentes (100,0%), 96 horas só numa das fontes; geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): 46.137 de 46.267 horas coincidentes (99,7%), 130 divergências, listadas na aba CONF_G4_DIVERGENCIAS, 5 horas só numa das fontes.
+Calculado neste relatório a partir de: Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 29/10/2026. Conferência: programação diária conferida com o programado da Geração térmica por motivo de despacho (G3): 5.976 de 5.976 horas coincidentes (100,0%); geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): 46.337 de 46.459 horas coincidentes (99,7%), 122 divergências, listadas na aba CONF_G4_DIVERGENCIAS, 5 horas só numa das fontes.
 
 ![Geração por motivo de despacho e inflexibilidade](figures/06_despacho_por_motivo_mensal.png)
 
 Geração verificada mensal por motivo de despacho (GWh), de jul/2021 a out/2026, somadas as unidades de planejamento; o ponto marca a geração verificada total publicada.
 
-Calculado neste relatório a partir de: Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 21/10/2026. Conferência: geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): 46.137 de 46.267 horas coincidentes (99,7%), 130 divergências, listadas na aba CONF_G4_DIVERGENCIAS, 5 horas só numa das fontes. Sem outra fonte para conferir: motivos de despacho.
+Calculado neste relatório a partir de: Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 29/10/2026. Conferência: geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): 46.337 de 46.459 horas coincidentes (99,7%), 122 divergências, listadas na aba CONF_G4_DIVERGENCIAS, 5 horas só numa das fontes. Sem outra fonte para conferir: motivos de despacho.
 
 ![Geração por motivo de despacho e inflexibilidade](figures/07_inflexibilidade_mensal.png)
 
 Inflexibilidade programada e verificada por mês (GWh), de jul/2021 a out/2026.
 
-Calculado neste relatório a partir de: Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 21/10/2026. Sem outra fonte para conferir: motivos de despacho.
+Calculado neste relatório a partir de: Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 29/10/2026. Sem outra fonte para conferir: motivos de despacho.
 
 
 ## 9. Atendimento ao despacho
 
-**Atendimento ao despacho.** Nas 3.271 horas com geração programada, a verificada ficou mais de 5 MW abaixo da programada em 2.826 horas (112.445 MWh) e acima em 88 horas (1.875 MWh); sem programação, geração acima de 5 MW em 114 horas.
+**Atendimento ao despacho.** Nas 3.271 horas com geração programada, a verificada ficou mais de 5 MW abaixo da programada em 2.825 horas (112.414 MWh) e acima em 87 horas (1.825 MWh); sem programação, geração acima de 5 MW em 129 horas.
 
 ### Atendimento ao despacho por ano
 
@@ -468,11 +468,11 @@ Calculado neste relatório a partir de: Geração térmica por motivo de despach
 | 2023 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | 2024 | 0 | 0 | 0 | 0 | 0 | 53 | 1.424 |
 | 2025 | 32 | 27 | 1.868 | 3 | 57 | 42 | 989 |
-| 2026* | 118 | 83 | 3.988 | 10 | 312 | 19 | 615 |
+| 2026* | 118 | 82 | 3.958 | 9 | 262 | 34 | 2.327 |
 
 \* Ano parcial. Nas horas com geração programada acima de 1 MW, desvio = verificada − programada; abaixo e acima = desvio além de 5 MW. Sem programação, com geração = programada até 1 MW e verificada mais de 5 MW acima dela.
 
-Calculado neste relatório a partir de: Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 21/10/2026. Conferência: programação diária conferida com o programado da Geração térmica por motivo de despacho (G3): 5.784 de 5.784 horas coincidentes (100,0%), 96 horas só numa das fontes; geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): 46.137 de 46.267 horas coincidentes (99,7%), 130 divergências, listadas na aba CONF_G4_DIVERGENCIAS, 5 horas só numa das fontes.
+Calculado neste relatório a partir de: Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 29/10/2026. Conferência: programação diária conferida com o programado da Geração térmica por motivo de despacho (G3): 5.976 de 5.976 horas coincidentes (100,0%); geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): 46.337 de 46.459 horas coincidentes (99,7%), 122 divergências, listadas na aba CONF_G4_DIVERGENCIAS, 5 horas só numa das fontes.
 
 ### Maiores desvios entre a geração verificada e a programada
 
@@ -496,20 +496,20 @@ Calculado neste relatório a partir de: Geração térmica por motivo de despach
 
 Até 15 horas, as de maior desvio absoluto; a lista completa está na planilha.
 
-Fonte dos dados: Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 21/10/2026. Conferência: geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): 46.137 de 46.267 horas coincidentes (99,7%), 130 divergências, listadas na aba CONF_G4_DIVERGENCIAS, 5 horas só numa das fontes.
+Fonte dos dados: Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 29/10/2026. Conferência: geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): 46.337 de 46.459 horas coincidentes (99,7%), 122 divergências, listadas na aba CONF_G4_DIVERGENCIAS, 5 horas só numa das fontes.
 
 ![Atendimento ao despacho](figures/08_desvios_despacho_mensal.png)
 
 Energia mensal das horas com a geração verificada mais de 5 MW abaixo (barras para baixo) e acima (para cima) da programada, de jul/2021 a out/2026.
 
-Calculado neste relatório a partir de: Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 21/10/2026. Conferência: programação diária conferida com o programado da Geração térmica por motivo de despacho (G3): 5.784 de 5.784 horas coincidentes (100,0%), 96 horas só numa das fontes; geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): 46.137 de 46.267 horas coincidentes (99,7%), 130 divergências, listadas na aba CONF_G4_DIVERGENCIAS, 5 horas só numa das fontes.
+Calculado neste relatório a partir de: Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 29/10/2026. Conferência: programação diária conferida com o programado da Geração térmica por motivo de despacho (G3): 5.976 de 5.976 horas coincidentes (100,0%); geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): 46.337 de 46.459 horas coincidentes (99,7%), 122 divergências, listadas na aba CONF_G4_DIVERGENCIAS, 5 horas só numa das fontes.
 
 
 ## 10. Disponível sem despacho e CVU × CMO
 
-**Disponível sem despacho.** Disponível, sem programação e sem geração em 10.873 das 46.267 horas com a disponibilidade e o despacho (23,5%), com a potência disponível média de 134,4 MW.
+**Disponível sem despacho.** Disponível, sem programação e sem geração em 11.050 das 46.459 horas com a disponibilidade e o despacho (23,8%), com a potência disponível média de 134,7 MW.
 
-**CVU e CMO.** Unidade 334: CVU abaixo do CMO em 4 e acima em 154 das 274 semanas; unidade 434: CVU abaixo do CMO em 0 e acima em 17 das 267 semanas; nas semanas com algum CVU abaixo do CMO, 0 horas disponíveis sem despacho.
+**CVU e CMO.** Unidade 334: CVU abaixo do CMO em 4 e acima em 155 das 275 semanas; unidade 434: CVU abaixo do CMO em 0 e acima em 17 das 268 semanas; nas semanas com algum CVU abaixo do CMO, 0 horas disponíveis sem despacho.
 
 ### Horas disponíveis sem despacho por ano
 
@@ -520,35 +520,35 @@ Calculado neste relatório a partir de: Geração térmica por motivo de despach
 | 2023 | 8.760 | 1 | 0,0% | 3,0 |
 | 2024 | 8.784 | 0 | 0,0% | — |
 | 2025 | 8.760 | 2.943 | 33,6% | 108,3 |
-| 2026* | 7.003 | 6.671 | 95,3% | 146,2 |
+| 2026* | 7.195 | 6.848 | 95,2% | 146,4 |
 
 \* Ano parcial. Disponibilidade operacional acima de 0,001 MW, com programação e geração até 1 MW.
 
-Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUTWI), obtido em 26/10/2026; Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 21/10/2026. Conferência: geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): 46.137 de 46.267 horas coincidentes (99,7%), 130 divergências, listadas na aba CONF_G4_DIVERGENCIAS, 5 horas só numa das fontes.
+Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUTWI), obtido em 29/10/2026; Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 29/10/2026. Conferência: geração verificada da Geração térmica por motivo de despacho conferida com Geração por usina (G4): 46.337 de 46.459 horas coincidentes (99,7%), 122 divergências, listadas na aba CONF_G4_DIVERGENCIAS, 5 horas só numa das fontes.
 
 ### CVU de cada unidade × CMO médio semanal do subsistema
 
 | Unidade de planejamento | Semanas | CVU abaixo do CMO (semanas) | Geração nessas semanas (MWh) | CVU acima do CMO (semanas) | Geração nessas semanas (MWh) | CVU igual ao CMO (semanas) | Sem comparação (semanas) |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 334 | 274 | 4 | 66.405 | 154 | 84.590 | 0 | 116 |
-| 434 | 267 | 0 | 0 | 17 | 145.401 | 0 | 250 |
+| 334 | 275 | 4 | 66.405 | 155 | 86.281 | 0 | 116 |
+| 434 | 268 | 0 | 0 | 17 | 145.401 | 0 | 251 |
 
 Por semana operativa (sábado a sexta). CVU da revisão mais recente; CVU ausente, zero ou negativo fica sem comparação. A comparação não avalia o despacho.
 
-Calculado neste relatório a partir de: CVU das usinas térmicas (códigos de planejamento 34, 334, 434), obtido em 21/10/2026; CMO semanal (subsistema SE, agregado), obtido em 20/10/2026; Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 21/10/2026. Sem outra fonte para conferir: CVU e CMO.
+Calculado neste relatório a partir de: CVU das usinas térmicas (códigos de planejamento 34, 334, 434), obtido em 29/10/2026; CMO semanal (subsistema SE, agregado), obtido em 29/10/2026; Geração térmica por motivo de despacho (CEG UTE.GN.MS.027075-0.01; códigos de planejamento 34, 334, 434), obtido em 29/10/2026. Sem outra fonte para conferir: CVU e CMO.
 
 ![Disponível sem despacho e CVU × CMO](figures/09_cvu_cmo_semanal.png)
 
 CVU semanal de cada unidade de planejamento e CMO médio semanal do subsistema SE (R$/MWh), de jul/2021 a out/2026; a linha se interrompe nas semanas com CVU ausente, zero ou negativo.
 
-Calculado neste relatório a partir de: CVU das usinas térmicas (códigos de planejamento 34, 334, 434), obtido em 21/10/2026; CMO semanal (subsistema SE, agregado), obtido em 20/10/2026. Sem outra fonte para conferir: CVU e CMO.
+Calculado neste relatório a partir de: CVU das usinas térmicas (códigos de planejamento 34, 334, 434), obtido em 29/10/2026; CMO semanal (subsistema SE, agregado), obtido em 29/10/2026. Sem outra fonte para conferir: CVU e CMO.
 
 
 ## 11. Programação diária × geração verificada
 
-**Programação diária do ONS.** Nas 5.880 horas com programação e geração verificada, geração verificada média de 1,7 MW e programada de 2,1 MW (desvio médio absoluto de 0,8 MW; correlação de 0,93); 2 horas com geração até 1 MW e programação acima de 5 MW.
+**Programação diária do ONS.** Nas 5.976 horas com programação e geração verificada, geração verificada média de 1,9 MW e programada de 2,0 MW (desvio médio absoluto de 1,0 MW; correlação de 0,84); 2 horas com geração até 1 MW e programação acima de 5 MW.
 
-Programação diária do ONS (usina) × geração verificada, de 13/02/2026 a 23/10/2026: 5.880 horas comuns; correlação de 0,93; 21 dias sem arquivo de programação.
+Programação diária do ONS (usina) × geração verificada, de 13/02/2026 a 27/10/2026: 5.976 horas comuns; correlação de 0,84; 20 dias sem arquivo de programação.
 
 ### Geração programada × verificada por mês
 
@@ -562,11 +562,11 @@ Programação diária do ONS (usina) × geração verificada, de 13/02/2026 a 23
 | jul/2026 | 744 | 0,0 | 0,0 | 0,0 | 0,0 | 0 |
 | ago/2026 | 744 | 1,0 | 1,2 | -0,2 | 0,6 | 1 |
 | set/2026 | 720 | 1,4 | 1,7 | -0,3 | 0,6 | 1 |
-| out/2026 | 552 | 2,0 | 3,5 | -1,5 | 1,7 | 0 |
+| out/2026 | 648 | 4,3 | 3,0 | 1,3 | 4,0 | 0 |
 
 Horas comuns às duas fontes, no mesmo nível. Desvio = verificada − programada; horas parada c/ programação = geração até 1 MW com programação acima de 5 MW.
 
-Calculado neste relatório a partir de: Programação diária (MSUTWI), obtido em 26/10/2026; Geração por usina (id ONS MSUTWI), obtido em 26/10/2026. Sem outra fonte para conferir: programação diária, geração.
+Calculado neste relatório a partir de: Programação diária (MSUTWI), obtido em 29/10/2026; Geração por usina (id ONS MSUTWI), obtido em 29/10/2026. Sem outra fonte para conferir: programação diária, geração.
 
 ### Horas consecutivas com geração até 1 MW e programação acima de 5 MW
 
@@ -577,7 +577,7 @@ Calculado neste relatório a partir de: Programação diária (MSUTWI), obtido e
 
 Até 15 eventos, os mais longos; a lista completa está na planilha.
 
-Calculado neste relatório a partir de: Programação diária (MSUTWI), obtido em 26/10/2026; Geração por usina (id ONS MSUTWI), obtido em 26/10/2026. Sem outra fonte para conferir: programação diária, geração.
+Calculado neste relatório a partir de: Programação diária (MSUTWI), obtido em 29/10/2026; Geração por usina (id ONS MSUTWI), obtido em 29/10/2026. Sem outra fonte para conferir: programação diária, geração.
 
 
 ## 12. Disponibilidade operacional e sincronizada (ONS)
@@ -586,22 +586,22 @@ Calculado neste relatório a partir de: Programação diária (MSUTWI), obtido e
 
 Médias mensais da disponibilidade operacional e sincronizada publicadas pelo ONS e da geração da usina, nas horas com os dois dados. Linha tracejada: potência instalada (177 MW).
 
-Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUTWI), obtido em 26/10/2026; Geração por usina (id ONS MSUTWI), obtido em 26/10/2026. Sem outra fonte para conferir: disponibilidade sincronizada.
+Calculado neste relatório a partir de: Disponibilidade por usina (id ONS MSUTWI), obtido em 29/10/2026; Geração por usina (id ONS MSUTWI), obtido em 29/10/2026. Sem outra fonte para conferir: disponibilidade sincronizada.
 
 
 ## 13. Qualidade dos dados
 
-**Qualidade dos dados.** 1.320 horas sinalizadas (2,85% das horas; R7, geração acima da disponibilidade declarada: 1.320 h), mantidas na base e nos totais.
+**Qualidade dos dados.** 1.331 horas sinalizadas (2,86% das horas; R7, geração acima da disponibilidade declarada: 1.331 h), mantidas na base e nos totais.
 
 ### Horas sinalizadas na base horária
 
 | Código | Descrição | Horas | % das horas |
 | --- | --- | --- | --- |
-| R7 | geração acima da disponibilidade declarada | 1.320 | 2,85% |
+| R7 | geração acima da disponibilidade declarada | 1.331 | 2,86% |
 
 Sinalização não exclui o registro: as horas ficam na base e nos totais.
 
-Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 26/10/2026; Disponibilidade por usina (id ONS MSUTWI), obtido em 26/10/2026.
+Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obtido em 29/10/2026; Disponibilidade por usina (id ONS MSUTWI), obtido em 29/10/2026.
 
 ### Intervalos ausentes da série de referência
 
@@ -614,7 +614,7 @@ Calculado neste relatório a partir de: Geração por usina (id ONS MSUTWI), obt
 
 Até 15 intervalos, os mais longos; nenhuma hora é preenchida. A lista completa está na planilha.
 
-Fonte dos dados: Geração por usina (id ONS MSUTWI), obtido em 26/10/2026.
+Fonte dos dados: Geração por usina (id ONS MSUTWI), obtido em 29/10/2026.
 
 
 ## 14. Conclusão
@@ -623,15 +623,15 @@ Indícios a confirmar, gerados pelas regras descritas nas notas metodológicas a
 
 ### Possíveis problemas
 
-- Geração acima da disponibilidade declarada em 1.320 h, segundo a regra R7 (seção 13).
-- Geração verificada mais de 5 MW abaixo da programada pelo ONS em 2.826 h (112.445 MWh) (seção 9).
+- Geração acima da disponibilidade declarada em 1.331 h, segundo a regra R7 (seção 13).
+- Geração verificada mais de 5 MW abaixo da programada pelo ONS em 2.825 h (112.414 MWh) (seção 9).
 
 ### A confirmar com o agente
 
-- Critério e horário da declaração de disponibilidade ao ONS, dado que a geração superou a disponibilidade declarada em 1.320 h (seção 13).
+- Critério e horário da declaração de disponibilidade ao ONS, dado que a geração superou a disponibilidade declarada em 1.331 h (seção 13).
 - Causa e documentação da indisponibilidade total de 30/01/2023 a 27/08/2025, com 22.558 h, e das paradas programadas longas de todas as unidades em 2022, 2023, 2024 e 2025 (seções 3 e 4).
-- Motivo da geração verificada mais de 5 MW abaixo da programada pelo ONS em 2.826 h (112.445 MWh) (seção 9).
-- Programação do ONS correspondente à geração verificada em 114 h sem programação, com 3.028 MWh acima da programada (seção 9).
+- Motivo da geração verificada mais de 5 MW abaixo da programada pelo ONS em 2.825 h (112.414 MWh) (seção 9).
+- Programação do ONS correspondente à geração verificada em 129 h sem programação, com 4.739 MWh acima da programada (seção 9).
 - Motivo da diferença entre as taxas operativas e as oficiais do ONS em set/2026: TEIFa operativa de 12,89% e oficial de 30,07% (diferença de −17,18 p.p.); TEIP operativa de 58,98% e oficial de 70,30% (diferença de −11,32 p.p.) (seção 4).
 
 ### A verificar em campo

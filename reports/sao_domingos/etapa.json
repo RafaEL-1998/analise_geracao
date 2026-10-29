@@ -2,59 +2,59 @@
  "etapa": "relatorio",
  "usina": "sao_domingos",
  "versao_formato": 1,
- "iniciada_em": "2026-10-26T12:27:31Z",
- "concluida_em": "2026-10-26T12:27:51Z",
+ "iniciada_em": "2026-10-29T18:05:38Z",
+ "concluida_em": "2026-10-29T18:05:56Z",
  "status": "concluida",
  "codigo_saida": 0,
  "etapa_anterior": {
   "etapa": "analises",
-  "concluida_em": "2026-10-26T12:24:51Z"
+  "concluida_em": "2026-10-29T18:05:38Z"
  },
  "arquivos": [
   {
    "nome": "relatorio_analise_estatistica.pdf",
-   "bytes": 2365006,
-   "sha256": "88906dd78035eef25e4646c0d189cd8d56999810a7ac53791f63945c60b46e99"
+   "bytes": 2368110,
+   "sha256": "0e2d0da32cd52374e99f82db09cb8fb52632d7607262a33902361885cc06e928"
   },
   {
    "nome": "relatorio_analise_estatistica.md",
    "bytes": 79323,
-   "sha256": "74f843b54e6162804a4c1704ac300fcd034e35655a16e181dde2a15fc93b35fe"
+   "sha256": "11272bdf137587d6246b11f976ca58d823887800e0fdaf49a8b1fd8dd851e0da"
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
-   "bytes": 2975683,
-   "sha256": "7a2b45b60429a552e97a1130d29063eddfc22afa067c75d98b2cff10f3714cb8"
+   "bytes": 2981838,
+   "sha256": "7de938b886014b2fc879b46c4ad78d127074d9cb326100d43d7cf1ed12854bf2"
   },
   {
    "nome": "perfil_estatistico_anual.csv",
-   "bytes": 4281,
-   "sha256": "188f29e33b548418d3f798cebb043d466db27a0d5ca01c03320f271e1822f5b6"
+   "bytes": 4290,
+   "sha256": "d801b112d528cdd2ed00afffb05c3faa959da08f911110d85f55817eaf6e4e83"
   },
   {
    "nome": "resumo_executivo.pdf",
-   "bytes": 83884,
-   "sha256": "7557ed6f99135b1874cc64c47af6fc39a1638bb333c92b273489a21a24f35b52"
+   "bytes": 83890,
+   "sha256": "387ec3fe510592311ca7258210d938a467f243fa9d3f8eecf933e8180e05cf47"
   },
   {
    "nome": "resumo_executivo.md",
    "bytes": 7329,
-   "sha256": "33b8fb5c1a555013ae469f4e60f8464f124c1c233197d8c6497a57826dbbeb77"
+   "sha256": "d899f761b01ba74d5a19510120516f445f36211ea24d014b1718be524270be88"
   },
   {
    "nome": "figures/01_serie_temporal_disponibilidade_geracao_evt.png",
-   "bytes": 503123,
-   "sha256": "68937ac9cc3553db9fd63111496a8d28aaa8bbbd5c70b195e138aa12af1c9695"
+   "bytes": 504519,
+   "sha256": "9c8795017908f88dc9171f50290ee0abb4636dea608fadd950210c5bcec86e0b"
   },
   {
    "nome": "figures/02_evt_mensal.png",
-   "bytes": 104098,
-   "sha256": "9639ab26eed4f9020182776e2925e10693c4a14c1c318650788e199fb68722d5"
+   "bytes": 105653,
+   "sha256": "da7f77c8b678a9bf11238a5cad3f51777b18ae229752fe7ec1c155b6ddf2e90a"
   },
   {
    "nome": "figures/03_perfil_horario_geracao_evt.png",
-   "bytes": 127248,
-   "sha256": "0d298668dfcba6208636d90cafaacdda2161ae137c74240b2fa058ef6cfeb2a1"
+   "bytes": 127074,
+   "sha256": "ec7cd850a4a851a0ccd8cdb52ba45e4e932e42c6618d7d311f945c46b2f20bfb"
   },
   {
    "nome": "figures/04_disponibilidade_geracao_anual.png",
@@ -63,27 +63,27 @@
   },
   {
    "nome": "figures/05_vazoes_defluentes_anuais.png",
-   "bytes": 105247,
-   "sha256": "ec2013f47006223dc0e7c2c11e07dd7e9a904e210e76e354705c5e74275ade86"
+   "bytes": 105252,
+   "sha256": "2e74f193978628cb2291d797c428c4ea969cb03dec2163d5a0a6a0ad76477a02"
   },
   {
    "nome": "figures/06_disponibilidade_operacional_sincronizada_mensal.png",
-   "bytes": 362560,
-   "sha256": "6a5c7043773ee51fe7403f821de7d9c5f7bd24609f9efeb90faa4a8f75ccf053"
+   "bytes": 362440,
+   "sha256": "56e9b42819f36c24b9108e7cc53627b7e2f17b2f758a18f863ec93cd0d5143c7"
   },
   {
    "nome": "figures/07_evt_por_faixa_de_afluencia.png",
-   "bytes": 123188,
-   "sha256": "a1f381f27c600df512e2852b2c16ba3678a1befaeb58a32f81bdb19c5e68d09a"
+   "bytes": 123603,
+   "sha256": "7581aa692856e71f0072f2bb6bdac1374f76af28646d20abf2d6fa1496e169d7"
   },
   {
    "nome": "figures/08_perfil_horario_nivel_vazoes.png",
-   "bytes": 231447,
-   "sha256": "42a34298b17ad872c3af2172c696b48e7f5d3b17b141e25a6ffe8ae96fae9f60"
+   "bytes": 232568,
+   "sha256": "097f6638a6462fba9c000ffca2dbc1b2303acec984af8e10b7c04c619f84d6b6"
   }
  ],
  "resumo": {
-  "data_geracao": "26/10/2026 09:00",
+  "data_geracao": "29/10/2026 08:00",
   "secoes": 17,
   "paginas_pdf": 30,
   "figuras": 8,

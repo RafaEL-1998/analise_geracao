@@ -24,11 +24,14 @@ def _como_float(valor: Any) -> float:
 
 
 def fmt_num(valor: Any, casas: int = 1) -> str:
-    """Número com separador de milhar '.' e decimal ','; ausente vira '–'."""
+    """Número com separador de milhar '.' e decimal ','; ausente vira '–'; o negativo que arredonda a zero sai sem o
+    sinal ('0,0', não '-0,0')."""
     v = _como_float(valor)
     if math.isnan(v) or math.isinf(v):
         return SEM_VALOR
     texto = f"{v:,.{casas}f}"
+    if set(texto) <= set("-0.,"):
+        texto = texto.lstrip("-")
     return texto.replace(",", "X").replace(".", ",").replace("X", ".")
 
 

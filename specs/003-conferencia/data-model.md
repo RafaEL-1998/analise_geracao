@@ -145,7 +145,7 @@ Montados por `src/comum/periodos.periodos_continuos`. Na São Domingos, os dois 
 | Coluna | Tipo | Descrição |
 |---|---|---|
 | `mes` | data | mês (dia 1, 00:00) |
-| `ug` | inteiro | número da unidade geradora |
+| `ug` | inteiro ou texto | unidade geradora, como no Tratamento (o rótulo publicado; texto quando algum rótulo da usina tem letra) |
 | `HP` | real | horas do período (nas térmicas, com as horas equivalentes, como o ONS publica) |
 | `HS` | real | horas em serviço |
 | `HRD` | real | horas em reserva desligada |

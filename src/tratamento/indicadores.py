@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
@@ -40,7 +40,9 @@ INSUMOS_HORAS: Dict[str, str] = {
 # Parcelas que somam as horas do período (identidade conferida no tratamento)
 PARCELAS_HP: List[str] = ["HS", "HRD", "HDP", "HDF", "HDCE", "HEDP", "HEDF"]
 
-_RE_NUMERO_UG = re.compile(r"(\d+)\s+[A-Z]{2}$")
+_RE_ROTULO_UG = re.compile(r"(\S+)\s+[A-Z]{2}$")
+_RE_PREFIXO_UG = re.compile(r"UG(\d+)")
+_RE_ALGARISMOS = re.compile(r"\d+")
 
 
 @dataclass
@@ -71,12 +73,88 @@ def _deduplicar(df: pd.DataFrame, chave: List[str], nome: str) -> pd.DataFrame:
     return df.drop_duplicates(chave, keep="last")
 
 
+# ---------------------------------------------------------------------------
+# Unidade geradora: o rótulo publicado pelo ONS
+# ---------------------------------------------------------------------------
+
+
+def rotulo_ug(valor: Any) -> Optional[str]:
+    """Rótulo da unidade geradora como o ONS publica, sem espaços ('1', '1A', 'TG10'); o só de algarismos fica sem os
+    zeros à esquerda ('07' → '7'), como o número da unidade, e 'UG' seguido só de algarismos é o número ('UG1' → '1');
+    vazio → None."""
+    if not isinstance(valor, str) and pd.isna(valor):
+        return None
+    if isinstance(valor, float) and valor.is_integer():  # 1.0 de uma coluna lida com vazios
+        valor = int(valor)
+    texto = str(valor).strip().upper()
+    prefixado = _RE_PREFIXO_UG.fullmatch(texto)  # UHE Santa Branca: 'UG1' nos parâmetros até 2025, '1' nos indicadores
+    if prefixado:
+        texto = prefixado.group(1)
+    if not texto:
+        return None
+    return str(int(texto)) if texto.isdigit() else texto
+
+
+def rotulo_no_nome(nome_unidade: Any) -> Optional[str]:
+    """Rótulo da unidade no nome publicado, o último termo antes da sigla do estado:
+    'UG   24 MW <USINA>              1 MS' → '1'; 'UG 57P8 MW TRES LAGOAS              2A MS' → '2A'."""
+    achado = _RE_ROTULO_UG.search(str(nome_unidade).strip())
+    return rotulo_ug(achado.group(1)) if achado else None
+
+
+def tipar_ug(valores: pd.Series, texto: bool = False) -> pd.Series:
+    """Coluna ``ug``: inteiro (Int64) quando todos os rótulos são só algarismos, como nas usinas de hoje; o rótulo como
+    texto quando algum tem letra (ciclo combinado: '1A', '1B', '1C') ou com ``texto``."""
+    rotulos = valores.map(rotulo_ug)
+    if not texto and all(r.isdigit() for r in rotulos.dropna()):
+        return pd.to_numeric(rotulos).astype("Int64")
+    return rotulos.astype(object)
+
+
+def chave_ug(valor: Any) -> Optional[str]:
+    """Ordem natural das unidades: 2 antes de 10, 18 antes de 18A, 1A antes de 1B e de 2A, TG4 antes de TG10."""
+    rotulo = rotulo_ug(valor)
+    return None if rotulo is None else _RE_ALGARISMOS.sub(lambda m: m.group().zfill(6), rotulo)
+
+
+def nome_ug(valor: Any) -> str:
+    """A unidade no texto e nas tabelas: 'UG1', 'UG1A'; com espaço quando o rótulo começa por letra ('UG TG10')."""
+    rotulo = rotulo_ug(valor) or ""
+    return f"UG {rotulo}" if rotulo[:1].isalpha() else f"UG{rotulo}"
+
+
+def ordenar_por_ug(t: pd.DataFrame, colunas: List[str]) -> pd.DataFrame:
+    """Linhas na ordem das colunas, com a unidade na ordem natural (``chave_ug``) quando ``ug`` é texto."""
+    if pd.api.types.is_numeric_dtype(t["ug"]):
+        return t.sort_values(colunas).reset_index(drop=True)
+    return t.sort_values(colunas, key=lambda s: s.map(chave_ug) if s.name == "ug" else s).reset_index(drop=True)
+
+
+def em_ordem_ug(agrupado: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:
+    """Resultado de ``groupby("ug")`` com as unidades na ordem natural (no texto, o groupby põe '10' antes de '2')."""
+    return agrupado.reindex(sorted(agrupado.index, key=chave_ug))
+
+
+def _avisar_sem_rotulo(t: pd.DataFrame, nome: str) -> None:
+    vazias = int(t["ug"].isna().sum())
+    if vazias:
+        logger.warning("%s: %d linhas sem o rótulo da unidade geradora; ficam com a unidade vazia.", nome, vazias)
+
+
+def _mesmo_tipo_de_ug(tabelas: List[pd.DataFrame]) -> List[pd.DataFrame]:
+    """A coluna ``ug`` com o mesmo tipo em todas as tabelas da usina: texto em todas quando alguma tem rótulo com letra
+    (a Conferência e as Análises juntam as tabelas por mês e unidade)."""
+    if all(pd.api.types.is_numeric_dtype(t["ug"]) for t in tabelas if "ug" in t.columns):
+        return tabelas
+    return [t.assign(ug=tipar_ug(t["ug"], texto=True)) if "ug" in t.columns else t for t in tabelas]
+
+
 def tratar_indicadores_ug(df: pd.DataFrame, anual: bool) -> pd.DataFrame:
     """Tipagem dos indicadores por unidade geradora (mensal ou anual)."""
     if df.empty:
         return pd.DataFrame()
     t = pd.DataFrame({
-        "ug": _numerico(df["num_unidadegeradora"]).astype("Int64"),
+        "ug": tipar_ug(df["num_unidadegeradora"]),
         "cod_equipamento": df["cod_equipamento"],
         "potencia_mw": _numerico(df["val_potencia"]),
     })
@@ -91,14 +169,10 @@ def tratar_indicadores_ug(df: pd.DataFrame, anual: bool) -> pd.DataFrame:
     t["modalidade"] = df["nom_modalidadeoperacao"]
     t["arquivo_origem"] = df["arquivo_origem"]
     periodo = "ano" if anual else "mes"
-    t = _deduplicar(t, [periodo, "ug"], "indicadores anuais" if anual else "indicadores mensais")
-    return t.sort_values([periodo, "ug"]).reset_index(drop=True)
-
-
-def numero_ug(nome_unidade: str) -> Optional[int]:
-    """Número da unidade em nomes como 'UG   24 MW <USINA>              1 MS'."""
-    achado = _RE_NUMERO_UG.search(str(nome_unidade).strip())
-    return int(achado.group(1)) if achado else None
+    nome = "indicadores anuais" if anual else "indicadores mensais"
+    _avisar_sem_rotulo(t, nome)
+    t = _deduplicar(t, [periodo, "ug"], nome)
+    return ordenar_por_ug(t, [periodo, "ug"])
 
 
 def tratar_horas_estado(df: pd.DataFrame) -> pd.DataFrame:
@@ -107,11 +181,12 @@ def tratar_horas_estado(df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame()
     longo = pd.DataFrame({
         "mes": pd.to_datetime(df["dat_periodo"], format="%m/%Y", errors="coerce"),
-        "ug": df["nom_unidadegeradora"].map(numero_ug).astype("Int64"),
+        "ug": tipar_ug(df["nom_unidadegeradora"].map(rotulo_no_nome)),
         "insumo": df["nom_tpinsumo"].str.upper(),
         "horas": _numerico(df["val_parametro"]),
         "num_versao": _numerico(df["num_versao"]),
     })
+    _avisar_sem_rotulo(longo, "horas por estado operativo")
     longo = longo.sort_values("num_versao").drop_duplicates(["mes", "ug", "insumo"], keep="last")
     largo = longo.pivot_table(index=["mes", "ug"], columns="insumo", values="horas", aggfunc="first")
     largo = largo.reindex(columns=list(INSUMOS_HORAS))
@@ -119,7 +194,7 @@ def tratar_horas_estado(df: pd.DataFrame) -> pd.DataFrame:
     largo = largo.reset_index()
     largo.columns.name = None
     largo["residuo_identidade_h"] = largo["HP"] - largo[PARCELAS_HP].sum(axis=1, min_count=1)
-    return largo.sort_values(["mes", "ug"]).reset_index(drop=True)
+    return ordenar_por_ug(largo, ["mes", "ug"])
 
 
 def tratar_taxas(df: pd.DataFrame, sufixo: str = "") -> pd.DataFrame:
@@ -182,10 +257,15 @@ def recortar_periodo(ind: IndicadoresONS, inicio: pd.Timestamp, fim: pd.Timestam
 def montar_indicadores(extraido: pd.DataFrame, inicio: pd.Timestamp, fim: pd.Timestamp) -> IndicadoresONS:
     """Trata os cinco conjuntos extraídos, recorta no período e junta a potência às horas por estado."""
     tabelas = separar_conjuntos(extraido)
+    ug_mensal, ug_anual, horas_estado = _mesmo_tipo_de_ug([
+        tratar_indicadores_ug(tabelas[MENSAL], anual=False),
+        tratar_indicadores_ug(tabelas[ANUAL], anual=True),
+        tratar_horas_estado(tabelas[PARAMETROS]),
+    ])
     ind = recortar_periodo(IndicadoresONS(
-        ug_mensal=tratar_indicadores_ug(tabelas[MENSAL], anual=False),
-        ug_anual=tratar_indicadores_ug(tabelas[ANUAL], anual=True),
-        horas_estado=tratar_horas_estado(tabelas[PARAMETROS]),
+        ug_mensal=ug_mensal,
+        ug_anual=ug_anual,
+        horas_estado=horas_estado,
         taxas=juntar_taxas_operativas(tratar_taxas(tabelas[TAXAS]),
                                       tratar_taxas(tabelas[TAXAS_OPERATIVAS], sufixo="_oper")),
     ), inicio, fim)
@@ -256,4 +336,6 @@ def carregar_indicadores_tratados(pasta: Path) -> Optional[IndicadoresONS]:
         return t
 
     tabelas = {atributo: _ler(arquivos[chave], datas) for chave, (atributo, datas) in _TABELAS.items()}
+    com_ug = ["ug_mensal", "ug_anual", "horas_estado"]
+    tabelas.update(zip(com_ug, _mesmo_tipo_de_ug([tabelas[a] for a in com_ug])))
     return IndicadoresONS(**tabelas)

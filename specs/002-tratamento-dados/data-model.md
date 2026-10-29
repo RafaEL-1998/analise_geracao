@@ -159,12 +159,22 @@ Frases: sem violação, `- **R<n>** (<nome>): nenhuma violação em <total> regi
 
 ### 2.3 Indicadores
 
+**Unidade geradora (`ug`)**: é o rótulo que o ONS publica, sem espaços. Nos indicadores, ele vem de `num_unidadegeradora`. Nos parâmetros das taxas, vem do último termo de `nom_unidadegeradora` antes da sigla do estado. Nos dados de 29/10/2026, os dois são iguais em todas as 126.307 linhas dos indicadores.
+- **Formato**: rótulo só de algarismos perde os zeros à esquerda ("07" vira "7"). "UG" seguido só de algarismos vale o número ("UG1" vira "1"): a UHE Santa Branca publica "UG1" e "UG2" nos parâmetros das taxas até 2025 e "1" e "2" nos indicadores e nos parâmetros de 2026.
+- **Tipo**:
+  - inteiro, quando todos os rótulos da usina são só algarismos (todas as usinas com perfil até 29/10/2026);
+  - texto, quando algum tem letra. Exemplos: o ciclo combinado da UTE Três Lagoas ("1A", "1B", "1C", "2A", "2B", "2C"), "TG10", "ST1", e Itaipu, que mistura "1" a "18" com "9A" e "G18A".
+- **Mesmo tipo nas três tabelas**: a Conferência e as Análises juntam as tabelas por mês e unidade. Por isso as três têm o mesmo tipo, e a leitura do CSV refaz a mesma escolha.
+- **Ordem**: a ordem de `ug` é a natural. "2" vem antes de "10", "18" antes de "18A", "1A" antes de "1B" e de "2A", e "TG4" antes de "TG10".
+- **Sem rótulo**: a linha fica com `ug` vazio, e o log informa quantas linhas ficaram assim.
+- **No texto e nas tabelas**: a unidade aparece como "UG" seguido do rótulo ("UG1", "UG1A"). Quando o rótulo começa por letra, há um espaço entre os dois ("UG TG10").
+
 `indicadores_ug_mensal.csv`: uma linha por mês e UG, em ordem de `mes` e `ug`.
 
 | Coluna | Tipo | Origem |
 |---|---|---|
 | `mes` | data (dia 1) | `dat_mesreferencia` |
-| `ug` | inteiro | `num_unidadegeradora` |
+| `ug` | inteiro ou texto (rótulo com letra) | `num_unidadegeradora` |
 | `cod_equipamento` | texto | `cod_equipamento` |
 | `potencia_mw` | real | `val_potencia` |
 | `dispf`, `indisppf`, `indispff`, `dmdff`, `fdff`, `tdff` | real | `val_dispf` a `val_tdff`, como publicados (vírgula decimal aceita) |
@@ -180,7 +190,7 @@ Frases: sem violação, `- **R<n>** (<nome>): nenhuma violação em <total> regi
 | Coluna | Tipo | Origem |
 |---|---|---|
 | `mes` | data (dia 1) | `dat_periodo` |
-| `ug` | inteiro | número no fim de `nom_unidadegeradora` (antes da sigla do estado) |
+| `ug` | inteiro ou texto (rótulo com letra) | último termo de `nom_unidadegeradora`, antes da sigla do estado |
 | `HP`, `HS`, `HRD`, `HDP`, `HDF`, `HDCE`, `HEDP`, `HEDF` | real (h) | `val_parametro` de cada `nom_tpinsumo`, na maior versão |
 | `num_versao` | real | maior versão usada no mês e UG |
 | `residuo_identidade_h` | real (h) | HP − (HS + HRD + HDP + HDF + HDCE + HEDP + HEDF) |

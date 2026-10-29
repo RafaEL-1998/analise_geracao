@@ -73,7 +73,7 @@ from src.comum.regras import (
     TOLERANCIA_DIVERGENCIA_HORAS,
 )
 from src.relatorio.estrutura import secoes_presentes, titulo_da_secao
-from src.tratamento.indicadores import INSUMOS_HORAS, TOLERANCIA_IDENTIDADE_HORAS
+from src.tratamento.indicadores import INSUMOS_HORAS, TOLERANCIA_IDENTIDADE_HORAS, nome_ug
 from src.tratamento.validacao import faixa_produtividade
 
 logger = setup_logger("relatorio")
@@ -362,7 +362,7 @@ def linhas_tabela_ons_ug_anual(res: ResultadosAnalise) -> Tuple[List[str], List[
     cabecalho = ["Ano", "UG", "DISPF", "INDISPPF", "INDISPFF", "DMDFF (h)"]
     t = res.ons.get("ug_anual", pd.DataFrame())
     linhas = [
-        [_rotulo_ano(r.ano, r.ano_parcial), f"UG{int(r.ug)}", fmt_pct(r.dispf, 2), fmt_pct(r.indisppf, 2),
+        [_rotulo_ano(r.ano, r.ano_parcial), nome_ug(r.ug), fmt_pct(r.dispf, 2), fmt_pct(r.indisppf, 2),
          fmt_pct(r.indispff, 2), fmt_num(r.dmdff, 1)]
         for r in t.itertuples()
     ]
@@ -374,7 +374,7 @@ def linhas_tabela_ons_horas(res: ResultadosAnalise) -> Tuple[List[str], List[Lis
     cabecalho = ["Ano", "UG", "Meses", *INSUMOS_HORAS.keys()]
     t = res.ons.get("horas_anual", pd.DataFrame())
     linhas = [
-        [_rotulo_ano(r["ano"], r["ano_parcial"]), f"UG{int(r['ug'])}", fmt_int(r["meses"]),
+        [_rotulo_ano(r["ano"], r["ano_parcial"]), nome_ug(r["ug"]), fmt_int(r["meses"]),
          *[fmt_int(r[s]) for s in INSUMOS_HORAS]]
         for r in t.to_dict("records")
     ]
@@ -388,7 +388,7 @@ def linhas_tabela_ons_decomposicao(res: ResultadosAnalise) -> Tuple[List[str], L
     if t is None:
         return cabecalho, []
     linhas = [
-        [r.taxa, f"UG{int(r.ug)}", f"{r.parcela} ({DESCRICAO_PARCELA[r.parcela]})", fmt_num(r.horas, 1),
+        [r.taxa, nome_ug(r.ug), f"{r.parcela} ({DESCRICAO_PARCELA[r.parcela]})", fmt_num(r.horas, 1),
          fmt_num(r.contribuicao_pp, 3), fmt_pct(r.participacao_pct)]
         for r in t.itertuples()
     ]
@@ -401,7 +401,7 @@ def linhas_tabela_ons_divergencias(res: ResultadosAnalise) -> Tuple[List[str], L
                  "Forçadas pelo DISPF (h)"]
     t = res.ons.get("divergencias", pd.DataFrame())
     linhas = [
-        [fmt_mes_ano(r.mes), f"UG{int(r.ug)}", fmt_num(r.HS, 1), fmt_num(r.HRD, 1), fmt_num(r.HDP, 1),
+        [fmt_mes_ano(r.mes), nome_ug(r.ug), fmt_num(r.HS, 1), fmt_num(r.HRD, 1), fmt_num(r.HDP, 1),
          fmt_num(r.horas_programadas_indisppf, 1), fmt_num(r.HDF, 1), fmt_num(r.horas_forcadas_indispff, 1)]
         for r in t.itertuples()
     ]

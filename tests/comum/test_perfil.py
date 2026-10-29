@@ -429,3 +429,74 @@ def test_uhe_sem_cobertura_continua_exigindo_o_codigo(tmp_path: Path) -> None:
     """Sem a [cobertura], a UHE coleta a Programação diária (São Domingos): o código continua obrigatório."""
     texto = _trocar(PERFIL_SD, 'cod_programacao = "PRUHSD"           # Programação diária (código de exibição)\n', "")
     assert "identificacao.cod_programacao: campo obrigatório ausente" in _problemas(_gravar(tmp_path, texto))
+
+
+# ---------------------------------------------------------------------------
+# Campos da trilha da EVT na UHE pela cobertura (bug uhe-sem-evt-campos-evt; homologação de 26/10/2026)
+# ---------------------------------------------------------------------------
+
+PERFIL_UHE = """
+[usina]
+slug = "uhe_ficticia"
+nome = "UHE Fictícia"
+nome_curto = "Fictícia"
+estado = "GO"
+inicio_operacao_comercial = 2005
+tipo = "UHE"
+modalidade = "TIPO I"
+
+[identificacao]
+ceg = "UHE.PH.GO.000005-0.01"
+id_ons = "GOUHFI"
+cod_programacao = "GOUHFI"
+
+[cobertura]
+indicadores = "proprio"
+programacao = "proprio"
+disponibilidade = "proprio"
+geracao = "proprio"
+
+[parametros]
+potencia_instalada_mw = 120.0
+unidades_geradoras = 3
+potencia_unitaria_mw = 40.0
+""" + FONTES_FICTICIAS
+
+
+def test_uhe_sem_evt_nem_hidrologia_dispensa_os_campos_da_trilha_da_evt(tmp_path: Path) -> None:
+    """Decisão do usuário de 26/10/2026: sem a EVT, garantia física, IP e TEIF ficam opcionais, como na PCH."""
+    p = _carregar(tmp_path, PERFIL_UHE, "uhe_ficticia")
+    assert p.analises is None and p.identificacao.cod_usina is None and p.identificacao.id_reservatorio is None
+    assert (p.parametros.garantia_fisica_mwmed, p.parametros.ip_referencia, p.parametros.teif_referencia) == (
+        None, None, None)
+    assert p.parametros.queda_bruta_m is None and p.parametros.engolimento_nominal_ug_m3s is None
+
+
+def test_uhe_sem_evt_com_hidrologia_exige_os_hidraulicos_e_o_reservatorio(tmp_path: Path) -> None:
+    texto = _trocar(PERFIL_UHE, "[cobertura]\n", '[cobertura]\nhidrologia = "proprio"\n')
+    problemas = _problemas(_gravar(tmp_path, texto, slug="uhe_ficticia"), "uhe_ficticia")
+    for campo in ("parametros.engolimento_nominal_ug_m3s", "parametros.queda_bruta_m", "identificacao.cod_usina",
+                  "identificacao.id_reservatorio"):
+        assert f'{campo}: obrigatório para UHE com a cobertura "proprio" em hidrologia' in problemas
+    assert not any(p.startswith(("analises", "parametros.garantia_fisica_mwmed", "parametros.ip_referencia",
+                                 "parametros.teif_referencia")) for p in problemas)
+
+
+def test_uhe_com_evt_na_cobertura_exige_todos_os_campos_da_trilha_da_evt(tmp_path: Path) -> None:
+    texto = _trocar(PERFIL_UHE, "[cobertura]\n", '[cobertura]\nevt = "proprio"\n')
+    problemas = _problemas(_gravar(tmp_path, texto, slug="uhe_ficticia"), "uhe_ficticia")
+    for campo in ("analises", "parametros.garantia_fisica_mwmed", "parametros.ip_referencia",
+                  "parametros.teif_referencia", "parametros.rendimento_turbina_gerador", "identificacao.nome_ons"):
+        assert f'{campo}: obrigatório para UHE com a cobertura "proprio" em evt' in problemas
+
+
+@pytest.mark.parametrize("velho, mensagem", [
+    ("queda_bruta_m = 35.24", "parametros.queda_bruta_m: campo obrigatório ausente"),
+    ("ip_referencia = 0.06861", "parametros.ip_referencia: campo obrigatório ausente"),
+    ("vertimento_minimo_m3s = 6.0", "analises.vertimento_minimo_m3s: campo obrigatório ausente"),
+])
+def test_uhe_sem_cobertura_continua_exigindo_os_campos_da_trilha_da_evt(tmp_path: Path, velho: str,
+                                                                        mensagem: str) -> None:
+    """Sem a [cobertura], a UHE é a de hoje (São Domingos, com a EVT): os campos e as mensagens não mudam."""
+    linha = next(x for x in PERFIL_SD.splitlines(keepends=True) if x.startswith(velho))
+    assert mensagem in _problemas(_gravar(tmp_path, _trocar(PERFIL_SD, linha, "")))

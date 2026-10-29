@@ -2,89 +2,89 @@
  "etapa": "relatorio",
  "usina": "william_arjona",
  "versao_formato": 1,
- "iniciada_em": "2026-10-26T12:27:52Z",
- "concluida_em": "2026-10-26T12:28:01Z",
+ "iniciada_em": "2026-10-29T18:07:15Z",
+ "concluida_em": "2026-10-29T18:07:22Z",
  "status": "concluida",
  "codigo_saida": 0,
  "etapa_anterior": {
   "etapa": "analises",
-  "concluida_em": "2026-10-26T12:26:39Z"
+  "concluida_em": "2026-10-29T18:07:15Z"
  },
  "arquivos": [
   {
    "nome": "relatorio_analise_estatistica.pdf",
-   "bytes": 1342382,
-   "sha256": "d01061f745356906c27830d87d67cb3438435d755adfa7eb5539bd1ce5497dfc"
+   "bytes": 1348237,
+   "sha256": "6b428484e218cc683dd0846ef44805e6874d9b799fd0c4aab579c2d120f5a978"
   },
   {
    "nome": "relatorio_analise_estatistica.md",
-   "bytes": 49133,
-   "sha256": "cc74b53728bd96281eb48801cbb9ab8711cf82f382bcd32d4b4d7a04a032334a"
+   "bytes": 49046,
+   "sha256": "c99f34ff49a17b1be7fe074c93d6f2063f948f25c2bf523eadb91244cb096e70"
   },
   {
    "nome": "perfil_estatistico_anual.xlsx",
-   "bytes": 130917,
-   "sha256": "682f90ee626c525bc9991f368016b8b3e066c55c5d66029b7926e019a1a23fb9"
+   "bytes": 130912,
+   "sha256": "59e423026ab650a2caadca0d663cb3dd9183b2e26ba963134cb7a734c825cb48"
   },
   {
    "nome": "perfil_estatistico_anual.csv",
-   "bytes": 908,
-   "sha256": "cd0ba766879ce39ce2eaa318440b6bf0429f71a631140b14cc9471e0915a92a2"
+   "bytes": 910,
+   "sha256": "e9d45c6951b452c245388a832f38a9d0411ad9f161a4680602f4df7431acf3d6"
   },
   {
    "nome": "resumo_executivo.pdf",
-   "bytes": 82120,
-   "sha256": "f46c4052ba27f8d3a20d212796e2cab907a195785534b19b22147ff2d4855eb4"
+   "bytes": 82088,
+   "sha256": "a2727707510cd67c0ab1a49fe772bb40b03221c35b733f6d9907d057a2d13972"
   },
   {
    "nome": "resumo_executivo.md",
-   "bytes": 5098,
-   "sha256": "7cf545c30b078784364c9fca0ec59901669c081ed7d978f4ced419bd7f3c6410"
+   "bytes": 5048,
+   "sha256": "37f8f20e89b73057cb67a12aa9458a4814f86ffac07e2b534f68f597ed4a7267"
   },
   {
    "nome": "figures/01_serie_temporal_geracao_disponibilidade.png",
-   "bytes": 161565,
-   "sha256": "3b78bb3998149fb895957c3cc91c4ea6200de6ac9ab5f8f1bcf33359bace0ec1"
+   "bytes": 163591,
+   "sha256": "707d46c7098f9541ed8c886bcd2f5633e6d5d0bf6baea94becd3a199423b731e"
   },
   {
    "nome": "figures/02_geracao_mensal.png",
-   "bytes": 69303,
-   "sha256": "3fa98dc4c1ba612044939872776f29ede17aaa2b3ce13c40bf4e0a2ca5220f6a"
+   "bytes": 69338,
+   "sha256": "c86b5abf3c9d9b193e8daa700f9095d4ea4945b5de2c1018f84a3f6f8b529143"
   },
   {
    "nome": "figures/03_geracao_por_mes_do_ano.png",
    "bytes": 82041,
-   "sha256": "0167510d84ffc1ec69c939a2d5a4d9262714b7cd02cb33353bd368452ac1b5ac"
+   "sha256": "ae797d1799a44e34e39437b26e00f922c8709ca0b276c088a389e92dc6c4daad"
   },
   {
    "nome": "figures/04_perfil_horario_geracao.png",
-   "bytes": 85197,
-   "sha256": "87a383f037a5cb573541c1f163becc37a63c9c53715100138a9b3d179e0ddb9b"
+   "bytes": 85319,
+   "sha256": "744cd5a76b224e3ed434bb25d29e11f07f80b0e100b13dde623e84172de806c2"
   },
   {
    "nome": "figures/05_disponibilidade_operacional_sincronizada_mensal.png",
-   "bytes": 146250,
-   "sha256": "3af886415e746bbdc44c04a1bbaf3a7a9d4fc789642ae50b9850c241ff2c77a1"
+   "bytes": 147097,
+   "sha256": "70338281b07663d081fb5841a978fe7f2ce66e4e91a151d078768188500a42ef"
   },
   {
    "nome": "figures/06_despacho_por_motivo_mensal.png",
-   "bytes": 93401,
-   "sha256": "2bad0871f9172890ad34996751b547eee56b3aae560e410efe90c77d4b4a042f"
+   "bytes": 93826,
+   "sha256": "6a3360751937299d5050abedc5f61ed0b9e06afcf0dda912e40a76dd55fe3eec"
   },
   {
    "nome": "figures/07_inflexibilidade_mensal.png",
-   "bytes": 72372,
-   "sha256": "739be4e973125e4354330d3cf2ab94cadc06c31107cafd441cc40bfd06f6b754"
+   "bytes": 72401,
+   "sha256": "78a786168e3e2e3e78118a5e9620b36e6d0791a967671584dbd6613d3aca4b49"
   },
   {
    "nome": "figures/08_desvios_despacho_mensal.png",
-   "bytes": 86581,
-   "sha256": "16e8885f5b0cd7564e2fd9ab8a32720442e5ca9a35196ca164a53a53c633861a"
+   "bytes": 86578,
+   "sha256": "d9b895d35fb62a7964ad303fb12271ecf1002aad508e09d97defd6b6909b9c49"
   },
   {
    "nome": "figures/09_cvu_cmo_semanal.png",
-   "bytes": 142578,
-   "sha256": "7579965d99657973302abc408e0460743b4e1208d4bdf0bbf23d14812709c315"
+   "bytes": 141488,
+   "sha256": "8317db35b34edf0a946104dc174a1a00cff923eb38138115225616bbc2e215ca"
   },
   {
    "nome": "figures/16_taxas_oficiais_e_operativas.png",
@@ -93,7 +93,7 @@
   }
  ],
  "resumo": {
-  "data_geracao": "26/10/2026 09:00",
+  "data_geracao": "29/10/2026 08:00",
   "secoes": 15,
   "paginas_pdf": 28,
   "figuras": 10,
@@ -101,7 +101,7 @@
   "resumo_executivo": {
    "paginas": 2,
    "evolucao_anual": true,
-   "palavras": 615
+   "palavras": 610
   }
  }
 }

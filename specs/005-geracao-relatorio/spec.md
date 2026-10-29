@@ -1169,6 +1169,7 @@ Quero o mesmo formato para qualquer tipo de usina, com os blocos que o tipo perm
 | 23/10/2026 | Carteira de MS aprovada ("aprovo a carteira de MS"). O relatório atualizado da São Domingos fica em `reports/sao_domingos/`, com a série até 19/10/2026; a referência continua a aprovada. | FR-049, SC-001 |
 | 23/10/2026 | Taxas operativas no relatório: tabela, frase, figura com diferença de pelo menos 1 p.p., notas e aba; carteira sem coluna nova (aprovado pelo usuário). | FR-071 |
 | 26/10/2026 | Aprovados os relatórios da São Domingos e da William Arjona com as taxas operativas, a mudança da PCH Bandeirante (C20 entre as regras não avaliadas e o PDF de 13 para 14 páginas) e a fotografia nova da hidrelétrica fictícia; referências das três usinas registradas de novo. | FR-071, princípio IX |
+| 29/10/2026 | Diferença aprovada na referência da PCH Bandeirante ("aceito suas recomendações"): duas células da tabela "Geração programada × verificada por mês", de jan/2025 e ago/2025, passam de "-0,0" a "0,0" (bug `zero-negativo-tabela`). O novo registro é feito na máquina que tem a Coleta congelada, com a data de geração de 22/10/2026 (passos em `.specify/bugs/zero-negativo-tabela/fix.md`). | FR-042, princípio IX |
 
 ---
 

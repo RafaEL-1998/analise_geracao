@@ -1,6 +1,6 @@
 # EOL Praia Formosa — resumo executivo
 
-01/07/2009 00h a 19/10/2026 23h (151.598 registros horários) · Gerado em 21/10/2026 10:00
+01/07/2009 00h a 27/10/2026 23h (151.790 registros horários) · Gerado em 29/10/2026 08:00
 
 EOL · CE · TIPO I · 105,0 MW
 
@@ -14,9 +14,9 @@ Resume o relatório completo "EOL Praia Formosa — Análise do desempenho opera
 
 | Indicador | Valor | Detalhe |
 | --- | --- | --- |
-| Geração média | 26,1 MWmed | 3.951,0 GWh em 151.598 horas com valor |
+| Geração média | 26,1 MWmed | 3.956,8 GWh em 151.790 horas com valor |
 | Fator de capacidade | 24,8% | geração média ÷ potência instalada |
-| Energia cortada | 16,6% | 184.769 MWh por restrição de operação, da energia estimada nas semi-horas com a marca |
+| Energia cortada | 16,7% | 186.512 MWh por restrição de operação, da energia estimada nas semi-horas com a marca |
 
 Seção de origem: capa do relatório completo.
 
@@ -41,17 +41,17 @@ Seção de origem: capa do relatório completo.
 | 2023 | usina | 22,0 | 193.081 | 21,0% | 19.339 (11,2%) |
 | 2024 | usina | 22,1 | 193.711 | 21,0% | 43.866 (15,3%) |
 | 2025 | usina | 18,3 | 160.559 | 17,5% | 81.354 (32,2%) |
-| 2026* | usina | 16,4 | 115.220 | 15,7% | 38.877 (24,6%) |
+| 2026* | usina | 16,8 | 121.037 | 16,0% | 40.620 (24,7%) |
 
 \* Ano parcial. Colunas e definições na seção 2 do relatório completo.
 
 ## Sobre os dados
 
-Dados: série horária de referência, Geração por usina (id ONS CEUFM), de 01/07/2009 00h a 19/10/2026 23h, com 151.598 registros; 2009 e 2026 são anos parciais; 82 horas ausentes, não preenchidas. Nenhuma hora sinalizada.
+Dados: série horária de referência, Geração por usina (id ONS CEUFM), de 01/07/2009 00h a 27/10/2026 23h, com 151.790 registros; 2009 e 2026 são anos parciais; 82 horas ausentes, não preenchidas. Nenhuma hora sinalizada.
 
 Conferências: cadastro sem divergência; geração coincidente entre as fontes em 98,3% das horas comparadas, com 6.254 divergências; programação diária coincidente com o programado do Fator de capacidade em 94,5% das horas, com 969 divergências. Os dados abertos do ONS não informam a causa das paradas nem os eventos individuais de desligamento.
 
-Fontes: Geração por usina, Fator de capacidade e Restrição com a razão (constrained-off) (id ONS CEUFM), obtidos em 21/10/2026; Programação diária (CEUFM), obtido em 20/10/2026; Modalidade das usinas e Capacidade de geração (CEG EOL.CV.CE.028631-1.01), obtidos em 21/10/2026; Restrição com detalhe (constrained-off) (id ONS CEUFM; CEG EOL.CV.CE.028631-1.01), obtido em 21/10/2026.
+Fontes: Geração por usina, Fator de capacidade e Restrição com a razão (constrained-off) (id ONS CEUFM), obtidos em 29/10/2026; Programação diária (CEUFM), obtido em 29/10/2026; Modalidade das usinas e Capacidade de geração (CEG EOL.CV.CE.028631-1.01), obtidos em 29/10/2026; Restrição com detalhe (constrained-off) (id ONS CEUFM; CEG EOL.CV.CE.028631-1.01), obtido em 29/10/2026.
 
 ## Conclusão
 
@@ -61,8 +61,8 @@ Indícios a confirmar, gerados pelas regras descritas nas notas metodológicas a
 
 ### Pontos de atenção
 
-- Energia cortada por restrição de operação de 184.769 MWh, 16,6% da energia estimada nas semi-horas com a marca de restrição (seção 7).
+- Energia cortada por restrição de operação de 186.512 MWh, 16,7% da energia estimada nas semi-horas com a marca de restrição (seção 7).
 
 ### A verificar em campo
 
-- Medição de vento marcada como inválida pelo ONS em 13.157 das 88.560 semi-horas da usina (14,9%) (seção 8).
+- Medição de vento marcada como inválida pelo ONS em 13.151 das 88.944 semi-horas da usina (14,8%) (seção 8).

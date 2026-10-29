@@ -437,18 +437,28 @@ def _obtido(valor: Any) -> bool:
     return any(v in COBERTURAS_QUE_OBTEM for v in valores)
 
 
+def conjuntos_pela_cobertura(tipo: str, cobertura: Dict[str, Any]) -> List[EntradaRegistro]:
+    """Conjuntos que a Coleta obtém para uma usina do ``tipo`` com a ``cobertura``, sem conferir os campos de
+    ``[usina]`` que alguns exigem (o subsistema do CMO). Serve também ao rascunho do perfil, que só tem o catálogo."""
+    do_tipo = [e for e in REGISTRO if tipo in e.tipos and not e.so_catalogo]
+    if not cobertura:
+        return [e for e in do_tipo if e.chave in CHAVES_SEM_COBERTURA]
+    return [e for e in do_tipo if not e.na_cobertura or _obtido(cobertura.get(e.chave))]
+
+
+def nivel_na_cobertura(chave: str, cobertura: Dict[str, Any]) -> str:
+    """Nível do conjunto ``chave`` pela ``cobertura`` (o primeiro, com a lista ``["proprio", "conjunto"]``)."""
+    return _nivel(entrada(chave), cobertura)
+
+
 def conjuntos_da_usina(perfil: Any) -> List[EntradaRegistro]:
     """Conjuntos que a Coleta obtém para a usina, na ordem do registro (FR-016; data-model da Coleta de dados, seção 6).
 
     Sem ``[cobertura]`` (só na UHE), os dez de hoje. Com ela, os conjuntos de série com ``proprio`` ou ``conjunto``
     (ou a lista dos dois) e, sempre, os cadastrais e os do subsistema do tipo.
     """
-    tipo, cobertura = tipo_da_usina(perfil), cobertura_da_usina(perfil)
-    do_tipo = [e for e in REGISTRO if tipo in e.tipos and not e.so_catalogo
-               and (not e.campo_usina or getattr(perfil.usina, e.campo_usina, None))]
-    if not cobertura:
-        return [e for e in do_tipo if e.chave in CHAVES_SEM_COBERTURA]
-    return [e for e in do_tipo if not e.na_cobertura or _obtido(cobertura.get(e.chave))]
+    return [e for e in conjuntos_pela_cobertura(tipo_da_usina(perfil), cobertura_da_usina(perfil))
+            if not e.campo_usina or getattr(perfil.usina, e.campo_usina, None)]
 
 
 def _nivel(e: EntradaRegistro, cobertura: Dict[str, Any]) -> str:

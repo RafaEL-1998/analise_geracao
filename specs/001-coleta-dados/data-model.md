@@ -793,17 +793,17 @@ Obrigatórios em todos os tipos: `usina.slug`, `nome`, `nome_curto`, `estado`, `
 | Campo | UHE | PCH e CGH | UTE e UTN | EOL e UFV |
 |---|---|---|---|---|
 | `identificacao.id_ons` | O | C: `geracao` ou `disponibilidade` com `proprio` | O | C: `geracao`, `fator_capacidade`, `restricao_detalhe` ou `restricao_razao` com `proprio` |
-| `identificacao.cod_usina`, `nome_ons` | O | C: `evt` ou `hidrologia` com `proprio` ou `conjunto` | — | — |
-| `identificacao.id_reservatorio` | O | C: `hidrologia` | — | — |
+| `identificacao.cod_usina`, `nome_ons` | O sem a `[cobertura]`; C: `evt` ou `hidrologia` | C: `evt` ou `hidrologia` com `proprio` ou `conjunto` | — | — |
+| `identificacao.id_reservatorio` | O sem a `[cobertura]`; C: `hidrologia` | C: `hidrologia` | — | — |
 | `identificacao.id_conjunto` | — | C: `geracao`, `fator_capacidade` ou `restricao_razao` com `conjunto` | idem | idem |
 | `identificacao.planejamento` | — | — | C: `despacho` ou `cvu` | — |
 | `identificacao.membros` | — | opcional | — | opcional |
 | `usina.subsistema` | opcional | opcional | C: `cvu` | opcional |
-| hidráulicos (`tipo_turbina`, `engolimento_nominal_ug_m3s`, `queda_bruta_m`, `perda_hidraulica_m`, `rendimento_turbina_gerador`, `vazao_remanescente_m3s`) | O | C: `evt` ou `hidrologia` | — | — |
-| `parametros.garantia_fisica_mwmed` | O | opcional | opcional | opcional |
-| `parametros.ip_referencia`, `teif_referencia` | O | opcional | opcional | — |
+| hidráulicos (`tipo_turbina`, `engolimento_nominal_ug_m3s`, `queda_bruta_m`, `perda_hidraulica_m`, `rendimento_turbina_gerador`, `vazao_remanescente_m3s`) | O sem a `[cobertura]`; C: `evt` ou `hidrologia` | C: `evt` ou `hidrologia` | — | — |
+| `parametros.garantia_fisica_mwmed` | O sem a `[cobertura]`; C: `evt` | opcional | opcional | opcional |
+| `parametros.ip_referencia`, `teif_referencia` | O sem a `[cobertura]`; C: `evt` | opcional | opcional | — |
 | `parametros.combustivel` | — | — | O | — |
-| `[analises]` | O | C: `evt` | — | — |
+| `[analises]` | O sem a `[cobertura]`; C: `evt` | C: `evt` | — | — |
 
 **Situação do perfil**:
 

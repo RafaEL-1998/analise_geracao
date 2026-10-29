@@ -50,6 +50,7 @@ from src.comum.regras import (
     LIMIAR_GERACAO_PARADA_MW,
     RAZAO_DIURNA_RELEVANTE,
 )
+from src.tratamento.indicadores import chave_ug, em_ordem_ug, nome_ug, rotulo_ug
 
 
 LISTAS_CONCLUSAO: Tuple[Tuple[str, str], ...] = (
@@ -130,44 +131,45 @@ def _regra_c2(res: ResultadosAnalise) -> List[Dict[str, Any]]:
     t = o.get("taxa_ultima") or {}
     teif = perfil_ativo().parametros.teif_referencia  # sem a TEIF de referência, só a limitação recorrente (D18)
     teifa_acima = bool(t) and teif is not None and t["teifa_pct"] > teif * 100.0
-    participacao: Dict[int, float] = {}
-    parcela_dominante: Dict[int, str] = {}
+    participacao: Dict[str, float] = {}  # pelo rótulo da unidade ('2', '1A')
+    parcela_dominante: Dict[str, str] = {}
     dec = o.get("decomposicao")
     if dec is not None and len(dec):
         teifa = dec[dec["taxa"] == "TEIFa"]
-        participacao = {int(u): float(v) for u, v in teifa.groupby("ug")["participacao_pct"].sum().items()}
-        parcela_dominante = {int(u): str(g.loc[g["participacao_pct"].idxmax(), "parcela"]) for u, g in teifa.groupby("ug")}
-    por_ug = horas.groupby("ug").agg(meses=("mes", "nunique"), meses_hedf=("HEDF", lambda s: int((s > 0).sum())),
-                                     hedf=("HEDF", "sum"))
+        participacao = {rotulo_ug(u): float(v) for u, v in teifa.groupby("ug")["participacao_pct"].sum().items()}
+        parcela_dominante = {rotulo_ug(u): str(g.loc[g["participacao_pct"].idxmax(), "parcela"])
+                             for u, g in teifa.groupby("ug")}
+    por_ug = em_ordem_ug(horas.groupby("ug").agg(meses=("mes", "nunique"),
+                                                 meses_hedf=("HEDF", lambda s: int((s > 0).sum())), hedf=("HEDF", "sum")))
     itens: List[Dict[str, Any]] = []
     for ug, r in por_ug.iterrows():
-        ug = int(ug)
-        dominante = teifa_acima and participacao.get(ug, 0.0) >= LIMIAR_CONCLUSAO_PARTICIPACAO_TEIFA * 100.0
+        rotulo = rotulo_ug(ug)
+        dominante = teifa_acima and participacao.get(rotulo, 0.0) >= LIMIAR_CONCLUSAO_PARTICIPACAO_TEIFA * 100.0
         recorrente = bool(r["meses"]) and r["meses_hedf"] / r["meses"] * 100.0 >= LIMIAR_CONCLUSAO_MESES_LIMITACAO_PCT
         if not (dominante or recorrente):
             continue
-        limitacao = recorrente or parcela_dominante.get(ug) == "HEDF"
-        partes = [f"UG{ug}: indício de problema na unidade"]
+        limitacao = recorrente or parcela_dominante.get(rotulo) == "HEDF"
+        partes = [f"{nome_ug(ug)}: indício de problema na unidade"]
         if recorrente:
             outras = por_ug.drop(index=ug)
             partes[0] += (f", com limitação forçada de potência em {fmt_int(r['meses_hedf'])} dos {fmt_int(r['meses'])} "
                           f"meses ({fmt_int(r['hedf'])} h equivalentes"
-                          + "".join(f"; UG{int(u)}: {fmt_int(v)} h" for u, v in outras["hedf"].items()) + ")")
+                          + "".join(f"; {nome_ug(u)}: {fmt_int(v)} h" for u, v in outras["hedf"].items()) + ")")
         if dominante:
-            parte = f"responde por {fmt_pct(participacao[ug], 0)} da TEIFa de {fmt_mes_ano(t['mes'])}"
+            parte = f"responde por {fmt_pct(participacao[rotulo], 0)} da TEIFa de {fmt_mes_ano(t['mes'])}"
             taxa = f"{fmt_pct(t['teifa_pct'], 2)}, acima da referência de {fmt_pct(perfil_ativo().parametros.teif_referencia * 100, 3)}"
             if recorrente:
                 partes.append(f"{parte}, que ficou em {taxa}")
             else:
-                descricao = DESCRICAO_PARCELA.get(parcela_dominante.get(ug, ""), "horas forçadas")
+                descricao = DESCRICAO_PARCELA.get(parcela_dominante.get(rotulo, ""), "horas forçadas")
                 partes.append(f"{parte}, sobretudo por {descricao}; a TEIFa ficou em {taxa}")
         objeto = "da limitação forçada de potência" if limitacao else "dos desligamentos forçados"
-        campo = (f"UG{ug}: potência máxima que a unidade alcança hoje e registros de limitação no supervisório e no livro de "
-                 "operação" if limitacao else
-                 f"UG{ug}: registros dos desligamentos forçados no supervisório e no livro de operação")
+        campo = (f"{nome_ug(ug)}: potência máxima que a unidade alcança hoje e registros de limitação no supervisório e no "
+                 "livro de operação" if limitacao else
+                 f"{nome_ug(ug)}: registros dos desligamentos forçados no supervisório e no livro de operação")
         itens += [
             _item("possiveis_problemas", "C2", "; ".join(partes), ["indicadores_ons"]),
-            _item("confirmar_agente", "C2", f"Causa, histórico e situação atual {objeto} da UG{ug}: ocorrências, ordens de "
+            _item("confirmar_agente", "C2", f"Causa, histórico e situação atual {objeto} da {nome_ug(ug)}: ocorrências, ordens de "
                   "serviço e correção prevista", ["indicadores_ons"]),
             _item("verificar_campo", "C2", campo, ["indicadores_ons"]),
         ]
@@ -335,9 +337,9 @@ def _regra_c9(res: ResultadosAnalise) -> List[Dict[str, Any]]:
 def _unidades_agrupadas(sel: pd.DataFrame, total_unidades: int) -> str:
     """Unidades e anos das paradas programadas longas, com os anos seguidos de mesmas unidades juntos:
     "de todas as unidades em 2022, 2023 e 2024; da UG1 em 2025" (usinas sem EVT, com muitas unidades)."""
-    blocos: List[Tuple[Tuple[int, ...], List[int]]] = []
+    blocos: List[Tuple[Tuple[str, ...], List[int]]] = []
     for ano, g in sel.groupby("ano"):
-        unidades = tuple(sorted(int(u) for u in g["ug"]))
+        unidades = tuple(sorted((rotulo_ug(u) for u in g["ug"]), key=chave_ug))
         if blocos and blocos[-1][0] == unidades:
             blocos[-1][1].append(int(ano))
         else:
@@ -347,9 +349,9 @@ def _unidades_agrupadas(sel: pd.DataFrame, total_unidades: int) -> str:
         if len(unidades) == total_unidades > 1:
             quem = "de todas as unidades"
         elif len(unidades) == 1:
-            quem = f"da UG{unidades[0]}"
+            quem = f"da {nome_ug(unidades[0])}"
         else:
-            quem = "das " + fmt_lista(f"UG{u}" for u in unidades)
+            quem = "das " + fmt_lista(nome_ug(u) for u in unidades)
         textos.append(f"{quem} em {fmt_lista(str(a) for a in anos)}")
     return "; ".join(textos)
 
@@ -381,7 +383,7 @@ def _regra_c10(res: ResultadosAnalise, eventos: Optional[pd.DataFrame] = None,
             if agrupar_unidades:
                 quem = _unidades_agrupadas(sel, ug_anual["ug"].nunique())
             else:
-                quem = fmt_lista(f"{' e '.join(f'da UG{int(u)}' for u in sorted(g['ug']))} em {int(ano)}"
+                quem = fmt_lista(f"{' e '.join(f'da {nome_ug(u)}' for u in sorted(g['ug'], key=chave_ug))} em {int(ano)}"
                                  for ano, g in sel.groupby("ano"))
             partes.append(f"das paradas programadas longas {quem}")
             secoes.append("indicadores_ons")

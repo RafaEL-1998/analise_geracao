@@ -243,6 +243,15 @@ def test_c10_indisponibilidade_longa(df_base: pd.DataFrame) -> None:
     assert "UG2 em 2022" in _por_regra(res, "C10")["confirmar_agente"]["texto"]
 
 
+def test_c10_com_unidades_de_rotulo_com_letra(df_base: pd.DataFrame) -> None:
+    """Unidades com algarismo e letra (ciclo combinado, UTE Três Lagoas): a C10 cita o rótulo, em ordem natural, sem
+    exceção (bug unidade-com-letra; antes, ``int`` do rótulo)."""
+    res = _neutro(df_base)
+    res.ons = {"ug_anual": pd.DataFrame([{"ano": 2022, "ug": u, "dispf": 74.18, "indisppf": 25.05, "indispff": 0.77,
+                                          "dmdff": 4.2, "ano_parcial": False} for u in ("2A", "1B", "1A")])}
+    assert "da UG1A e da UG1B e da UG2A em 2022" in _por_regra(res, "C10")["confirmar_agente"]["texto"]
+
+
 def test_c11_instrumentacao_e_medicao(df_base: pd.DataFrame) -> None:
     res = _neutro(df_base)
     res.hidrologia = _hidrologia(cabia=False, sinalizadas=13)
@@ -406,6 +415,8 @@ def test_c10_das_usinas_sem_evt_agrupa_unidades_e_anos() -> None:
                                                              "da UG1 em 2025")
     assert _unidades_agrupadas(pd.DataFrame([{"ano": 2022, "ug": 2}, {"ano": 2022, "ug": 3}]), 5) == \
         "das UG2 e UG3 em 2022"
+    assert _unidades_agrupadas(pd.DataFrame([{"ano": 2022, "ug": "1B"}, {"ano": 2022, "ug": "1A"}]), 6) == \
+        "das UG1A e UG1B em 2022"
 
 
 # ---------------------------------------------------------------------------

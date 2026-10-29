@@ -1,5 +1,5 @@
 # Dependências usadas pelo código (src/) e pelos testes (tests/) — conferidas por tests/comum/test_conformidade.py
-pandas>=2.0.0
+pandas>=2.0.0,<3.1  # o 3.1 devolve arrays só de leitura em .loc depois de .map (tests/analises/test_comum_tipos.py)
 numpy>=1.26.0
 pyarrow>=14.0.0
 openpyxl>=3.1.0
